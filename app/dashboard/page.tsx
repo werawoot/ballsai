@@ -1,12 +1,13 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { Trophy, House, ClipboardList, User, Users, CheckCircle, XCircle, Clock, Plus, MapPin, Calendar } from 'lucide-react'
+import { Trophy, House, ClipboardList, User, Users, CheckCircle, Clock, Plus, MapPin, Calendar, Image } from 'lucide-react'
 import Link from 'next/link'
 import ConfirmTeamButton from './ConfirmTeamButton'
+import ConfirmPaymentButton from './ConfirmPaymentButton'
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies()
+  const cookieStore = cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -38,11 +39,18 @@ export default async function DashboardPage() {
     .eq('organizer_id', user.id)
     .order('created_at', { ascending: false })
 
+  const tournamentIds = myTournaments?.map(t => t.id) ?? []
+
   const { data: allTeams } = await supabase
     .from('teams')
     .select('*, tournaments(name, organizer_id)')
-    .in('tournament_id', myTournaments?.map(t => t.id) ?? [])
+    .in('tournament_id', tournamentIds.length > 0 ? tournamentIds : ['none'])
     .order('created_at', { ascending: false })
+
+  const { data: allPayments } = await supabase
+    .from('payments')
+    .select('*')
+    .in('tournament_id', tournamentIds.length > 0 ? tournamentIds : ['none'])
 
   const pendingTeams = allTeams?.filter(t => t.status === 'pending') ?? []
   const confirmedTeams = allTeams?.filter(t => t.status === 'confirmed') ?? []
@@ -134,10 +142,8 @@ export default async function DashboardPage() {
                           )}
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4, background: '#f8f8f8', borderRadius: 8, padding: '8px 10px', fontSize: 12, fontWeight: 700, color: '#555' }}>
-                          <Users size={14} color="#aaa" /> {tTeams.length} ทีม
-                        </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#f8f8f8', borderRadius: 8, padding: '8px 10px', fontSize: 12, fontWeight: 700, color: '#555' }}>
+                        <Users size={14} color="#aaa" /> {tTeams.length} ทีม
                       </div>
                     </div>
                   </div>
@@ -157,30 +163,77 @@ export default async function DashboardPage() {
 
         {/* PENDING TEAMS */}
         {pendingTeams.length > 0 && (
-          <div>
+          <div style={{ marginBottom: 20 }}>
             <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <div style={{ width: 4, height: 20, background: '#f59e0b', borderRadius: 2 }} />
               รอการยืนยัน ({pendingTeams.length})
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {pendingTeams.map(team => (
-                <div key={team.id} style={{ background: 'white', borderRadius: 12, border: '1.5px solid #e5e5e5', padding: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                    <div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: '#111', marginBottom: 3 }}>{team.name}</div>
-                      <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{team.tournaments?.name}</div>
-                      <div style={{ fontSize: 12, color: '#aaa', lineHeight: 1.5 }}>{team.members}</div>
-                    </div>
-                    <div style={{ background: '#fef9c3', color: '#854d0e', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 20, flexShrink: 0 }}>
-                      รอยืนยัน
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {pendingTeams.map(team => {
+                const payment = allPayments?.find(p => p.team_id === team.id)
+                return (
+                  <div key={team.id} style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                    <div style={{ height: 4, background: '#f59e0b' }} />
+                    <div style={{ padding: '14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: '#111', marginBottom: 3 }}>{team.name}</div>
+                          <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{team.tournaments?.name}</div>
+                          <div style={{ fontSize: 12, color: '#aaa', lineHeight: 1.6 }}>{team.members}</div>
+                        </div>
+                        <div style={{ background: '#fef9c3', color: '#854d0e', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 20, flexShrink: 0 }}>
+                          รอยืนยัน
+                        </div>
+                      </div>
+
+                      {/* PAYMENT SLIP */}
+                      {payment ? (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <Image size={13} /> หลักฐานการชำระเงิน
+                          </div>
+                          <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '10px', marginBottom: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                              <span style={{ fontSize: 12, color: '#888' }}>ยอดชำระ</span>
+                              <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, fontWeight: 700, color: '#CC0001' }}>฿{payment.amount?.toLocaleString()}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: 12, color: '#888' }}>สถานะ</span>
+                              <span style={{ fontSize: 11, fontWeight: 800, background: payment.status === 'confirmed' ? '#dcfce7' : '#fef9c3', color: payment.status === 'confirmed' ? '#16a34a' : '#854d0e', padding: '2px 8px', borderRadius: 20 }}>
+                                {payment.status === 'confirmed' ? '✓ ยืนยันแล้ว' : '⏳ รอตรวจสอบ'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {payment.slip_url && (
+                            <a href={payment.slip_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', border: '1.5px solid #e5e5e5' }}>
+                              <img src={payment.slip_url} alt="slip" style={{ width: '100%', maxHeight: 200, objectFit: 'contain', display: 'block', background: '#f8f8f8' }} />
+                              <div style={{ background: '#f8f8f8', padding: '6px', textAlign: 'center', fontSize: 11, color: '#888', fontWeight: 600 }}>
+                                แตะเพื่อดูรูปขนาดเต็ม
+                              </div>
+                            </a>
+                          )}
+
+                          {payment.status === 'pending' && (
+                            <div style={{ marginTop: 10 }}>
+                              <ConfirmPaymentButton paymentId={payment.id} teamId={team.id} />
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '12px', marginBottom: 12, textAlign: 'center' }}>
+                          <p style={{ fontSize: 12, color: '#aaa', fontWeight: 600 }}>⏳ ยังไม่ได้อัปโหลดสลิป</p>
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <ConfirmTeamButton teamId={team.id} action="confirmed" />
+                        <ConfirmTeamButton teamId={team.id} action="rejected" />
+                      </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <ConfirmTeamButton teamId={team.id} action="confirmed" />
-                    <ConfirmTeamButton teamId={team.id} action="rejected" />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
@@ -195,10 +248,9 @@ export default async function DashboardPage() {
           { icon: <ClipboardList size={22} />, label: 'รายการแข่ง', href: '/tournaments', active: false },
           { icon: <User size={22} />, label: 'โปรไฟล์', href: '/profile', active: false },
         ].map((item) => (
-          <Link key={item.href} href={item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 12px', textDecoration: 'none', color: item.active ? '#CC0001' : '#aaa', minWidth: 55 }}>
+          <Link key={item.href} href={item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 12px', textDecoration: 'none', color: '#aaa', minWidth: 55 }}>
             {item.icon}
             <span style={{ fontSize: 10, fontWeight: 700 }}>{item.label}</span>
-            {item.active && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#CC0001' }} />}
           </Link>
         ))}
       </nav>

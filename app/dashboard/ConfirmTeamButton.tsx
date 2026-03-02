@@ -12,7 +12,31 @@ export default function ConfirmTeamButton({ teamId, action }: { teamId: string, 
   const handleClick = async () => {
     setLoading(true)
     const supabase = createClient()
+
+    // Update team status
     await supabase.from('teams').update({ status: action }).eq('id', teamId)
+
+    // Get team + tournament + user info for email
+    const { data: team } = await supabase
+      .from('teams')
+      .select('*, tournaments(name), profiles:created_by(email)')
+      .eq('id', teamId)
+      .single()
+
+    if (team) {
+      const email = (team.profiles as any)?.email
+      const teamName = team.name
+      const tournamentName = (team.tournaments as any)?.name
+
+      if (email) {
+       await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamName, tournamentName, email, status: action })
+      })
+      }
+    }
+
     setLoading(false)
     router.refresh()
   }
