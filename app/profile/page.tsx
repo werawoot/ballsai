@@ -71,6 +71,11 @@ export default async function ProfilePage() {
             <span style={{ WebkitTextStroke: '2px rgba(255,255,255,0.4)', color: 'transparent' }}>PROFILE</span>
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10 }}>{user.email}</p>
+        <form action="/auth/signout" method="POST" style={{ marginTop: 12 }}>
+          <button type="submit" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 20, padding: '6px 16px', fontSize: 12, fontWeight: 700, color: 'white', cursor: 'pointer', fontFamily: 'var(--font-oswald)', letterSpacing: 1 }}>
+            ออกจากระบบ
+          </button>
+        </form>
         </div>
       </div>
 
