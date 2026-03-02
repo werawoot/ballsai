@@ -7,7 +7,7 @@ import RankingFilter from './RankingFilter'
 export default async function RankingPage({
   searchParams,
 }: {
-  searchParams: { province?: string; position?: string; sport?: string }
+ searchParams: { province?: string; position?: string; sport?: string; search?: string }
 }) {
   const cookieStore = cookies()
   const supabase = createServerClient(
@@ -27,6 +27,8 @@ export default async function RankingPage({
   const sport = searchParams.sport ?? 'football'
   const province = searchParams.province ?? ''
   const position = searchParams.position ?? ''
+  const search = searchParams.search ?? ''
+
 
   let query = supabase
     .from('player_ranks')
@@ -37,6 +39,8 @@ export default async function RankingPage({
 
   if (province) query = query.eq('province', province)
   if (position) query = query.eq('position', position)
+  if (search) query = query.ilike('player_name', `%${search}%`)
+
 
   const { data: rankings } = await query.limit(50)
 
@@ -113,8 +117,7 @@ export default async function RankingPage({
       </svg>
 
       {/* FILTERS */}
-      <RankingFilter provinces={uniqueProvinces} currentProvince={province} currentPosition={position} />
-
+<RankingFilter provinces={uniqueProvinces} currentProvince={province} currentPosition={position} currentSearch={search} />
       {/* TOP 3 */}
       {top3.length > 0 && (
         <>
@@ -178,35 +181,35 @@ export default async function RankingPage({
             อันดับ 4 ขึ้นไป
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {rest.map((p, i) => (
-              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'white', borderRadius: 12, border: '1.5px solid #e5e5e5', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 18, fontWeight: 700, color: '#ccc', width: 26, textAlign: 'center', flexShrink: 0 }}>{i + 4}</div>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f2f2f2', border: '2px solid #e5e5e5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {p.position === 'GK' || p.position === 'DF'
-                    ? <Shield size={20} color="#CC0001" strokeWidth={1.5} />
-                    : p.position === 'MF'
-                    ? <Zap size={20} color="#CC0001" strokeWidth={1.5} />
-                    : <Star size={20} color="#CC0001" strokeWidth={1.5} />
-                  }
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>{p.player_name}</div>
-                  <div style={{ display: 'flex', gap: 6, marginTop: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 9, fontWeight: 800, background: '#CC0001', color: 'white', borderRadius: 4, padding: '1px 6px', fontFamily: 'var(--font-barlow)', letterSpacing: 0.5 }}>{p.position}</span>
-                    <span style={{ fontSize: 11, color: '#888' }}>{p.team}</span>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: '#555', background: '#f2f2f2', border: '1px solid #e5e5e5', borderRadius: 4, padding: '1px 6px', display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <MapPin size={8} />{p.province}
-                    </span>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, color: '#111' }}>{p.pts.toLocaleString()}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: p.rank_change > 0 ? '#16a34a' : p.rank_change < 0 ? '#CC0001' : '#888' }}>
-                    {p.rank_change > 0 ? `▲ ${p.rank_change}` : p.rank_change < 0 ? `▼ ${Math.abs(p.rank_change)}` : '– 0'}
-                  </span>
-                </div>
-              </div>
-            ))}
+       {rest.map((p, i) => (
+        <Link key={p.id} href={`/players/${p.id}`} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 12, padding: '12px 14px', background: 'white', borderRadius: 12, border: '1.5px solid #e5e5e5', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 18, fontWeight: 700, color: '#ccc', width: 26, textAlign: 'center', flexShrink: 0 }}>{i + 4}</div>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f2f2f2', border: '2px solid #e5e5e5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            {p.position === 'GK' || p.position === 'DF'
+              ? <Shield size={20} color="#CC0001" strokeWidth={1.5} />
+              : p.position === 'MF'
+              ? <Zap size={20} color="#CC0001" strokeWidth={1.5} />
+              : <Star size={20} color="#CC0001" strokeWidth={1.5} />
+            }
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>{p.player_name}</div>
+            <div style={{ display: 'flex', gap: 6, marginTop: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 9, fontWeight: 800, background: '#CC0001', color: 'white', borderRadius: 4, padding: '1px 6px', fontFamily: 'var(--font-barlow)', letterSpacing: 0.5 }}>{p.position}</span>
+              <span style={{ fontSize: 11, color: '#888' }}>{p.team}</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: '#555', background: '#f2f2f2', border: '1px solid #e5e5e5', borderRadius: 4, padding: '1px 6px', display: 'flex', alignItems: 'center', gap: 2 }}>
+                <MapPin size={8} />{p.province}
+              </span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, color: '#111' }}>{p.pts.toLocaleString()}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: p.rank_change > 0 ? '#16a34a' : p.rank_change < 0 ? '#CC0001' : '#888' }}>
+              {p.rank_change > 0 ? `▲ ${p.rank_change}` : p.rank_change < 0 ? `▼ ${Math.abs(p.rank_change)}` : '– 0'}
+            </span>
+          </div>
+        </Link>
+      ))}
           </div>
         </div>
       )}

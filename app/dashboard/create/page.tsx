@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Trophy, MapPin, Calendar, Banknote, ArrowLeft, FileText, Phone, CheckCircle } from 'lucide-react'
+import { Trophy, MapPin, Calendar, Banknote, ArrowLeft, FileText, Phone, CheckCircle, Users } from 'lucide-react'
 import Link from 'next/link'
 
 export default function CreateTournamentPage() {
@@ -14,6 +14,7 @@ export default function CreateTournamentPage() {
   const [endDate, setEndDate] = useState('')
   const [fee, setFee] = useState('')
   const [promptpay, setPromptpay] = useState('')
+  const [maxTeams, setMaxTeams] = useState('16')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [message, setMessage] = useState('')
@@ -37,6 +38,7 @@ export default function CreateTournamentPage() {
       end_date: endDate || startDate,
       fee: parseFloat(fee),
       promptpay,
+      max_teams: parseInt(maxTeams) || 16, 
       organizer_id: user.id,
       status: 'open'
     })
@@ -143,6 +145,7 @@ export default function CreateTournamentPage() {
           </div>
           <Field icon={<Banknote size={16} />} label="ค่าสมัคร (บาท)" value={fee} onChange={setFee} placeholder="500" type="number" required />
           <Field icon={<Phone size={16} />} label="เบอร์ PromptPay" value={promptpay} onChange={setPromptpay} placeholder="08x-xxx-xxxx" type="tel" />
+          <Field icon={<Users size={16} />} label="จำนวนทีมสูงสุด" value={maxTeams} onChange={setMaxTeams} placeholder="16" type="number" required />
         </div>
 
         {message && (
