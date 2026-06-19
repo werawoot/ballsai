@@ -1,17 +1,12 @@
 "use client";
 
 import { useLoading } from "@/hooks/useLoading";
-import { createClient } from "@/lib/supabase";
 import { CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-export default function ConfirmPaymentButton({
-  paymentId,
-  teamId,
-}: {
-  paymentId: string;
-  teamId: string;
-}) {
+export default function ConfirmPaymentButton({ paymentId }: { paymentId: string }) {
+  const [message, setMessage] = useState("");
   const { loading, execute, LoadingModal } = useLoading({
     showLoadingModal: true,
     loadingMessage: "กำลังยืนยันการชำระเงิน",
@@ -20,22 +15,25 @@ export default function ConfirmPaymentButton({
   const router = useRouter();
 
   const handleConfirm = async () => {
+    setMessage("");
+
     await execute(async () => {
-      const supabase = createClient();
-      await supabase
-        .from("payments")
-        .update({ status: "confirmed" })
-        .eq("id", paymentId);
-      await supabase
-        .from("teams")
-        .update({ status: "confirmed" })
-        .eq("id", teamId);
+      const response = await fetch(`/api/payments/${paymentId}/confirm`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { error?: string } | null;
+        setMessage(data?.error ?? "ยืนยันการชำระเงินไม่สำเร็จ");
+        return;
+      }
+
       router.refresh();
     });
   };
 
   return (
-    <>
+    <div>
       <button
         onClick={handleConfirm}
         disabled={loading}
@@ -58,10 +56,12 @@ export default function ConfirmPaymentButton({
           opacity: loading ? 0.6 : 1,
         }}
       >
-        <CheckCircle size={16} />{" "}
-        {loading ? "กำลังดำเนินการ..." : "ยืนยันการชำระเงิน"}
+        <CheckCircle size={16} /> {loading ? "กำลังดำเนินการ..." : "ยืนยันการชำระเงิน"}
       </button>
+      {message ? (
+        <p style={{ marginTop: 6, fontSize: 11, color: "#CC0001", textAlign: "center" }}>{message}</p>
+      ) : null}
       {LoadingModal}
-    </>
+    </div>
   );
 }

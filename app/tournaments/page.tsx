@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { Trophy, MapPin, Calendar, ChevronRight, House, ClipboardList, User } from 'lucide-react'
+import { sampleTournaments, isSampleId, showDemoData } from '@/lib/sample-data'
 
 export default async function TournamentsPage() {
   const cookieStore = await cookies()
@@ -23,6 +24,11 @@ export default async function TournamentsPage() {
     .from('tournaments')
     .select('*')
     .order('start_date', { ascending: true })
+  const displayTournaments = tournaments && tournaments.length > 0
+    ? tournaments
+    : showDemoData
+      ? sampleTournaments
+      : []
 
   return (
     <main style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
@@ -58,7 +64,7 @@ export default async function TournamentsPage() {
       {/* LIST */}
       <div style={{ padding: '16px 16px 0' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {tournaments && tournaments.length > 0 ? tournaments.map((t) => (
+          {displayTournaments.length > 0 ? displayTournaments.map((t) => (
             <div key={t.id} style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
               {/* Card top bar */}
               <div style={{ height: 6, background: 'linear-gradient(90deg,#CC0001,#ff4444)' }} />
@@ -84,7 +90,7 @@ export default async function TournamentsPage() {
                     <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 20, fontWeight: 700, color: '#CC0001' }}>฿{t.fee}</div>
                   </div>
                 </div>
-                <Link href={`/tournaments/${t.id}`} style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: '#CC0001', color: 'white', borderRadius: 10, padding: '11px', fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 0.5, textDecoration: 'none' }}>
+                <Link href={isSampleId(t.id) ? '/login' : `/tournaments/${t.id}`} style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: '#CC0001', color: 'white', borderRadius: 10, padding: '11px', fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 0.5, textDecoration: 'none' }}>
                   ดูรายละเอียด <ChevronRight size={16} />
                 </Link>
               </div>

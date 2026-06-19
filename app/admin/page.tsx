@@ -144,15 +144,7 @@ export default async function AdminPage() {
               PANEL
             </span>
           </h1>
-          <p
-            style={{
-              color: "rgba(255,255,255,0.7)",
-              fontSize: 13,
-              marginTop: 10,
-            }}
-          >
-            จัดการ Player Rankings Season 2026
-          </p>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10 }}>จัดการ Power Rating Season 2026</p>
         </div>
       </div>
 
@@ -313,28 +305,9 @@ export default async function AdminPage() {
                     </span>
                   </div>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-end",
-                    gap: 2,
-                    flexShrink: 0,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: "var(--font-oswald)",
-                      fontSize: 20,
-                      fontWeight: 700,
-                      color: "#CC0001",
-                    }}
-                  >
-                    {p.ovr}
-                  </div>
-                  <div style={{ fontSize: 10, color: "#aaa", fontWeight: 700 }}>
-                    {p.pts.toLocaleString()} pts
-                  </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 20, fontWeight: 700, color: '#CC0001' }}>{p.ovr}</div>
+                  <div style={{ fontSize: 10, color: '#aaa', fontWeight: 700 }}>{p.pts.toLocaleString()} Power</div>
                 </div>
               </div>
 

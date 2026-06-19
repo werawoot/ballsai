@@ -1,93 +1,58 @@
 "use client";
 
-import { useState } from "react";
-import { createClient } from "@/lib/supabase";
-import { User, MapPin, Users, Phone, Save } from "lucide-react";
+import { useState, type ReactNode } from 'react'
+import { createClient } from '@/lib/supabase'
+import { User, MapPin, Users, Phone, Save } from 'lucide-react'
 
-interface FieldProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  type?: string;
+type ProfileForm = {
+  full_name?: string | null
+  province?: string | null
+  team?: string | null
+  position?: string | null
+  phone?: string | null
 }
 
-const Field = ({
-  icon,
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-}: FieldProps) => (
-  <div style={{ marginBottom: 16 }}>
-    <label
-      style={{
-        display: "block",
-        fontSize: 12,
-        fontWeight: 700,
-        color: "#555",
-        marginBottom: 6,
-        letterSpacing: 0.5,
-        textTransform: "uppercase",
-      }}
-    >
-      {label}
-    </label>
-    <div style={{ position: "relative" }}>
-      <div
-        style={{
-          position: "absolute",
-          left: 14,
-          top: "50%",
-          transform: "translateY(-50%)",
-          color: "#aaa",
-        }}
-      >
-        {icon}
-      </div>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        style={{
-          width: "100%",
-          border: "1.5px solid #e5e5e5",
-          borderRadius: 10,
-          padding: "11px 14px 11px 40px",
-          fontSize: 14,
-          outline: "none",
-          fontFamily: "var(--font-sarabun)",
-          color: "#111",
-          background: "#fafafa",
-        }}
-      />
-    </div>
-  </div>
-);
+type FieldProps = {
+  icon: ReactNode
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder: string
+  type?: string
+}
 
-export default function EditProfileForm({
-  profile,
-  userId,
-}: {
-  profile: {
-    full_name?: string;
-    province?: string;
-    team?: string;
-    position?: string;
-    phone?: string;
-  } | null;
-  userId: string;
-}) {
-  const [fullName, setFullName] = useState(profile?.full_name ?? "");
-  const [province, setProvince] = useState(profile?.province ?? "");
-  const [team, setTeam] = useState(profile?.team ?? "");
-  const [position, setPosition] = useState(profile?.position ?? "");
-  const [phone, setPhone] = useState(profile?.phone ?? "");
-  const [loading, setLoading] = useState(false);
-  const [saved, setSaved] = useState(false);
+const inputStyle = {
+  width: '100%',
+  border: '1.5px solid #e5e5e5',
+  borderRadius: 10,
+  padding: '11px 14px 11px 40px',
+  fontSize: 14,
+  outline: 'none',
+  fontFamily: 'var(--font-sarabun)',
+  color: '#111',
+  background: '#fafafa',
+} as const
+
+function Field({ icon, label, value, onChange, placeholder, type = 'text' }: FieldProps) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>{label}</label>
+      <div style={{ position: 'relative' }}>
+        <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }}>{icon}</div>
+        <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={inputStyle} />
+      </div>
+    </div>
+  )
+}
+
+export default function EditProfileForm({ profile, userId }: { profile: ProfileForm | null, userId: string }) {
+  const [fullName, setFullName] = useState(profile?.full_name ?? '')
+  const [province, setProvince] = useState(profile?.province ?? '')
+  const [team, setTeam] = useState(profile?.team ?? '')
+  const [position, setPosition] = useState(profile?.position ?? '')
+  const [phone, setPhone] = useState(profile?.phone ?? '')
+  const [loading, setLoading] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   const handleSave = async () => {
     setLoading(true);
@@ -99,11 +64,11 @@ export default function EditProfileForm({
       team,
       position,
       phone,
-    });
-    setLoading(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
+    })
+    setLoading(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   return (
     <div
@@ -211,5 +176,5 @@ export default function EditProfileForm({
         {loading ? "กำลังบันทึก..." : saved ? "บันทึกแล้ว ✓" : "บันทึกข้อมูล"}
       </button>
     </div>
-  );
+  )
 }

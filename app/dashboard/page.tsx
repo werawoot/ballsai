@@ -1,10 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { Trophy, House, ClipboardList, User, Users, CheckCircle, Clock, Plus, MapPin, Calendar, Image } from 'lucide-react'
+import { Trophy, House, ClipboardList, User, Users, CheckCircle, Clock, Plus, MapPin, Calendar, Image as ImageIcon, ClipboardCheck, Pencil } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import ConfirmTeamButton from './ConfirmTeamButton'
 import ConfirmPaymentButton from './ConfirmPaymentButton'
+import ToggleTournamentStatusButton from './ToggleTournamentStatusButton'
 
 export default async function DashboardPage() {
   const cookieStore = cookies()
@@ -100,6 +102,10 @@ export default async function DashboardPage() {
           ))}
         </div>
 
+        <Link href="/dashboard/results" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#111', color: 'white', borderRadius: 12, padding: '13px 16px', fontSize: 14, fontWeight: 800, textDecoration: 'none', marginBottom: 20, boxShadow: '0 4px 16px rgba(0,0,0,0.18)' }}>
+          <ClipboardCheck size={18} /> บันทึกผลแข่งและอัปเดต Rating
+        </Link>
+
         {/* MY TOURNAMENTS */}
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -140,10 +146,19 @@ export default async function DashboardPage() {
                               {tPending} รอยืนยัน
                             </div>
                           )}
+                          <div style={{ background: t.status === 'open' ? '#dcfce7' : '#fee2e2', color: t.status === 'open' ? '#166534' : '#991b1b', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20 }}>
+                            {t.status === 'open' ? 'เปิดรับสมัคร' : 'ปิดรับสมัคร'}
+                          </div>
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#f8f8f8', borderRadius: 8, padding: '8px 10px', fontSize: 12, fontWeight: 700, color: '#555' }}>
                         <Users size={14} color="#aaa" /> {tTeams.length} ทีม
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                        <Link href={`/dashboard/tournaments/${t.id}/edit`} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: '#CC0001', color: 'white', borderRadius: 10, padding: '9px 10px', fontSize: 12, fontWeight: 800, textDecoration: 'none', fontFamily: 'var(--font-oswald)' }}>
+                          <Pencil size={14} /> แก้ไข
+                        </Link>
+                        <ToggleTournamentStatusButton tournamentId={t.id} status={t.status} />
                       </div>
                     </div>
                   </div>
@@ -190,7 +205,7 @@ export default async function DashboardPage() {
                       {payment ? (
                         <div style={{ marginBottom: 12 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <Image size={13} /> หลักฐานการชำระเงิน
+                            <ImageIcon size={13} /> หลักฐานการชำระเงิน
                           </div>
                           <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '10px', marginBottom: 8 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -207,7 +222,7 @@ export default async function DashboardPage() {
 
                           {payment.slip_url && (
                             <a href={payment.slip_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', border: '1.5px solid #e5e5e5' }}>
-                              <img src={payment.slip_url} alt="slip" style={{ width: '100%', maxHeight: 200, objectFit: 'contain', display: 'block', background: '#f8f8f8' }} />
+                              <Image src={payment.slip_url} alt="slip" width={640} height={900} unoptimized style={{ width: '100%', maxHeight: 200, height: 'auto', objectFit: 'contain', display: 'block', background: '#f8f8f8' }} />
                               <div style={{ background: '#f8f8f8', padding: '6px', textAlign: 'center', fontSize: 11, color: '#888', fontWeight: 600 }}>
                                 แตะเพื่อดูรูปขนาดเต็ม
                               </div>
@@ -216,7 +231,7 @@ export default async function DashboardPage() {
 
                           {payment.status === 'pending' && (
                             <div style={{ marginTop: 10 }}>
-                              <ConfirmPaymentButton paymentId={payment.id} teamId={team.id} />
+                              <ConfirmPaymentButton paymentId={payment.id} />
                             </div>
                           )}
                         </div>

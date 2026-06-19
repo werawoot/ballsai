@@ -5,6 +5,14 @@ import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { Trophy, Users, ArrowLeft, CheckCircle, Upload, Copy, Banknote } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
+
+type Tournament = {
+  id: string
+  name: string
+  fee: number
+  promptpay: string | null
+}
 
 export default function RegisterPage({ params }: { params: { id: string } }) {
   const [step, setStep] = useState<'form' | 'payment' | 'success'>('form')
@@ -15,7 +23,7 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
   const [slipPreview, setSlipPreview] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
-  const [tournament, setTournament] = useState<any>(null)
+  const [tournament, setTournament] = useState<Tournament | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -29,26 +37,36 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
       setTournament(data)
     }
     load()
-  }, [])
+  }, [params.id])
 
   const handleSubmitTeam = async () => {
+    if (!teamName.trim() || !members.trim()) return
     setLoading(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/login'); return }
+    setMessage('')
 
-    const { data, error } = await supabase.from('teams').insert({
-      name: teamName,
-      members,
-      tournament_id: params.id,
-      created_by: user.id,
-      status: 'pending'
-    }).select().single()
+    const response = await fetch(`/api/tournaments/${params.id}/teams`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: teamName,
+        members,
+      }),
+    })
 
-    if (error) {
-      setMessage('เกิดข้อผิดพลาด: ' + error.message)
+    if (response.status === 401) {
+      setLoading(false)
+      router.push('/login')
+      return
+    }
+
+    const result = (await response.json().catch(() => null)) as
+      | { error?: string; teamId?: string }
+      | null
+
+    if (!response.ok || !result?.teamId) {
+      setMessage(result?.error ?? 'เกิดข้อผิดพลาดในการสมัครทีม')
     } else {
-      setTeamId(data.id)
+      setTeamId(result.teamId)
       setStep('payment')
     }
     setLoading(false)
@@ -64,37 +82,26 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
   const handleUploadSlip = async () => {
     if (!slipFile) return
     setLoading(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    setMessage('')
 
-    const ext = slipFile.name.split('.').pop()
-    const fileName = `${teamId}_${Date.now()}.${ext}`
+    const formData = new FormData()
+    formData.append('slip', slipFile)
 
-    const { error: uploadError } = await supabase.storage
-      .from('slips')
-      .upload(fileName, slipFile)
+    const response = await fetch(`/api/teams/${teamId}/payment`, {
+      method: 'POST',
+      body: formData,
+    })
 
-    if (uploadError) {
-      setMessage('อัปโหลดสลิปไม่สำเร็จ: ' + uploadError.message)
+    if (response.status === 401) {
       setLoading(false)
+      router.push('/login')
       return
     }
 
-    const { data: urlData } = supabase.storage.from('slips').getPublicUrl(fileName)
+    const result = (await response.json().catch(() => null)) as { error?: string } | null
 
-    const { error: paymentError } = await supabase.from('payments').insert({
-      team_id: teamId,
-      tournament_id: params.id,
-      user_id: user.id,
-      amount: tournament?.fee ?? 0,
-      promptpay: tournament?.promptpay ?? '',
-      slip_url: urlData.publicUrl,
-      status: 'pending'
-    })
-
-    if (paymentError) {
-      setMessage('บันทึกการชำระเงินไม่สำเร็จ: ' + paymentError.message)
+    if (!response.ok) {
+      setMessage(result?.error ?? 'บันทึกการชำระเงินไม่สำเร็จ')
     } else {
       setStep('success')
     }
@@ -212,7 +219,7 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
                 <input type="file" accept="image/*" onChange={handleSlipChange} style={{ display: 'none' }} />
                 {slipPreview ? (
                   <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', border: '2px solid #CC0001' }}>
-                    <img src={slipPreview} alt="slip" style={{ width: '100%', maxHeight: 300, objectFit: 'contain', display: 'block' }} />
+                    <Image src={slipPreview} alt="slip" width={640} height={900} unoptimized style={{ width: '100%', maxHeight: 300, height: 'auto', objectFit: 'contain', display: 'block' }} />
                     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(204,0,1,0.8)', color: 'white', textAlign: 'center', padding: '8px', fontSize: 12, fontWeight: 700 }}>
                       แตะเพื่อเปลี่ยนสลิป
                     </div>

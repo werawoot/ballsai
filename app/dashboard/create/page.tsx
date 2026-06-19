@@ -1,10 +1,45 @@
 'use client'
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase'
+import { useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trophy, MapPin, Calendar, Banknote, ArrowLeft, FileText, Phone, CheckCircle, Users } from 'lucide-react'
 import Link from 'next/link'
+
+type FieldProps = {
+  icon: ReactNode
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder: string
+  type?: string
+  required?: boolean
+}
+
+const inputStyle = {
+  width: '100%',
+  border: '1.5px solid #e5e5e5',
+  borderRadius: 10,
+  padding: '11px 14px 11px 40px',
+  fontSize: 14,
+  outline: 'none',
+  fontFamily: 'var(--font-sarabun)',
+  color: '#111',
+  background: '#fafafa',
+} as const
+
+function Field({ icon, label, value, onChange, placeholder, type = 'text', required = false }: FieldProps) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>
+        {label} {required && <span style={{ color: '#CC0001' }}>*</span>}
+      </label>
+      <div style={{ position: 'relative' }}>
+        <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }}>{icon}</div>
+        <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={inputStyle} />
+      </div>
+    </div>
+  )
+}
 
 export default function CreateTournamentPage() {
   const [name, setName] = useState('')
@@ -25,30 +60,39 @@ export default function CreateTournamentPage() {
       setMessage('กรุณากรอกข้อมูลที่จำเป็นให้ครบ')
       return
     }
-    setLoading(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/login'); return }
 
-    const { error } = await supabase.from('tournaments').insert({
-      name,
-      description,
-      location,
-      start_date: startDate,
-      end_date: endDate || startDate,
-      fee: parseFloat(fee),
-      promptpay,
-      max_teams: parseInt(maxTeams) || 16, 
-      organizer_id: user.id,
-      status: 'open'
+    setLoading(true)
+    setMessage('')
+
+    const response = await fetch('/api/tournaments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        description,
+        location,
+        startDate,
+        endDate,
+        fee: Number(fee),
+        promptpay,
+        maxTeams: Number(maxTeams) || 16,
+      }),
     })
 
-    if (error) {
-      setMessage('เกิดข้อผิดพลาด: ' + error.message)
+    if (response.status === 401) {
+      setLoading(false)
+      router.push('/login')
+      return
+    }
+
+    if (!response.ok) {
+      const data = (await response.json().catch(() => null)) as { error?: string } | null
+      setMessage(data?.error ?? 'เกิดข้อผิดพลาดในการสร้างรายการ')
     } else {
       setSuccess(true)
       setTimeout(() => router.push('/dashboard'), 2000)
     }
+
     setLoading(false)
   }
 
@@ -63,24 +107,6 @@ export default function CreateTournamentPage() {
       </main>
     )
   }
-
-  const inputStyle = {
-    width: '100%', border: '1.5px solid #e5e5e5', borderRadius: 10,
-    padding: '11px 14px 11px 40px', fontSize: 14, outline: 'none',
-    fontFamily: 'var(--font-sarabun)', color: '#111', background: '#fafafa'
-  }
-
-  const Field = ({ icon, label, value, onChange, placeholder, type = 'text', required = false }: any) => (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>
-        {label} {required && <span style={{ color: '#CC0001' }}>*</span>}
-      </label>
-      <div style={{ position: 'relative' }}>
-        <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }}>{icon}</div>
-        <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={inputStyle} />
-      </div>
-    </div>
-  )
 
   return (
     <main style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden', paddingBottom: 40 }}>

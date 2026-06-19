@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { Trophy, House, ClipboardList, User, MapPin, Zap, Shield, Star } from 'lucide-react'
 import RankingFilter from './RankingFilter'
+import { samplePlayerRanks, showDemoData } from '@/lib/sample-data'
 
 export default async function RankingPage({
   searchParams,
@@ -50,10 +51,16 @@ export default async function RankingPage({
     .eq('sport', sport)
     .order('province')
 
-  const uniqueProvinces = [...new Set(provinces?.map(p => p.province) ?? [])]
+  const fallbackRankings = showDemoData ? samplePlayerRanks
+    .filter(player => player.sport === sport)
+    .filter(player => !province || player.province === province)
+    .filter(player => !position || player.position === position)
+    .filter(player => !search || player.player_name.includes(search)) : []
+  const displayRankings = rankings && rankings.length > 0 ? rankings : fallbackRankings
+  const uniqueProvinces = [...new Set((provinces && provinces.length > 0 ? provinces.map(p => p.province) : showDemoData ? samplePlayerRanks.map(p => p.province) : []) ?? [])]
 
-  const top3 = rankings?.slice(0, 3) ?? []
-  const rest = rankings?.slice(3) ?? []
+  const top3 = displayRankings.slice(0, 3)
+  const rest = displayRankings.slice(3)
 
   const cardBg = (rank: number) => {
     if (rank === 1) return {
@@ -104,7 +111,7 @@ export default async function RankingPage({
             <span style={{ WebkitTextStroke: '2px rgba(255,255,255,0.4)', color: 'transparent' }}>RANKING</span>
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10 }}>
-            {rankings?.length ?? 0} นักกีฬา
+            {displayRankings.length} นักกีฬา
             {province && ` · ${province}`}
             {position && ` · ${position}`}
           </p>
@@ -164,7 +171,7 @@ export default async function RankingPage({
                     </div>
                   </div>
                   <div style={{ textAlign: 'center', marginTop: 8, fontFamily: 'var(--font-oswald)', fontSize: isFirst ? 15 : 13, fontWeight: 700, color: '#CC0001' }}>
-                    {p.pts.toLocaleString()} pts
+                    {p.pts.toLocaleString()} Power
                   </div>
                 </div>
               )
@@ -204,6 +211,7 @@ export default async function RankingPage({
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
             <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, color: '#111' }}>{p.pts.toLocaleString()}</span>
+            <span style={{ fontSize: 9, fontWeight: 800, color: '#aaa', textTransform: 'uppercase' }}>Power</span>
             <span style={{ fontSize: 11, fontWeight: 700, color: p.rank_change > 0 ? '#16a34a' : p.rank_change < 0 ? '#CC0001' : '#888' }}>
               {p.rank_change > 0 ? `▲ ${p.rank_change}` : p.rank_change < 0 ? `▼ ${Math.abs(p.rank_change)}` : '– 0'}
             </span>
@@ -214,7 +222,7 @@ export default async function RankingPage({
         </div>
       )}
 
-      {rankings?.length === 0 && (
+      {displayRankings.length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
           <Trophy size={48} color="#ddd" strokeWidth={1} style={{ marginBottom: 12 }} />
           <p style={{ fontSize: 15, fontWeight: 600, color: '#aaa' }}>ไม่พบนักกีฬาที่ค้นหา</p>

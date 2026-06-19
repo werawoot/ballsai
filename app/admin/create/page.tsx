@@ -9,7 +9,7 @@ import Link from 'next/link'
 export default function CreatePlayerPage() {
   const [form, setForm] = useState({
     player_name: '', team: '', province: '', position: 'FW',
-    ovr: 70, pts: 0, pac: 70, sho: 70, pas: 70, dri: 70, def: 70, rank_change: 0
+    ovr: 60, pts: 1000, pac: 70, sho: 70, pas: 70, dri: 70, def: 70, rank_change: 0
   })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -91,9 +91,9 @@ export default function CreatePlayerPage() {
         </div>
 
         <div style={{ background: 'white', borderRadius: 16, border: '1.5px solid #e5e5e5', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#CC0001', textTransform: 'uppercase', marginBottom: 16 }}>Stats</div>
+          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#CC0001', textTransform: 'uppercase', marginBottom: 16 }}>Rating V1</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            {[['OVR', 'ovr'], ['PTS', 'pts'], ['PAC', 'pac'], ['SHO', 'sho'], ['PAS', 'pas'], ['DRI', 'dri'], ['DEF', 'def'], ['RANK CHANGE', 'rank_change']].map(([label, key]) => (
+            {[['OVR', 'ovr'], ['POWER RATING', 'pts'], ['PAC', 'pac'], ['SHO', 'sho'], ['PAS', 'pas'], ['DRI', 'dri'], ['DEF', 'def'], ['LAST CHANGE', 'rank_change']].map(([label, key]) => (
               <div key={key}>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#aaa', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>
                 <input type="number" value={form[key as keyof typeof form] as number} onChange={e => setForm({ ...form, [key]: parseInt(e.target.value) || 0 })} style={numInputStyle} />

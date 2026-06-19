@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { Trophy, Mail, KeyRound, ArrowLeft, Lock, Shield } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,13 +13,20 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [loginMode, setLoginMode] = useState<"otp" | "admin">("otp");
   const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const sendOtp = async () => {
+    if (!acceptedTerms) {
+      setMessage("กรุณายอมรับข้อกำหนดและนโยบายความเป็นส่วนตัวก่อน");
+      return;
+    }
+
     setLoading(true);
+    setMessage("");
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: "http://localhost:3000/auth/callback" },
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     });
     if (error) {
       setMessage("เกิดข้อผิดพลาด: " + error.message);
@@ -31,6 +39,7 @@ export default function LoginPage() {
 
   const verifyOtp = async () => {
     setLoading(true);
+    setMessage("");
     const supabase = createClient();
     const { error } = await supabase.auth.verifyOtp({
       email,
@@ -225,7 +234,7 @@ export default function LoginPage() {
             boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
           }}
         >
-          {step === "email" ? (
+          {loginMode === "otp" && (step === "email" ? (
             <>
               <div style={{ marginBottom: 24 }}>
                 <h2
@@ -287,13 +296,28 @@ export default function LoginPage() {
                 />
               </div>
 
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: '#666', lineHeight: 1.5, marginBottom: 18 }}>
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={e => setAcceptedTerms(e.target.checked)}
+                  style={{ marginTop: 3 }}
+                />
+                <span>
+                  ฉันยอมรับ{' '}
+                  <Link href="/terms" style={{ color: '#CC0001', fontWeight: 700 }}>ข้อกำหนดการใช้งาน</Link>
+                  {' '}และ{' '}
+                  <Link href="/privacy" style={{ color: '#CC0001', fontWeight: 700 }}>นโยบายความเป็นส่วนตัว/PDPA</Link>
+                </span>
+              </label>
+
               <button
                 onClick={sendOtp}
-                disabled={loading || !email}
+                disabled={loading || !email || !acceptedTerms}
                 style={{
                   width: "100%",
-                  background: loading || !email ? "#eee" : "#CC0001",
-                  color: loading || !email ? "#aaa" : "white",
+                  background: loading || !email || !acceptedTerms ? "#eee" : "#CC0001",
+                  color: loading || !email || !acceptedTerms ? "#aaa" : "white",
                   border: "none",
                   borderRadius: 10,
                   padding: "13px",
@@ -301,7 +325,7 @@ export default function LoginPage() {
                   fontWeight: 800,
                   fontFamily: "var(--font-oswald)",
                   letterSpacing: 1,
-                  cursor: loading || !email ? "default" : "pointer",
+                  cursor: loading || !email || !acceptedTerms ? "default" : "pointer",
                   transition: "all 0.2s",
                 }}
               >
@@ -452,7 +476,7 @@ export default function LoginPage() {
                 {loading ? "กำลังยืนยัน..." : "ยืนยัน OTP"}
               </button>
             </>
-          )}
+          ) : null)}
 
           {loginMode === "admin" && (
             <>

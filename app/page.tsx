@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { House, Trophy, ClipboardList, User, MapPin, Calendar, ChevronRight, Zap, Shield, Star } from 'lucide-react'
+import { samplePlayerRanks, sampleTournaments, isSampleId, showDemoData } from '@/lib/sample-data'
 
 export default async function Home() {
   const cookieStore = await cookies()
@@ -36,8 +37,18 @@ export default async function Home() {
     .order('start_date', { ascending: true })
     .limit(5)
 
-  const top3 = rankings?.slice(0, 3) ?? []
-  const rest = rankings?.slice(3) ?? []
+  const displayRankings = rankings && rankings.length > 0
+    ? rankings
+    : showDemoData
+      ? samplePlayerRanks.slice(0, 10)
+      : []
+  const displayTournaments = tournaments && tournaments.length > 0
+    ? tournaments
+    : showDemoData
+      ? sampleTournaments
+      : []
+  const top3 = displayRankings.slice(0, 3)
+  const rest = displayRankings.slice(3)
 
   const cardBg = (rank: number) => {
     if (rank === 1) return {
@@ -110,7 +121,7 @@ export default async function Home() {
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10, position: 'relative' }}>ตารางอันดับนักกีฬาเยาวชนไทย อัปเดตทุกสัปดาห์</p>
         <div style={{ display: 'flex', marginTop: 18, position: 'relative' }}>
-          {[['2,841', 'นักกีฬา'], ['77', 'จังหวัด'], [String(tournaments?.length ?? 0), 'รายการแข่ง']].map(([num, label], i) => (
+          {[['2,841', 'นักกีฬา'], ['77', 'จังหวัด'], [String(displayTournaments.length), 'รายการแข่ง']].map(([num, label], i) => (
             <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 18px', borderRight: i < 2 ? '1px solid rgba(255,255,255,0.2)' : 'none', paddingLeft: i === 0 ? 0 : undefined }}>
               <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 26, fontWeight: 700, color: 'white', lineHeight: 1 }}>{num}</span>
               <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{label}</span>
@@ -192,7 +203,7 @@ export default async function Home() {
                 </div>
               </div>
               <div style={{ textAlign: 'center', marginTop: 8, fontFamily: 'var(--font-oswald)', fontSize: isFirst ? 15 : 13, fontWeight: 700, color: '#CC0001' }}>
-                {p.pts.toLocaleString()} pts
+                {p.pts.toLocaleString()} Power
               </div>
             </div>
           )
@@ -234,6 +245,7 @@ export default async function Home() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
                 <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, color: '#111' }}>{p.pts.toLocaleString()}</span>
+                <span style={{ fontSize: 9, fontWeight: 800, color: '#aaa', textTransform: 'uppercase' }}>Power</span>
                 <span style={{ fontSize: 11, fontWeight: 700, color: p.rank_change > 0 ? '#16a34a' : p.rank_change < 0 ? '#CC0001' : '#888' }}>
                   {p.rank_change > 0 ? `▲ ${p.rank_change}` : p.rank_change < 0 ? `▼ ${Math.abs(p.rank_change)}` : '– 0'}
                 </span>
@@ -257,8 +269,8 @@ export default async function Home() {
       </div>
 
       <div style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '4px 16px 16px', scrollbarWidth: 'none' }}>
-        {tournaments?.map((t) => (
-          <Link key={t.id} href={`/tournaments/${t.id}`} style={{ flexShrink: 0, width: 185, background: 'white', border: '1.5px solid #e5e5e5', borderRadius: 14, overflow: 'hidden', textDecoration: 'none', color: 'inherit', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', display: 'block' }}>
+        {displayTournaments.map((t) => (
+          <Link key={t.id} href={isSampleId(t.id) ? '/tournaments' : `/tournaments/${t.id}`} style={{ flexShrink: 0, width: 185, background: 'white', border: '1.5px solid #e5e5e5', borderRadius: 14, overflow: 'hidden', textDecoration: 'none', color: 'inherit', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', display: 'block' }}>
             <div style={{ height: 80, background: 'linear-gradient(135deg,#CC0001,#8b0000)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Trophy size={36} color="rgba(255,255,255,0.8)" strokeWidth={1.5} />
             </div>

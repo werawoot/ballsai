@@ -4,6 +4,14 @@ export async function POST(req: Request) {
   const { teamName, tournamentName, email, status } = await req.json()
   const isConfirmed = status === 'confirmed'
 
+  if (!teamName || !tournamentName || !email || (status !== 'confirmed' && status !== 'rejected')) {
+    return NextResponse.json({ error: 'ข้อมูลอีเมลไม่ครบถ้วน' }, { status: 400 })
+  }
+
+  if (!process.env.RESEND_API_KEY) {
+    return NextResponse.json({ error: 'ยังไม่ได้ตั้งค่าอีเมลสำหรับระบบ' }, { status: 500 })
+  }
+
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -19,5 +27,5 @@ export async function POST(req: Request) {
   })
 
   const data = await res.json()
-  return NextResponse.json(data)
+  return NextResponse.json(data, { status: res.ok ? 200 : 500 })
 }

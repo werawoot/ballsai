@@ -5,7 +5,23 @@ import { createClient } from '@/lib/supabase'
 import { Pencil, X, Save } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-export default function EditPlayerButton({ player }: { player: any }) {
+type PlayerRecord = {
+  id: string
+  player_name: string
+  team: string
+  province: string
+  position: string
+  ovr: number
+  pts: number
+  pac: number
+  sho: number
+  pas: number
+  dri: number
+  def: number
+  rank_change: number
+}
+
+export default function EditPlayerButton({ player }: { player: PlayerRecord }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
@@ -75,7 +91,7 @@ export default function EditPlayerButton({ player }: { player: any }) {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {[['OVR', 'ovr'], ['PTS', 'pts'], ['PAC', 'pac'], ['SHO', 'sho'], ['PAS', 'pas'], ['DRI', 'dri'], ['DEF', 'def'], ['CHANGE', 'rank_change']].map(([label, key]) => (
+                {[['OVR', 'ovr'], ['POWER', 'pts'], ['PAC', 'pac'], ['SHO', 'sho'], ['PAS', 'pas'], ['DRI', 'dri'], ['DEF', 'def'], ['CHANGE', 'rank_change']].map(([label, key]) => (
                   <div key={key}>
                     <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#aaa', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>
                     <input type="number" value={form[key as keyof typeof form]} onChange={e => setForm({ ...form, [key]: parseInt(e.target.value) || 0 })} style={numInputStyle} />
