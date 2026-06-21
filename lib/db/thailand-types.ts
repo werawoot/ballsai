@@ -183,15 +183,3 @@ export function searchProvinces(
     return false;
   });
 }
-
-// Export all types for convenience
-export type {
-  Region,
-  RegionInsert,
-  RegionUpdate,
-  Province,
-  ProvinceInsert,
-  ProvinceUpdate,
-  ProvinceWithRegion,
-  RegionWithProvinceCount,
-};

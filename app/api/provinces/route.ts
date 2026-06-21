@@ -6,6 +6,7 @@ import {
   searchProvinces,
   searchProvincesWithRegion
 } from '@/lib/db/thailand-queries'
+import type { ProvinceSortOptions } from '@/lib/db/thailand-types'
 
 /**
  * GET /api/provinces
@@ -34,7 +35,17 @@ export async function GET(request: Request) {
     const searchQuery = searchParams.get('search')
     const language = (searchParams.get('language') as 'en' | 'th' | 'both') || 'en'
     const withRegion = searchParams.get('with_region') === 'true'
-    const sortField = (searchParams.get('sort_field') as any) || 'province_name_en'
+    const sortFieldParam = searchParams.get('sort_field')
+    const allowedSortFields: ProvinceSortOptions['field'][] = [
+      'province_id',
+      'province_name_en',
+      'province_name_th',
+      'region_id'
+    ]
+    const sortField: ProvinceSortOptions['field'] =
+      sortFieldParam && allowedSortFields.includes(sortFieldParam as ProvinceSortOptions['field'])
+        ? sortFieldParam as ProvinceSortOptions['field']
+        : 'province_name_en'
     const sortOrder = (searchParams.get('sort_order') as 'asc' | 'desc') || 'asc'
 
     let data

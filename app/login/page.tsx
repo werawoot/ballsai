@@ -476,7 +476,7 @@ export default function LoginPage() {
                 {loading ? "กำลังยืนยัน..." : "ยืนยัน OTP"}
               </button>
             </>
-          ) : null)}
+          ))}
 
           {loginMode === "admin" && (
             <>

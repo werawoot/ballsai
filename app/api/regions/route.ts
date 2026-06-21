@@ -5,6 +5,15 @@ import {
   getRegionsByIds
 } from '@/lib/db/thailand-queries'
 
+type RegionResult = {
+  region_id: number
+  region_name_en: string
+  region_name_th: string
+  province_count?: number
+  created_at?: string
+  updated_at?: string
+}
+
 /**
  * GET /api/regions
  *
@@ -52,7 +61,7 @@ export async function GET(request: Request) {
     }
 
     // Transform data based on language preference
-    const transformedData = data.map((region: any) => ({
+    const transformedData = (data as RegionResult[]).map(region => ({
       id: region.region_id,
       name: language === 'en' ? region.region_name_en : region.region_name_th,
       name_en: region.region_name_en,

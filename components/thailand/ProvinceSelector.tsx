@@ -8,7 +8,7 @@ interface ProvinceSelectorProps {
   value?: number;
   onChange?: (provinceId: number) => void;
   placeholder?: string;
-  language?: "en" | "th";
+  language?: "en" | "th" | "both";
   disabled?: boolean;
   className?: string;
   showRegionLabels?: boolean;

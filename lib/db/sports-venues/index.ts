@@ -5,8 +5,39 @@
 // Export types
 export * from './sports-venues-types'
 
-// Export query functions
-export * from './sports-venues-queries'
+// Export query functions. The database filter is aliased to avoid colliding
+// with the in-memory filterVenues utility from sports-venues-types.
+export {
+  getAllSports,
+  getSportById,
+  getSportsWithVenueCount,
+  searchSports,
+  createSport,
+  updateSport,
+  deleteSport,
+  getAllVenues,
+  getVenueById,
+  getVenuesBySport,
+  getVenuesByProvince,
+  getVenuesByCity,
+  getVenuesWithSport,
+  searchVenues,
+  searchVenuesWithSport,
+  filterVenues as filterVenuesFromDatabase,
+  findVenuesNearby,
+  createVenue,
+  updateVenue,
+  deleteVenue,
+  getVenueSelectorData,
+  getVenueNameById,
+  getSportNameById,
+  getVenueWithSportName,
+  getVenuesByIds,
+  getSportsByIds,
+  getVenueStatistics,
+  getVenuesByStatus,
+  getVenuesByType,
+} from './sports-venues-queries'
 
 // Re-export commonly used constants for convenience
 export {

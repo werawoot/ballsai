@@ -101,7 +101,7 @@ export const VENUE_STATUS = {
   TEMPORARILY_CLOSED: "temporarily_closed",
 } as const;
 
-export type VenueStatus = keyof typeof VENUE_STATUS;
+export type VenueStatus = (typeof VENUE_STATUS)[keyof typeof VENUE_STATUS];
 
 // Venue type constants
 export const VENUE_TYPES = {
@@ -115,7 +115,7 @@ export const VENUE_TYPES = {
   COMPLEX: "complex",
 } as const;
 
-export type VenueType = keyof typeof VENUE_TYPES;
+export type VenueType = (typeof VENUE_TYPES)[keyof typeof VENUE_TYPES];
 
 // Surface type constants
 export const SURFACE_TYPES = {
@@ -131,7 +131,7 @@ export const SURFACE_TYPES = {
   TARTAN: "tartan",
 } as const;
 
-export type SurfaceType = keyof typeof SURFACE_TYPES;
+export type SurfaceType = (typeof SURFACE_TYPES)[keyof typeof SURFACE_TYPES];
 
 // Helper functions
 export function isValidVenueStatus(status: string): status is VenueStatus {
@@ -310,7 +310,7 @@ export function searchVenues(
       const value = v[field];
       if (value === null) continue;
 
-      if (field === "name_th" || field === "name_th") {
+      if (field === "name_th") {
         if ((language === "th" || language === "both") &&
             value.includes(query)) {
           return true;
@@ -441,15 +441,3 @@ export function filterVenues(
     return true;
   });
 }
-
-// Export all types for convenience
-export type {
-  Sport,
-  SportInsert,
-  SportUpdate,
-  Venue,
-  VenueInsert,
-  VenueUpdate,
-  VenueWithSport,
-  SportWithVenueCount,
-};

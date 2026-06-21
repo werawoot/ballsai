@@ -96,7 +96,6 @@ export function ErrorHandlingExample() {
     showLoadingModal: true,
     loadingMessage: "กำลังเชื่อมต่อ",
     onError: (err) => {
-      setErrorMessage(err.message);
       // You can also show a toast notification here
       console.error("Error occurred:", err);
     },
@@ -118,7 +117,7 @@ export function ErrorHandlingExample() {
             : "กำลังดึงข้อมูล",
         },
       );
-    } catch (err) {
+    } catch {
       // Error already handled by onError callback
     }
   };
@@ -213,7 +212,7 @@ export function MultiLoadingExample() {
           }, 1500),
         ),
       ]);
-    } catch (err) {
+    } catch {
       setLoading("loadUser", false);
       setLoading("loadPosts", false);
       setLoading("loadSettings", false);
