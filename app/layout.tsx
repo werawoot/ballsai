@@ -21,7 +21,7 @@ const barlowCondensed = Barlow_Condensed({
 })
 
 export const metadata: Metadata = {
-  title: 'Ballsai — แพลตฟอร์มกีฬาเด็กไทย',
+  title: 'BallDoenSai.com — แพลตฟอร์มกีฬาเด็กไทย',
   description: 'ตารางอันดับนักกีฬาเยาวชนไทย',
 }
 

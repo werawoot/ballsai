@@ -132,7 +132,7 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
 
       <header style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
         <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <Trophy size={22} strokeWidth={2.5} /> BALLSAI
+          <Trophy size={22} strokeWidth={2.5} /> BallDoenSai.com
         </Link>
         <button onClick={() => router.back()} style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>
           <ArrowLeft size={16} /> กลับ

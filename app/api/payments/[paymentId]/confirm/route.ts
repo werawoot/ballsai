@@ -54,26 +54,12 @@ export async function POST(
     return NextResponse.json({ error: 'ไม่มีสิทธิ์ยืนยันรายการนี้' }, { status: 403 })
   }
 
-  if (typedPayment.status === 'confirmed') {
-    return NextResponse.json({ ok: true })
-  }
+  const { error: confirmError } = await supabase.rpc('confirm_payment_safely', {
+    p_payment_id: params.paymentId,
+  })
 
-  const { error: updatePaymentError } = await supabase
-    .from('payments')
-    .update({ status: 'confirmed' })
-    .eq('id', params.paymentId)
-
-  if (updatePaymentError) {
-    return NextResponse.json({ error: updatePaymentError.message }, { status: 400 })
-  }
-
-  const { error: updateTeamError } = await supabase
-    .from('teams')
-    .update({ status: 'confirmed' })
-    .eq('id', typedPayment.team_id)
-
-  if (updateTeamError) {
-    return NextResponse.json({ error: updateTeamError.message }, { status: 400 })
+  if (confirmError) {
+    return NextResponse.json({ error: 'ยืนยันการชำระเงินไม่สำเร็จ กรุณาลองใหม่หรือติดต่อผู้ดูแลระบบ' }, { status: 400 })
   }
 
   return NextResponse.json({ ok: true })

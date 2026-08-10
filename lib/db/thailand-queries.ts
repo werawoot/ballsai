@@ -207,7 +207,6 @@ export async function searchProvinces(
   options: ProvinceSearchOptions
 ): Promise<Province[]> {
   const { query: searchQuery, language = 'both' } = options
-  const searchQueryLower = searchQuery.toLowerCase()
 
   // Build the query based on language preference
   let supabaseQuery = supabase.from('province').select('*')

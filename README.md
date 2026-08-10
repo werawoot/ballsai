@@ -1,6 +1,13 @@
-# BALLSAI
+# BallDoenSai.com
 
-BALLSAI is a Thai youth sports ranking and tournament registration platform built with Next.js and Supabase.
+BallDoenSai.com is a Thai youth sports ranking and tournament registration platform built with Next.js and Supabase.
+
+## Production environment
+
+- `RESEND_API_KEY` and `RESEND_FROM_EMAIL` for transactional email.
+- `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` for shared rate limits across server instances. Without these variables, the app uses a best-effort in-memory limit for local development only.
+
+Before a closed-beta or production deployment, run `npm run verify:production` with the deployment environment variables available. It verifies configuration without printing any secret values.
 
 ## Features
 
@@ -35,6 +42,9 @@ Create `.env.local` with:
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 RESEND_API_KEY=your_resend_api_key
+RESEND_FROM_EMAIL="BallDoenSai.com <verified-sender@your-domain.com>"
+UPSTASH_REDIS_REST_URL=your_upstash_redis_rest_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_rest_token
 NEXT_PUBLIC_SHOW_DEMO_DATA=false
 ```
 
@@ -46,12 +56,10 @@ Use `NEXT_PUBLIC_SHOW_DEMO_DATA=true` only in local development when the databas
 
 1. Create the required tables in Supabase: `profiles`, `player_ranks`, `tournaments`, `teams`, and `payments`.
 2. Create a Storage bucket named `slips`.
-3. Apply one RLS script:
-   - `sql/supabase-rls.sql` for public slip image URLs.
-   - `sql/supabase-rls-private-slips.sql` if you adapt the app to signed/private slip URLs.
+3. Apply `sql/supabase-rls.sql`, then `sql/ballsai-rating-v1.sql`, and finally `sql/production-hardening.sql`. The current app uses private slip storage and signed URLs.
 4. Before applying unique indexes to an existing database, run `sql/check-duplicates-before-unique-indexes.sql` and clean duplicate rows if needed.
 5. Set user roles in `profiles.role` as needed: `user`, `organizer`, or `admin`.
-6. Apply `sql/ballsai-rating-v1.sql` to add `sports`, `player_ratings`, and `rating_events`.
+6. Confirm the `slips` bucket is private after applying production hardening.
 
 ## Rating V1
 
@@ -66,27 +74,6 @@ BALLSAI uses one public-facing value: `Power Rating`.
   - `3-9` matches: `active`
   - `10+` matches: `full`
 
-Admin rating updates can be posted to:
-
-```http
-POST /api/ratings
-```
-
-Example body:
-
-```json
-{
-  "playerRankId": "player_rank_uuid",
-  "result": "win",
-  "opponentRating": 1500,
-  "goals": 1,
-  "assists": 1,
-  "mvp": true
-}
-```
-
-The API updates `player_ratings`, writes a `rating_events` audit row, and syncs `player_ranks.pts`, `player_ranks.ovr`, and `player_ranks.rank_change` so existing ranking pages update immediately.
-
 Organizers can use `/dashboard/results` to enter match results:
 
 1. Select a tournament.
@@ -95,7 +82,7 @@ Organizers can use `/dashboard/results` to enter match results:
 4. Preview Power Rating changes.
 5. Confirm the result.
 
-Confirmed results are stored in `match_results`, player-level performance rows are stored in `match_player_performances`, and rating changes are audited in `rating_events`.
+Confirmed results are stored in `match_results`, player-level performance rows are stored in `match_player_performances`, and rating changes are audited in `rating_events`. This single flow updates all related records atomically.
 
 ## Development
 
@@ -116,6 +103,18 @@ npm run build
 ```
 
 Current expected result: lint passes with no warnings and production build completes successfully.
+
+With the app running locally, verify all public pages without writing data:
+
+```bash
+npm run smoke:public
+```
+
+To use the same test against a Vercel preview or production deployment:
+
+```bash
+BASE_URL=https://your-deployment-url npm run smoke:public
+```
 
 For closed beta readiness, follow `docs/closed-beta-runbook.md`.
 

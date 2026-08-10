@@ -184,7 +184,7 @@ export default function LoginPage() {
               color: "white",
             }}
           >
-            BALLSAI
+            BallDoenSai.com
           </div>
           <div
             style={{

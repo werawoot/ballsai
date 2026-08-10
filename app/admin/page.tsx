@@ -8,6 +8,9 @@ import {
   User,
   Plus,
   Database,
+  Activity,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 import Link from "next/link";
 import DeletePlayerButton from "./DeletePlayerButton";
@@ -45,12 +48,22 @@ export default async function AdminPage() {
 
   if (profile?.role !== "admin") redirect("/");
 
-  const { data: players } = await supabase
-    .from("player_ranks")
-    .select("*")
-    .eq("sport", "football")
-    .eq("season", "2026")
-    .order("pts", { ascending: false });
+  const [{ data: players }, { data: athleteAccounts }] = await Promise.all([
+    supabase
+      .from("player_ranks")
+      .select("*")
+      .eq("sport", "football")
+      .eq("season", "2026")
+      .order("pts", { ascending: false }),
+    supabase
+      .from("athlete_profiles")
+      .select("user_id, display_name, current_team, province, position")
+      .order("display_name"),
+  ]);
+
+  const linkedPlayerIds = (players ?? [])
+    .map((player) => player.player_id as string | null)
+    .filter((playerId): playerId is string => Boolean(playerId));
 
   return (
     <main
@@ -90,7 +103,7 @@ export default async function AdminPage() {
             textDecoration: "none",
           }}
         >
-          <Trophy size={22} strokeWidth={2.5} /> BALLSAI
+          <Trophy size={22} strokeWidth={2.5} /> BallDoenSai.com
         </Link>
         <div
           style={{
@@ -190,6 +203,25 @@ export default async function AdminPage() {
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <Link
+              href="/admin/operations"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                background: "#111827",
+                color: "white",
+                borderRadius: 20,
+                padding: "6px 14px",
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: "none",
+                fontFamily: "var(--font-oswald)",
+                letterSpacing: 0.5,
+              }}
+            >
+              <Activity size={14} /> Operations
+            </Link>
+            <Link
               href="/admin/infrastructure"
               style={{
                 display: "flex",
@@ -275,6 +307,10 @@ export default async function AdminPage() {
                     }}
                   >
                     {p.player_name}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 5, color: p.player_id ? "#15803d" : "#a16207", fontSize: 10, fontWeight: 800 }}>
+                    {p.player_id ? <UserCheck size={13} /> : <UserX size={13} />}
+                    {p.player_id ? "เชื่อม Athlete Account แล้ว" : "ยังไม่เชื่อมบัญชี"}
                   </div>
                   <div
                     style={{
@@ -364,7 +400,11 @@ export default async function AdminPage() {
 
               {/* ACTIONS */}
               <div style={{ display: "flex", gap: 8 }}>
-                <EditPlayerButton player={p} />
+                <EditPlayerButton
+                  player={p}
+                  athleteAccounts={athleteAccounts ?? []}
+                  linkedPlayerIds={linkedPlayerIds}
+                />
                 <DeletePlayerButton playerId={p.id} />
               </div>
             </div>

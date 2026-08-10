@@ -11,6 +11,9 @@ NEXT_PUBLIC_SUPABASE_URL=<production_supabase_url>
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<production_supabase_anon_key>
 NEXT_PUBLIC_SHOW_DEMO_DATA=false
 RESEND_API_KEY=<resend_api_key_if_email_notifications_are_enabled>
+RESEND_FROM_EMAIL=BallDoenSai.com <verified-sender@your-domain.com>
+UPSTASH_REDIS_REST_URL=<upstash_redis_rest_url>
+UPSTASH_REDIS_REST_TOKEN=<upstash_redis_rest_token>
 ```
 
 Do not set `NEXT_PUBLIC_SHOW_DEMO_DATA=true` in closed beta or production.
@@ -22,7 +25,11 @@ Apply SQL in this order from the Supabase SQL editor:
 1. `sql/check-duplicates-before-unique-indexes.sql`
 2. Fix duplicate rows if the duplicate check returns anything.
 3. `sql/supabase-rls.sql`
-4. `sql/ballsai-rating-v1.sql`
+4. `sql/fix-profile-auth-trigger.sql`
+5. `sql/ballsai-rating-v1.sql`
+6. `sql/athlete-profile-v2.sql`
+7. `sql/link-player-ranks-to-profiles.sql`
+8. `sql/production-hardening.sql`
 
 Use `sql/supabase-rls-private-slips.sql` instead of `sql/supabase-rls.sql` only if the app is changed to serve signed/private slip URLs.
 
@@ -37,9 +44,14 @@ Confirm these tables have RLS enabled:
 - `rating_events`
 - `match_results`
 - `match_player_performances`
+- `athlete_profiles`
+- `athlete_videos`
+- `athlete_achievements`
+- `athlete_skill_assessments`
 - `storage.objects`
 
 Confirm the `slips` storage bucket exists.
+Confirm the public `athlete-avatars` bucket exists with a 5 MB file limit and only allows JPG, PNG, and WEBP.
 
 ## 3. Create Real Test Accounts
 
@@ -66,6 +78,10 @@ admin1@test.com -> admin
 - Sign up with email OTP.
 - Log in.
 - Edit profile.
+- Add an athlete photo URL, birth date, height, weight, highlight, and achievement.
+- Confirm a minor cannot publish without guardian consent.
+- Confirm the public athlete profile never shows a phone number.
+- Open Athlete Database and filter by province and position.
 - Open Ranking.
 - Register a team for an open tournament.
 - Upload a JPG/PNG/WEBP payment slip under 5 MB.
@@ -86,6 +102,10 @@ admin1@test.com -> admin
 - Preview rating changes.
 - Confirm result.
 
+The legacy `/api/ratings` endpoint is intentionally disabled. Rating must be
+recorded through the match-result flow so the result, player performance,
+Power Rating, ranking, and rating event are committed together.
+
 ### Admin
 
 - Log in.
@@ -95,7 +115,19 @@ admin1@test.com -> admin
 
 ## 5. RLS And API Security Tests
 
-Use `scripts/rls-smoke-test.mjs` with real JWTs from the Supabase session.
+Use the safe-mode script with real JWTs from the Supabase session:
+
+```bash
+npm run security:rls
+```
+
+Set the three JWTs and optional target IDs as environment variables. Safe mode
+checks read access and skips all writes. Only run write checks against an
+isolated beta tournament, with explicit confirmation:
+
+```bash
+ALLOW_RLS_WRITE_TESTS=true npm run security:rls
+```
 
 Minimum checks:
 
@@ -121,6 +153,13 @@ The app now writes structured JSON logs for high-risk server actions:
 - `tournament_update_failed`
 
 Before beta, confirm these logs appear in local terminal and production runtime logs.
+
+Open `/admin/operations` as an admin and confirm:
+
+- Supabase database is ready.
+- `slips` is private.
+- Demo fallback is disabled.
+- Email sender and distributed rate limiting show ready before a multi-instance deployment.
 
 Recommended next setup:
 

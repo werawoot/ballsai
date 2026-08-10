@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { calculateRating, ratingToOverall, type MatchResult, type PlayerPosition } from '@/lib/rating'
+import { calculateRating, type MatchResult, type PlayerPosition } from '@/lib/rating'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 type PerformanceInput = {
   playerRankId?: string
@@ -96,6 +97,14 @@ function averageRating(ratings: number[]) {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = await checkRateLimit(request, { scope: 'match-results', limit: 20, windowSeconds: 5 * 60 })
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'บันทึกผลแข่งบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } },
+    )
+  }
+
   const supabase = await createServerSupabaseClient()
   const {
     data: { user },
@@ -163,6 +172,9 @@ export async function POST(request: Request) {
   }
 
   const playerRankIds = [...new Set(performances.map(item => item.playerRankId).filter(Boolean))] as string[]
+  if (playerRankIds.length !== performances.length) {
+    return NextResponse.json({ error: 'นักกีฬาแต่ละคนบันทึกได้หนึ่งครั้งต่อหนึ่งผลแข่ง' }, { status: 400 })
+  }
   const { data: playerRanks } = await supabase
     .from('player_ranks')
     .select('id, player_id, player_name, sport, season, position, pts')
@@ -285,131 +297,40 @@ export async function POST(request: Request) {
     })
   }
 
-  const { data: matchResult, error: matchResultError } = await supabase
-    .from('match_results')
-    .insert({
-      tournament_id: body.tournamentId,
-      team_a_id: body.teamAId,
-      team_b_id: body.teamBId,
-      team_a_score: teamAScore,
-      team_b_score: teamBScore,
-      created_by: user.id,
-    })
-    .select('id')
-    .single()
+  const payload = preview.map(item => ({
+    ...item,
+    opponentRating: item.teamId === body.teamAId ? teamBAverageRating : teamAAverageRating,
+  }))
+  const { data: matchResultId, error: matchResultError } = await supabase.rpc('record_match_result_safely', {
+    p_tournament_id: body.tournamentId,
+    p_team_a_id: body.teamAId,
+    p_team_b_id: body.teamBId,
+    p_team_a_score: teamAScore,
+    p_team_b_score: teamBScore,
+    p_performances: payload,
+  })
 
-  if (matchResultError || !matchResult) {
+  if (matchResultError || !matchResultId) {
     logServerError({
       event: 'match_result_create_failed',
       userId: user.id,
       route: '/api/match-results',
-      metadata: { tournamentId: body.tournamentId, teamAId: body.teamAId, teamBId: body.teamBId },
+      metadata: { tournamentId: body.tournamentId, teamAId: body.teamAId, teamBId: body.teamBId, code: matchResultError?.code },
       error: matchResultError,
     })
-    return NextResponse.json({ error: matchResultError?.message ?? 'บันทึกผลแข่งไม่สำเร็จ' }, { status: 400 })
-  }
-
-  for (const item of preview) {
-    const rating = ratingByPlayerRank.get(item.playerRankId)
-    if (!rating) continue
-
-    const { error: updateRatingError } = await supabase
-      .from('player_ratings')
-      .update({
-        power_rating: item.ratingAfter,
-        matches_played: rating.matches_played + 1,
-        wins: rating.wins + (item.result === 'win' ? 1 : 0),
-        draws: rating.draws + (item.result === 'draw' ? 1 : 0),
-        losses: rating.losses + (item.result === 'loss' ? 1 : 0),
-        goals: rating.goals + item.goals,
-        assists: rating.assists + item.assists,
-        clean_sheets: rating.clean_sheets + (item.cleanSheet ? 1 : 0),
-        mvps: rating.mvps + (item.mvp ? 1 : 0),
-        last_rating_change: item.ratingChange,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', rating.id)
-
-    if (updateRatingError) {
-      logServerError({
-        event: 'match_rating_update_failed',
-        userId: user.id,
-        route: '/api/match-results',
-        metadata: { matchResultId: matchResult.id, playerRankId: item.playerRankId },
-        error: updateRatingError,
-      })
-      return NextResponse.json({ error: updateRatingError.message }, { status: 400 })
-    }
-
-    const { error: updateRankError } = await supabase
-      .from('player_ranks')
-      .update({
-        pts: item.ratingAfter,
-        ovr: ratingToOverall(item.ratingAfter),
-        rank_change: item.ratingChange,
-      })
-      .eq('id', item.playerRankId)
-
-    if (updateRankError) {
-      return NextResponse.json({ error: updateRankError.message }, { status: 400 })
-    }
-
-    const { error: eventError } = await supabase.from('rating_events').insert({
-      player_rating_id: rating.id,
-      sport: 'football',
-      match_id: matchResult.id,
-      result: item.result,
-      opponent_rating: item.teamId === body.teamAId ? teamBAverageRating : teamAAverageRating,
-      rating_before: item.ratingBefore,
-      rating_after: item.ratingAfter,
-      rating_change: item.ratingChange,
-      match_change: item.matchChange,
-      performance_bonus: item.performanceBonus,
-      goals: item.goals,
-      assists: item.assists,
-      clean_sheet: item.cleanSheet,
-      mvp: item.mvp,
-      save_percentage: item.savePercentage,
-      created_by: user.id,
-    })
-
-    if (eventError) {
-      logServerError({
-        event: 'rating_event_create_failed',
-        userId: user.id,
-        route: '/api/match-results',
-        metadata: { matchResultId: matchResult.id, playerRankId: item.playerRankId },
-        error: eventError,
-      })
-      return NextResponse.json({ error: eventError.message }, { status: 400 })
-    }
-
-    const { error: performanceError } = await supabase.from('match_player_performances').insert({
-      match_result_id: matchResult.id,
-      player_rank_id: item.playerRankId,
-      team_id: item.teamId,
-      result: item.result,
-      rating_before: item.ratingBefore,
-      rating_after: item.ratingAfter,
-      rating_change: item.ratingChange,
-      goals: item.goals,
-      assists: item.assists,
-      clean_sheet: item.cleanSheet,
-      mvp: item.mvp,
-      save_percentage: item.savePercentage,
-    })
-
-    if (performanceError) {
-      return NextResponse.json({ error: performanceError.message }, { status: 400 })
-    }
+    const isConflict = matchResultError?.message.includes('RATING_CHANGED') || matchResultError?.code === '40001'
+    return NextResponse.json(
+      { error: isConflict ? 'คะแนนนักกีฬาถูกอัปเดตโดยรายการอื่น กรุณากดคำนวณใหม่แล้วบันทึกอีกครั้ง' : 'บันทึกผลแข่งไม่สำเร็จ' },
+      { status: isConflict ? 409 : 400 },
+    )
   }
 
   logServerEvent({
     event: 'match_result_confirmed',
     userId: user.id,
     route: '/api/match-results',
-    metadata: { matchResultId: matchResult.id, tournamentId: body.tournamentId, performanceCount: preview.length },
+    metadata: { matchResultId, tournamentId: body.tournamentId, performanceCount: preview.length },
   })
 
-  return NextResponse.json({ ok: true, mode: 'confirm', matchResultId: matchResult.id, preview })
+  return NextResponse.json({ ok: true, mode: 'confirm', matchResultId, preview })
 }

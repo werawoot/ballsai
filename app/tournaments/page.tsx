@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
-import { Trophy, MapPin, Calendar, ChevronRight, House, ClipboardList, User } from 'lucide-react'
+import { Trophy, MapPin, Calendar, ChevronRight, House, ClipboardList, User, Search } from 'lucide-react'
 import { sampleTournaments, isSampleId, showDemoData } from '@/lib/sample-data'
 
 export default async function TournamentsPage() {
@@ -36,7 +36,7 @@ export default async function TournamentsPage() {
       {/* TOPBAR */}
       <header style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
         <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <Trophy size={22} strokeWidth={2.5} /> BALLSAI
+          <Trophy size={22} strokeWidth={2.5} /> BallDoenSai.com
         </Link>
       </header>
 
@@ -110,6 +110,7 @@ export default async function TournamentsPage() {
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white', borderTop: '1.5px solid #e5e5e5', display: 'flex', justifyContent: 'space-around', padding: '6px 0', zIndex: 100, boxShadow: '0 -4px 20px rgba(0,0,0,0.06)' }}>
         {[
           { icon: <House size={22} />, label: 'หน้าแรก', href: '/', active: false },
+          { icon: <Search size={22} />, label: 'นักกีฬา', href: '/athletes', active: false },
           { icon: <Trophy size={22} />, label: 'Ranking', href: '/ranking', active: false },
           { icon: <ClipboardList size={22} />, label: 'รายการแข่ง', href: '/tournaments', active: true },
           { icon: <User size={22} />, label: 'โปรไฟล์', href: '/profile', active: false },

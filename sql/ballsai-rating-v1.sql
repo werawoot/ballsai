@@ -1,29 +1,17 @@
--- BALLSAI Rating V1
--- Apply after the core BALLSAI tables exist.
+-- BallDoenSai.com Rating V1
+-- Apply after the core tables and sql/supabase-rls.sql exist.
 -- The current app keeps player_ranks.pts as the visible Power Rating for compatibility.
+-- This project stores sports as text slugs on player_ranks (for example,
+-- "football"). Do not depend on a legacy public.sports table because older
+-- projects may use an integer ID there.
 
 begin;
-
-create table if not exists public.sports (
-  id text primary key,
-  name text not null,
-  created_at timestamptz not null default now()
-);
-
-insert into public.sports (id, name)
-values
-  ('football', 'Football'),
-  ('futsal', 'Futsal'),
-  ('basketball', 'Basketball'),
-  ('volleyball', 'Volleyball'),
-  ('badminton', 'Badminton')
-on conflict (id) do nothing;
 
 create table if not exists public.player_ratings (
   id uuid primary key default gen_random_uuid(),
   player_id uuid references auth.users(id) on delete set null,
   player_rank_id uuid references public.player_ranks(id) on delete cascade,
-  sport text not null references public.sports(id),
+  sport text not null,
   season text not null default '2026',
   power_rating integer not null default 1000 check (power_rating between 0 and 3000),
   matches_played integer not null default 0 check (matches_played >= 0),
@@ -50,7 +38,7 @@ create table if not exists public.player_ratings (
 create table if not exists public.rating_events (
   id uuid primary key default gen_random_uuid(),
   player_rating_id uuid not null references public.player_ratings(id) on delete cascade,
-  sport text not null references public.sports(id),
+  sport text not null,
   match_id uuid null,
   result text not null check (result in ('win', 'draw', 'loss')),
   opponent_rating integer not null default 1000 check (opponent_rating between 0 and 3000),

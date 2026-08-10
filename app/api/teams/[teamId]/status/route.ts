@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { sendTeamStatusEmail } from '@/lib/email'
+import { logServerError } from '@/lib/monitoring'
 
 type TeamStatusBody = {
   status?: 'confirmed' | 'rejected'
@@ -76,16 +78,20 @@ export async function POST(
 
   const email = teamOwner?.email
   if (email) {
-    await fetch(new URL('/api/send-email', request.url), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        teamName: typedTeam.name,
-        tournamentName: tournament?.name,
-        email,
-        status: body.status,
-      }),
+    const emailResult = await sendTeamStatusEmail({
+      teamName: typedTeam.name,
+      tournamentName: tournament?.name ?? 'รายการแข่งขัน',
+      email,
+      status: body.status,
     })
+    if (!emailResult.sent) {
+      logServerError({
+        event: 'team_status_email_failed',
+        userId: user.id,
+        route: '/api/teams/[teamId]/status',
+        metadata: { teamId: params.teamId, reason: emailResult.reason },
+      })
+    }
   }
 
   return NextResponse.json({ ok: true })

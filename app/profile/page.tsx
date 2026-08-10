@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { House, Trophy, ClipboardList, User, MapPin, Zap, Shield, Star } from 'lucide-react'
+import { House, Trophy, ClipboardList, User, MapPin, Zap, Shield, Star, Search } from 'lucide-react'
 import Link from 'next/link'
 import EditProfileForm from './EditProfileForm'
 
@@ -11,6 +11,39 @@ type ProfileRecord = {
   team?: string | null
   position?: string | null
   phone?: string | null
+}
+
+type AthleteProfileRecord = {
+  user_id: string
+  display_name: string
+  birth_date?: string | null
+  sport: string
+  position?: string | null
+  province?: string | null
+  height_cm?: number | null
+  weight_kg?: number | null
+  current_team?: string | null
+  bio?: string | null
+  profile_image_url?: string | null
+  guardian_consent_at?: string | null
+  is_public: boolean
+  verification_level: 'self' | 'coach_verified' | 'performance_verified'
+}
+
+type AthleteVideoRecord = {
+  id: number
+  title: string
+  video_url: string
+  video_type: 'highlight' | 'match' | 'training'
+}
+
+type AthleteAchievementRecord = {
+  id: number
+  title: string
+  event_name?: string | null
+  achievement_year?: number | null
+  proof_url?: string | null
+  verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
 }
 
 type PlayerRankRecord = {
@@ -63,21 +96,19 @@ export default async function ProfilePage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  const { data: playerRank } = await supabase
-    .from('player_ranks')
-    .select('*')
-    .eq('player_id', user.id)
-    .eq('sport', 'football')
-    .single()
-  const { data: myTeams } = await supabase
-    .from('teams')
-    .select('*, tournaments(name, location)')
-    .eq('created_by', user.id)
-    .order('created_at', { ascending: false })
-    .limit(5)
+  const [{ data: profile }, { data: athleteProfile }, { data: athleteVideos }, { data: achievements }, { data: playerRank }, { data: myTeams }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('athlete_profiles').select('*').eq('user_id', user.id).maybeSingle(),
+    supabase.from('athlete_videos').select('*').eq('athlete_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('athlete_achievements').select('*').eq('athlete_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('player_ranks').select('*').eq('player_id', user.id).eq('sport', 'football').maybeSingle(),
+    supabase.from('teams').select('*, tournaments(name, location)').eq('created_by', user.id).order('created_at', { ascending: false }).limit(5),
+  ])
 
   const typedProfile = (profile ?? null) as ProfileRecord | null
+  const typedAthleteProfile = (athleteProfile ?? null) as AthleteProfileRecord | null
+  const typedVideos = (athleteVideos ?? []) as AthleteVideoRecord[]
+  const typedAchievements = (achievements ?? []) as AthleteAchievementRecord[]
   const typedPlayerRank = (playerRank ?? null) as PlayerRankRecord | null
   const typedTeams = (myTeams ?? []) as MyTeamRecord[]
   const cardBg = 'linear-gradient(160deg,#3d2a00 0%,#c8860a 18%,#f5c518 30%,#c8860a 42%,#7a4f00 55%,#c8860a 70%,#f5c518 82%,#3d2a00 100%)'
@@ -86,7 +117,7 @@ export default async function ProfilePage() {
     <main style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
       <header style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
         <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <Trophy size={22} strokeWidth={2.5} /> BALLSAI
+          <Trophy size={22} strokeWidth={2.5} /> BallDoenSai.com
         </Link>
       </header>
 
@@ -129,7 +160,7 @@ export default async function ProfilePage() {
                 </div>
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px 12px 14px', background: 'linear-gradient(180deg,transparent 0%,rgba(0,0,0,0.72) 30%,rgba(0,0,0,0.92) 100%)', zIndex: 2 }}>
                   <div style={{ fontFamily: 'var(--font-barlow)', fontSize: 16, fontWeight: 800, color: 'white', textAlign: 'center', textTransform: 'uppercase', lineHeight: 1.1 }}>{typedPlayerRank.player_name}</div>
-                  <div style={{ fontFamily: 'var(--font-barlow)', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.75)', textAlign: 'center', marginTop: 2 }}>{typedProfile?.team || typedProfile?.province || 'BALLSAI PLAYER'}</div>
+                  <div style={{ fontFamily: 'var(--font-barlow)', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.75)', textAlign: 'center', marginTop: 2 }}>{typedProfile?.team || typedProfile?.province || 'BALLDOENSAI.COM PLAYER'}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 4, marginTop: 12 }}>
                     {[
                       { key: 'PAC', val: typedPlayerRank.pac },
@@ -164,7 +195,13 @@ export default async function ProfilePage() {
             <div style={{ width: 4, height: 20, background: '#CC0001', borderRadius: 2 }} />
             ข้อมูลส่วนตัว
           </div>
-          <EditProfileForm profile={typedProfile} userId={user.id} />
+          <EditProfileForm
+            profile={typedProfile}
+            athleteProfile={typedAthleteProfile}
+            videos={typedVideos}
+            achievements={typedAchievements}
+            userId={user.id}
+          />
         </div>
 
         {typedTeams.length > 0 && (
@@ -207,6 +244,7 @@ export default async function ProfilePage() {
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white', borderTop: '1.5px solid #e5e5e5', display: 'flex', justifyContent: 'space-around', padding: '6px 0', zIndex: 100, boxShadow: '0 -4px 20px rgba(0,0,0,0.06)' }}>
         {[
           { icon: <House size={22} />, label: 'หน้าแรก', href: '/', active: false },
+          { icon: <Search size={22} />, label: 'นักกีฬา', href: '/athletes', active: false },
           { icon: <Trophy size={22} />, label: 'Ranking', href: '/ranking', active: false },
           { icon: <ClipboardList size={22} />, label: 'รายการแข่ง', href: '/tournaments', active: false },
           { icon: <User size={22} />, label: 'โปรไฟล์', href: '/profile', active: true },

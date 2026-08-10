@@ -147,7 +147,7 @@ export function useLoading(options: UseLoadingOptions = {}): UseLoadingReturn {
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);
 
-        executeOptions.onError?.(error);
+        onError?.(error);
         globalOnError?.(error);
 
         throw error;

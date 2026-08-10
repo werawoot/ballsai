@@ -1,8 +1,28 @@
-"use client";
+'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
+import {
+  Award,
+  Camera,
+  CalendarDays,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Image as ImageIcon,
+  Link2,
+  Loader2,
+  MapPin,
+  Plus,
+  Ruler,
+  Save,
+  ShieldCheck,
+  Trash2,
+  User,
+  Users,
+  Weight,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase'
-import { User, MapPin, Users, Phone, Save } from 'lucide-react'
 
 type ProfileForm = {
   full_name?: string | null
@@ -12,6 +32,38 @@ type ProfileForm = {
   phone?: string | null
 }
 
+type AthleteProfileForm = {
+  display_name: string
+  birth_date?: string | null
+  sport: string
+  position?: string | null
+  province?: string | null
+  height_cm?: number | null
+  weight_kg?: number | null
+  current_team?: string | null
+  bio?: string | null
+  profile_image_url?: string | null
+  guardian_consent_at?: string | null
+  is_public: boolean
+  verification_level: 'self' | 'coach_verified' | 'performance_verified'
+}
+
+type Video = {
+  id: number
+  title: string
+  video_url: string
+  video_type: 'highlight' | 'match' | 'training'
+}
+
+type Achievement = {
+  id: number
+  title: string
+  event_name?: string | null
+  achievement_year?: number | null
+  proof_url?: string | null
+  verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
+}
+
 type FieldProps = {
   icon: ReactNode
   label: string
@@ -19,13 +71,48 @@ type FieldProps = {
   onChange: (value: string) => void
   placeholder: string
   type?: string
+  min?: string
+  max?: string
+}
+
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024
+const ALLOWED_AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const VIDEO_TYPE_LABELS: Record<Video['video_type'], string> = {
+  highlight: 'ไฮไลต์',
+  match: 'การแข่งขัน',
+  training: 'การฝึกซ้อม',
+}
+
+function isSupportedVideoUrl(value: string) {
+  try {
+    const url = new URL(value)
+    const host = url.hostname.toLowerCase()
+    return url.protocol === 'https:' && (
+      host === 'youtu.be'
+      || host === 'youtube.com'
+      || host.endsWith('.youtube.com')
+      || host === 'tiktok.com'
+      || host.endsWith('.tiktok.com')
+    )
+  } catch {
+    return false
+  }
+}
+
+function avatarPathFromPublicUrl(value: string, userId: string) {
+  const marker = '/storage/v1/object/public/athlete-avatars/'
+  const markerIndex = value.indexOf(marker)
+  if (markerIndex === -1) return null
+  const path = decodeURIComponent(value.slice(markerIndex + marker.length).split('?')[0])
+  return path.startsWith(`${userId}/`) ? path : null
 }
 
 const inputStyle = {
   width: '100%',
+  minHeight: 44,
   border: '1.5px solid #e5e5e5',
-  borderRadius: 10,
-  padding: '11px 14px 11px 40px',
+  borderRadius: 8,
+  padding: '10px 12px 10px 38px',
   fontSize: 14,
   outline: 'none',
   fontFamily: 'var(--font-sarabun)',
@@ -33,148 +120,303 @@ const inputStyle = {
   background: '#fafafa',
 } as const
 
-function Field({ icon, label, value, onChange, placeholder, type = 'text' }: FieldProps) {
+function Field({ icon, label, value, onChange, placeholder, type = 'text', min, max }: FieldProps) {
   return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>{label}</label>
-      <div style={{ position: 'relative' }}>
-        <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }}>{icon}</div>
-        <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={inputStyle} />
-      </div>
+    <label style={{ display: 'block' }}>
+      <span style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#666', marginBottom: 6 }}>{label}</span>
+      <span style={{ position: 'relative', display: 'block' }}>
+        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#999', display: 'flex' }}>{icon}</span>
+        <input type={type} value={value} onChange={event => onChange(event.target.value)} placeholder={placeholder} min={min} max={max} style={inputStyle} />
+      </span>
+    </label>
+  )
+}
+
+function sectionTitle(icon: ReactNode, title: string, description: string) {
+  return (
+    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 16 }}>
+      <span style={{ width: 32, height: 32, borderRadius: 8, background: '#fff1f1', color: '#CC0001', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</span>
+      <span>
+        <span style={{ display: 'block', fontFamily: 'var(--font-oswald)', fontSize: 16, fontWeight: 700, color: '#111' }}>{title}</span>
+        <span style={{ display: 'block', fontSize: 11, color: '#888', marginTop: 2 }}>{description}</span>
+      </span>
     </div>
   )
 }
 
-export default function EditProfileForm({ profile, userId }: { profile: ProfileForm | null, userId: string }) {
-  const [fullName, setFullName] = useState(profile?.full_name ?? '')
-  const [province, setProvince] = useState(profile?.province ?? '')
-  const [team, setTeam] = useState(profile?.team ?? '')
-  const [position, setPosition] = useState(profile?.position ?? '')
-  const [phone, setPhone] = useState(profile?.phone ?? '')
+export default function EditProfileForm({
+  profile,
+  athleteProfile,
+  videos: initialVideos,
+  achievements: initialAchievements,
+  userId,
+}: {
+  profile: ProfileForm | null
+  athleteProfile: AthleteProfileForm | null
+  videos: Video[]
+  achievements: Achievement[]
+  userId: string
+}) {
+  const router = useRouter()
+  const [displayName, setDisplayName] = useState(athleteProfile?.display_name || profile?.full_name || '')
+  const [birthDate, setBirthDate] = useState(athleteProfile?.birth_date ?? '')
+  const [province, setProvince] = useState(athleteProfile?.province || profile?.province || '')
+  const [team, setTeam] = useState(athleteProfile?.current_team || profile?.team || '')
+  const [position, setPosition] = useState(athleteProfile?.position || profile?.position || '')
+  const [height, setHeight] = useState(athleteProfile?.height_cm?.toString() ?? '')
+  const [weight, setWeight] = useState(athleteProfile?.weight_kg?.toString() ?? '')
+  const [bio, setBio] = useState(athleteProfile?.bio ?? '')
+  const [profileImageUrl, setProfileImageUrl] = useState(athleteProfile?.profile_image_url ?? '')
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('')
+  const [removeCurrentImage, setRemoveCurrentImage] = useState(false)
+  const [isPublic, setIsPublic] = useState(athleteProfile?.is_public ?? false)
+  const [hasGuardianConsent, setHasGuardianConsent] = useState(Boolean(athleteProfile?.guardian_consent_at))
+  const [videos, setVideos] = useState(initialVideos)
+  const [achievements, setAchievements] = useState(initialAchievements)
+  const [videoTitle, setVideoTitle] = useState('')
+  const [videoUrl, setVideoUrl] = useState('')
+  const [videoType, setVideoType] = useState<Video['video_type']>('highlight')
+  const [achievementTitle, setAchievementTitle] = useState('')
+  const [achievementEvent, setAchievementEvent] = useState('')
   const [loading, setLoading] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
 
-  const handleSave = async () => {
-    setLoading(true);
-    const supabase = createClient();
-    await supabase.from("profiles").upsert({
-      id: userId,
-      full_name: fullName,
-      province,
-      team,
-      position,
-      phone,
-    })
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl.startsWith('blob:')) URL.revokeObjectURL(imagePreviewUrl)
+    }
+  }, [imagePreviewUrl])
+
+  const age = useMemo(() => {
+    if (!birthDate) return null
+    const birth = new Date(`${birthDate}T00:00:00`)
+    if (Number.isNaN(birth.getTime())) return null
+    const now = new Date()
+    let years = now.getFullYear() - birth.getFullYear()
+    if (now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) years -= 1
+    return years
+  }, [birthDate])
+
+  const isMinor = age !== null && age < 20
+  const canPublish = Boolean(birthDate) && (!isMinor || hasGuardianConsent)
+  const displayedImageUrl = imagePreviewUrl || (removeCurrentImage ? '' : profileImageUrl)
+  const completedFields = [displayName, birthDate, province, team, position, height, weight, bio, displayedImageUrl].filter(Boolean).length
+  const completionPercentage = Math.round((completedFields / 9) * 100)
+
+  const chooseImage = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
+      setMessage({ kind: 'error', text: 'รองรับเฉพาะรูป JPG, PNG หรือ WEBP' })
+      return
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      setMessage({ kind: 'error', text: 'รูปโปรไฟล์ต้องมีขนาดไม่เกิน 5 MB' })
+      return
+    }
+    setMessage(null)
+    setSelectedImage(file)
+    setRemoveCurrentImage(false)
+    setImagePreviewUrl(URL.createObjectURL(file))
+  }
+
+  const clearImage = () => {
+    setSelectedImage(null)
+    setImagePreviewUrl('')
+    setRemoveCurrentImage(true)
+  }
+
+  const saveProfile = async () => {
+    setMessage(null)
+    if (!displayName.trim() || !birthDate) {
+      setMessage({ kind: 'error', text: 'กรุณากรอกชื่อและวันเกิดก่อนบันทึก' })
+      return
+    }
+    if (isPublic && !canPublish) {
+      setMessage({ kind: 'error', text: 'โปรไฟล์ผู้เยาว์ต้องได้รับความยินยอมจากผู้ปกครองก่อนเผยแพร่' })
+      return
+    }
+
+    const supabase = createClient()
+    setLoading(true)
+    const previousAvatarPath = avatarPathFromPublicUrl(profileImageUrl, userId)
+    let uploadedAvatarPath: string | null = null
+    let nextProfileImageUrl = removeCurrentImage ? '' : profileImageUrl
+
+    if (selectedImage) {
+      const extensionByType: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
+      uploadedAvatarPath = `${userId}/profile-${Date.now()}.${extensionByType[selectedImage.type]}`
+      const { error: uploadError } = await supabase.storage.from('athlete-avatars').upload(uploadedAvatarPath, selectedImage, {
+        cacheControl: '3600',
+        contentType: selectedImage.type,
+        upsert: false,
+      })
+      if (uploadError) {
+        setLoading(false)
+        setMessage({ kind: 'error', text: uploadError.message.includes('Bucket') ? 'กรุณา Apply SQL Athlete Profile V2 เพื่อสร้างพื้นที่เก็บรูปก่อน' : `อัปโหลดรูปไม่สำเร็จ: ${uploadError.message}` })
+        return
+      }
+      nextProfileImageUrl = supabase.storage.from('athlete-avatars').getPublicUrl(uploadedAvatarPath).data.publicUrl
+    }
+
+    const [{ error: privateProfileError }, { error: athleteProfileError }] = await Promise.all([
+      supabase.from('profiles').upsert({
+        id: userId,
+        full_name: displayName.trim(),
+        province: province.trim(),
+        team: team.trim(),
+        position,
+      }),
+      supabase.from('athlete_profiles').upsert({
+        user_id: userId,
+        display_name: displayName.trim(),
+        birth_date: birthDate,
+        sport: 'football',
+        position: position || null,
+        province: province.trim() || null,
+        height_cm: height ? Number(height) : null,
+        weight_kg: weight ? Number(weight) : null,
+        current_team: team.trim() || null,
+        bio: bio.trim() || null,
+        profile_image_url: nextProfileImageUrl || null,
+        guardian_consent_at: hasGuardianConsent ? athleteProfile?.guardian_consent_at || new Date().toISOString() : null,
+        is_public: isPublic && canPublish,
+      }, { onConflict: 'user_id' }),
+    ])
     setLoading(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+
+    const error = privateProfileError || athleteProfileError
+    if (error) {
+      if (uploadedAvatarPath) await supabase.storage.from('athlete-avatars').remove([uploadedAvatarPath])
+      setMessage({ kind: 'error', text: error.message.includes('athlete_profiles') ? 'กรุณา Apply SQL Athlete Profile V2 ใน Supabase ก่อน' : error.message })
+      return
+    }
+
+    if (previousAvatarPath && (removeCurrentImage || uploadedAvatarPath)) {
+      await supabase.storage.from('athlete-avatars').remove([previousAvatarPath])
+    }
+    setProfileImageUrl(nextProfileImageUrl)
+    setSelectedImage(null)
+    setImagePreviewUrl('')
+    setRemoveCurrentImage(false)
+    setMessage({ kind: 'success', text: 'บันทึกโปรไฟล์นักกีฬาแล้ว' })
+    router.refresh()
+  }
+
+  const addVideo = async () => {
+    if (!videoTitle.trim() || !isSupportedVideoUrl(videoUrl)) {
+      setMessage({ kind: 'error', text: 'กรุณาใส่ลิงก์ YouTube หรือ TikTok ที่ถูกต้อง' })
+      return
+    }
+    const supabase = createClient()
+    const { data, error } = await supabase.from('athlete_videos').insert({ athlete_id: userId, title: videoTitle.trim(), video_url: videoUrl.trim(), video_type: videoType }).select().single()
+    if (error) return setMessage({ kind: 'error', text: 'บันทึกคลิปไม่สำเร็จ กรุณาบันทึกโปรไฟล์ก่อน' })
+    setVideos(current => [data as Video, ...current])
+    setVideoTitle('')
+    setVideoUrl('')
+    setVideoType('highlight')
+  }
+
+  const addAchievement = async () => {
+    if (!achievementTitle.trim()) return setMessage({ kind: 'error', text: 'กรุณาใส่ชื่อผลงาน' })
+    const supabase = createClient()
+    const { data, error } = await supabase.from('athlete_achievements').insert({ athlete_id: userId, title: achievementTitle.trim(), event_name: achievementEvent.trim() || null }).select().single()
+    if (error) return setMessage({ kind: 'error', text: 'บันทึกผลงานไม่สำเร็จ กรุณาบันทึกโปรไฟล์ก่อน' })
+    setAchievements(current => [data as Achievement, ...current])
+    setAchievementTitle('')
+    setAchievementEvent('')
+  }
+
+  const removeItem = async (table: 'athlete_videos' | 'athlete_achievements', id: number) => {
+    const { error } = await createClient().from(table).delete().eq('id', id)
+    if (error) return setMessage({ kind: 'error', text: 'ลบข้อมูลไม่สำเร็จ' })
+    if (table === 'athlete_videos') setVideos(current => current.filter(item => item.id !== id))
+    else setAchievements(current => current.filter(item => item.id !== id))
   }
 
   return (
-    <div
-      style={{
-        background: "white",
-        borderRadius: 14,
-        border: "1.5px solid #e5e5e5",
-        padding: "20px",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-      }}
-    >
-      <Field
-        icon={<User size={16} />}
-        label="ชื่อ-นามสกุล"
-        value={fullName}
-        onChange={setFullName}
-        placeholder="สมศักดิ์ วีรชัย"
-      />
-      <Field
-        icon={<MapPin size={16} />}
-        label="จังหวัด"
-        value={province}
-        onChange={setProvince}
-        placeholder="กรุงเทพฯ"
-      />
-      <Field
-        icon={<Users size={16} />}
-        label="ทีม/สโมสร"
-        value={team}
-        onChange={setTeam}
-        placeholder="Bangkok FC"
-      />
-      <Field
-        icon={<Phone size={16} />}
-        label="เบอร์โทร"
-        value={phone}
-        onChange={setPhone}
-        placeholder="08x-xxx-xxxx"
-        type="tel"
-      />
-
-      <div style={{ marginBottom: 20 }}>
-        <label
-          style={{
-            display: "block",
-            fontSize: 12,
-            fontWeight: 700,
-            color: "#555",
-            marginBottom: 6,
-            letterSpacing: 0.5,
-            textTransform: "uppercase",
-          }}
-        >
-          ตำแหน่ง
-        </label>
-        <div style={{ display: "flex", gap: 8 }}>
-          {["FW", "MF", "DF", "GK"].map((pos) => (
-            <button
-              key={pos}
-              onClick={() => setPosition(pos)}
-              style={{
-                flex: 1,
-                padding: "10px",
-                borderRadius: 10,
-                border: "1.5px solid",
-                borderColor: position === pos ? "#CC0001" : "#e5e5e5",
-                background: position === pos ? "#CC0001" : "white",
-                color: position === pos ? "white" : "#555",
-                fontSize: 13,
-                fontWeight: 800,
-                cursor: "pointer",
-                fontFamily: "var(--font-barlow)",
-                letterSpacing: 0.5,
-              }}
-            >
-              {pos}
-            </button>
-          ))}
+    <div style={{ background: 'white', border: '1.5px solid #e5e5e5', borderRadius: 8, overflow: 'hidden' }}>
+      <section style={{ padding: 18, borderBottom: '1px solid #eee' }}>
+        {sectionTitle(<User size={18} />, 'Athlete Profile', 'ข้อมูลที่ใช้สร้างการ์ดและโปรไฟล์สาธารณะ')}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 10, fontWeight: 800, color: '#777' }}><span>ความสมบูรณ์ของโปรไฟล์</span><span>{completionPercentage}%</span></div>
+          <div style={{ height: 5, background: '#eee', borderRadius: 3, overflow: 'hidden' }}><div style={{ width: `${completionPercentage}%`, height: '100%', background: completionPercentage === 100 ? '#15803d' : '#CC0001', transition: 'width .25s ease' }} /></div>
         </div>
-      </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '88px minmax(0,1fr)', gap: 14, alignItems: 'start', marginBottom: 16 }}>
+          <div style={{ width: 88, aspectRatio: '3/4', borderRadius: 8, background: displayedImageUrl ? `url(${displayedImageUrl}) center/cover` : '#f1f1f1', border: '1px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa' }}>
+            {!displayedImageUrl && <ImageIcon size={28} />}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 7 }}>รูปนักกีฬา</div>
+            <input id="athlete-avatar-upload" type="file" accept="image/jpeg,image/png,image/webp" onChange={chooseImage} style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }} />
+            <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+              <label htmlFor="athlete-avatar-upload" style={{ minHeight: 38, padding: '0 12px', borderRadius: 7, background: '#111', color: 'white', display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}><Camera size={15} />{displayedImageUrl ? 'เปลี่ยนรูป' : 'เลือกรูป'}</label>
+              {displayedImageUrl && <button type="button" onClick={clearImage} title="ลบรูปโปรไฟล์" style={{ width: 38, minHeight: 38, border: '1px solid #ddd', borderRadius: 7, background: 'white', color: '#999', display: 'grid', placeItems: 'center', cursor: 'pointer' }}><Trash2 size={15} /></button>}
+            </div>
+            <div style={{ fontSize: 10, color: '#999', lineHeight: 1.5, marginTop: 7 }}>JPG, PNG หรือ WEBP<br />ไม่เกิน 5 MB</div>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gap: 14 }}>
+          <Field icon={<User size={16} />} label="ชื่อที่แสดง" value={displayName} onChange={setDisplayName} placeholder="ชื่อ-นามสกุล" />
+          <Field icon={<CalendarDays size={16} />} label="วันเกิด" value={birthDate} onChange={setBirthDate} placeholder="" type="date" max={new Date().toISOString().slice(0, 10)} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <Field icon={<Ruler size={16} />} label="ส่วนสูง (ซม.)" value={height} onChange={setHeight} placeholder="170" type="number" min="80" max="250" />
+            <Field icon={<Weight size={16} />} label="น้ำหนัก (กก.)" value={weight} onChange={setWeight} placeholder="60" type="number" min="20" max="250" />
+          </div>
+          <Field icon={<MapPin size={16} />} label="จังหวัด" value={province} onChange={setProvince} placeholder="กรุงเทพมหานคร" />
+          <Field icon={<Users size={16} />} label="ทีม/สโมสรปัจจุบัน" value={team} onChange={setTeam} placeholder="Bangkok FC" />
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: '#666', marginBottom: 7 }}>ตำแหน่ง</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 7 }}>
+              {['FW', 'MF', 'DF', 'GK'].map(item => <button key={item} type="button" onClick={() => setPosition(item)} style={{ minHeight: 40, borderRadius: 8, border: `1.5px solid ${position === item ? '#CC0001' : '#ddd'}`, background: position === item ? '#CC0001' : 'white', color: position === item ? 'white' : '#555', fontWeight: 800, cursor: 'pointer' }}>{item}</button>)}
+            </div>
+          </div>
+          <label>
+            <span style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#666', marginBottom: 6 }}>แนะนำตัว</span>
+            <textarea value={bio} onChange={event => setBio(event.target.value.slice(0, 600))} rows={4} placeholder="เป้าหมาย จุดเด่น และประสบการณ์ของคุณ" style={{ ...inputStyle, padding: 12, resize: 'vertical' }} />
+            <span style={{ display: 'block', textAlign: 'right', fontSize: 10, color: '#aaa', marginTop: 4 }}>{bio.length}/600</span>
+          </label>
+        </div>
+      </section>
 
-      <button
-        onClick={handleSave}
-        disabled={loading}
-        style={{
-          width: "100%",
-          background: saved ? "#16a34a" : "#CC0001",
-          color: "white",
-          border: "none",
-          borderRadius: 12,
-          padding: "14px",
-          fontSize: 15,
-          fontWeight: 800,
-          fontFamily: "var(--font-oswald)",
-          letterSpacing: 1,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          transition: "background 0.3s",
-        }}
-      >
-        <Save size={18} />
-        {loading ? "กำลังบันทึก..." : saved ? "บันทึกแล้ว ✓" : "บันทึกข้อมูล"}
-      </button>
+      <section style={{ padding: 18, borderBottom: '1px solid #eee' }}>
+        {sectionTitle(<Link2 size={18} />, 'Highlight', 'ใช้ลิงก์ YouTube, TikTok หรือแพลตฟอร์มวิดีโอ')}
+        <div style={{ display: 'grid', gap: 8 }}>
+          <input value={videoTitle} onChange={event => setVideoTitle(event.target.value)} placeholder="ชื่อคลิป" style={{ ...inputStyle, padding: '10px 12px' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 44px', gap: 8 }}>
+            <input value={videoUrl} onChange={event => setVideoUrl(event.target.value)} placeholder="https://..." type="url" style={{ ...inputStyle, padding: '10px 12px' }} />
+            <button type="button" title="เพิ่มคลิป" onClick={addVideo} style={{ border: 0, borderRadius: 8, background: '#111', color: 'white', display: 'grid', placeItems: 'center', cursor: 'pointer' }}><Plus size={18} /></button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
+            {(Object.keys(VIDEO_TYPE_LABELS) as Video['video_type'][]).map(type => <button key={type} type="button" onClick={() => setVideoType(type)} style={{ minHeight: 36, borderRadius: 7, border: `1px solid ${videoType === type ? '#CC0001' : '#ddd'}`, background: videoType === type ? '#fff1f1' : 'white', color: videoType === type ? '#a40000' : '#666', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>{VIDEO_TYPE_LABELS[type]}</button>)}
+          </div>
+          {videos.map(video => <div key={video.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid #eee' }}><Link2 size={15} color="#CC0001" /><div style={{ flex: 1, minWidth: 0 }}><a href={video.video_url} target="_blank" rel="noreferrer" style={{ display: 'block', color: '#222', fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{video.title}</a><span style={{ fontSize: 9, color: '#999' }}>{VIDEO_TYPE_LABELS[video.video_type]}</span></div><button type="button" title="ลบคลิป" onClick={() => removeItem('athlete_videos', video.id)} style={{ border: 0, background: 'transparent', color: '#aaa', cursor: 'pointer', display: 'flex' }}><Trash2 size={16} /></button></div>)}
+        </div>
+      </section>
+
+      <section style={{ padding: 18, borderBottom: '1px solid #eee' }}>
+        {sectionTitle(<Award size={18} />, 'Achievements', 'บันทึกผลงานก่อนส่งหลักฐานเพื่อรับการยืนยัน')}
+        <div style={{ display: 'grid', gap: 8 }}>
+          <input value={achievementTitle} onChange={event => setAchievementTitle(event.target.value)} placeholder="ชื่อผลงานหรือรางวัล" style={{ ...inputStyle, padding: '10px 12px' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 44px', gap: 8 }}>
+            <input value={achievementEvent} onChange={event => setAchievementEvent(event.target.value)} placeholder="ชื่อรายการแข่งขัน" style={{ ...inputStyle, padding: '10px 12px' }} />
+            <button type="button" title="เพิ่มผลงาน" onClick={addAchievement} style={{ border: 0, borderRadius: 8, background: '#111', color: 'white', display: 'grid', placeItems: 'center', cursor: 'pointer' }}><Plus size={18} /></button>
+          </div>
+          {achievements.map(item => <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid #eee' }}><Award size={15} color={item.verification_status === 'verified' ? '#15803d' : '#CC0001'} /><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700 }}>{item.title}</div><div style={{ fontSize: 10, color: '#888' }}>{item.event_name || 'ยังไม่ระบุรายการ'} · {item.verification_status === 'verified' ? 'ยืนยันแล้ว' : 'ยังไม่ยืนยัน'}</div></div><button type="button" title="ลบผลงาน" onClick={() => removeItem('athlete_achievements', item.id)} style={{ border: 0, background: 'transparent', color: '#aaa', cursor: 'pointer', display: 'flex' }}><Trash2 size={16} /></button></div>)}
+        </div>
+      </section>
+
+      <section style={{ padding: 18 }}>
+        {sectionTitle(<ShieldCheck size={18} />, 'Privacy & Publishing', 'เบอร์โทรจะไม่แสดงในโปรไฟล์สาธารณะ')}
+        {isMinor && <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: 12, background: '#fff8e6', border: '1px solid #f4d98b', borderRadius: 8, marginBottom: 10, cursor: 'pointer' }}><input type="checkbox" checked={hasGuardianConsent} onChange={event => setHasGuardianConsent(event.target.checked)} style={{ marginTop: 3 }} /><span style={{ fontSize: 12, color: '#624a00', lineHeight: 1.5 }}>ฉันยืนยันว่าได้รับความยินยอมจากผู้ปกครองให้เผยแพร่โปรไฟล์นักกีฬานี้แล้ว</span></label>}
+        <button type="button" onClick={() => canPublish && setIsPublic(value => !value)} disabled={!canPublish} style={{ width: '100%', minHeight: 48, border: `1.5px solid ${isPublic ? '#15803d' : '#ddd'}`, borderRadius: 8, background: isPublic ? '#f0fdf4' : '#fafafa', color: isPublic ? '#166534' : '#666', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', cursor: canPublish ? 'pointer' : 'not-allowed', opacity: canPublish ? 1 : 0.55 }}><span style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 800 }}>{isPublic ? <Eye size={18} /> : <EyeOff size={18} />}{isPublic ? 'เผยแพร่โปรไฟล์แล้ว' : 'โปรไฟล์ยังเป็นส่วนตัว'}</span><span style={{ fontSize: 10 }}>{canPublish ? 'แตะเพื่อเปลี่ยน' : 'กรอกวันเกิดและความยินยอม'}</span></button>
+
+        {athleteProfile?.verification_level && athleteProfile.verification_level !== 'self' && <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, color: '#166534', fontSize: 12, fontWeight: 700 }}><CheckCircle2 size={16} />{athleteProfile.verification_level === 'coach_verified' ? 'ยืนยันโดยโค้ช' : 'ยืนยันจากผลงานการแข่งขัน'}</div>}
+        {message && <div role="status" style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: message.kind === 'success' ? '#f0fdf4' : '#fff1f1', color: message.kind === 'success' ? '#166534' : '#a40000' }}>{message.text}</div>}
+        <button type="button" onClick={saveProfile} disabled={loading} style={{ width: '100%', minHeight: 48, marginTop: 12, border: 0, borderRadius: 8, background: loading ? '#aaa' : '#CC0001', color: 'white', fontSize: 14, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: loading ? 'wait' : 'pointer' }}>{loading ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={18} />}{loading ? 'กำลังบันทึก...' : 'บันทึก Athlete Profile'}</button>
+      </section>
     </div>
   )
 }

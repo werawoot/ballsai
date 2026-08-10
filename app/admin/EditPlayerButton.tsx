@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Pencil, X, Save } from 'lucide-react'
+import { Link2, Pencil, Save, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 type PlayerRecord = {
   id: string
+  player_id?: string | null
   player_name: string
   team: string
   province: string
@@ -21,10 +22,27 @@ type PlayerRecord = {
   rank_change: number
 }
 
-export default function EditPlayerButton({ player }: { player: PlayerRecord }) {
+type AthleteAccount = {
+  user_id: string
+  display_name: string
+  current_team?: string | null
+  province?: string | null
+  position?: string | null
+}
+
+export default function EditPlayerButton({
+  player,
+  athleteAccounts,
+  linkedPlayerIds,
+}: {
+  player: PlayerRecord
+  athleteAccounts: AthleteAccount[]
+  linkedPlayerIds: string[]
+}) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
+    player_id: player.player_id ?? '',
     player_name: player.player_name,
     team: player.team,
     province: player.province,
@@ -38,13 +56,39 @@ export default function EditPlayerButton({ player }: { player: PlayerRecord }) {
     def: player.def,
     rank_change: player.rank_change,
   })
+  const [message, setMessage] = useState('')
   const router = useRouter()
+  const availableAccounts = athleteAccounts.filter(account =>
+    account.user_id === player.player_id || !linkedPlayerIds.includes(account.user_id)
+  )
+
+  const selectAthleteAccount = (playerId: string) => {
+    const account = athleteAccounts.find(item => item.user_id === playerId)
+    setForm(current => ({
+      ...current,
+      player_id: playerId,
+      ...(account ? {
+        player_name: account.display_name || current.player_name,
+        team: account.current_team || current.team,
+        province: account.province || current.province,
+        position: account.position || current.position,
+      } : {}),
+    }))
+  }
 
   const handleSave = async () => {
     setLoading(true)
+    setMessage('')
     const supabase = createClient()
-    await supabase.from('player_ranks').update(form).eq('id', player.id)
+    const { error } = await supabase.from('player_ranks').update({
+      ...form,
+      player_id: form.player_id || null,
+    }).eq('id', player.id)
     setLoading(false)
+    if (error) {
+      setMessage(error.code === '23505' ? 'บัญชีนี้มี Ranking ใน Season 2026 แล้ว' : `บันทึกไม่สำเร็จ: ${error.message}`)
+      return
+    }
     setOpen(false)
     router.refresh()
   }
@@ -74,6 +118,15 @@ export default function EditPlayerButton({ player }: { player: PlayerRecord }) {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ padding: 12, border: `1.5px solid ${form.player_id ? '#15803d' : '#e5e5e5'}`, borderRadius: 8, background: form.player_id ? '#f0fdf4' : '#fafafa' }}>
+                <label htmlFor={`athlete-account-${player.id}`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 7 }}><Link2 size={14} /> ATHLETE ACCOUNT</label>
+                <select id={`athlete-account-${player.id}`} value={form.player_id} onChange={event => selectAthleteAccount(event.target.value)} style={{ ...inputStyle, padding: '9px 10px', background: 'white' }}>
+                  <option value="">ยังไม่เชื่อมบัญชี</option>
+                  {availableAccounts.map(account => <option key={account.user_id} value={account.user_id}>{account.display_name} · {account.current_team || account.province || 'BallDoenSai.com Athlete'}</option>)}
+                </select>
+                <p style={{ fontSize: 10, color: '#888', lineHeight: 1.5, marginTop: 7 }}>เลือกจากบัญชีที่สร้าง Athlete Profile แล้ว ระบบจะใช้ UUID เชื่อมข้อมูลแทนชื่อ</p>
+              </div>
+
               {[['ชื่อนักกีฬา', 'player_name'], ['ทีม', 'team'], ['จังหวัด', 'province']].map(([label, key]) => (
                 <div key={key}>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#aaa', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>
@@ -99,6 +152,8 @@ export default function EditPlayerButton({ player }: { player: PlayerRecord }) {
                 ))}
               </div>
             </div>
+
+            {message && <div role="alert" style={{ marginTop: 12, padding: '9px 11px', borderRadius: 7, background: '#fff1f1', color: '#a40000', fontSize: 12, fontWeight: 700 }}>{message}</div>}
 
             <button onClick={handleSave} disabled={loading} style={{ width: '100%', marginTop: 20, background: '#CC0001', color: 'white', border: 'none', borderRadius: 12, padding: '14px', fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <Save size={18} /> {loading ? 'กำลังบันทึก...' : 'บันทึก'}

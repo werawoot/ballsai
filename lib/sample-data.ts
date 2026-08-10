@@ -220,7 +220,7 @@ export const samplePlayerRanks = [
 export const sampleTournaments = [
   {
     id: 'sample-tournament-1',
-    name: 'BALLSAI Youth Cup 2026',
+    name: 'BallDoenSai.com Youth Cup 2026',
     description: 'รายการเยาวชนรุ่นอายุไม่เกิน 16 ปี ใช้ผลแข่งอัปเดต Power Rating',
     location: 'สนามกีฬาเฉลิมพระเกียรติ อยุธยา',
     start_date: '2026-07-12',

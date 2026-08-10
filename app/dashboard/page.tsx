@@ -63,7 +63,7 @@ export default async function DashboardPage() {
       {/* TOPBAR */}
       <header style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
         <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <Trophy size={22} strokeWidth={2.5} /> BALLSAI
+          <Trophy size={22} strokeWidth={2.5} /> BallDoenSai.com
         </Link>
         <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.8)', letterSpacing: 1 }}>ORGANIZER</div>
       </header>
@@ -221,8 +221,8 @@ export default async function DashboardPage() {
                           </div>
 
                           {payment.slip_url && (
-                            <a href={payment.slip_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', border: '1.5px solid #e5e5e5' }}>
-                              <Image src={payment.slip_url} alt="slip" width={640} height={900} unoptimized style={{ width: '100%', maxHeight: 200, height: 'auto', objectFit: 'contain', display: 'block', background: '#f8f8f8' }} />
+                            <a href={`/api/payments/${payment.id}/slip`} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', border: '1.5px solid #e5e5e5' }}>
+                              <Image src={`/api/payments/${payment.id}/slip`} alt="slip" width={640} height={900} unoptimized style={{ width: '100%', maxHeight: 200, height: 'auto', objectFit: 'contain', display: 'block', background: '#f8f8f8' }} />
                               <div style={{ background: '#f8f8f8', padding: '6px', textAlign: 'center', fontSize: 11, color: '#888', fontWeight: 600 }}>
                                 แตะเพื่อดูรูปขนาดเต็ม
                               </div>

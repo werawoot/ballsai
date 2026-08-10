@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const MAX_SLIP_SIZE_BYTES = 5 * 1024 * 1024
 const ALLOWED_SLIP_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -28,6 +29,14 @@ export async function POST(
   request: Request,
   { params }: { params: { teamId: string } }
 ) {
+  const rateLimit = await checkRateLimit(request, { scope: 'payment-slip-upload', limit: 8, windowSeconds: 10 * 60 })
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'อัปโหลดบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } },
+    )
+  }
+
   const supabase = await createServerSupabaseClient()
   const {
     data: { user },
@@ -105,14 +114,13 @@ export async function POST(
     return NextResponse.json({ error: uploadError.message }, { status: 400 })
   }
 
-  const { data: publicUrlData } = supabase.storage.from('slips').getPublicUrl(fileName)
   const { error: paymentError } = await supabase.from('payments').insert({
     team_id: params.teamId,
     tournament_id: typedTeam.tournament_id,
     user_id: user.id,
     amount: tournament?.fee ?? 0,
     promptpay: tournament?.promptpay ?? '',
-    slip_url: publicUrlData.publicUrl,
+    slip_url: fileName,
     status: 'pending',
   })
 
