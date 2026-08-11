@@ -19,6 +19,7 @@ import HomeHighlightsRail from './HomeHighlightsRail'
 import { getPublicOpenTournaments, getPublicRankings } from '@/lib/public-data'
 
 const positionLabel: Record<string, string> = { GK: 'GOALKEEPER', DF: 'DEFENDER', MF: 'MIDFIELDER', FW: 'FORWARD' }
+const advertisementTickerItems = Array.from({ length: 14 }, (_, index) => index)
 
 export default async function Home() {
   const cookieStore = await cookies()
@@ -87,11 +88,11 @@ export default async function Home() {
 
       <div className="home-ticker" aria-label="พื้นที่สำหรับโฆษณา">
         <div className="home-ticker-track">
-          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
-          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
-          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
-          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
-          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
+          {[0, 1].map(group => (
+            <div className="home-ticker-group" key={group} aria-hidden={group === 1}>
+              {advertisementTickerItems.map(item => <span key={item}><Megaphone size={14} /> พื้นที่สำหรับโฆษณา<i /></span>)}
+            </div>
+          ))}
         </div>
       </div>
 
