@@ -96,3 +96,37 @@ export const getPublicRankingProvinces = unstable_cache(
   ['public-ranking-provinces'],
   { revalidate: 60, tags: ['public-ranking'] },
 )
+
+// Hall of Fame is intentionally stricter than Ranking: youth athletes appear
+// here only after their Athlete Profile has been made public by the owner.
+export const getPublicHallOfFame = unstable_cache(
+  async (province = '') => {
+    try {
+      let profileQuery = publicSupabase
+        .from('athlete_profiles')
+        .select('user_id, province')
+        .eq('sport', 'football')
+        .eq('is_public', true)
+      if (province) profileQuery = profileQuery.eq('province', province)
+      const { data: profiles, error: profileError } = await profileQuery.limit(250)
+      if (profileError) throw profileError
+      const athleteIds = (profiles ?? []).map(profile => profile.user_id)
+      if (athleteIds.length === 0) return []
+      const { data, error } = await publicSupabase
+        .from('player_ranks')
+        .select('*')
+        .eq('sport', 'football')
+        .eq('season', '2026')
+        .in('player_id', athleteIds)
+        .order('pts', { ascending: false })
+        .limit(50)
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error(JSON.stringify({ level: 'error', event: 'public_hall_of_fame_fetch_failed', error: error instanceof Error ? error.message : String(error) }))
+      return []
+    }
+  },
+  ['public-hall-of-fame'],
+  { revalidate: 60, tags: ['public-ranking', 'public-athletes'] },
+)

@@ -1,10 +1,11 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { Trophy, MapPin, Zap, Shield, Star } from 'lucide-react'
+import { Crown, Sparkles, Trophy, MapPin, Zap, Shield, Star } from 'lucide-react'
 import Link from 'next/link'
 import EditProfileForm from './EditProfileForm'
 import SiteNav from '@/components/SiteNav'
+import { calculateLevel, identityTitle, levelProgress } from '@/lib/digital-identity'
 
 type ProfileRecord = {
   full_name?: string | null
@@ -68,6 +69,7 @@ type MyTeamRecord = {
     location: string | null
   } | null
 }
+type IdentityProgress = { xp_total: number; current_level: number }
 
 function PositionIcon({ pos }: { pos: string }) {
   if (pos === 'GK' || pos === 'DF') return <Shield size={56} color="rgba(255,255,255,0.9)" strokeWidth={1.5} />
@@ -97,13 +99,14 @@ export default async function ProfilePage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: athleteProfile }, { data: athleteVideos }, { data: achievements }, { data: playerRank }, { data: myTeams }] = await Promise.all([
+  const [{ data: profile }, { data: athleteProfile }, { data: athleteVideos }, { data: achievements }, { data: playerRank }, { data: myTeams }, { data: identityProgress }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('athlete_profiles').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('athlete_videos').select('*').eq('athlete_id', user.id).order('created_at', { ascending: false }),
     supabase.from('athlete_achievements').select('*').eq('athlete_id', user.id).order('created_at', { ascending: false }),
     supabase.from('player_ranks').select('*').eq('player_id', user.id).eq('sport', 'football').maybeSingle(),
     supabase.from('teams').select('*, tournaments(name, location)').eq('created_by', user.id).order('created_at', { ascending: false }).limit(5),
+    supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', user.id).maybeSingle(),
   ])
 
   const typedProfile = (profile ?? null) as ProfileRecord | null
@@ -112,6 +115,11 @@ export default async function ProfilePage() {
   const typedAchievements = (achievements ?? []) as AthleteAchievementRecord[]
   const typedPlayerRank = (playerRank ?? null) as PlayerRankRecord | null
   const typedTeams = (myTeams ?? []) as MyTeamRecord[]
+  const typedIdentityProgress = identityProgress as IdentityProgress | null
+  const fallbackXp = (typedPlayerRank?.pts ?? 0) >= 1500 ? 900 : typedPlayerRank ? 100 : 0
+  const xp = typedIdentityProgress?.xp_total ?? fallbackXp
+  const level = typedIdentityProgress?.current_level ?? calculateLevel(xp)
+  const levelInfo = levelProgress(xp, level)
   const cardBg = 'linear-gradient(160deg,#3d2a00 0%,#c8860a 18%,#f5c518 30%,#c8860a 42%,#7a4f00 55%,#c8860a 70%,#f5c518 82%,#3d2a00 100%)'
 
   return (
@@ -143,6 +151,11 @@ export default async function ProfilePage() {
       </svg>
 
       <div className="bds-content" style={{ padding: '16px' }}>
+        <div style={{ background: 'linear-gradient(125deg,#101827,#29456f 68%,#0b5234)', color: 'white', padding: 18, marginBottom: 20, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', width: 170, height: 170, borderRadius: '50%', border: '1px solid rgba(244,185,66,.32)', right: -50, top: -80 }} />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 15 }}><div style={{ borderRight: '1px solid rgba(255,255,255,.22)', paddingRight: 15, display: 'grid', textAlign: 'center' }}><span style={{ fontFamily: 'var(--font-barlow)', fontSize: 9, letterSpacing: 1.2, color: '#f4c861', fontWeight: 800 }}>LEVEL</span><b style={{ fontFamily: 'var(--font-oswald)', fontSize: 43, lineHeight: .85 }}>{level.toString().padStart(2, '0')}</b></div><div style={{ flex: 1, minWidth: 0 }}><span style={{ fontFamily: 'var(--font-barlow)', fontSize: 9, letterSpacing: 1.2, color: '#f4c861', fontWeight: 800 }}>{identityTitle(level).toUpperCase()}</span><b style={{ display: 'block', fontSize: 16, marginTop: 4 }}>เส้นทางนักบอลของฉัน</b><div style={{ height: 5, background: 'rgba(255,255,255,.15)', marginTop: 11 }}><i style={{ display: 'block', height: '100%', width: `${levelInfo.percentage}%`, background: 'linear-gradient(90deg,#d71920,#f4c861)' }} /></div><small style={{ color: 'rgba(255,255,255,.65)', fontSize: 10, marginTop: 5, display: 'block' }}>{xp.toLocaleString()} XP · อีก {levelInfo.remaining.toLocaleString()} XP สู่ Level {level + 1}</small></div></div>
+          <div style={{ position: 'relative', display: 'flex', gap: 9, marginTop: 15 }}><Link href="/career" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#d71920', color: 'white', fontSize: 11, fontWeight: 800, textDecoration: 'none', padding: '9px 10px' }}><Sparkles size={14} /> ATHLETE PASSPORT</Link><Link href="/hall-of-fame" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid rgba(255,255,255,.35)', color: 'white', fontSize: 11, fontWeight: 800, textDecoration: 'none', padding: '8px 10px' }}><Crown size={14} /> HALL OF FAME</Link></div>
+        </div>
         {typedPlayerRank ? (
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
