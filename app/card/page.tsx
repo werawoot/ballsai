@@ -6,8 +6,8 @@ import { Trophy } from 'lucide-react'
 import PlayerCardBuilder from './PlayerCardBuilder'
 
 type Profile = { full_name?: string | null; province?: string | null; team?: string | null; position?: string | null }
-type AthleteProfile = { display_name?: string | null; position?: string | null; province?: string | null; current_team?: string | null; profile_image_url?: string | null; verification_level?: string | null }
-type PlayerRank = { player_name: string; position: string; ovr: number; pac: number; sho: number; pas: number; dri: number; def: number }
+type AthleteProfile = { display_name?: string | null; position?: string | null; province?: string | null; current_team?: string | null; profile_image_url?: string | null; verification_level?: string | null; is_public?: boolean }
+type PlayerRank = { id: string; player_name: string; position: string; ovr: number; pac: number; sho: number; pas: number; dri: number; def: number }
 
 export default async function PlayerCardPage() {
   const cookieStore = await cookies()
@@ -21,8 +21,8 @@ export default async function PlayerCardPage() {
 
   const [{ data: profile }, { data: athlete }, { data: rank }] = await Promise.all([
     supabase.from('profiles').select('full_name, province, team, position').eq('id', user.id).maybeSingle(),
-    supabase.from('athlete_profiles').select('display_name, position, province, current_team, profile_image_url, verification_level').eq('user_id', user.id).maybeSingle(),
-    supabase.from('player_ranks').select('player_name, position, ovr, pac, sho, pas, dri, def').eq('player_id', user.id).eq('sport', 'football').maybeSingle(),
+    supabase.from('athlete_profiles').select('display_name, position, province, current_team, profile_image_url, verification_level, is_public').eq('user_id', user.id).maybeSingle(),
+    supabase.from('player_ranks').select('id, player_name, position, ovr, pac, sho, pas, dri, def').eq('player_id', user.id).eq('sport', 'football').maybeSingle(),
   ])
 
   const p = (profile ?? {}) as Profile
@@ -37,6 +37,7 @@ export default async function PlayerCardPage() {
         <div style={{ display: 'flex', gap: 8 }}><Link href="/career" className="card-page-profile-link">Athlete Passport</Link><Link href="/profile" className="card-page-profile-link">แก้ไขโปรไฟล์</Link></div>
       </header>
       <PlayerCardBuilder
+        publicProfilePath={athleteProfile.is_public ? `/players/${playerRank?.id || user.id}` : null}
         player={{
           name,
           position: playerRank?.position || athleteProfile.position || p.position || 'MF',

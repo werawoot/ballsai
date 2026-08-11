@@ -37,7 +37,7 @@ function themeColors(theme: Theme) {
   return { top: '#f8d958', bottom: '#8b4c04', accent: '#fff0a3', ink: '#111827' }
 }
 
-export default function PlayerCardBuilder({ player }: { player: Player }) {
+export default function PlayerCardBuilder({ player, publicProfilePath }: { player: Player; publicProfilePath: string | null }) {
   const [theme, setTheme] = useState<Theme>('gold')
   const [format, setFormat] = useState<Format>('story')
   const [localImage, setLocalImage] = useState<string | null>(null)
@@ -116,7 +116,7 @@ export default function PlayerCardBuilder({ player }: { player: Player }) {
       setStatus('กำลังเตรียมการ์ดสำหรับแชร์…')
       const blob = await makeCard(); const file = new File([blob], 'balldoensai-player-card.png', { type: 'image/png' })
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: 'My BallDoenSai Player Card', text: 'นี่คือ Player Card ของฉันจาก BallDoenSai.com ⚽', files: [file] })
+        await navigator.share({ title: 'My BallDoenSai Player Card', text: 'นี่คือ Player Card ของฉันจาก BallDoenSai.com ⚽', url: publicProfilePath ? `${window.location.origin}${publicProfilePath}` : undefined, files: [file] })
         track('player_card_shared', { format, theme, has_photo: Boolean(imageUrl), rating: player.isRanked ? 'ranked' : 'starter' })
         setStatus('เปิดเมนูแชร์แล้ว เลือก Instagram, Facebook หรือ TikTok ได้เลย')
       } else {
@@ -149,7 +149,7 @@ export default function PlayerCardBuilder({ player }: { player: Player }) {
         <footer>BALLDOENSAI.COM · YOUR GAME, YOUR STORY</footer>
       </div></div>
       <div className="card-share-actions"><button onClick={download}><Download size={19} /> ดาวน์โหลด PNG</button><button className="card-share-primary" onClick={share}><Share2 size={19} /> แชร์การ์ด</button></div>
-      <p className="card-share-note"><Instagram size={15} /> บนมือถือ ปุ่ม “แชร์การ์ด” จะเปิดรายชื่อแอปที่ติดตั้งในเครื่อง</p>
+      <p className="card-share-note"><Instagram size={15} /> บนมือถือ ปุ่ม “แชร์การ์ด” จะเปิดรายชื่อแอปที่ติดตั้งในเครื่อง{publicProfilePath ? ' พร้อมลิงก์ Athlete Profile' : ''}</p>
       {status && <p className="card-status" role="status">{status}</p>}
     </div>
   </section>

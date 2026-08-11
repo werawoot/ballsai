@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { Crown, Sparkles, Trophy, MapPin, Zap, Shield, Star } from 'lucide-react'
 import Link from 'next/link'
 import EditProfileForm from './EditProfileForm'
+import PublicProfileShare from './PublicProfileShare'
 import SiteNav from '@/components/SiteNav'
 import { calculateLevel, identityTitle, levelProgress } from '@/lib/digital-identity'
 
@@ -47,8 +48,10 @@ type AthleteAchievementRecord = {
   proof_url?: string | null
   verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
 }
+type AthleteHighlightRecord = { id: number; title: string; media_path: string; media_type: 'image' | 'video' }
 
 type PlayerRankRecord = {
+  id: string
   player_name: string
   position: string
   ovr: number
@@ -99,7 +102,7 @@ export default async function ProfilePage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: athleteProfile }, { data: athleteVideos }, { data: achievements }, { data: playerRank }, { data: myTeams }, { data: identityProgress }] = await Promise.all([
+  const [{ data: profile }, { data: athleteProfile }, { data: athleteVideos }, { data: achievements }, { data: playerRank }, { data: myTeams }, { data: identityProgress }, { data: highlights }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('athlete_profiles').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('athlete_videos').select('*').eq('athlete_id', user.id).order('created_at', { ascending: false }),
@@ -107,6 +110,7 @@ export default async function ProfilePage() {
     supabase.from('player_ranks').select('*').eq('player_id', user.id).eq('sport', 'football').maybeSingle(),
     supabase.from('teams').select('*, tournaments(name, location)').eq('created_by', user.id).order('created_at', { ascending: false }).limit(5),
     supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', user.id).maybeSingle(),
+    supabase.from('athlete_highlights').select('id, title, media_path, media_type').eq('athlete_id', user.id).order('created_at', { ascending: false }),
   ])
 
   const typedProfile = (profile ?? null) as ProfileRecord | null
@@ -116,6 +120,7 @@ export default async function ProfilePage() {
   const typedPlayerRank = (playerRank ?? null) as PlayerRankRecord | null
   const typedTeams = (myTeams ?? []) as MyTeamRecord[]
   const typedIdentityProgress = identityProgress as IdentityProgress | null
+  const typedHighlights = (highlights ?? []) as AthleteHighlightRecord[]
   const fallbackXp = (typedPlayerRank?.pts ?? 0) >= 1500 ? 900 : typedPlayerRank ? 100 : 0
   const xp = typedIdentityProgress?.xp_total ?? fallbackXp
   const level = typedIdentityProgress?.current_level ?? calculateLevel(xp)
@@ -154,8 +159,9 @@ export default async function ProfilePage() {
         <div style={{ background: 'linear-gradient(125deg,#101827,#29456f 68%,#0b5234)', color: 'white', padding: 18, marginBottom: 20, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', width: 170, height: 170, borderRadius: '50%', border: '1px solid rgba(244,185,66,.32)', right: -50, top: -80 }} />
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 15 }}><div style={{ borderRight: '1px solid rgba(255,255,255,.22)', paddingRight: 15, display: 'grid', textAlign: 'center' }}><span style={{ fontFamily: 'var(--font-barlow)', fontSize: 9, letterSpacing: 1.2, color: '#f4c861', fontWeight: 800 }}>LEVEL</span><b style={{ fontFamily: 'var(--font-oswald)', fontSize: 43, lineHeight: .85 }}>{level.toString().padStart(2, '0')}</b></div><div style={{ flex: 1, minWidth: 0 }}><span style={{ fontFamily: 'var(--font-barlow)', fontSize: 9, letterSpacing: 1.2, color: '#f4c861', fontWeight: 800 }}>{identityTitle(level).toUpperCase()}</span><b style={{ display: 'block', fontSize: 16, marginTop: 4 }}>เส้นทางนักบอลของฉัน</b><div style={{ height: 5, background: 'rgba(255,255,255,.15)', marginTop: 11 }}><i style={{ display: 'block', height: '100%', width: `${levelInfo.percentage}%`, background: 'linear-gradient(90deg,#d71920,#f4c861)' }} /></div><small style={{ color: 'rgba(255,255,255,.65)', fontSize: 10, marginTop: 5, display: 'block' }}>{xp.toLocaleString()} XP · อีก {levelInfo.remaining.toLocaleString()} XP สู่ Level {level + 1}</small></div></div>
-          <div style={{ position: 'relative', display: 'flex', gap: 9, marginTop: 15 }}><Link href="/career" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#d71920', color: 'white', fontSize: 11, fontWeight: 800, textDecoration: 'none', padding: '9px 10px' }}><Sparkles size={14} /> ATHLETE PASSPORT</Link><Link href="/hall-of-fame" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid rgba(255,255,255,.35)', color: 'white', fontSize: 11, fontWeight: 800, textDecoration: 'none', padding: '8px 10px' }}><Crown size={14} /> HALL OF FAME</Link></div>
+          <div style={{ position: 'relative', display: 'flex', gap: 9, marginTop: 15 }}><Link href="/career" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#d71920', color: 'white', fontSize: 11, fontWeight: 800, textDecoration: 'none', padding: '9px 10px' }}><Sparkles size={14} /> ATHLETE PASSPORT</Link><Link href="/ranking?view=trending" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid rgba(255,255,255,.35)', color: 'white', fontSize: 11, fontWeight: 800, textDecoration: 'none', padding: '8px 10px' }}><Crown size={14} /> กำลังมาแรง</Link></div>
         </div>
+        <PublicProfileShare profilePath={`/players/${typedPlayerRank?.id || user.id}`} isPublic={typedAthleteProfile?.is_public ?? false} />
         {typedPlayerRank ? (
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
@@ -226,6 +232,7 @@ export default async function ProfilePage() {
             athleteProfile={typedAthleteProfile}
             videos={typedVideos}
             achievements={typedAchievements}
+            highlights={typedHighlights}
             userId={user.id}
           />
         </div>

@@ -1,24 +1,26 @@
 import Link from 'next/link'
-import { Trophy, MapPin, Zap, Shield, Star } from 'lucide-react'
+import { Award, Flame, Sparkles, Trophy, MapPin, Zap, Shield, Star } from 'lucide-react'
 import RankingFilter from './RankingFilter'
 import { samplePlayerRanks, showDemoData } from '@/lib/sample-data'
 import SiteNav from '@/components/SiteNav'
-import { getPublicRankingProvinces, getPublicRankings } from '@/lib/public-data'
+import { getPublicIdentityRankingData, getPublicRankingProvinces, getPublicRankings } from '@/lib/public-data'
 
 export default async function RankingPage({
   searchParams,
 }: {
- searchParams: { province?: string; position?: string; sport?: string; search?: string }
+ searchParams: { province?: string; position?: string; sport?: string; search?: string; view?: string }
 }) {
   const sport = searchParams.sport ?? 'football'
   const province = searchParams.province ?? ''
   const position = searchParams.position ?? ''
   const search = searchParams.search ?? ''
+  const view = ['overall', 'trending', 'emerging', 'mvp'].includes(searchParams.view ?? '') ? searchParams.view! : 'overall'
 
 
-  const [rankings, provinces] = await Promise.all([
+  const [rankings, provinces, identityData] = await Promise.all([
     getPublicRankings({ sport, season: '2026', province, position, search }),
     getPublicRankingProvinces(sport, '2026'),
+    getPublicIdentityRankingData(),
   ])
 
   const fallbackRankings = showDemoData ? samplePlayerRanks
@@ -29,8 +31,13 @@ export default async function RankingPage({
   const displayRankings = rankings && rankings.length > 0 ? rankings : fallbackRankings
   const uniqueProvinces = [...new Set((provinces && provinces.length > 0 ? provinces.map(p => p.province) : showDemoData ? samplePlayerRanks.map(p => p.province) : []) ?? [])]
 
-  const top3 = displayRankings.slice(0, 3)
-  const rest = displayRankings.slice(3)
+  const trending = [...displayRankings].filter(player => player.rank_change > 0).sort((a, b) => b.rank_change - a.rank_change || b.pts - a.pts)
+  const emerging = (identityData.emerging.length ? identityData.emerging : trending) as typeof displayRankings
+  const mvpLeaders = [...identityData.performance].sort((a, b) => b.mvps - a.mvps || b.goals - a.goals || b.pts - a.pts) as typeof displayRankings
+  const rankingsForView = view === 'trending' ? (trending.length ? trending : displayRankings) : view === 'emerging' ? (emerging.length ? emerging : displayRankings) : view === 'mvp' ? (mvpLeaders.length ? mvpLeaders : displayRankings) : displayRankings
+  const top3 = rankingsForView.slice(0, 3)
+  const rest = rankingsForView.slice(3)
+  const modeCopy = view === 'trending' ? { label: 'WHO IS CLIMBING', title: 'กำลังมาแรง' } : view === 'emerging' ? { label: 'UNDER 18 · PUBLIC PROFILES', title: 'ดาวรุ่งน่าจับตา' } : view === 'mvp' ? { label: 'VERIFIED MATCH STATS', title: 'MVP & สถิติเด่น' } : { label: 'POWER RATING TABLE', title: 'อันดับรวม' }
 
   const cardBg = (rank: number) => {
     if (rank === 1) return {
@@ -81,7 +88,7 @@ export default async function RankingPage({
             <span style={{ WebkitTextStroke: '2px rgba(255,255,255,0.4)', color: 'transparent' }}>RANKING</span>
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10 }}>
-            {displayRankings.length} นักกีฬา
+            {rankingsForView.length} นักกีฬา
             {province && ` · ${province}`}
             {position && ` · ${position}`}
           </p>
@@ -95,13 +102,18 @@ export default async function RankingPage({
 
       {/* FILTERS */}
 <RankingFilter provinces={uniqueProvinces} currentProvince={province} currentPosition={position} currentSearch={search} />
+      <section className="bds-content" style={{ paddingTop: 8, paddingBottom: 0 }}>
+        <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 6 }}>
+          {[{ id: 'overall', label: 'อันดับรวม', icon: Trophy }, { id: 'trending', label: 'กำลังมาแรง', icon: Flame }, { id: 'emerging', label: 'ดาวรุ่ง', icon: Sparkles }, { id: 'mvp', label: 'MVP & สถิติ', icon: Award }].map(item => { const Icon = item.icon; const href = new URLSearchParams({ ...(province ? { province } : {}), ...(position ? { position } : {}), ...(search ? { search } : {}), ...(item.id !== 'overall' ? { view: item.id } : {}) }).toString(); return <Link key={item.id} href={`/ranking${href ? `?${href}` : ''}`} style={{ flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${view === item.id ? '#111827' : '#d8d3c9'}`, background: view === item.id ? '#111827' : 'white', color: view === item.id ? 'white' : '#4d5663', padding: '9px 12px', fontSize: 11, fontWeight: 800, textDecoration: 'none' }}><Icon size={15} color={view === item.id ? '#f4c861' : '#d71920'} />{item.label}</Link> })}
+        </div>
+      </section>
       {/* TOP 3 */}
       {top3.length > 0 && (
         <>
           <div className="bds-content" style={{ padding: '16px 16px 0' }}>
             <div className="bds-section-title" style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <div style={{ width: 4, height: 20, background: '#CC0001', borderRadius: 2 }} />
-              🏆 TOP 3
+              <span style={{ color: '#d71920', marginRight: 6 }}>{modeCopy.label}</span>{modeCopy.title}
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 10, padding: '8px 12px 4px' }}>
@@ -192,7 +204,7 @@ export default async function RankingPage({
         </div>
       )}
 
-      {displayRankings.length === 0 && (
+      {rankingsForView.length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
           <Trophy size={48} color="#ddd" strokeWidth={1} style={{ marginBottom: 12 }} />
           <p style={{ fontSize: 15, fontWeight: 600, color: '#aaa' }}>ไม่พบนักกีฬาที่ค้นหา</p>

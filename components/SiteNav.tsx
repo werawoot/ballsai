@@ -1,13 +1,12 @@
 import Link from 'next/link'
-import { ClipboardList, Crown, House, Search, Trophy, User } from 'lucide-react'
+import { ClipboardList, House, Search, Trophy, User } from 'lucide-react'
 
-type SiteNavProps = { active?: 'athletes' | 'ranking' | 'tournaments' | 'profile' | 'hall' }
+type SiteNavProps = { active?: 'athletes' | 'ranking' | 'tournaments' | 'profile' }
 
 const items = [
   { id: 'home', href: '/', label: 'หน้าแรก', icon: House },
   { id: 'athletes', href: '/athletes', label: 'นักกีฬา', icon: Search },
   { id: 'ranking', href: '/ranking', label: 'Ranking', icon: Trophy },
-  { id: 'hall', href: '/hall-of-fame', label: 'Hall', icon: Crown },
   { id: 'tournaments', href: '/tournaments', label: 'รายการแข่ง', icon: ClipboardList },
   { id: 'profile', href: '/profile', label: 'โปรไฟล์', icon: User },
 ] as const

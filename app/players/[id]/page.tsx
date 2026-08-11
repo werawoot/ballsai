@@ -54,6 +54,7 @@ type AthleteProfile = {
 }
 
 type AthleteVideo = { id: number; title: string; video_url: string; video_type: string }
+type AthleteHighlight = { id: number; title: string; media_type: 'image' | 'video' }
 type AthleteAchievement = { id: number; title: string; event_name?: string | null; achievement_year?: number | null; proof_url?: string | null; verification_status: string }
 type SkillAssessment = { speed?: number | null; stamina?: number | null; strength?: number | null; technique?: number | null; vision?: number | null; source_level: string }
 
@@ -104,18 +105,21 @@ export default async function PlayerPage({ params }: { params: { id: string } })
 
   let athleteProfile: AthleteProfile | null = null
   let videos: AthleteVideo[] = []
+  let uploadedHighlights: AthleteHighlight[] = []
   let achievements: AthleteAchievement[] = []
   let skillAssessment: SkillAssessment | null = null
 
   if (athleteId) {
-    const [profileResult, videoResult, achievementResult, skillResult] = await Promise.all([
+    const [profileResult, videoResult, highlightResult, achievementResult, skillResult] = await Promise.all([
       supabase.from('athlete_profiles').select('*').eq('user_id', athleteId).maybeSingle(),
       supabase.from('athlete_videos').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6),
+      supabase.from('athlete_highlights').select('id, title, media_type').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6),
       supabase.from('athlete_achievements').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(8),
       supabase.from('athlete_skill_assessments').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     ])
     athleteProfile = profileResult.data as AthleteProfile | null
     videos = (videoResult.data ?? []) as AthleteVideo[]
+    uploadedHighlights = (highlightResult.data ?? []) as AthleteHighlight[]
     achievements = (achievementResult.data ?? []) as AthleteAchievement[]
     skillAssessment = skillResult.data as SkillAssessment | null
   }
@@ -215,7 +219,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
           </div>
         </section>
 
-        {videos.length > 0 && <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}><h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, marginBottom: 12 }}>HIGHLIGHTS</h2><div style={{ display: 'grid', gap: 7 }}>{videos.map(video => <a key={video.id} href={video.video_url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 46, padding: '9px 11px', border: '1px solid #e5e5e5', borderRadius: 6, color: '#111', textDecoration: 'none' }}><PlayCircle size={19} color="#CC0001" /><span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{video.title}</span><ExternalLink size={14} color="#999" /></a>)}</div></section>}
+        {(videos.length > 0 || uploadedHighlights.length > 0) && <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}><h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, marginBottom: 12 }}>HIGHLIGHT MOMENTS</h2><div style={{ display: 'grid', gap: 7 }}>{uploadedHighlights.map(item => <a key={`upload-${item.id}`} href={`/api/highlights/${item.id}/media`} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 46, padding: '9px 11px', border: '1px solid #e5e5e5', borderRadius: 6, color: '#111', textDecoration: 'none' }}><PlayCircle size={19} color="#CC0001" /><span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{item.title}<small style={{ display: 'block', color: '#888', marginTop: 2 }}>{item.media_type === 'video' ? 'วิดีโอที่อัปโหลด' : 'รูปที่อัปโหลด'}</small></span><ExternalLink size={14} color="#999" /></a>)}{videos.map(video => <a key={`link-${video.id}`} href={video.video_url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 46, padding: '9px 11px', border: '1px solid #e5e5e5', borderRadius: 6, color: '#111', textDecoration: 'none' }}><PlayCircle size={19} color="#CC0001" /><span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{video.title}</span><ExternalLink size={14} color="#999" /></a>)}</div></section>}
 
         {achievements.length > 0 && <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}><h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, marginBottom: 12 }}>ACHIEVEMENTS</h2><div>{achievements.map(item => <div key={item.id} style={{ display: 'flex', gap: 11, padding: '10px 0', borderBottom: '1px solid #eee' }}><Award size={19} color={item.verification_status === 'verified' ? '#15803d' : '#CC0001'} /><div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 800 }}>{item.title}</div><div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{[item.event_name, item.achievement_year].filter(Boolean).join(' · ') || 'BallDoenSai.com Athlete'}</div></div>{item.verification_status === 'verified' && <CheckCircle2 size={16} color="#15803d" />}</div>)}</div></section>}
       </div>

@@ -56,6 +56,6 @@ export default async function HallOfFamePage({ searchParams }: { searchParams: {
 
       {players.length > 3 && <><div className="hall-heading hall-list-heading"><div><p>KEEP CLIMBING</p><h2>ผู้ท้าชิง</h2></div></div><div className="hall-list">{players.slice(3).map((player, index) => <Link key={player.id} href={`/players/${player.id}`}><strong>{index + 4}</strong><span className="hall-list-mark"><PositionIcon position={player.position} /></span><span><b>{player.player_name}</b><small>{player.position} · {player.team} · {player.province}</small></span><em>{player.pts.toLocaleString()}<small>POWER</small></em></Link>)}</div></>}
     </section>
-    <SiteNav active="hall" />
+    <SiteNav active="ranking" />
   </main>
 }
