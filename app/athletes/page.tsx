@@ -5,6 +5,7 @@ import { CheckCircle2, MapPin, Shield, Star, Trophy, User, Users, Zap } from 'lu
 import AthleteFilters from './AthleteFilters'
 import SiteNav from '@/components/SiteNav'
 import { samplePlayerRanks, showDemoData } from '@/lib/sample-data'
+import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 
 type AthleteProfile = {
   user_id: string
@@ -58,7 +59,7 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
   const province = searchParams.province || ''
   const position = searchParams.position || ''
   const ageGroup = searchParams.age || ''
-  let profileQuery = supabase.from('athlete_profiles').select('*').eq('is_public', true).eq('sport', 'football').order('updated_at', { ascending: false })
+  let profileQuery = supabase.from('athlete_profiles').select('*').eq('is_public', true).eq('sport', ACTIVE_SPORT).order('updated_at', { ascending: false })
   if (search) profileQuery = profileQuery.ilike('display_name', `%${search}%`)
   if (province) profileQuery = profileQuery.eq('province', province)
   if (position) profileQuery = profileQuery.eq('position', position)
@@ -66,7 +67,7 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
   const realProfiles = (profileRows ?? []) as AthleteProfile[]
   const athleteIds = realProfiles.map(profile => profile.user_id)
   const { data: rankRows } = athleteIds.length
-    ? await supabase.from('player_ranks').select('id, player_id, pts, ovr, position').in('player_id', athleteIds).eq('sport', 'football').eq('season', '2026')
+    ? await supabase.from('player_ranks').select('id, player_id, pts, ovr, position').in('player_id', athleteIds).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON)
     : { data: [] }
   const rankByAthlete = new Map(((rankRows ?? []) as PlayerRank[]).map(rank => [rank.player_id, rank]))
 

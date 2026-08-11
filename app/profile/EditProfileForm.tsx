@@ -24,6 +24,7 @@ import {
   Weight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import { ACTIVE_SPORT } from '@/lib/season'
 
 type ProfileForm = {
   full_name?: string | null
@@ -288,7 +289,7 @@ export default function EditProfileForm({
         user_id: userId,
         display_name: displayName.trim(),
         birth_date: birthDate,
-        sport: 'football',
+        sport: ACTIVE_SPORT,
         position: position || null,
         province: province.trim() || null,
         height_cm: height ? Number(height) : null,

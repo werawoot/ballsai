@@ -299,9 +299,14 @@ UPSTASH_REDIS_REST_URL=your_upstash_redis_rest_url
 UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_rest_token
 
 NEXT_PUBLIC_SHOW_DEMO_DATA=false
+
+NEXT_PUBLIC_ACTIVE_SPORT=football
+NEXT_PUBLIC_ACTIVE_SEASON=2026
 ```
 
 หมายเหตุ:
+
+- `NEXT_PUBLIC_ACTIVE_SPORT` / `NEXT_PUBLIC_ACTIVE_SEASON` คือช่วงการแข่งขันที่ระบบใช้อยู่ (Ranking, Hall of Fame, บันทึกผล, Player Card, admin) ไม่ตั้งก็ได้ ค่า default คือ `football` / `2026` ตามที่ [`lib/season.ts`](lib/season.ts) กำหนด การเปลี่ยนฤดูกาลต้อง redeploy เพราะเป็นค่าระดับ build time
 
 - Google OAuth Client ID/Secret ตั้งใน **Supabase Auth provider dashboard** ไม่ใช่ `.env.local` ของ client
 - `RESEND_API_KEY` จำเป็นเมื่อเปิดส่งอีเมลแจ้งสถานะทีม

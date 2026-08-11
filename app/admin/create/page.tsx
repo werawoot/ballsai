@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Link2, Save, Trophy, Users } from 'lucide-react'
 import Link from 'next/link'
+import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 
 type AthleteAccount = {
   user_id: string
@@ -34,7 +35,7 @@ async function fetchUnlinkedAthleteAccounts(): Promise<{ accounts: AthleteAccoun
   const supabase = createClient()
   const [{ data: accounts, error: accountsError }, { data: linkedRanks, error: ranksError }] = await Promise.all([
     supabase.from('athlete_profiles').select('user_id, display_name, current_team, province, position').order('display_name'),
-    supabase.from('player_ranks').select('player_id').eq('sport', 'football').eq('season', '2026').not('player_id', 'is', null),
+    supabase.from('player_ranks').select('player_id').eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).not('player_id', 'is', null),
   ])
   if (accountsError || ranksError) {
     return { accounts: [], error: `โหลดบัญชีนักกีฬาไม่สำเร็จ: ${(accountsError || ranksError)?.message}` }
@@ -106,12 +107,12 @@ export default function CreatePlayerPage() {
         province: account.province?.trim() || '',
         position: account.position || 'MF',
         player_id: account.user_id,
-        sport: 'football',
-        season: '2026',
+        sport: ACTIVE_SPORT,
+        season: ACTIVE_SEASON,
       })
 
       if (error) {
-        skipped.push({ name: playerName, reason: error.code === '23505' ? 'มี Ranking ใน Season 2026 แล้ว' : error.message })
+        skipped.push({ name: playerName, reason: error.code === '23505' ? `มี Ranking ใน Season ${ACTIVE_SEASON} แล้ว` : error.message })
         continue
       }
       created += 1
@@ -149,11 +150,11 @@ export default function CreatePlayerPage() {
     const { error } = await supabase.from('player_ranks').insert({
       ...form,
       player_id: selectedPlayerId,
-      sport: 'football',
-      season: '2026'
+      sport: ACTIVE_SPORT,
+      season: ACTIVE_SEASON
     })
     if (error) {
-      setMessage(error.code === '23505' ? 'บัญชีนี้มี Ranking ใน Season 2026 แล้ว' : `เกิดข้อผิดพลาด: ${error.message}`)
+      setMessage(error.code === '23505' ? `บัญชีนี้มี Ranking ใน Season ${ACTIVE_SEASON} แล้ว` : `เกิดข้อผิดพลาด: ${error.message}`)
     } else {
       router.push('/admin')
     }

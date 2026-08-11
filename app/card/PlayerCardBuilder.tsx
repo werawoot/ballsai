@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { CheckCircle2, Copy, Download, Facebook, ImagePlus, Instagram, Loader2, Music2, Save, Share2, Sparkles, Trophy } from 'lucide-react'
 import { track } from '@vercel/analytics'
 import { createClient } from '@/lib/supabase'
+import { ACTIVE_SPORT } from '@/lib/season'
 
 type Player = {
   name: string
@@ -96,7 +97,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
       supabase.from('athlete_profiles').upsert({
         user_id: userId,
         display_name: name.trim(),
-        sport: 'football',
+        sport: ACTIVE_SPORT,
         position: position || null,
         province: province.trim() || null,
         current_team: team.trim() || null,

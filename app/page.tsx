@@ -17,6 +17,7 @@ import { isSampleId, samplePlayerRanks, sampleTournaments, showDemoData } from '
 import HomeHeroCarousel from './HomeHeroCarousel'
 import HomeHighlightsRail from './HomeHighlightsRail'
 import { getPublicOpenTournaments, getPublicRankings } from '@/lib/public-data'
+import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 
 const positionLabel: Record<string, string> = { GK: 'GOALKEEPER', DF: 'DEFENDER', MF: 'MIDFIELDER', FW: 'FORWARD' }
 const advertisementTickerItems = Array.from({ length: 14 }, (_, index) => index)
@@ -36,7 +37,7 @@ export default async function Home() {
 
   const [{ data: { user } }, rankings, tournaments] = await Promise.all([
     supabase.auth.getUser(),
-    getPublicRankings({ sport: 'football', season: '2026' }),
+    getPublicRankings({ sport: ACTIVE_SPORT, season: ACTIVE_SEASON }),
     getPublicOpenTournaments(),
   ])
 

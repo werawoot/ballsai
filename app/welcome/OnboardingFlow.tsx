@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Check, ChevronLeft, Compass, Sparkles, Trophy, UsersRound } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { ACTIVE_SPORT } from "@/lib/season";
 
 type Persona = "athlete" | "guardian" | "coach_organizer";
 type Goal = "player_card" | "find_competitions" | "follow_athlete" | "discover_talent";
@@ -25,7 +26,7 @@ export default function OnboardingFlow({ email, nextPath, userId }: { email: str
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [persona, setPersona] = useState<Persona | null>(null);
-  const [sport, setSport] = useState("football");
+  const [sport, setSport] = useState(ACTIVE_SPORT);
   const [goal, setGoal] = useState<Goal | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");

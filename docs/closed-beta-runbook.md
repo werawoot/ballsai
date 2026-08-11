@@ -24,9 +24,18 @@ RESEND_API_KEY=<resend_api_key>
 RESEND_FROM_EMAIL=BallDoenSai.com <verified-sender@your-domain.com>
 UPSTASH_REDIS_REST_URL=<upstash_redis_rest_url>
 UPSTASH_REDIS_REST_TOKEN=<upstash_redis_rest_token>
+
+# Optional. Defaults to football / 2026.
+NEXT_PUBLIC_ACTIVE_SPORT=football
+NEXT_PUBLIC_ACTIVE_SEASON=2026
 ```
 
 Notes:
+
+- `NEXT_PUBLIC_ACTIVE_SPORT` and `NEXT_PUBLIC_ACTIVE_SEASON` define the competition
+  window every ranking, result and card query uses (`lib/season.ts`). They are build-time
+  public values, so rolling into a new season means setting the variable and
+  redeploying. Leave them unset during W1 to keep the current window.
 
 - Demo data appears **only** when `NEXT_PUBLIC_SHOW_DEMO_DATA` is exactly `true`
   (`lib/sample-data.ts`). Leaving it unset behaves like `false`. Setting it

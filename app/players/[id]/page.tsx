@@ -23,6 +23,7 @@ import {
 import Link from 'next/link'
 import { isSampleId, samplePlayerRanks, showDemoData } from '@/lib/sample-data'
 import { IDENTITY_BADGES, calculateLevel, identityTitle } from '@/lib/digital-identity'
+import { ACTIVE_SPORT } from '@/lib/season'
 
 type PlayerRecord = {
   id: string
@@ -101,7 +102,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
 
   const routeIsUserId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(params.id)
   const linkedPlayerResult = !player && routeIsUserId
-    ? await supabase.from('player_ranks').select('*').eq('player_id', params.id).eq('sport', 'football').maybeSingle()
+    ? await supabase.from('player_ranks').select('*').eq('player_id', params.id).eq('sport', ACTIVE_SPORT).maybeSingle()
     : { data: null }
   const rankedPlayer = (player || linkedPlayerResult.data) as PlayerRecord | null
   const athleteId = rankedPlayer?.player_id || (routeIsUserId ? params.id : null)

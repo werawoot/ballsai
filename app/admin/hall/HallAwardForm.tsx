@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Award, Save } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import { ACTIVE_SEASON } from '@/lib/season'
 
 type Player = { id: string; player_id: string | null; player_name: string; team: string; province: string; position: string }
 
@@ -12,7 +13,7 @@ export default function HallAwardForm({ players }: { players: Player[] }) {
   const [playerId, setPlayerId] = useState('')
   const [category, setCategory] = useState('mvp')
   const [ageGroup, setAgeGroup] = useState('OPEN')
-  const [season, setSeason] = useState('2026')
+  const [season, setSeason] = useState(ACTIVE_SEASON)
   const [citation, setCitation] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')

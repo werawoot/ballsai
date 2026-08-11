@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { unstable_cache } from 'next/cache'
+import { ACTIVE_SEASON, ACTIVE_SPORT } from './season'
 
 const publicSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -105,7 +106,7 @@ export const getPublicHallOfFame = unstable_cache(
       let profileQuery = publicSupabase
         .from('athlete_profiles')
         .select('user_id, province')
-        .eq('sport', 'football')
+        .eq('sport', ACTIVE_SPORT)
         .eq('is_public', true)
       if (province) profileQuery = profileQuery.eq('province', province)
       const { data: profiles, error: profileError } = await profileQuery.limit(250)
@@ -115,8 +116,8 @@ export const getPublicHallOfFame = unstable_cache(
       const { data, error } = await publicSupabase
         .from('player_ranks')
         .select('*')
-        .eq('sport', 'football')
-        .eq('season', '2026')
+        .eq('sport', ACTIVE_SPORT)
+        .eq('season', ACTIVE_SEASON)
         .in('player_id', athleteIds)
         .order('pts', { ascending: false })
         .limit(50)
@@ -136,7 +137,7 @@ type PublicRank = Record<string, unknown> & { id: string; player_id: string | nu
 type PublicRating = { player_id: string; player_rank_id: string | null; goals: number; assists: number; clean_sheets: number; mvps: number; matches_played: number }
 
 async function publicProfileIds() {
-  const { data, error } = await publicSupabase.from('athlete_profiles').select('user_id, birth_date').eq('sport', 'football').eq('is_public', true).limit(500)
+  const { data, error } = await publicSupabase.from('athlete_profiles').select('user_id, birth_date').eq('sport', ACTIVE_SPORT).eq('is_public', true).limit(500)
   if (error) throw error
   return (data ?? []) as PublicProfile[]
 }
@@ -148,8 +149,8 @@ export const getPublicIdentityRankingData = unstable_cache(
       const ids = profiles.map(item => item.user_id)
       if (!ids.length) return { emerging: [] as PublicRank[], performance: [] as Array<PublicRank & PublicRating> }
       const [{ data: ranks, error: ranksError }, { data: ratings, error: ratingsError }] = await Promise.all([
-        publicSupabase.from('player_ranks').select('*').eq('sport', 'football').eq('season', '2026').in('player_id', ids).limit(500),
-        publicSupabase.from('player_ratings').select('player_id, player_rank_id, goals, assists, clean_sheets, mvps, matches_played').eq('sport', 'football').eq('season', '2026').in('player_id', ids).limit(500),
+        publicSupabase.from('player_ranks').select('*').eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).in('player_id', ids).limit(500),
+        publicSupabase.from('player_ratings').select('player_id, player_rank_id, goals, assists, clean_sheets, mvps, matches_played').eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).in('player_id', ids).limit(500),
       ])
       if (ranksError) throw ranksError
       if (ratingsError) throw ratingsError

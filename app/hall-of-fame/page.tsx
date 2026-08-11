@@ -3,6 +3,7 @@ import { Award, Crown, MapPin, Medal, Shield, Sparkles, Trophy } from 'lucide-re
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import SiteNav from '@/components/SiteNav'
+import { ACTIVE_SEASON } from '@/lib/season'
 
 type HallEntry = {
   id: string
@@ -29,7 +30,7 @@ const categoryCopy: Record<HallEntry['category'], { label: string; icon: typeof 
 }
 
 export default async function HallOfFamePage({ searchParams }: { searchParams: { season?: string; category?: string; age?: string; province?: string } }) {
-  const season = searchParams.season || '2026'
+  const season = searchParams.season || ACTIVE_SEASON
   const category = Object.keys(categoryCopy).includes(searchParams.category || '') ? searchParams.category as HallEntry['category'] : ''
   const age = ['U12', 'U15', 'U18', 'OPEN'].includes(searchParams.age || '') ? searchParams.age! : ''
   const province = searchParams.province || ''

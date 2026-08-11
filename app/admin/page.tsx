@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import DeletePlayerButton from "./DeletePlayerButton";
 import EditPlayerButton from "./EditPlayerButton";
+import { ACTIVE_SEASON, ACTIVE_SPORT } from "@/lib/season";
 
 export default async function AdminPage() {
   const cookieStore = cookies();
@@ -52,8 +53,8 @@ export default async function AdminPage() {
     supabase
       .from("player_ranks")
       .select("*")
-      .eq("sport", "football")
-      .eq("season", "2026")
+      .eq("sport", ACTIVE_SPORT)
+      .eq("season", ACTIVE_SEASON)
       .order("pts", { ascending: false }),
     supabase
       .from("athlete_profiles")

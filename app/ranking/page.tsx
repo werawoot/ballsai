@@ -4,13 +4,14 @@ import RankingFilter from './RankingFilter'
 import { samplePlayerRanks, showDemoData } from '@/lib/sample-data'
 import SiteNav from '@/components/SiteNav'
 import { getPublicIdentityRankingData, getPublicRankingProvinces, getPublicRankings } from '@/lib/public-data'
+import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 
 export default async function RankingPage({
   searchParams,
 }: {
  searchParams: { province?: string; position?: string; sport?: string; search?: string; view?: string }
 }) {
-  const sport = searchParams.sport ?? 'football'
+  const sport = searchParams.sport ?? ACTIVE_SPORT
   const province = searchParams.province ?? ''
   const position = searchParams.position ?? ''
   const search = searchParams.search ?? ''
@@ -18,8 +19,8 @@ export default async function RankingPage({
 
 
   const [rankings, provinces, identityData] = await Promise.all([
-    getPublicRankings({ sport, season: '2026', province, position, search }),
-    getPublicRankingProvinces(sport, '2026'),
+    getPublicRankings({ sport, season: ACTIVE_SEASON, province, position, search }),
+    getPublicRankingProvinces(sport, ACTIVE_SEASON),
     getPublicIdentityRankingData(),
   ])
 

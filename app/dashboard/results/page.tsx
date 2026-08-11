@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, Trophy } from 'lucide-react'
 import MatchResultForm from './MatchResultForm'
 import MatchResultHistory from './MatchResultHistory'
+import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 
 type TournamentOption = {
   id: string
@@ -89,8 +90,8 @@ export default async function MatchResultsPage() {
   const { data: players } = await supabase
     .from('player_ranks')
     .select('id, player_name, team, position, pts')
-    .eq('sport', 'football')
-    .eq('season', '2026')
+    .eq('sport', ACTIVE_SPORT)
+    .eq('season', ACTIVE_SEASON)
     .order('player_name')
 
   const { data: matchResults } = await supabase

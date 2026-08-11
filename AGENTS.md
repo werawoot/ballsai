@@ -72,14 +72,17 @@ Known manual seams, by design for now:
   batch action. An athlete without one earns no match XP.
 - Team rosters are free text, so the athlete list in `/dashboard/results` is the whole
   season and is searched by name/team.
-- `sport` and `season` are hardcoded to `football` / `2026` in ranking, results, hall,
-  admin, profile, card and `lib/public-data.ts`.
+- Only one competition window is active at a time. `lib/season.ts` is the single source:
+  `ACTIVE_SPORT` and `ACTIVE_SEASON`, from `NEXT_PUBLIC_ACTIVE_SPORT` /
+  `NEXT_PUBLIC_ACTIVE_SEASON`, defaulting to `football` / `2026`. Never write those
+  literals into a query again — import from `lib/season.ts`. The sport picker in
+  `/welcome` is a user choice and keeps its own list.
 
 ## Next tasks, in order
 
-Before expanding past 5 testers: unhardcode `sport`/`season`; real team roster linking
-members to accounts (`team_members`, new migration); Highlight moderation queue with
-report and admin delete; in-app notifications.
+Before expanding past 5 testers: real team roster linking members to accounts
+(`team_members`, new migration); Highlight moderation queue with report and admin
+delete; in-app notifications.
 
 Before public launch: guardian consent enforced at the database level, not only in
 `app/profile/EditProfileForm.tsx`; account and data deletion for PDPA; move the admin

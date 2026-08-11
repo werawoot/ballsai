@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Trophy } from 'lucide-react'
 import PlayerCardBuilder from './PlayerCardBuilder'
+import { ACTIVE_SPORT } from '@/lib/season'
 
 type Profile = { full_name?: string | null; province?: string | null; team?: string | null; position?: string | null }
 type AthleteProfile = { display_name?: string | null; position?: string | null; province?: string | null; current_team?: string | null; profile_image_url?: string | null; verification_level?: string | null; is_public?: boolean }
@@ -22,7 +23,7 @@ export default async function PlayerCardPage() {
   const [{ data: profile }, { data: athlete }, { data: rank }] = await Promise.all([
     supabase.from('profiles').select('full_name, province, team, position').eq('id', user.id).maybeSingle(),
     supabase.from('athlete_profiles').select('display_name, position, province, current_team, profile_image_url, verification_level, is_public').eq('user_id', user.id).maybeSingle(),
-    supabase.from('player_ranks').select('id, player_name, position, ovr, pac, sho, pas, dri, def').eq('player_id', user.id).eq('sport', 'football').maybeSingle(),
+    supabase.from('player_ranks').select('id, player_name, position, ovr, pac, sho, pas, dri, def').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).maybeSingle(),
   ])
 
   const p = (profile ?? {}) as Profile

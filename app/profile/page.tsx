@@ -7,6 +7,7 @@ import EditProfileForm from './EditProfileForm'
 import PublicProfileShare from './PublicProfileShare'
 import SiteNav from '@/components/SiteNav'
 import { calculateLevel, identityTitle, levelProgress } from '@/lib/digital-identity'
+import { ACTIVE_SPORT } from '@/lib/season'
 
 type ProfileRecord = {
   full_name?: string | null
@@ -107,7 +108,7 @@ export default async function ProfilePage() {
     supabase.from('athlete_profiles').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('athlete_videos').select('*').eq('athlete_id', user.id).order('created_at', { ascending: false }),
     supabase.from('athlete_achievements').select('*').eq('athlete_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('player_ranks').select('*').eq('player_id', user.id).eq('sport', 'football').maybeSingle(),
+    supabase.from('player_ranks').select('*').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).maybeSingle(),
     supabase.from('teams').select('*, tournaments(name, location)').eq('created_by', user.id).order('created_at', { ascending: false }).limit(5),
     supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', user.id).maybeSingle(),
     supabase.from('athlete_highlights').select('id, title, media_path, media_type').eq('athlete_id', user.id).order('created_at', { ascending: false }),

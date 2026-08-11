@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Award, ChevronRight, CircleDot, Crown, Footprints, Medal, Play, ShieldCheck, Sparkles, Trophy, UserRound } from 'lucide-react'
 import SiteNav from '@/components/SiteNav'
 import { IDENTITY_BADGES, calculateLevel, identityTitle, levelProgress, unlockedBadgeKeys } from '@/lib/digital-identity'
+import { ACTIVE_SPORT } from '@/lib/season'
 
 type AthleteProfile = { display_name: string; created_at: string; verification_level: string }
 type Rating = { id: string; power_rating: number; matches_played: number; wins: number; goals: number; assists: number; clean_sheets: number; mvps: number; confidence: string }
@@ -32,7 +33,7 @@ export default async function CareerPage() {
 
   const [{ data: athlete }, { data: rating }, { data: achievements }, { data: teams }, { data: progress }, { data: videos }, { data: highlights }, { data: earnedBadges }] = await Promise.all([
     supabase.from('athlete_profiles').select('display_name, created_at, verification_level').eq('user_id', user.id).maybeSingle(),
-    supabase.from('player_ratings').select('id, power_rating, matches_played, wins, goals, assists, clean_sheets, mvps, confidence').eq('player_id', user.id).eq('sport', 'football').maybeSingle(),
+    supabase.from('player_ratings').select('id, power_rating, matches_played, wins, goals, assists, clean_sheets, mvps, confidence').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).maybeSingle(),
     supabase.from('athlete_achievements').select('id, title, event_name, verification_status, created_at').eq('athlete_id', user.id).order('created_at', { ascending: false }).limit(12),
     supabase.from('teams').select('id, name, status, created_at, tournaments(name)').eq('created_by', user.id).order('created_at', { ascending: false }).limit(12),
     supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', user.id).maybeSingle(),
