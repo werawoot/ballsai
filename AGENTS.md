@@ -21,6 +21,8 @@ Fame. Users are minors, their guardians, coaches and tournament organizers.
 3. **Never edit an SQL file that has already been applied.** Every schema or function
    change is a new file in `sql/`, then added to the runbook table with its order and
    dependencies. `sql/` is the record of what production looks like.
+   `sql/apply-closed-beta-2026-08.sql` is only a convenience bundle of steps 13–16 for a
+   single paste; add new work as its own numbered file, never inside the bundle.
 4. Do **not** apply `sql/supabase-rls-private-slips.sql`. `sql/production-hardening.sql`
    already makes the `slips` bucket private with a newer policy, and the private-slips
    file would overwrite the optimized `profiles` policies. Do not apply

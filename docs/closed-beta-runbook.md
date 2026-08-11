@@ -113,11 +113,16 @@ where tgname = 'athlete_profiles_guardian_consent_guard';
 
 select proname from pg_proc where proname in (
   'register_team_safely', 'confirm_payment_safely', 'record_match_result_safely',
-  'void_match_result_safely'
+  'void_match_result_safely', 'delete_my_athlete_data'
 );
 ```
 
-Five triggers and four functions must come back.
+Five triggers and five functions must come back.
+
+Steps 13–16 are also bundled as `sql/apply-closed-beta-2026-08.sql`, a single
+transaction with the same content and the verification queries at the end. Use the bundle
+to apply them in one paste, or the individual files if you want to go step by step. The
+four numbered files stay the record of what production looks like.
 
 ---
 
