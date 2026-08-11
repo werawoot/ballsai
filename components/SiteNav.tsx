@@ -1,0 +1,25 @@
+import Link from 'next/link'
+import { ClipboardList, House, Search, Trophy, User } from 'lucide-react'
+
+type SiteNavProps = { active?: 'athletes' | 'ranking' | 'tournaments' | 'profile' }
+
+const items = [
+  { id: 'home', href: '/', label: 'หน้าแรก', icon: House },
+  { id: 'athletes', href: '/athletes', label: 'นักกีฬา', icon: Search },
+  { id: 'ranking', href: '/ranking', label: 'Ranking', icon: Trophy },
+  { id: 'tournaments', href: '/tournaments', label: 'รายการแข่ง', icon: ClipboardList },
+  { id: 'profile', href: '/profile', label: 'โปรไฟล์', icon: User },
+] as const
+
+export default function SiteNav({ active }: SiteNavProps) {
+  return <nav className="bds-nav" aria-label="เมนูหลัก">
+    {items.map(item => {
+      const Icon = item.icon
+      const isActive = item.id === active
+      return <Link key={item.id} href={item.href} className={`bds-nav-item ${isActive ? 'is-active' : ''}`}>
+        <Icon size={19} />
+        <span>{item.label}</span>
+      </Link>
+    })}
+  </nav>
+}

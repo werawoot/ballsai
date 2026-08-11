@@ -1,9 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { House, Trophy, ClipboardList, User, MapPin, Zap, Shield, Star, Search } from 'lucide-react'
+import { Trophy, MapPin, Zap, Shield, Star } from 'lucide-react'
 import Link from 'next/link'
 import EditProfileForm from './EditProfileForm'
+import SiteNav from '@/components/SiteNav'
 
 type ProfileRecord = {
   full_name?: string | null
@@ -114,14 +115,14 @@ export default async function ProfilePage() {
   const cardBg = 'linear-gradient(160deg,#3d2a00 0%,#c8860a 18%,#f5c518 30%,#c8860a 42%,#7a4f00 55%,#c8860a 70%,#f5c518 82%,#3d2a00 100%)'
 
   return (
-    <main style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
-      <header style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
+    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
+      <header className="bds-header" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
         <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
           <Trophy size={22} strokeWidth={2.5} /> BallDoenSai.com
         </Link>
       </header>
 
-      <div style={{ background: '#CC0001', padding: '20px 16px 36px', position: 'relative', overflow: 'hidden' }}>
+      <div className="bds-hero" style={{ background: '#CC0001', padding: '20px 16px 36px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg,transparent,transparent 20px,rgba(255,255,255,0.03) 20px,rgba(255,255,255,0.03) 21px)' }} />
         <div style={{ position: 'relative' }}>
           <h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(28px,8vw,48px)', fontWeight: 700, color: 'white', lineHeight: 0.9, textTransform: 'uppercase' }}>
@@ -137,11 +138,11 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      <svg viewBox="0 0 375 28" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 28, marginTop: -1 }}>
+      <svg className="bds-wave" viewBox="0 0 375 28" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 28, marginTop: -1 }}>
         <path d="M0,0 C100,28 275,0 375,20 L375,0 Z" fill="#CC0001" />
       </svg>
 
-      <div style={{ padding: '16px' }}>
+      <div className="bds-content" style={{ padding: '16px' }}>
         {typedPlayerRank ? (
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
@@ -181,12 +182,24 @@ export default async function ProfilePage() {
             <div style={{ textAlign: 'center', marginTop: 10, fontFamily: 'var(--font-oswald)', fontSize: 16, fontWeight: 700, color: '#CC0001' }}>
               {typedPlayerRank.pts.toLocaleString()} Power Rating
             </div>
+            <div style={{ textAlign: 'center', marginTop: 12 }}>
+              <Link href="/card" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#111827', color: 'white', textDecoration: 'none', padding: '10px 14px', fontFamily: 'var(--font-oswald)', fontSize: 13, fontWeight: 700, letterSpacing: .4 }}>
+                สร้างและแชร์ PLAYER CARD
+              </Link>
+              <Link href="/career" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'white', color: '#111827', border: '1px solid #111827', textDecoration: 'none', padding: '9px 13px', marginLeft: 8, fontFamily: 'var(--font-oswald)', fontSize: 13, fontWeight: 700, letterSpacing: .4 }}>
+                ATHLETE PASSPORT
+              </Link>
+            </div>
           </div>
         ) : (
           <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: '24px', textAlign: 'center', marginBottom: 20 }}>
             <Star size={40} color="#ddd" strokeWidth={1} style={{ marginBottom: 10 }} />
             <p style={{ fontSize: 14, fontWeight: 700, color: '#aaa' }}>ยังไม่มีการ์ดนักกีฬา</p>
             <p style={{ fontSize: 12, color: '#ccc', marginTop: 4 }}>เข้าร่วมแข่งขันเพื่อรับ Rating</p>
+            <Link href="/card" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#CC0001', color: 'white', textDecoration: 'none', padding: '10px 14px', marginTop: 14, fontFamily: 'var(--font-oswald)', fontSize: 13, fontWeight: 700, letterSpacing: .4 }}>
+              สร้าง STARTER CARD ของฉัน
+            </Link>
+            <div><Link href="/career" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: '#555', textDecoration: 'underline', paddingTop: 13, fontSize: 12, fontWeight: 700 }}>ดู Athlete Passport ของฉัน</Link></div>
           </div>
         )}
 
@@ -241,21 +254,7 @@ export default async function ProfilePage() {
         )}
       </div>
 
-      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white', borderTop: '1.5px solid #e5e5e5', display: 'flex', justifyContent: 'space-around', padding: '6px 0', zIndex: 100, boxShadow: '0 -4px 20px rgba(0,0,0,0.06)' }}>
-        {[
-          { icon: <House size={22} />, label: 'หน้าแรก', href: '/', active: false },
-          { icon: <Search size={22} />, label: 'นักกีฬา', href: '/athletes', active: false },
-          { icon: <Trophy size={22} />, label: 'Ranking', href: '/ranking', active: false },
-          { icon: <ClipboardList size={22} />, label: 'รายการแข่ง', href: '/tournaments', active: false },
-          { icon: <User size={22} />, label: 'โปรไฟล์', href: '/profile', active: true },
-        ].map((item) => (
-          <Link key={item.href} href={item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 12px', textDecoration: 'none', color: item.active ? '#CC0001' : '#aaa', minWidth: 55 }}>
-            {item.icon}
-            <span style={{ fontSize: 10, fontWeight: 700 }}>{item.label}</span>
-            {item.active && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#CC0001' }} />}
-          </Link>
-        ))}
-      </nav>
+      <SiteNav active="profile" />
     </main>
   )
 }

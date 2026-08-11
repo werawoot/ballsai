@@ -1,8 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
-import { CheckCircle2, ClipboardList, House, MapPin, Shield, Star, Trophy, User, Users, Zap } from 'lucide-react'
+import { CheckCircle2, MapPin, Shield, Star, Trophy, User, Users, Zap } from 'lucide-react'
 import AthleteFilters from './AthleteFilters'
+import SiteNav from '@/components/SiteNav'
 import { samplePlayerRanks, showDemoData } from '@/lib/sample-data'
 
 type AthleteProfile = {
@@ -84,20 +85,20 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
   const provinces = [...new Set(realProfiles.map(profile => profile.province).filter((value): value is string => Boolean(value)))].sort()
 
   return (
-    <main style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 80 }}>
-      <header style={{ height: 54, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#CC0001', color: 'white', position: 'sticky', top: 0, zIndex: 50 }}>
+    <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 80 }}>
+      <header className="bds-header" style={{ height: 54, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#CC0001', color: 'white', position: 'sticky', top: 0, zIndex: 50 }}>
         <Link href="/" style={{ color: 'white', textDecoration: 'none', display: 'flex', gap: 8, alignItems: 'center', fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2 }}><Trophy size={22} />BallDoenSai.com</Link>
         <span style={{ fontSize: 11, fontWeight: 800 }}>ATHLETE DATABASE</span>
       </header>
 
-      <section style={{ background: '#111', color: 'white', padding: '25px 16px 22px' }}>
+      <section className="bds-hero" style={{ background: '#111', color: 'white', padding: '25px 16px 22px' }}>
         <div style={{ maxWidth: 920, margin: '0 auto' }}><span style={{ fontSize: 10, fontWeight: 800, color: '#ff7373' }}>FOOTBALL · THAILAND</span><h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(30px,8vw,48px)', lineHeight: 1, marginTop: 5 }}>ค้นหานักกีฬาเยาวชน</h1><p style={{ fontSize: 12, color: '#aaa', marginTop: 8 }}>โปรไฟล์ ผลงาน และข้อมูลที่ระบุระดับการยืนยันอย่างชัดเจน</p></div>
       </section>
 
       <AthleteFilters provinces={provinces} currentSearch={search} currentProvince={province} currentPosition={position} currentAge={ageGroup} />
 
-      <section style={{ maxWidth: 920, margin: '0 auto', padding: '18px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}><h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 17 }}>นักกีฬาที่พบ</h2><span style={{ fontSize: 11, color: '#888' }}>{visibleProfiles.length} โปรไฟล์</span></div>
+      <section className="bds-content" style={{ maxWidth: 920, margin: '0 auto', padding: '18px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}><h2 className="bds-section-title" style={{ fontFamily: 'var(--font-oswald)', fontSize: 17 }}>นักกีฬาที่พบ</h2><span style={{ fontSize: 11, color: '#888' }}>{visibleProfiles.length} โปรไฟล์</span></div>
         {visibleProfiles.length === 0 ? <div style={{ padding: '50px 20px', textAlign: 'center', borderTop: '1px solid #ddd', color: '#888' }}><User size={34} strokeWidth={1.3} /><p style={{ marginTop: 10, fontSize: 13 }}>ยังไม่มีนักกีฬาที่ตรงกับตัวกรอง</p></div> : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(155px,1fr))', gap: 10 }}>
           {visibleProfiles.map(profile => {
             const sampleRank = profile.sampleRank
@@ -105,7 +106,7 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
             const routeId = rank?.id || profile.user_id
             const athleteAge = getAge(profile.birth_date)
             const verified = profile.verification_level !== 'self'
-            return <Link key={profile.user_id} href={`/players/${routeId}`} style={{ background: 'white', border: '1px solid #dededb', borderRadius: 7, overflow: 'hidden', textDecoration: 'none', color: '#111', minWidth: 0 }}>
+            return <Link className="bds-card" key={profile.user_id} href={`/players/${routeId}`} style={{ background: 'white', border: '1px solid #dededb', borderRadius: 7, overflow: 'hidden', textDecoration: 'none', color: '#111', minWidth: 0 }}>
               <div style={{ height: 144, position: 'relative', background: profile.profile_image_url ? `url(${profile.profile_image_url}) center top/cover` : '#ececea', display: 'grid', placeItems: 'center', color: '#CC0001' }}>
                 {!profile.profile_image_url && <PositionMark position={profile.position || 'FW'} />}
                 <span style={{ position: 'absolute', left: 8, top: 8, background: '#111', color: 'white', borderRadius: 4, padding: '3px 7px', fontFamily: 'var(--font-barlow)', fontSize: 10, fontWeight: 800 }}>{profile.position || 'N/A'}</span>
@@ -122,9 +123,7 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
         </div>}
       </section>
 
-      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '6px 0', zIndex: 100 }}>
-        {[{ icon: <House size={22} />, label: 'หน้าแรก', href: '/' }, { icon: <User size={22} />, label: 'นักกีฬา', href: '/athletes' }, { icon: <Trophy size={22} />, label: 'Ranking', href: '/ranking' }, { icon: <ClipboardList size={22} />, label: 'รายการแข่ง', href: '/tournaments' }, { icon: <User size={22} />, label: 'โปรไฟล์', href: '/profile' }].map(item => <Link key={item.href} href={item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 6px', color: item.href === '/athletes' ? '#CC0001' : '#999', textDecoration: 'none', minWidth: 52 }}>{item.icon}<span style={{ fontSize: 9, fontWeight: 700 }}>{item.label}</span></Link>)}
-      </nav>
+      <SiteNav active="athletes" />
     </main>
   )
 }

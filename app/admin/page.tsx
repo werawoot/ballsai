@@ -67,6 +67,7 @@ export default async function AdminPage() {
 
   return (
     <main
+      className="bds-page"
       style={{
         background: "#f8f8f8",
         minHeight: "100vh",
@@ -75,7 +76,7 @@ export default async function AdminPage() {
       }}
     >
       {/* TOPBAR */}
-      <header
+      <header className="bds-header"
         style={{
           position: "sticky",
           top: 0,
@@ -119,7 +120,7 @@ export default async function AdminPage() {
       </header>
 
       {/* HERO */}
-      <div
+      <div className="bds-hero"
         style={{
           background: "#CC0001",
           padding: "20px 16px 36px",

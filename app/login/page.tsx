@@ -14,6 +14,10 @@ export default function LoginPage() {
   const [loginMode, setLoginMode] = useState<"otp" | "admin">("otp");
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const getNextPath = () => {
+    const requestedNext = new URLSearchParams(window.location.search).get("next");
+    return requestedNext?.startsWith("/") && !requestedNext.startsWith("//") ? requestedNext : "/";
+  };
 
   const sendOtp = async () => {
     if (!acceptedTerms) {
@@ -24,9 +28,10 @@ export default function LoginPage() {
     setLoading(true);
     setMessage("");
     const supabase = createClient();
+    const nextPath = getNextPath();
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}` },
     });
     if (error) {
       setMessage("เกิดข้อผิดพลาด: " + error.message);
@@ -41,6 +46,7 @@ export default function LoginPage() {
     setLoading(true);
     setMessage("");
     const supabase = createClient();
+    const nextPath = getNextPath();
     const { error } = await supabase.auth.verifyOtp({
       email,
       token: otp,
@@ -49,7 +55,7 @@ export default function LoginPage() {
     if (error) {
       setMessage("OTP ไม่ถูกต้อง: " + error.message);
     } else {
-      window.location.href = "/";
+      window.location.href = nextPath;
     }
     setLoading(false);
   };
@@ -70,7 +76,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main
+    <main className="bds-auth"
       style={{
         minHeight: "100vh",
         background: "#f8f8f8",
@@ -78,7 +84,7 @@ export default function LoginPage() {
         flexDirection: "column",
       }}
     >
-      <div
+      <div className="bds-auth-controls"
         style={{
           display: "flex",
           justifyContent: "flex-end",
@@ -136,7 +142,7 @@ export default function LoginPage() {
       </div>
 
       {/* TOP RED SECTION */}
-      <div
+      <div className="bds-auth-hero"
         style={{
           background: "#CC0001",
           padding: "48px 24px 64px",
@@ -214,7 +220,7 @@ export default function LoginPage() {
       </svg>
 
       {/* CARD */}
-      <div
+      <div className="bds-auth-body"
         style={{
           flex: 1,
           display: "flex",
@@ -223,7 +229,7 @@ export default function LoginPage() {
           padding: "24px 20px",
         }}
       >
-        <div
+        <div className="bds-auth-card"
           style={{
             width: "100%",
             maxWidth: 400,

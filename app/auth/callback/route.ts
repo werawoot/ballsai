@@ -5,6 +5,10 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const requestedNext = searchParams.get('next')
+  const safeNext = requestedNext && requestedNext.startsWith('/') && !requestedNext.startsWith('//')
+    ? requestedNext
+    : '/'
 
   if (code) {
     const cookieStore = await cookies()
@@ -25,5 +29,5 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  return NextResponse.redirect(origin)
+  return NextResponse.redirect(new URL(safeNext, origin))
 }

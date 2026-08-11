@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { Sarabun, Oswald, Barlow_Condensed } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 
 const sarabun = Sarabun({
@@ -30,6 +32,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="th">
       <body className={`${sarabun.variable} ${oswald.variable} ${barlowCondensed.variable}`}>
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

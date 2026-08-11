@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { calculateRating, type MatchResult, type PlayerPosition } from '@/lib/rating'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
@@ -331,6 +332,8 @@ export async function POST(request: Request) {
     route: '/api/match-results',
     metadata: { matchResultId, tournamentId: body.tournamentId, performanceCount: preview.length },
   })
+
+  revalidateTag('public-ranking')
 
   return NextResponse.json({ ok: true, mode: 'confirm', matchResultId, preview })
 }

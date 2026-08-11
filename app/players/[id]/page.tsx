@@ -167,13 +167,13 @@ export default async function PlayerPage({ params }: { params: { id: string } })
   ].filter(item => item.value !== null && item.value !== undefined) : []
 
   return (
-    <main style={{ background: '#f6f6f4', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
-      <header style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
+    <main className="bds-page" style={{ background: '#f6f6f4', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
+      <header className="bds-header" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
         <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}><Trophy size={22} /> BallDoenSai.com</Link>
         <Link href="/athletes" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}><ArrowLeft size={16} /> นักกีฬา</Link>
       </header>
 
-      <section style={{ background: '#CC0001', color: 'white', padding: '24px 16px 44px' }}>
+      <section className="bds-hero" style={{ background: '#CC0001', color: 'white', padding: '24px 16px 44px' }}>
         <div style={{ maxWidth: 760, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(130px,180px) minmax(0,1fr)', gap: 20, alignItems: 'center' }}>
           <div style={{ width: '100%', aspectRatio: '2/3', borderRadius: 8, position: 'relative', overflow: 'hidden', background: cardBg, boxShadow: '0 16px 40px rgba(0,0,0,0.32)' }}>
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg,rgba(255,255,255,.35),transparent 42%,rgba(255,255,255,.1) 72%,transparent)' }} />
@@ -194,7 +194,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         </div>
       </section>
 
-      <div style={{ maxWidth: 760, margin: '-20px auto 0', padding: '0 16px', position: 'relative' }}>
+      <div className="bds-content" style={{ maxWidth: 760, margin: '-20px auto 0', padding: '0 16px', position: 'relative' }}>
         {(assessedStats.length > 0 || hasRanking) && <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}>
           <h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, marginBottom: 14 }}>ATHLETE SNAPSHOT</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>

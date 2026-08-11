@@ -3,8 +3,8 @@ import { ArrowLeft, FileText, Trophy } from 'lucide-react'
 
 export default function TermsPage() {
   return (
-    <main style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 40 }}>
-      <header style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
+    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 40 }}>
+      <header className="bds-header" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
         <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
           <Trophy size={22} strokeWidth={2.5} /> BallDoenSai.com
         </Link>
@@ -13,8 +13,8 @@ export default function TermsPage() {
         </Link>
       </header>
 
-      <div style={{ padding: 20, maxWidth: 760, margin: '0 auto' }}>
-        <div style={{ background: 'white', borderRadius: 16, border: '1.5px solid #e5e5e5', padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+      <div className="bds-content" style={{ padding: 20, maxWidth: 760, margin: '0 auto' }}>
+        <div className="bds-card" style={{ background: 'white', borderRadius: 16, border: '1.5px solid #e5e5e5', padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#CC0001', fontFamily: 'var(--font-oswald)', fontSize: 22, fontWeight: 800, marginBottom: 12 }}>
             <FileText size={22} /> Terms of Service
           </div>
