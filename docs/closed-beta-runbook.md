@@ -85,6 +85,7 @@ the base RLS file leaves permissive.
 | 11 | `sql/onboarding-v1.sql` | `profiles.onboarding_persona / _sport / _goal / _completed_at` | 3 |
 | 12 | `sql/production-hardening.sql` | Makes `slips` private, replaces the public slip read policy, adds `register_team_safely`, `confirm_payment_safely`, `record_match_result_safely`, discovery indexes | 3, 5 |
 | 13 | `sql/match-result-void-v1.sql` | `void_match_result_safely()` so a mistyped result can be reversed together with its rating, XP and badges | 9, 12 |
+| 14 | `sql/guardian-consent-enforcement-v1.sql` | Blocks a public athlete profile without a birth date, and a minor's public profile without guardian consent, at the database level | 6 |
 
 Files that must **not** be applied during closed beta:
 
@@ -105,13 +106,16 @@ select tgname from pg_trigger where tgname in (
   'athlete_profile_create_rookie_identity'
 );
 
+select tgname from pg_trigger
+where tgname = 'athlete_profiles_guardian_consent_guard';
+
 select proname from pg_proc where proname in (
   'register_team_safely', 'confirm_payment_safely', 'record_match_result_safely',
   'void_match_result_safely'
 );
 ```
 
-Four triggers and four functions must come back.
+Five triggers and four functions must come back.
 
 ---
 
@@ -262,7 +266,8 @@ Run these once per environment, in addition to the W1 pilot.
 - Sign up with email OTP, and separately with Google.
 - Land on `/welcome`, finish the three steps, and confirm a second login skips it.
 - Edit profile: athlete photo, birth date, height, weight, highlight, achievement.
-- Confirm a minor cannot publish without guardian consent.
+- Confirm a minor cannot publish without guardian consent, in the form and by calling
+  the API directly with the athlete's own session (both must refuse).
 - Confirm the public athlete profile never shows a phone number.
 - Open `/athletes` and filter by province and position.
 - Open `/ranking`.

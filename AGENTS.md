@@ -34,9 +34,14 @@ Fame. Users are minors, their guardians, coaches and tournament organizers.
 8. For any athlete-facing data, answer "where does this come from and how verified is
    it": `self` / `coach_verified` / `performance_verified`. Never present a default value
    as performance. A card without a `player_ranks` row is a STARTER card and says so.
-9. Never `git push --force`. Pull before starting; this branch is worked on by more than
-   one agent.
-10. Do not call anything "100%" until a real closed-beta group has completed the whole
+9. A public athlete profile needs a birth date, and a minor needs recorded guardian
+   consent. This is enforced in `app/profile/EditProfileForm.tsx` **and** by a database
+   trigger (`sql/guardian-consent-enforcement-v1.sql`). Never weaken either side. The
+   admin password form lives at `/login?admin=1` and must stay unadvertised on the public
+   login page.
+10. Never `git push --force`. Pull before starting; this branch is worked on by more than
+    one agent.
+11. Do not call anything "100%" until a real closed-beta group has completed the whole
     flow on real data.
 
 ## Verification before handing work back
@@ -61,10 +66,11 @@ Not proven yet: nothing has run against real users. No real organizer, tournamen
 athlete or match result exists in the database. Closed beta W1 (5 testers) is the next
 milestone; see runbook §6.
 
-Pending human action: apply SQL steps 1–13 from runbook §3, create the private `slips`
+Pending human action: apply SQL steps 1–14 from runbook §3, create the private `slips`
 bucket, set `profiles.role` for organizers/admins, add Google OAuth test users. In
 particular `sql/match-result-void-v1.sql` must be applied before the void button works —
-the API returns HTTP 503 with instructions until then.
+the API returns HTTP 503 with instructions until then — and
+`sql/guardian-consent-enforcement-v1.sql` before relying on the consent rule server-side.
 
 Known manual seams, by design for now:
 
@@ -84,10 +90,9 @@ Before expanding past 5 testers: real team roster linking members to accounts
 (`team_members`, new migration); Highlight moderation queue with report and admin
 delete; in-app notifications.
 
-Before public launch: guardian consent enforced at the database level, not only in
-`app/profile/EditProfileForm.tsx`; account and data deletion for PDPA; move the admin
-password login off the public `/login` page; RLS tests with real JWTs; load and
-rate-limit testing.
+Before public launch: account and data deletion for PDPA; RLS tests with real JWTs; load
+and rate-limit testing; Google OAuth published and a custom SMTP sender configured in
+Supabase Auth so email OTP is not throttled.
 
 **Do not start the team roster rewrite without agreeing the design first.** It changes
 registration, results and RLS at once.

@@ -155,6 +155,22 @@ function sectionTitle(icon: ReactNode, title: string, description: string) {
   )
 }
 
+// The database enforces the guardian consent rule as well as this form
+// (sql/guardian-consent-enforcement-v1.sql). Translate its codes instead of showing a
+// raw Postgres message to a young athlete.
+function publishErrorText(message: string) {
+  if (message.includes('PUBLIC_REQUIRES_GUARDIAN_CONSENT')) {
+    return 'โปรไฟล์ผู้เยาว์ต้องได้รับความยินยอมจากผู้ปกครองก่อนเผยแพร่'
+  }
+  if (message.includes('PUBLIC_REQUIRES_BIRTH_DATE')) {
+    return 'กรุณากรอกวันเกิดก่อนเผยแพร่โปรไฟล์สาธารณะ'
+  }
+  if (message.includes('athlete_profiles')) {
+    return 'กรุณา Apply SQL Athlete Profile V2 ใน Supabase ก่อน'
+  }
+  return message
+}
+
 export default function EditProfileForm({
   profile,
   athleteProfile,
@@ -306,7 +322,7 @@ export default function EditProfileForm({
     const error = privateProfileError || athleteProfileError
     if (error) {
       if (uploadedAvatarPath) await supabase.storage.from('athlete-avatars').remove([uploadedAvatarPath])
-      setMessage({ kind: 'error', text: error.message.includes('athlete_profiles') ? 'กรุณา Apply SQL Athlete Profile V2 ใน Supabase ก่อน' : error.message })
+      setMessage({ kind: 'error', text: publishErrorText(error.message) })
       return
     }
 

@@ -202,7 +202,9 @@ Supabase
 | `sql/digital-identity-v2-hall.sql` | Rookie badge, Achievement sync, Hall of Fame | 8 |
 | `sql/athlete-highlight-uploads-v1.sql` | Athlete highlights + bucket `athlete-highlights` (private) | 9 |
 | `sql/onboarding-v1.sql` | ข้อมูล first-visit onboarding | 10 |
-| `sql/production-hardening.sql` | ทำให้ `slips` เป็น private, RPC `register_team_safely` / `confirm_payment_safely` / `record_match_result_safely`, indexes | 11 (ท้ายสุด) |
+| `sql/production-hardening.sql` | ทำให้ `slips` เป็น private, RPC `register_team_safely` / `confirm_payment_safely` / `record_match_result_safely`, indexes | 11 |
+| `sql/match-result-void-v1.sql` | RPC `void_match_result_safely()` ยกเลิกผลแข่งพร้อมคืน Rating/XP/Badge | 12 |
+| `sql/guardian-consent-enforcement-v1.sql` | บังคับกฎความยินยอมผู้ปกครองก่อนเผยแพร่โปรไฟล์ผู้เยาว์ในระดับฐานข้อมูล | 13 |
 
 ไฟล์ที่ **ไม่ต้อง apply**:
 
