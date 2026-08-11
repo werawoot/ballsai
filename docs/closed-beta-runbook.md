@@ -87,6 +87,7 @@ the base RLS file leaves permissive.
 | 13 | `sql/match-result-void-v1.sql` | `void_match_result_safely()` so a mistyped result can be reversed together with its rating, XP and badges | 9, 12 |
 | 14 | `sql/guardian-consent-enforcement-v1.sql` | Blocks a public athlete profile without a birth date, and a minor's public profile without guardian consent, at the database level | 6 |
 | 15 | `sql/highlight-moderation-v1.sql` | Report queue, hide/unhide state for uploaded highlights, and storage reads that follow the hidden state | 10 |
+| 16 | `sql/data-deletion-v1.sql` | `delete_my_athlete_data()` for PDPA requests, plus the `account_deletion_requests` queue an admin closes by hand | 9, 15 |
 
 Files that must **not** be applied during closed beta:
 
@@ -177,6 +178,7 @@ admin. Everyone signing up through `/login` starts as `user`.
 - `athlete_badges`
 - `athlete_highlights`
 - `athlete_highlight_reports`
+- `account_deletion_requests`
 - `hall_of_fame_entries`
 - `storage.objects`
 
@@ -277,6 +279,10 @@ Run these once per environment, in addition to the W1 pilot.
 - Upload a JPG/PNG/WEBP payment slip under 5 MB.
 - Confirm a duplicate team registration shows a readable error.
 - Confirm a duplicate slip upload does not create a second payment record.
+- Request data deletion from `/profile`, then confirm: the athlete profile, highlights and
+  badges are gone, the public profile no longer resolves, ranking rows read
+  `ATHLETE REMOVED` with no account link, and the request shows in `/admin/operations`.
+  Use a throwaway test account — this cannot be undone.
 
 ### Organizer
 
@@ -364,6 +370,9 @@ The app writes structured JSON logs for high-risk server actions:
 - `highlight_report_failed`
 - `highlight_moderated`
 - `highlight_moderation_failed`
+- `account_data_deleted`
+- `account_data_deletion_failed`
+- `account_data_deletion_storage_failed`
 - `tournament_updated`
 - `tournament_update_failed`
 - `public_rankings_fetch_failed`, `public_identity_ranking_fetch_failed`,
@@ -392,7 +401,18 @@ for product analytics, Vercel runtime logs for request visibility.
 
 ---
 
-## 10. Ready To Invite The First Organizer
+## 10. Data Deletion
+
+The application does not hold the Supabase service role key, so it cannot remove an auth
+user. `delete_my_athlete_data()` erases the athlete's own data, anonymises their ranking
+rows and files the request; an admin then deletes the account in Supabase →
+Authentication → Users and sets `completed_at` on the row in
+`account_deletion_requests`. Open requests are listed on `/admin/operations`. Keep that
+step in the support rota before inviting the public.
+
+---
+
+## 11. Ready To Invite The First Organizer
 
 Invite the first organizer only when all of these are true:
 

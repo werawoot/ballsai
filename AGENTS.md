@@ -61,13 +61,13 @@ Working: login (Google OAuth + email OTP), `/welcome` onboarding, Player Card bu
 athlete profile, highlights, Career Passport, Hall of Fame, tournaments, team
 registration, slip upload and confirmation, match result recording with rating preview,
 XP/Badge triggers, void of a recorded match result, highlight reporting with an admin
-moderation queue at `/admin/moderation`.
+moderation queue at `/admin/moderation`, PDPA data deletion from `/profile`.
 
 Not proven yet: nothing has run against real users. No real organizer, tournament,
 athlete or match result exists in the database. Closed beta W1 (5 testers) is the next
 milestone; see runbook §6.
 
-Pending human action: apply SQL steps 1–15 from runbook §3, create the private `slips`
+Pending human action: apply SQL steps 1–16 from runbook §3, create the private `slips`
 bucket, set `profiles.role` for organizers/admins, add Google OAuth test users. In
 particular `sql/match-result-void-v1.sql` must be applied before the void button works —
 the API returns HTTP 503 with instructions until then — and
@@ -79,6 +79,10 @@ Known manual seams, by design for now:
   batch action. An athlete without one earns no match XP.
 - Team rosters are free text, so the athlete list in `/dashboard/results` is the whole
   season and is searched by name/team.
+- Removing an auth account is a human step: the app holds no service role key on purpose,
+  so `delete_my_athlete_data()` erases the athlete's data and files a request in
+  `account_deletion_requests` for an admin to close. Do not add a service role key to the
+  app to automate this without the owner deciding it.
 - Only one competition window is active at a time. `lib/season.ts` is the single source:
   `ACTIVE_SPORT` and `ACTIVE_SEASON`, from `NEXT_PUBLIC_ACTIVE_SPORT` /
   `NEXT_PUBLIC_ACTIVE_SEASON`, defaulting to `football` / `2026`. Never write those
@@ -90,9 +94,9 @@ Known manual seams, by design for now:
 Before expanding past 5 testers: real team roster linking members to accounts
 (`team_members`, new migration); in-app notifications.
 
-Before public launch: account and data deletion for PDPA; RLS tests with real JWTs; load
-and rate-limit testing; Google OAuth published and a custom SMTP sender configured in
-Supabase Auth so email OTP is not throttled.
+Before public launch: RLS tests with real JWTs; load and rate-limit testing; Google OAuth
+published and a custom SMTP sender configured in Supabase Auth so email OTP is not
+throttled.
 
 **Do not start the team roster rewrite without agreeing the design first.** It changes
 registration, results and RLS at once.

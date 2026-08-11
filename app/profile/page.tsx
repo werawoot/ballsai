@@ -8,6 +8,7 @@ import PublicProfileShare from './PublicProfileShare'
 import SiteNav from '@/components/SiteNav'
 import { calculateLevel, identityTitle, levelProgress } from '@/lib/digital-identity'
 import { ACTIVE_SPORT } from '@/lib/season'
+import DeleteMyDataSection from './DeleteMyDataSection'
 
 type ProfileRecord = {
   full_name?: string | null
@@ -273,6 +274,7 @@ export default async function ProfilePage() {
             </div>
           </div>
         )}
+        <DeleteMyDataSection />
       </div>
 
       <SiteNav active="profile" />

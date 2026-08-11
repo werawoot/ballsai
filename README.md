@@ -112,6 +112,7 @@ GitHub: [werawoot/ballsai](https://github.com/werawoot/ballsai)
 - Payment slips ใช้ private bucket + signed URLs ใน production design
 - ระบบรายงานเนื้อหา Highlight + คิวตรวจของแอดมินที่ `/admin/moderation` ซ่อนได้ทันทีและกู้คืนได้ โดยไม่ต้องลบไฟล์ของเด็ก
 - กฎความยินยอมผู้ปกครองก่อนเผยแพร่โปรไฟล์ผู้เยาว์ บังคับทั้งในฟอร์มและ trigger ระดับฐานข้อมูล
+- สิทธิ์ลบข้อมูลตาม PDPA ที่ `/profile` ลบข้อมูลนักกีฬาและไฟล์ทันที ตัดชื่อออกจากตาราง ranking แต่เก็บตัวเลขที่ทีมอื่นถูกวัดด้วยไว้ แล้วส่งคำขอปิดบัญชีให้แอดมินที่ `/admin/operations`
 - Route/API validation สำหรับ upload, สถานะทีม, การยืนยันเงิน และบันทึกผล
 - Shared rate limit รองรับ Upstash Redis; local development มี in-memory fallback เท่านั้น
 - Structured server logs สำหรับ payment upload, match result/rating และ tournament update
@@ -208,6 +209,7 @@ Supabase
 | `sql/match-result-void-v1.sql` | RPC `void_match_result_safely()` ยกเลิกผลแข่งพร้อมคืน Rating/XP/Badge | 12 |
 | `sql/guardian-consent-enforcement-v1.sql` | บังคับกฎความยินยอมผู้ปกครองก่อนเผยแพร่โปรไฟล์ผู้เยาว์ในระดับฐานข้อมูล | 13 |
 | `sql/highlight-moderation-v1.sql` | คิวรายงานเนื้อหา, ซ่อน/แสดง Highlight และ storage policy ที่ตามสถานะการซ่อน | 14 |
+| `sql/data-deletion-v1.sql` | สิทธิ์ลบข้อมูลตาม PDPA + คิวคำขอปิดบัญชีสำหรับแอดมิน | 15 |
 
 ไฟล์ที่ **ไม่ต้อง apply**:
 
