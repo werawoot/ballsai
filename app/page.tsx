@@ -8,11 +8,10 @@ import {
   ClipboardList,
   House,
   MapPin,
+  Megaphone,
   Search,
-  Sparkles,
   Trophy,
   User,
-  Users,
 } from 'lucide-react'
 import { isSampleId, samplePlayerRanks, sampleTournaments, showDemoData } from '@/lib/sample-data'
 import HomeHeroCarousel from './HomeHeroCarousel'
@@ -86,13 +85,13 @@ export default async function Home() {
         </div>
       </section>
 
-      <div className="home-ticker" aria-label="ข้อมูลเด่นของแพลตฟอร์ม">
+      <div className="home-ticker" aria-label="พื้นที่สำหรับโฆษณา">
         <div className="home-ticker-track">
-          <span><Sparkles size={14} /> RANKING อัปเดตทุกสัปดาห์</span><i />
-          <span><Users size={14} /> พื้นที่ของนักกีฬาเยาวชนไทย</span><i />
-          <span><Trophy size={14} /> รายการแข่งทั่วประเทศ</span><i />
-          <span><Sparkles size={14} /> RANKING อัปเดตทุกสัปดาห์</span><i />
-          <span><Users size={14} /> พื้นที่ของนักกีฬาเยาวชนไทย</span><i />
+          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
+          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
+          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
+          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
+          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
         </div>
       </div>
 
