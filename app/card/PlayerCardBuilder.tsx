@@ -2,8 +2,10 @@
 
 import { ChangeEvent, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { CheckCircle2, Copy, Download, Facebook, ImagePlus, Instagram, Music2, Share2, Sparkles, Trophy } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { CheckCircle2, Copy, Download, Facebook, ImagePlus, Instagram, Loader2, Music2, Save, Share2, Sparkles, Trophy } from 'lucide-react'
 import { track } from '@vercel/analytics'
+import { createClient } from '@/lib/supabase'
 
 type Player = {
   name: string
@@ -37,14 +39,23 @@ function themeColors(theme: Theme) {
   return { top: '#f8d958', bottom: '#8b4c04', accent: '#fff0a3', ink: '#111827' }
 }
 
-export default function PlayerCardBuilder({ player, publicProfilePath }: { player: Player; publicProfilePath: string | null }) {
+export default function PlayerCardBuilder({ player, publicProfilePath, userId }: { player: Player; publicProfilePath: string | null; userId: string }) {
+  const router = useRouter()
   const [theme, setTheme] = useState<Theme>('gold')
   const [format, setFormat] = useState<Format>('story')
   const [localImage, setLocalImage] = useState<string | null>(null)
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null)
+  const [savedImage, setSavedImage] = useState<string | null>(player.imageUrl)
+  const [name, setName] = useState(player.name === 'YOUR NAME' ? '' : player.name)
+  const [position, setPosition] = useState(player.position)
+  const [team, setTeam] = useState(player.team === 'BALLDOENSAI ACADEMY' ? '' : player.team)
+  const [province, setProvince] = useState(player.province === 'THAILAND' ? '' : player.province)
+  const [savingProfile, setSavingProfile] = useState(false)
   const [status, setStatus] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-  const imageUrl = localImage || player.imageUrl
-  const cardFilename = `balldoensai-${player.name.toLowerCase().replace(/\s+/g, '-')}-card.png`
+  const imageUrl = localImage || savedImage
+  const cardPlayer = { ...player, name: name.trim() || 'YOUR NAME', position, team: team.trim() || 'BALLDOENSAI ACADEMY', province: province.trim() || 'THAILAND' }
+  const cardFilename = `balldoensai-${cardPlayer.name.toLowerCase().replace(/\s+/g, '-')}-card.png`
 
   useEffect(() => () => { if (localImage) URL.revokeObjectURL(localImage) }, [localImage])
 
@@ -54,8 +65,55 @@ export default function PlayerCardBuilder({ player, publicProfilePath }: { playe
     if (!file.type.startsWith('image/')) { setStatus('กรุณาเลือกรูปภาพ JPG, PNG หรือ WEBP'); return }
     if (file.size > 8 * 1024 * 1024) { setStatus('รูปต้องมีขนาดไม่เกิน 8MB'); return }
     if (localImage) URL.revokeObjectURL(localImage)
+    setSelectedPhoto(file)
     setLocalImage(URL.createObjectURL(file))
-    setStatus('ใช้รูปนี้กับการ์ดเรียบร้อย — รูปจะอยู่เฉพาะตอนสร้างการ์ดครั้งนี้')
+    setStatus('ใช้รูปนี้กับการ์ดแล้ว — กด “บันทึก Player Card” เพื่อเก็บไว้ในโปรไฟล์')
+  }
+
+  const saveCardIdentity = async () => {
+    if (!name.trim()) { setStatus('ใส่ชื่อบนการ์ดก่อนบันทึกครับ'); return }
+    setSavingProfile(true)
+    setStatus('กำลังบันทึก Player Card ของคุณ…')
+    const supabase = createClient()
+    let profileImageUrl = savedImage
+
+    if (selectedPhoto) {
+      const extension = selectedPhoto.type === 'image/png' ? 'png' : selectedPhoto.type === 'image/webp' ? 'webp' : 'jpg'
+      const path = `${userId}/card-${Date.now()}.${extension}`
+      const { error: uploadError } = await supabase.storage.from('athlete-avatars').upload(path, selectedPhoto, {
+        cacheControl: '3600', contentType: selectedPhoto.type, upsert: false,
+      })
+      if (uploadError) {
+        setSavingProfile(false)
+        setStatus(uploadError.message.includes('Bucket') ? 'ยังไม่พบพื้นที่เก็บรูป — กรุณา Apply SQL Athlete Profile V2 ก่อน' : `อัปโหลดรูปไม่สำเร็จ: ${uploadError.message}`)
+        return
+      }
+      profileImageUrl = supabase.storage.from('athlete-avatars').getPublicUrl(path).data.publicUrl
+    }
+
+    const [{ error: profileError }, { error: athleteError }] = await Promise.all([
+      supabase.from('profiles').upsert({ id: userId, full_name: name.trim(), province: province.trim(), team: team.trim(), position }),
+      supabase.from('athlete_profiles').upsert({
+        user_id: userId,
+        display_name: name.trim(),
+        sport: 'football',
+        position: position || null,
+        province: province.trim() || null,
+        current_team: team.trim() || null,
+        profile_image_url: profileImageUrl || null,
+      }, { onConflict: 'user_id' }),
+    ])
+    setSavingProfile(false)
+    if (profileError || athleteError) {
+      const error = profileError || athleteError
+      setStatus(error?.message.includes('athlete_profiles') ? 'ยังตั้งค่า Athlete Profile ไม่ครบ — กรุณา Apply SQL Athlete Profile V2 ก่อน' : `บันทึกไม่สำเร็จ: ${error?.message}`)
+      return
+    }
+    setSavedImage(profileImageUrl)
+    setSelectedPhoto(null)
+    setStatus('บันทึก Player Card แล้ว! ตอนนี้การ์ดและรูปจะอยู่ในโปรไฟล์ของคุณ')
+    track('player_card_identity_saved', { has_photo: Boolean(profileImageUrl), position })
+    router.refresh()
   }
 
   const makeCard = async (exportFormat: Format = format) => {
@@ -91,10 +149,10 @@ export default function PlayerCardBuilder({ player, publicProfilePath }: { playe
         ctx.fillStyle = fade; ctx.fillRect(cardX + 48, cardY + 145, cardW - 96, 530); ctx.restore()
       } catch { /* Public profile photo is optional; the card still exports cleanly. */ }
     }
-    ctx.textAlign = 'left'; ctx.fillStyle = colors.ink; ctx.font = '900 126px Impact, sans-serif'; ctx.fillText(String(player.stats.ovr), cardX + 58, cardY + 120)
-    ctx.font = '800 42px Arial, sans-serif'; ctx.fillText(player.position, cardX + 64, cardY + 172)
-    ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = '900 54px Arial, sans-serif'; ctx.fillText(player.name.toUpperCase(), width / 2, cardY + 758)
-    ctx.fillStyle = 'rgba(255,255,255,.78)'; ctx.font = '600 29px Arial, sans-serif'; ctx.fillText(`${player.team} · ${player.province}`, width / 2, cardY + 805)
+    ctx.textAlign = 'left'; ctx.fillStyle = colors.ink; ctx.font = '900 126px Impact, sans-serif'; ctx.fillText(String(cardPlayer.stats.ovr), cardX + 58, cardY + 120)
+    ctx.font = '800 42px Arial, sans-serif'; ctx.fillText(cardPlayer.position, cardX + 64, cardY + 172)
+    ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = '900 54px Arial, sans-serif'; ctx.fillText(cardPlayer.name.toUpperCase(), width / 2, cardY + 758)
+    ctx.fillStyle = 'rgba(255,255,255,.78)'; ctx.font = '600 29px Arial, sans-serif'; ctx.fillText(`${cardPlayer.team} · ${cardPlayer.province}`, width / 2, cardY + 805)
     const stats: Array<[string, number]> = [['PAC', player.stats.pac], ['SHO', player.stats.sho], ['PAS', player.stats.pas], ['DRI', player.stats.dri], ['DEF', player.stats.def]]
     stats.forEach(([key, value], index) => { const x = cardX + 105 + index * 153; ctx.fillStyle = '#fff'; ctx.font = '900 42px Impact, Arial'; ctx.fillText(String(value), x, cardY + 950); ctx.fillStyle = 'rgba(255,255,255,.72)'; ctx.font = '700 21px Arial'; ctx.fillText(key, x, cardY + 992) })
     ctx.fillStyle = 'rgba(0,0,0,.68)'; ctx.fillRect(cardX, cardY + cardH - 70, cardW, 70); ctx.fillStyle = '#fff'; ctx.font = '800 22px Arial'; ctx.fillText('BALLDOENSAI.COM · YOUR GAME, YOUR STORY', width / 2, cardY + cardH - 27)
@@ -106,7 +164,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath }: { playe
     try {
       setStatus('กำลังสร้างไฟล์ภาพ…')
       const blob = await makeCard(); const url = URL.createObjectURL(blob); const a = document.createElement('a')
-      a.href = url; a.download = `balldoensai-${player.name.toLowerCase().replace(/\s+/g, '-')}-card.png`; a.click(); URL.revokeObjectURL(url)
+      a.href = url; a.download = cardFilename; a.click(); URL.revokeObjectURL(url)
       track('player_card_downloaded', { format, theme, has_photo: Boolean(imageUrl), rating: player.isRanked ? 'ranked' : 'starter' })
       setStatus('ดาวน์โหลดการ์ดแล้ว พร้อมโพสต์ได้เลย!')
     } catch { setStatus('สร้างภาพไม่สำเร็จ ลองเลือกรูปอื่นหรือดาวน์โหลดอีกครั้ง') }
@@ -203,19 +261,30 @@ export default function PlayerCardBuilder({ player, publicProfilePath }: { playe
       <h1>สร้างการ์ด<br /><em>นักเตะของคุณ</em></h1>
       <p>ใส่รูป เลือกดีไซน์ แล้วเซฟเป็นภาพสำหรับ Story, TikTok หรือ Facebook ได้ทันที</p>
       {!player.isRanked && <div className="card-starter-note"><Trophy size={16} /><span><b>STARTER CARD</b> · ค่าสถานะเริ่มต้นจะเปลี่ยนเป็น Rating จริงหลังมีผลงานในระบบ</span></div>}
+      <div className="card-identity-fields" aria-label="ข้อมูล Player Card">
+        <span>ข้อมูลบน Player Card</span>
+        <div className="card-identity-grid">
+          <label>ชื่อนักเตะ<input value={name} onChange={event => setName(event.target.value.slice(0, 60))} placeholder="ชื่อที่อยากใช้บนการ์ด" /></label>
+          <label>ทีม / สโมสร<input value={team} onChange={event => setTeam(event.target.value.slice(0, 80))} placeholder="ชื่อทีมของคุณ" /></label>
+          <label>จังหวัด<input value={province} onChange={event => setProvince(event.target.value.slice(0, 60))} placeholder="เช่น กรุงเทพมหานคร" /></label>
+          <div><small>ตำแหน่ง</small><div className="card-position-options">{['FW', 'MF', 'DF', 'GK'].map(item => <button type="button" key={item} onClick={() => setPosition(item)} className={position === item ? 'is-selected' : ''}>{item}</button>)}</div></div>
+        </div>
+        <button type="button" className="card-save-identity" disabled={savingProfile} onClick={saveCardIdentity}>{savingProfile ? <Loader2 size={17} className="card-spinning" /> : <Save size={17} />}{savingProfile ? 'กำลังบันทึก…' : 'บันทึก PLAYER CARD'}</button>
+        {!publicProfilePath && <p className="card-public-hint">หลังบันทึกแล้ว เปิด <Link href="/profile">โปรไฟล์สาธารณะ</Link> เพื่อรับลิงก์สำหรับ Facebook และให้คนอื่นดูการ์ดของคุณ</p>}
+      </div>
       <div className="card-builder-controls">
         <span>ดีไซน์การ์ด</span><div className="card-theme-options">{(['gold', 'red', 'ice'] as Theme[]).map(item => <button key={item} onClick={() => setTheme(item)} className={`card-theme-option is-${item} ${theme === item ? 'is-selected' : ''}`} aria-label={themeLabel[item]}><i /> {themeLabel[item]}</button>)}</div>
         <span>ขนาดไฟล์</span><div className="card-format-options"><button onClick={() => setFormat('story')} className={format === 'story' ? 'is-selected' : ''}>9:16 <small>Story / TikTok</small></button><button onClick={() => setFormat('feed')} className={format === 'feed' ? 'is-selected' : ''}>4:5 <small>Instagram Feed</small></button></div>
         <input ref={inputRef} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={choosePhoto} />
         <button className="card-photo-button" onClick={() => inputRef.current?.click()}><ImagePlus size={18} /> {imageUrl ? 'เปลี่ยนรูปในการ์ด' : 'เลือกรูปของฉัน'}</button>
-        <p className="card-photo-help">รูปนี้ใช้สร้างการ์ดเท่านั้น · ต้องการบันทึกลงโปรไฟล์? <Link href="/profile">ไปที่โปรไฟล์</Link></p>
+        <p className="card-photo-help">รูปนี้จะถูกเก็บในโปรไฟล์เมื่อกด “บันทึก PLAYER CARD”</p>
       </div>
     </div>
     <div className="card-builder-preview">
       <div className={`player-card-poster is-${format}`}><div className={`player-card is-${theme}`}>
-        <div className="player-card-glint" /><div className="player-card-rating"><b>{player.stats.ovr}</b><span>{player.position}</span></div>
-        <div className="player-card-photo" style={imageUrl ? { backgroundImage: `url("${imageUrl}")` } : undefined}><div className="player-card-photo-fallback">{player.position}</div></div>
-        <div className="player-card-detail"><h2>{player.name}</h2>{player.isVerified && <CheckCircle2 size={17} />}<p>{player.team} · {player.province}</p><div>{Object.entries(player.stats).filter(([key]) => key !== 'ovr').map(([key, value]) => <span key={key}><b>{value}</b><small>{key.toUpperCase()}</small></span>)}</div></div>
+        <div className="player-card-glint" /><div className="player-card-rating"><b>{cardPlayer.stats.ovr}</b><span>{cardPlayer.position}</span></div>
+        <div className="player-card-photo" style={imageUrl ? { backgroundImage: `url("${imageUrl}")` } : undefined}><div className="player-card-photo-fallback">{cardPlayer.position}</div></div>
+        <div className="player-card-detail"><h2>{cardPlayer.name}</h2>{player.isVerified && <CheckCircle2 size={17} />}<p>{cardPlayer.team} · {cardPlayer.province}</p><div>{Object.entries(cardPlayer.stats).filter(([key]) => key !== 'ovr').map(([key, value]) => <span key={key}><b>{value}</b><small>{key.toUpperCase()}</small></span>)}</div></div>
         <footer>BALLDOENSAI.COM · YOUR GAME, YOUR STORY</footer>
       </div></div>
       <div className="card-share-actions"><button onClick={download}><Download size={19} /> ดาวน์โหลด PNG</button><button className="card-share-primary" onClick={share}><Share2 size={19} /> แชร์การ์ด</button></div>

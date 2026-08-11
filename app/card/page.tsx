@@ -37,6 +37,7 @@ export default async function PlayerCardPage() {
         <div style={{ display: 'flex', gap: 8 }}><Link href="/career" className="card-page-profile-link">Athlete Passport</Link><Link href="/profile" className="card-page-profile-link">แก้ไขโปรไฟล์</Link></div>
       </header>
       <PlayerCardBuilder
+        userId={user.id}
         publicProfilePath={athleteProfile.is_public ? `/players/${playerRank?.id || user.id}` : null}
         player={{
           name,
