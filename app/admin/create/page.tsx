@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Link2, Save, Trophy } from 'lucide-react'
+import { ArrowLeft, Link2, Save, Trophy, Users } from 'lucide-react'
 import Link from 'next/link'
 
 type AthleteAccount = {
@@ -12,6 +12,38 @@ type AthleteAccount = {
   current_team?: string | null
   province?: string | null
   position?: string | null
+}
+
+type BatchSkip = {
+  name: string
+  reason: string
+}
+
+type BatchResult = {
+  created: number
+  skipped: BatchSkip[]
+}
+
+// Neutral starting line for a batch-created ranking record: Power Rating 1000 is
+// the same baseline the match-result flow assumes when no rating row exists yet.
+const BATCH_RANKING_DEFAULTS = {
+  ovr: 60, pts: 1000, pac: 70, sho: 70, pas: 70, dri: 70, def: 70, rank_change: 0,
+}
+
+async function fetchUnlinkedAthleteAccounts(): Promise<{ accounts: AthleteAccount[]; error: string | null }> {
+  const supabase = createClient()
+  const [{ data: accounts, error: accountsError }, { data: linkedRanks, error: ranksError }] = await Promise.all([
+    supabase.from('athlete_profiles').select('user_id, display_name, current_team, province, position').order('display_name'),
+    supabase.from('player_ranks').select('player_id').eq('sport', 'football').eq('season', '2026').not('player_id', 'is', null),
+  ])
+  if (accountsError || ranksError) {
+    return { accounts: [], error: `โหลดบัญชีนักกีฬาไม่สำเร็จ: ${(accountsError || ranksError)?.message}` }
+  }
+  const linkedIds = new Set((linkedRanks ?? []).map(rank => rank.player_id as string))
+  return {
+    accounts: ((accounts ?? []) as AthleteAccount[]).filter(account => !linkedIds.has(account.user_id)),
+    error: null,
+  }
 }
 
 export default function CreatePlayerPage() {
@@ -24,26 +56,71 @@ export default function CreatePlayerPage() {
   const [athleteAccounts, setAthleteAccounts] = useState<AthleteAccount[]>([])
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
   const [message, setMessage] = useState('')
+  const [batchRunning, setBatchRunning] = useState(false)
+  const [batchResult, setBatchResult] = useState<BatchResult | null>(null)
   const router = useRouter()
 
   useEffect(() => {
-    const loadAthleteAccounts = async () => {
-      const supabase = createClient()
-      const [{ data: accounts, error: accountsError }, { data: linkedRanks, error: ranksError }] = await Promise.all([
-        supabase.from('athlete_profiles').select('user_id, display_name, current_team, province, position').order('display_name'),
-        supabase.from('player_ranks').select('player_id').eq('sport', 'football').eq('season', '2026').not('player_id', 'is', null),
-      ])
-      if (accountsError || ranksError) {
-        setMessage(`โหลดบัญชีนักกีฬาไม่สำเร็จ: ${(accountsError || ranksError)?.message}`)
-        setLoadingAccounts(false)
-        return
-      }
-      const linkedIds = new Set((linkedRanks ?? []).map(rank => rank.player_id as string))
-      setAthleteAccounts(((accounts ?? []) as AthleteAccount[]).filter(account => !linkedIds.has(account.user_id)))
+    let active = true
+    void (async () => {
+      const { accounts, error } = await fetchUnlinkedAthleteAccounts()
+      if (!active) return
+      if (error) setMessage(error)
+      else setAthleteAccounts(accounts)
       setLoadingAccounts(false)
-    }
-    void loadAthleteAccounts()
+    })()
+    return () => { active = false }
   }, [])
+
+  const refreshAthleteAccounts = async () => {
+    const { accounts, error } = await fetchUnlinkedAthleteAccounts()
+    if (error) setMessage(error)
+    else setAthleteAccounts(accounts)
+  }
+
+  // Closed beta invites athletes in groups, so creating one ranking record at a
+  // time is the slowest step for an admin. Inserts run per account rather than in
+  // one statement, so a single bad row reports its own reason instead of failing
+  // the whole group.
+  const createMissingRankings = async () => {
+    setBatchRunning(true)
+    setMessage('')
+    setBatchResult(null)
+    setSelectedPlayerId('')
+
+    const supabase = createClient()
+    const skipped: BatchSkip[] = []
+    let created = 0
+
+    for (const account of athleteAccounts) {
+      const playerName = account.display_name?.trim()
+      if (!playerName) {
+        skipped.push({ name: account.user_id.slice(0, 8), reason: 'ยังไม่ได้ตั้งชื่อในโปรไฟล์นักกีฬา' })
+        continue
+      }
+
+      const { error } = await supabase.from('player_ranks').insert({
+        ...BATCH_RANKING_DEFAULTS,
+        player_name: playerName,
+        team: account.current_team?.trim() || '',
+        province: account.province?.trim() || '',
+        position: account.position || 'MF',
+        player_id: account.user_id,
+        sport: 'football',
+        season: '2026',
+      })
+
+      if (error) {
+        skipped.push({ name: playerName, reason: error.code === '23505' ? 'มี Ranking ใน Season 2026 แล้ว' : error.message })
+        continue
+      }
+      created += 1
+    }
+
+    setBatchResult({ created, skipped })
+    setBatchRunning(false)
+    await refreshAthleteAccounts()
+  }
 
   const selectAthleteAccount = (playerId: string) => {
     setSelectedPlayerId(playerId)
@@ -119,6 +196,36 @@ export default function CreatePlayerPage() {
       </svg>
 
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+        <div style={{ background: 'white', borderRadius: 16, border: '1.5px solid #e5e5e5', padding: '18px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#CC0001', marginBottom: 8 }}>
+            <Users size={17} /> สร้าง Ranking แบบชุด
+          </div>
+          <p style={{ fontSize: 12, color: '#555', lineHeight: 1.7, marginBottom: 12 }}>
+            สร้าง Ranking Season 2026 ให้ Athlete Account ที่ยังไม่มี ทั้งหมด <b>{loadingAccounts ? '...' : athleteAccounts.length}</b> บัญชี
+            โดยใช้ค่าเริ่มต้น Power Rating {BATCH_RANKING_DEFAULTS.pts} · OVR {BATCH_RANKING_DEFAULTS.ovr}
+            แล้วให้ผลแข่งจริงเป็นตัวปรับคะแนนต่อจากนั้น
+            บัญชีที่ยังไม่มีชื่อในโปรไฟล์จะถูกข้าม และช่องทีม/จังหวัดที่ว่างจะบันทึกเป็นค่าว่าง แก้ไขได้ที่หน้า <Link href="/admin" style={{ color: '#CC0001', fontWeight: 700 }}>Admin</Link>
+          </p>
+          <button
+            onClick={createMissingRankings}
+            disabled={batchRunning || loadingAccounts || athleteAccounts.length === 0}
+            style={{ width: '100%', background: batchRunning || loadingAccounts || athleteAccounts.length === 0 ? '#eee' : '#111', color: batchRunning || loadingAccounts || athleteAccounts.length === 0 ? '#888' : 'white', border: 'none', borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: batchRunning || loadingAccounts || athleteAccounts.length === 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+          >
+            <Users size={17} /> {batchRunning ? 'กำลังสร้าง...' : `สร้าง Ranking ให้ ${loadingAccounts ? '' : athleteAccounts.length} บัญชีที่ยังไม่มี`}
+          </button>
+
+          {batchResult && (
+            <div style={{ marginTop: 12, borderRadius: 12, padding: '12px 14px', background: batchResult.created > 0 ? '#dcfce7' : '#fef9c3', color: batchResult.created > 0 ? '#166534' : '#854d0e', fontSize: 12, fontWeight: 700, lineHeight: 1.7 }}>
+              สร้างสำเร็จ {batchResult.created} บัญชี · ข้าม {batchResult.skipped.length} บัญชี
+              {batchResult.skipped.length > 0 && (
+                <ul style={{ margin: '8px 0 0', paddingLeft: 18, fontWeight: 600 }}>
+                  {batchResult.skipped.map(item => <li key={`${item.name}-${item.reason}`}>{item.name}: {item.reason}</li>)}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
 
         <div style={{ background: selectedPlayerId ? '#f0fdf4' : 'white', borderRadius: 10, border: `1.5px solid ${selectedPlayerId ? '#15803d' : '#e5e5e5'}`, padding: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: selectedPlayerId ? '#166534' : '#CC0001', marginBottom: 10 }}><Link2 size={17} /> เชื่อม Athlete Account</div>
