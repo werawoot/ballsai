@@ -1,20 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  Trophy,
-  House,
-  ClipboardList,
-  User,
-  Plus,
-  Database,
-  Activity,
-  UserCheck,
-  UserX,
-} from "lucide-react";
+import { Activity, ClipboardList, Database, House, Plus, ShieldAlert, Trophy, User, UserCheck, UserX } from "lucide-react";
 import Link from "next/link";
 import DeletePlayerButton from "./DeletePlayerButton";
 import EditPlayerButton from "./EditPlayerButton";
+import { ACTIVE_SEASON, ACTIVE_SPORT } from "@/lib/season";
 
 export default async function AdminPage() {
   const cookieStore = cookies();
@@ -52,8 +43,8 @@ export default async function AdminPage() {
     supabase
       .from("player_ranks")
       .select("*")
-      .eq("sport", "football")
-      .eq("season", "2026")
+      .eq("sport", ACTIVE_SPORT)
+      .eq("season", ACTIVE_SEASON)
       .order("pts", { ascending: false }),
     supabase
       .from("athlete_profiles")
@@ -67,6 +58,7 @@ export default async function AdminPage() {
 
   return (
     <main
+      className="bds-page"
       style={{
         background: "#f8f8f8",
         minHeight: "100vh",
@@ -75,7 +67,7 @@ export default async function AdminPage() {
       }}
     >
       {/* TOPBAR */}
-      <header
+      <header className="bds-header"
         style={{
           position: "sticky",
           top: 0,
@@ -119,7 +111,7 @@ export default async function AdminPage() {
       </header>
 
       {/* HERO */}
-      <div
+      <div className="bds-hero"
         style={{
           background: "#CC0001",
           padding: "20px 16px 36px",
@@ -202,6 +194,44 @@ export default async function AdminPage() {
             นักกีฬาทั้งหมด ({players?.length ?? 0})
           </div>
           <div style={{ display: "flex", gap: 8 }}>
+            <Link
+              href="/admin/hall"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                background: "#f5c518",
+                color: "#17120a",
+                borderRadius: 20,
+                padding: "6px 14px",
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: "none",
+                fontFamily: "var(--font-oswald)",
+                letterSpacing: 0.5,
+              }}
+            >
+              <Trophy size={14} /> Hall of Fame
+            </Link>
+            <Link
+              href="/admin/moderation"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                background: "#fff8e6",
+                color: "#854d0e",
+                borderRadius: 20,
+                padding: "6px 14px",
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: "none",
+                fontFamily: "var(--font-oswald)",
+                letterSpacing: 0.5,
+              }}
+            >
+              <ShieldAlert size={14} /> Moderation
+            </Link>
             <Link
               href="/admin/operations"
               style={{

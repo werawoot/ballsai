@@ -8,16 +8,19 @@ import {
   ClipboardList,
   House,
   MapPin,
+  Megaphone,
   Search,
-  Sparkles,
   Trophy,
   User,
-  Users,
 } from 'lucide-react'
 import { isSampleId, samplePlayerRanks, sampleTournaments, showDemoData } from '@/lib/sample-data'
 import HomeHeroCarousel from './HomeHeroCarousel'
+import HomeHighlightsRail from './HomeHighlightsRail'
+import { getPublicOpenTournaments, getPublicRankings } from '@/lib/public-data'
+import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 
 const positionLabel: Record<string, string> = { GK: 'GOALKEEPER', DF: 'DEFENDER', MF: 'MIDFIELDER', FW: 'FORWARD' }
+const advertisementTickerItems = Array.from({ length: 14 }, (_, index) => index)
 
 export default async function Home() {
   const cookieStore = await cookies()
@@ -32,14 +35,14 @@ export default async function Home() {
     },
   )
 
-  const [{ data: { user } }, { data: rankings }, { data: tournaments }] = await Promise.all([
+  const [{ data: { user } }, rankings, tournaments] = await Promise.all([
     supabase.auth.getUser(),
-    supabase.from('player_ranks').select('*').eq('sport', 'football').eq('season', '2026').order('pts', { ascending: false }).limit(6),
-    supabase.from('tournaments').select('*').eq('status', 'open').order('start_date', { ascending: true }).limit(4),
+    getPublicRankings({ sport: ACTIVE_SPORT, season: ACTIVE_SEASON }),
+    getPublicOpenTournaments(),
   ])
 
-  const displayRankings = rankings?.length ? rankings : showDemoData ? samplePlayerRanks.slice(0, 6) : []
-  const displayTournaments = tournaments?.length ? tournaments : showDemoData ? sampleTournaments.slice(0, 4) : []
+  const displayRankings = rankings?.length ? rankings.slice(0, 6) : showDemoData ? samplePlayerRanks.slice(0, 6) : []
+  const displayTournaments = tournaments?.length ? tournaments.slice(0, 4) : showDemoData ? sampleTournaments.slice(0, 4) : []
   const topThree = displayRankings.slice(0, 3)
   const podiumPlayers = topThree.length === 3 ? [topThree[1], topThree[0], topThree[2]] : topThree
 
@@ -50,6 +53,12 @@ export default async function Home() {
           <span className="home-logo-mark"><Trophy size={16} /></span>
           BallDoenSai.com
         </Link>
+        <nav className="home-desktop-nav" aria-label="เมนูเนื้อหาหลัก">
+          <Link href="/tournaments">การแข่งขัน</Link>
+          <Link href="/ranking">Ranking</Link>
+          <Link href="/athletes">นักกีฬา</Link>
+          <Link href="/impact">เรื่องของเรา</Link>
+        </nav>
         <div className="home-header-actions">
           <Link href="/athletes" className="home-header-search"><Search size={16} /><span>ค้นหานักกีฬา</span></Link>
           {user ? (
@@ -60,15 +69,48 @@ export default async function Home() {
 
       <HomeHeroCarousel />
 
-      <div className="home-ticker" aria-label="ข้อมูลเด่นของแพลตฟอร์ม">
+      <section className="home-match-centre" aria-label="ศูนย์กลางรายการแข่งขัน">
+        <div className="home-match-centre-head">
+          <div><span className="home-match-kicker"><i /> BALLDOENSAI MATCH CENTRE</span><h2>กำลังเปิดรับสมัคร</h2></div>
+          <Link href="/tournaments">ดูทุกการแข่งขัน <ChevronRight size={16} /></Link>
+        </div>
+        <div className="home-match-grid">
+          {displayTournaments.slice(0, 3).map((tournament, index) => (
+            <Link key={tournament.id} href={isSampleId(tournament.id) ? '/tournaments' : `/tournaments/${tournament.id}`} className="home-match-card">
+              <div className="home-match-meta"><span>OPEN / {String(index + 1).padStart(2, '0')}</span><b>฿{tournament.fee}</b></div>
+              <h3>{tournament.name}</h3>
+              <p><CalendarDays size={14} /> {tournament.start_date} <span /> <MapPin size={14} /> {tournament.location}</p>
+              <div className="home-match-cta">ดูรายละเอียด <ArrowUpRight size={16} /></div>
+            </Link>
+          ))}
+          {displayTournaments.length === 0 && <div className="home-match-empty">กำลังเปิดพื้นที่ให้ผู้จัดเพิ่มรายการแข่งขัน</div>}
+        </div>
+      </section>
+
+      <div className="home-ticker" aria-label="พื้นที่สำหรับโฆษณา">
         <div className="home-ticker-track">
-          <span><Sparkles size={14} /> RANKING อัปเดตทุกสัปดาห์</span><i />
-          <span><Users size={14} /> พื้นที่ของนักกีฬาเยาวชนไทย</span><i />
-          <span><Trophy size={14} /> รายการแข่งทั่วประเทศ</span><i />
-          <span><Sparkles size={14} /> RANKING อัปเดตทุกสัปดาห์</span><i />
-          <span><Users size={14} /> พื้นที่ของนักกีฬาเยาวชนไทย</span><i />
+          {[0, 1].map(group => (
+            <div className="home-ticker-group" key={group} aria-hidden={group === 1}>
+              {advertisementTickerItems.map(item => <span key={item}><Megaphone size={14} /> พื้นที่สำหรับโฆษณา<i /></span>)}
+            </div>
+          ))}
         </div>
       </div>
+
+      <section className="home-headlines">
+        <div className="home-headlines-primary">
+          <span className="home-eyebrow">LATEST FROM THE PITCH</span>
+          <h2>ความสามารถ<br />ไม่ควรอยู่<br /><em>แค่ข้างสนาม</em></h2>
+          <p>BallDoenSai.com รวมผลงาน เส้นทาง และโอกาสของนักกีฬาเยาวชนไทยไว้ในที่เดียว</p>
+          <Link href="/impact" className="home-dark-cta">ดูเรื่องราวของเรา <ArrowUpRight size={17} /></Link>
+        </div>
+        <div className="home-headlines-list">
+          {displayRankings.slice(0, 3).map((player, index) => <Link key={player.id} href={isSampleId(player.id) ? '/ranking' : `/players/${player.id}`} className="home-headline-item">
+            <span>0{index + 1}</span><div><small>RANKING UPDATE</small><h3>{player.player_name} กำลังสร้างชื่อกับ {player.team}</h3><p>{positionLabel[player.position] || player.position} · {player.province}</p></div><ChevronRight size={19} />
+          </Link>)}
+          {displayRankings.length === 0 && <div className="home-headline-empty">กำลังเตรียมเรื่องราวจากสนามให้คุณ</div>}
+        </div>
+      </section>
 
       <section className="home-spotlight">
         <div className="home-section-heading home-reveal">
@@ -91,6 +133,8 @@ export default async function Home() {
           })}
         </div> : <div className="home-empty">กำลังรอข้อมูล Ranking ฤดูกาลนี้</div>}
       </section>
+
+      <HomeHighlightsRail />
 
       <section className="home-discover">
         <div className="home-discover-copy home-reveal">
@@ -128,7 +172,7 @@ export default async function Home() {
       <section className="home-closing">
         <span className="home-eyebrow">BALLDOENSAI.COM FOR THE NEXT GENERATION</span>
         <h2>ไม่ได้แค่เล่น<br /><em>แต่กำลังไปไกล</em></h2>
-        <Link href={user ? '/profile' : '/login'} className="home-primary-cta">สร้างโปรไฟล์ของคุณ <ArrowUpRight size={18} /></Link>
+        <Link href="/card" className="home-primary-cta">สร้าง Player Card ของคุณ <ArrowUpRight size={18} /></Link>
       </section>
 
       <nav className="home-nav">

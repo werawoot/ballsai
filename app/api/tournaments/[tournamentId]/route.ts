@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
 
@@ -138,6 +139,8 @@ export async function PATCH(
     route: '/api/tournaments/[tournamentId]',
     metadata: { tournamentId: params.tournamentId, fields: Object.keys(update) },
   })
+
+  revalidateTag('public-tournaments')
 
   return NextResponse.json({ ok: true })
 }

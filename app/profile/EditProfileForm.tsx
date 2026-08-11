@@ -20,9 +20,11 @@ import {
   Trash2,
   User,
   Users,
+  Video as VideoIcon,
   Weight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import { ACTIVE_SPORT } from '@/lib/season'
 
 type ProfileForm = {
   full_name?: string | null
@@ -64,6 +66,14 @@ type Achievement = {
   verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
 }
 
+type UploadedHighlight = {
+  id: number
+  title: string
+  media_path: string
+  media_type: 'image' | 'video'
+  moderation_status?: 'visible' | 'hidden'
+}
+
 type FieldProps = {
   icon: ReactNode
   label: string
@@ -77,6 +87,8 @@ type FieldProps = {
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024
 const ALLOWED_AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const MAX_HIGHLIGHT_SIZE = 25 * 1024 * 1024
+const ALLOWED_HIGHLIGHT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'])
 const VIDEO_TYPE_LABELS: Record<Video['video_type'], string> = {
   highlight: 'ไฮไลต์',
   match: 'การแข่งขัน',
@@ -144,17 +156,35 @@ function sectionTitle(icon: ReactNode, title: string, description: string) {
   )
 }
 
+// The database enforces the guardian consent rule as well as this form
+// (sql/guardian-consent-enforcement-v1.sql). Translate its codes instead of showing a
+// raw Postgres message to a young athlete.
+function publishErrorText(message: string) {
+  if (message.includes('PUBLIC_REQUIRES_GUARDIAN_CONSENT')) {
+    return 'โปรไฟล์ผู้เยาว์ต้องได้รับความยินยอมจากผู้ปกครองก่อนเผยแพร่'
+  }
+  if (message.includes('PUBLIC_REQUIRES_BIRTH_DATE')) {
+    return 'กรุณากรอกวันเกิดก่อนเผยแพร่โปรไฟล์สาธารณะ'
+  }
+  if (message.includes('athlete_profiles')) {
+    return 'กรุณา Apply SQL Athlete Profile V2 ใน Supabase ก่อน'
+  }
+  return message
+}
+
 export default function EditProfileForm({
   profile,
   athleteProfile,
   videos: initialVideos,
   achievements: initialAchievements,
+  highlights: initialHighlights,
   userId,
 }: {
   profile: ProfileForm | null
   athleteProfile: AthleteProfileForm | null
   videos: Video[]
   achievements: Achievement[]
+  highlights: UploadedHighlight[]
   userId: string
 }) {
   const router = useRouter()
@@ -174,11 +204,14 @@ export default function EditProfileForm({
   const [hasGuardianConsent, setHasGuardianConsent] = useState(Boolean(athleteProfile?.guardian_consent_at))
   const [videos, setVideos] = useState(initialVideos)
   const [achievements, setAchievements] = useState(initialAchievements)
+  const [highlights, setHighlights] = useState(initialHighlights)
   const [videoTitle, setVideoTitle] = useState('')
   const [videoUrl, setVideoUrl] = useState('')
   const [videoType, setVideoType] = useState<Video['video_type']>('highlight')
   const [achievementTitle, setAchievementTitle] = useState('')
   const [achievementEvent, setAchievementEvent] = useState('')
+  const [highlightTitle, setHighlightTitle] = useState('')
+  const [highlightFile, setHighlightFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
 
@@ -273,7 +306,7 @@ export default function EditProfileForm({
         user_id: userId,
         display_name: displayName.trim(),
         birth_date: birthDate,
-        sport: 'football',
+        sport: ACTIVE_SPORT,
         position: position || null,
         province: province.trim() || null,
         height_cm: height ? Number(height) : null,
@@ -290,7 +323,7 @@ export default function EditProfileForm({
     const error = privateProfileError || athleteProfileError
     if (error) {
       if (uploadedAvatarPath) await supabase.storage.from('athlete-avatars').remove([uploadedAvatarPath])
-      setMessage({ kind: 'error', text: error.message.includes('athlete_profiles') ? 'กรุณา Apply SQL Athlete Profile V2 ใน Supabase ก่อน' : error.message })
+      setMessage({ kind: 'error', text: publishErrorText(error.message) })
       return
     }
 
@@ -329,11 +362,56 @@ export default function EditProfileForm({
     setAchievementEvent('')
   }
 
+  const addUploadHighlight = async () => {
+    if (!highlightTitle.trim() || !highlightFile) {
+      setMessage({ kind: 'error', text: 'กรุณาใส่ชื่อ Highlight และเลือกไฟล์ก่อน' })
+      return
+    }
+    if (!ALLOWED_HIGHLIGHT_TYPES.has(highlightFile.type) || highlightFile.size > MAX_HIGHLIGHT_SIZE) {
+      setMessage({ kind: 'error', text: 'รองรับ JPG, PNG, WEBP, MP4 หรือ WEBM ขนาดไม่เกิน 25 MB' })
+      return
+    }
+    const mediaType = highlightFile.type.startsWith('video/') ? 'video' : 'image'
+    const extension = highlightFile.name.split('.').pop()?.toLowerCase() || (mediaType === 'video' ? 'mp4' : 'jpg')
+    const path = `${userId}/highlight-${Date.now()}.${extension}`
+    const supabase = createClient()
+    setLoading(true)
+    const { error: uploadError } = await supabase.storage.from('athlete-highlights').upload(path, highlightFile, {
+      cacheControl: '3600', contentType: highlightFile.type, upsert: false,
+    })
+    if (uploadError) {
+      setLoading(false)
+      setMessage({ kind: 'error', text: uploadError.message.includes('Bucket') ? 'กรุณา Apply SQL Athlete Highlight Uploads V1 ก่อน' : `อัปโหลด Highlight ไม่สำเร็จ: ${uploadError.message}` })
+      return
+    }
+    const { data, error } = await supabase.from('athlete_highlights').insert({
+      athlete_id: userId, title: highlightTitle.trim(), media_path: path, media_type: mediaType,
+    }).select().single()
+    setLoading(false)
+    if (error || !data) {
+      await supabase.storage.from('athlete-highlights').remove([path])
+      setMessage({ kind: 'error', text: 'บันทึก Highlight ไม่สำเร็จ กรุณาบันทึก Athlete Profile ก่อน' })
+      return
+    }
+    setHighlights(current => [data as UploadedHighlight, ...current])
+    setHighlightTitle('')
+    setHighlightFile(null)
+    setMessage({ kind: 'success', text: 'เพิ่ม Highlight แล้ว' })
+  }
+
   const removeItem = async (table: 'athlete_videos' | 'athlete_achievements', id: number) => {
     const { error } = await createClient().from(table).delete().eq('id', id)
     if (error) return setMessage({ kind: 'error', text: 'ลบข้อมูลไม่สำเร็จ' })
     if (table === 'athlete_videos') setVideos(current => current.filter(item => item.id !== id))
     else setAchievements(current => current.filter(item => item.id !== id))
+  }
+
+  const removeUploadedHighlight = async (highlight: UploadedHighlight) => {
+    const supabase = createClient()
+    const { error } = await supabase.from('athlete_highlights').delete().eq('id', highlight.id)
+    if (error) return setMessage({ kind: 'error', text: 'ลบ Highlight ไม่สำเร็จ' })
+    await supabase.storage.from('athlete-highlights').remove([highlight.media_path])
+    setHighlights(current => current.filter(item => item.id !== highlight.id))
   }
 
   return (
@@ -382,7 +460,15 @@ export default function EditProfileForm({
       </section>
 
       <section style={{ padding: 18, borderBottom: '1px solid #eee' }}>
-        {sectionTitle(<Link2 size={18} />, 'Highlight', 'ใช้ลิงก์ YouTube, TikTok หรือแพลตฟอร์มวิดีโอ')}
+        {sectionTitle(<VideoIcon size={18} />, 'Highlight Moments', 'อัปโหลดรูป/วิดีโอของคุณ หรือใช้ลิงก์ YouTube และ TikTok')}
+        <div style={{ background: '#f7f7f5', border: '1px dashed #cfc9bd', padding: 11, marginBottom: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 44px', gap: 8 }}><input value={highlightTitle} onChange={event => setHighlightTitle(event.target.value)} placeholder="ชื่อโมเมนต์ เช่น ประตูแรกของฤดูกาล" style={{ ...inputStyle, padding: '10px 12px' }} /><button type="button" title="อัปโหลด Highlight" disabled={loading} onClick={addUploadHighlight} style={{ border: 0, borderRadius: 8, background: '#CC0001', color: 'white', display: 'grid', placeItems: 'center', cursor: loading ? 'wait' : 'pointer' }}><Plus size={18} /></button></div>
+          <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" onChange={event => setHighlightFile(event.target.files?.[0] || null)} style={{ width: '100%', fontSize: 11, marginTop: 8 }} />
+          <small style={{ display: 'block', color: '#777', marginTop: 7, lineHeight: 1.45 }}>{highlightFile ? `${highlightFile.name} · ${(highlightFile.size / 1024 / 1024).toFixed(1)} MB` : 'JPG, PNG, WEBP, MP4 หรือ WEBM · ไม่เกิน 25 MB'}<br />ไฟล์จะเป็นส่วนตัว จนกว่าคุณจะเปิดโปรไฟล์สาธารณะ</small>
+        </div>
+        {highlights.map(highlight => <div key={highlight.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid #eee', opacity: highlight.moderation_status === 'hidden' ? 0.6 : 1 }}>{highlight.moderation_status === 'hidden' && <span style={{ background: '#fff8e6', color: '#854d0e', border: '1px solid #f4d98b', borderRadius: 20, padding: '3px 8px', fontSize: 9, fontWeight: 800, flexShrink: 0 }}>ถูกซ่อนโดยผู้ดูแล</span>}<VideoIcon size={15} color="#CC0001" /><div style={{ flex: 1, minWidth: 0 }}><a href={`/api/highlights/${highlight.id}/media`} target="_blank" rel="noreferrer" style={{ display: 'block', color: '#222', fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{highlight.title}</a><span style={{ fontSize: 9, color: '#999' }}>{highlight.media_type === 'video' ? 'วิดีโอที่อัปโหลด' : 'รูปที่อัปโหลด'}</span></div><button type="button" title="ลบ Highlight" onClick={() => removeUploadedHighlight(highlight)} style={{ border: 0, background: 'transparent', color: '#aaa', cursor: 'pointer', display: 'flex' }}><Trash2 size={16} /></button></div>)}
+        <div style={{ borderTop: highlights.length ? '1px solid #eee' : 0, marginTop: highlights.length ? 4 : 0, paddingTop: highlights.length ? 14 : 0 }}>
+        <div style={{ fontSize: 10, fontWeight: 800, color: '#777', marginBottom: 8 }}>หรือเพิ่มจากลิงก์</div>
         <div style={{ display: 'grid', gap: 8 }}>
           <input value={videoTitle} onChange={event => setVideoTitle(event.target.value)} placeholder="ชื่อคลิป" style={{ ...inputStyle, padding: '10px 12px' }} />
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 44px', gap: 8 }}>
@@ -393,6 +479,7 @@ export default function EditProfileForm({
             {(Object.keys(VIDEO_TYPE_LABELS) as Video['video_type'][]).map(type => <button key={type} type="button" onClick={() => setVideoType(type)} style={{ minHeight: 36, borderRadius: 7, border: `1px solid ${videoType === type ? '#CC0001' : '#ddd'}`, background: videoType === type ? '#fff1f1' : 'white', color: videoType === type ? '#a40000' : '#666', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>{VIDEO_TYPE_LABELS[type]}</button>)}
           </div>
           {videos.map(video => <div key={video.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid #eee' }}><Link2 size={15} color="#CC0001" /><div style={{ flex: 1, minWidth: 0 }}><a href={video.video_url} target="_blank" rel="noreferrer" style={{ display: 'block', color: '#222', fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{video.title}</a><span style={{ fontSize: 9, color: '#999' }}>{VIDEO_TYPE_LABELS[video.video_type]}</span></div><button type="button" title="ลบคลิป" onClick={() => removeItem('athlete_videos', video.id)} style={{ border: 0, background: 'transparent', color: '#aaa', cursor: 'pointer', display: 'flex' }}><Trash2 size={16} /></button></div>)}
+        </div>
         </div>
       </section>
 

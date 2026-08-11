@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Activity, ArrowLeft, CheckCircle2, CircleAlert, Database, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
+import { UserMinus, Activity, ArrowLeft, CheckCircle2, CircleAlert, Database, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
@@ -35,12 +35,22 @@ function StatusCard({
 
 export default async function OperationsPage() {
   const supabase = await createServerSupabaseClient()
-  const [tournaments, ratings, profiles, slipBucket] = await Promise.all([
+  const [tournaments, ratings, profiles, slipBucket, deletionRequests] = await Promise.all([
     supabase.from('tournaments').select('id', { count: 'exact', head: true }),
     supabase.from('player_ratings').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase.storage.getBucket('slips'),
+    // Removing the auth account needs the service role key, which this app does not hold,
+    // so the last step of a PDPA deletion is a human one. This is its queue.
+    supabase
+      .from('account_deletion_requests')
+      .select('id, email, requested_at')
+      .is('completed_at', null)
+      .order('requested_at', { ascending: true })
+      .limit(25),
   ])
+
+  const openDeletions = (deletionRequests.data ?? []) as Array<{ id: number; email: string | null; requested_at: string }>
 
   const databaseReady = !tournaments.error && !ratings.error && !profiles.error
   const slipsPrivate = !slipBucket.error && slipBucket.data?.public === false
@@ -66,6 +76,33 @@ export default async function OperationsPage() {
           <StatusCard icon={<Mail size={19} />} title="Transactional email" status={emailReady ? 'ready' : 'attention'} detail={emailReady ? 'พร้อมส่งอีเมลสถานะทีมจากโดเมนที่กำหนด' : 'ต้องตั้ง RESEND_FROM_EMAIL หลังยืนยันโดเมนใน Resend'} />
           <StatusCard icon={<ShieldCheck size={19} />} title="Rate limiting" status={distributedRateLimitReady ? 'ready' : 'attention'} detail={distributedRateLimitReady ? 'ใช้ Upstash Redis ร่วมกันทุก instance' : 'กำลังใช้ fallback ใน memory; ต้องเชื่อม Upstash ก่อน deploy แบบหลาย instance'} />
           <StatusCard icon={<Activity size={19} />} title="Closed beta data mode" status={demoDisabled ? 'ready' : 'attention'} detail={demoDisabled ? 'Demo fallback ถูกปิด ระบบจะแสดงข้อมูลจาก Supabase จริงเท่านั้น' : 'ต้องตั้ง NEXT_PUBLIC_SHOW_DEMO_DATA=false ก่อนเชิญผู้จัดจริง'} />
+        </div>
+
+        <div style={{ background: 'white', border: `1.5px solid ${openDeletions.length > 0 ? '#f4d98b' : '#e5e7eb'}`, borderRadius: 16, marginTop: 24, padding: 20 }}>
+          <div style={{ alignItems: 'center', display: 'flex', gap: 10, marginBottom: 10 }}>
+            <UserMinus color={openDeletions.length > 0 ? '#854d0e' : '#596275'} size={20} />
+            <strong style={{ color: '#111827', fontFamily: 'var(--font-oswald)', fontSize: 16, letterSpacing: .3 }}>
+              คำขอลบบัญชีที่ยังไม่ปิด ({openDeletions.length})
+            </strong>
+          </div>
+          {deletionRequests.error ? (
+            <p style={{ color: '#854d0e', fontSize: 13, lineHeight: 1.7, margin: 0 }}>
+              ยังอ่านคิวคำขอไม่ได้ — apply <code>sql/data-deletion-v1.sql</code> ก่อน
+            </p>
+          ) : openDeletions.length === 0 ? (
+            <p style={{ color: '#596275', fontSize: 13, margin: 0 }}>ไม่มีคำขอค้าง</p>
+          ) : (
+            <>
+              <ul style={{ color: '#374151', fontSize: 13, lineHeight: 1.9, margin: '0 0 10px', paddingLeft: 20 }}>
+                {openDeletions.map(request => (
+                  <li key={request.id}>{request.email ?? 'ไม่ทราบอีเมล'} · ขอเมื่อ {new Date(request.requested_at).toLocaleDateString('th-TH')}</li>
+                ))}
+              </ul>
+              <p style={{ color: '#596275', fontSize: 12, lineHeight: 1.7, margin: 0 }}>
+                ข้อมูลนักกีฬาถูกลบและชื่อในตาราง ranking ถูกตัดออกแล้ว เหลือขั้นตอนลบบัญชีใน Supabase → Authentication → Users แล้วบันทึก <code>completed_at</code> ในตาราง <code>account_deletion_requests</code>
+              </p>
+            </>
+          )}
         </div>
 
         <div style={{ alignItems: 'center', background: '#111827', borderRadius: 16, color: 'white', display: 'flex', gap: 14, marginTop: 24, padding: 20 }}>

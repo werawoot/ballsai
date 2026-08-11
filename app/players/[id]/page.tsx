@@ -22,6 +22,9 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { isSampleId, samplePlayerRanks, showDemoData } from '@/lib/sample-data'
+import { IDENTITY_BADGES, calculateLevel, identityTitle } from '@/lib/digital-identity'
+import { ACTIVE_SPORT } from '@/lib/season'
+import ReportHighlightButton from './ReportHighlightButton'
 
 type PlayerRecord = {
   id: string
@@ -54,8 +57,11 @@ type AthleteProfile = {
 }
 
 type AthleteVideo = { id: number; title: string; video_url: string; video_type: string }
+type AthleteHighlight = { id: number; title: string; media_type: 'image' | 'video' }
 type AthleteAchievement = { id: number; title: string; event_name?: string | null; achievement_year?: number | null; proof_url?: string | null; verification_status: string }
 type SkillAssessment = { speed?: number | null; stamina?: number | null; strength?: number | null; technique?: number | null; vision?: number | null; source_level: string }
+type IdentityProgress = { xp_total: number; current_level: number }
+type AthleteBadge = { badge_key: string; awarded_at: string }
 
 function ageFromBirthDate(value?: string | null) {
   if (!value) return null
@@ -97,27 +103,36 @@ export default async function PlayerPage({ params }: { params: { id: string } })
 
   const routeIsUserId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(params.id)
   const linkedPlayerResult = !player && routeIsUserId
-    ? await supabase.from('player_ranks').select('*').eq('player_id', params.id).eq('sport', 'football').maybeSingle()
+    ? await supabase.from('player_ranks').select('*').eq('player_id', params.id).eq('sport', ACTIVE_SPORT).maybeSingle()
     : { data: null }
   const rankedPlayer = (player || linkedPlayerResult.data) as PlayerRecord | null
   const athleteId = rankedPlayer?.player_id || (routeIsUserId ? params.id : null)
 
   let athleteProfile: AthleteProfile | null = null
   let videos: AthleteVideo[] = []
+  let uploadedHighlights: AthleteHighlight[] = []
   let achievements: AthleteAchievement[] = []
   let skillAssessment: SkillAssessment | null = null
+  let identityProgress: IdentityProgress | null = null
+  let athleteBadges: AthleteBadge[] = []
 
   if (athleteId) {
-    const [profileResult, videoResult, achievementResult, skillResult] = await Promise.all([
+    const [profileResult, videoResult, highlightResult, achievementResult, skillResult, progressResult, badgeResult] = await Promise.all([
       supabase.from('athlete_profiles').select('*').eq('user_id', athleteId).maybeSingle(),
       supabase.from('athlete_videos').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6),
+      supabase.from('athlete_highlights').select('id, title, media_type').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6),
       supabase.from('athlete_achievements').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(8),
       supabase.from('athlete_skill_assessments').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', athleteId).maybeSingle(),
+      supabase.from('athlete_badges').select('badge_key, awarded_at').eq('athlete_id', athleteId).order('awarded_at', { ascending: false }),
     ])
     athleteProfile = profileResult.data as AthleteProfile | null
     videos = (videoResult.data ?? []) as AthleteVideo[]
+    uploadedHighlights = (highlightResult.data ?? []) as AthleteHighlight[]
     achievements = (achievementResult.data ?? []) as AthleteAchievement[]
     skillAssessment = skillResult.data as SkillAssessment | null
+    identityProgress = progressResult.data as IdentityProgress | null
+    athleteBadges = (badgeResult.data ?? []) as AthleteBadge[]
   }
 
   if (!rankedPlayer && !athleteProfile) redirect('/athletes')
@@ -165,15 +180,17 @@ export default async function PlayerPage({ params }: { params: { id: string } })
     { label: 'Technique', value: skillAssessment.technique },
     { label: 'Vision', value: skillAssessment.vision },
   ].filter(item => item.value !== null && item.value !== undefined) : []
+  const level = identityProgress?.current_level ?? calculateLevel(0)
+  const earnedBadgeKeys = new Set(athleteBadges.map(item => item.badge_key))
 
   return (
-    <main style={{ background: '#f6f6f4', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
-      <header style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
+    <main className="bds-page" style={{ background: '#f6f6f4', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
+      <header className="bds-header" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
         <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}><Trophy size={22} /> BallDoenSai.com</Link>
         <Link href="/athletes" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}><ArrowLeft size={16} /> นักกีฬา</Link>
       </header>
 
-      <section style={{ background: '#CC0001', color: 'white', padding: '24px 16px 44px' }}>
+      <section className="bds-hero" style={{ background: '#CC0001', color: 'white', padding: '24px 16px 44px' }}>
         <div style={{ maxWidth: 760, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(130px,180px) minmax(0,1fr)', gap: 20, alignItems: 'center' }}>
           <div style={{ width: '100%', aspectRatio: '2/3', borderRadius: 8, position: 'relative', overflow: 'hidden', background: cardBg, boxShadow: '0 16px 40px rgba(0,0,0,0.32)' }}>
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg,rgba(255,255,255,.35),transparent 42%,rgba(255,255,255,.1) 72%,transparent)' }} />
@@ -194,7 +211,12 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         </div>
       </section>
 
-      <div style={{ maxWidth: 760, margin: '-20px auto 0', padding: '0 16px', position: 'relative' }}>
+      <div className="bds-content" style={{ maxWidth: 760, margin: '-20px auto 0', padding: '0 16px', position: 'relative' }}>
+        {athleteId && <section style={{ background: '#111827', color: 'white', borderRadius: 8, padding: 18, marginBottom: 12, overflow: 'hidden', position: 'relative' }}>
+          <div style={{ position: 'absolute', width: 170, height: 170, border: '1px solid rgba(245,197,24,.28)', borderRadius: '50%', right: -52, top: -95 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}><div style={{ borderRight: '1px solid rgba(255,255,255,.2)', minWidth: 70, paddingRight: 14, textAlign: 'center' }}><small style={{ color: '#f5c518', fontSize: 9, fontWeight: 800, letterSpacing: 1.1 }}>LEVEL</small><b style={{ display: 'block', fontFamily: 'var(--font-oswald)', fontSize: 45, lineHeight: .9 }}>{level.toString().padStart(2, '0')}</b></div><div><small style={{ color: '#f5c518', fontSize: 9, fontWeight: 800, letterSpacing: 1.1 }}>{identityTitle(level).toUpperCase()}</small><b style={{ display: 'block', fontSize: 15, marginTop: 4 }}>Digital Sports Identity</b><span style={{ color: 'rgba(255,255,255,.62)', display: 'block', fontSize: 11, marginTop: 3 }}>{identityProgress?.xp_total?.toLocaleString() ?? 0} XP · {earnedBadgeKeys.size} Achievement</span></div></div>
+          <div style={{ display: 'flex', gap: 7, marginTop: 15, overflowX: 'auto', paddingBottom: 2, position: 'relative' }}>{IDENTITY_BADGES.map(badge => <div key={badge.key} title={badge.thaiName} style={{ alignItems: 'center', background: earnedBadgeKeys.has(badge.key) ? 'rgba(245,197,24,.17)' : 'rgba(255,255,255,.06)', border: `1px solid ${earnedBadgeKeys.has(badge.key) ? 'rgba(245,197,24,.65)' : 'rgba(255,255,255,.1)'}`, color: earnedBadgeKeys.has(badge.key) ? '#f5c518' : 'rgba(255,255,255,.33)', display: 'flex', flex: '0 0 auto', fontSize: 9, fontWeight: 800, minHeight: 31, padding: '0 8px' }}>{badge.name}</div>)}</div>
+        </section>}
         {(assessedStats.length > 0 || hasRanking) && <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}>
           <h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, marginBottom: 14 }}>ATHLETE SNAPSHOT</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
@@ -215,7 +237,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
           </div>
         </section>
 
-        {videos.length > 0 && <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}><h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, marginBottom: 12 }}>HIGHLIGHTS</h2><div style={{ display: 'grid', gap: 7 }}>{videos.map(video => <a key={video.id} href={video.video_url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 46, padding: '9px 11px', border: '1px solid #e5e5e5', borderRadius: 6, color: '#111', textDecoration: 'none' }}><PlayCircle size={19} color="#CC0001" /><span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{video.title}</span><ExternalLink size={14} color="#999" /></a>)}</div></section>}
+        {(videos.length > 0 || uploadedHighlights.length > 0) && <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}><h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, marginBottom: 12 }}>HIGHLIGHT MOMENTS</h2><div style={{ display: 'grid', gap: 7 }}>{uploadedHighlights.map(item => <div key={`upload-${item.id}`} style={{ display: 'flex', alignItems: 'center', gap: 4, minHeight: 46, padding: '0 6px 0 0', border: '1px solid #e5e5e5', borderRadius: 6 }}><a href={`/api/highlights/${item.id}/media`} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, padding: '9px 11px', color: '#111', textDecoration: 'none' }}><PlayCircle size={19} color="#CC0001" /><span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{item.title}<small style={{ display: 'block', color: '#888', marginTop: 2 }}>{item.media_type === 'video' ? 'วิดีโอที่อัปโหลด' : 'รูปที่อัปโหลด'}</small></span><ExternalLink size={14} color="#999" /></a><ReportHighlightButton highlightId={item.id} /></div>)}{videos.map(video => <a key={`link-${video.id}`} href={video.video_url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 46, padding: '9px 11px', border: '1px solid #e5e5e5', borderRadius: 6, color: '#111', textDecoration: 'none' }}><PlayCircle size={19} color="#CC0001" /><span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{video.title}</span><ExternalLink size={14} color="#999" /></a>)}</div></section>}
 
         {achievements.length > 0 && <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}><h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, marginBottom: 12 }}>ACHIEVEMENTS</h2><div>{achievements.map(item => <div key={item.id} style={{ display: 'flex', gap: 11, padding: '10px 0', borderBottom: '1px solid #eee' }}><Award size={19} color={item.verification_status === 'verified' ? '#15803d' : '#CC0001'} /><div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 800 }}>{item.title}</div><div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{[item.event_name, item.achievement_year].filter(Boolean).join(' · ') || 'BallDoenSai.com Athlete'}</div></div>{item.verification_status === 'verified' && <CheckCircle2 size={16} color="#15803d" />}</div>)}</div></section>}
       </div>

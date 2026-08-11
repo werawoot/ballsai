@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { CheckCircle, Eye, Plus, Save, Trash2 } from 'lucide-react'
+import { CheckCircle, Eye, Plus, Save, Search, Trash2 } from 'lucide-react'
 
 type TournamentOption = {
   id: string
@@ -77,10 +77,30 @@ export default function MatchResultForm({
   const [teamAScore, setTeamAScore] = useState(0)
   const [teamBScore, setTeamBScore] = useState(0)
   const [rows, setRows] = useState<PerformanceRow[]>([makeRow()])
+  const [playerQuery, setPlayerQuery] = useState('')
   const [preview, setPreview] = useState<PreviewItem[]>([])
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
+
+  // The ranking list covers every athlete in the season, not just the two teams
+  // playing, because team rosters are still free text. Searching by name or team
+  // keeps the organizer from scrolling a list of hundreds.
+  const filteredPlayers = useMemo(() => {
+    const query = playerQuery.trim().toLowerCase()
+    if (!query) return players
+    return players.filter(player =>
+      `${player.player_name} ${player.team} ${player.position}`.toLowerCase().includes(query)
+    )
+  }, [players, playerQuery])
+
+  // A selected athlete must stay in their own dropdown even when the current
+  // search no longer matches them, otherwise the row would silently look empty.
+  const optionsForRow = (playerRankId: string) => {
+    if (!playerRankId || filteredPlayers.some(player => player.id === playerRankId)) return filteredPlayers
+    const selected = players.find(player => player.id === playerRankId)
+    return selected ? [selected, ...filteredPlayers] : filteredPlayers
+  }
 
   const inputStyle = {
     width: '100%',
@@ -212,6 +232,42 @@ export default function MatchResultForm({
           </button>
         </div>
 
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }} />
+            <input
+              value={playerQuery}
+              onChange={event => setPlayerQuery(event.target.value)}
+              placeholder="ค้นหานักกีฬา: ชื่อ, ทีม หรือตำแหน่ง"
+              style={{ ...inputStyle, paddingLeft: 34 }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8, alignItems: 'center' }}>
+            {selectedTeamIds.map(teamId => {
+              const team = teams.find(item => item.id === teamId)
+              if (!team) return null
+              return (
+                <button key={team.id} onClick={() => setPlayerQuery(team.name)} style={{ background: 'white', color: '#555', border: '1.5px solid #e5e5e5', borderRadius: 20, padding: '5px 11px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                  กรอง: {team.name}
+                </button>
+              )
+            })}
+            {playerQuery && (
+              <button onClick={() => setPlayerQuery('')} style={{ background: 'white', color: '#CC0001', border: '1.5px solid #f2d0d0', borderRadius: 20, padding: '5px 11px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                ล้างคำค้นหา
+              </button>
+            )}
+            <span style={{ fontSize: 11, color: '#888', fontWeight: 600 }}>
+              พบ {filteredPlayers.length} จาก {players.length} คน
+            </span>
+          </div>
+          {filteredPlayers.length === 0 && (
+            <p style={{ fontSize: 11, color: '#a16207', lineHeight: 1.6, marginTop: 8 }}>
+              ไม่พบนักกีฬาที่ตรงกับคำค้นหา นักกีฬาจะขึ้นในรายการนี้เมื่อแอดมินสร้าง Ranking ให้บัญชีนั้นแล้ว
+            </p>
+          )}
+        </div>
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {rows.map((row, index) => {
             const itemPreview = previewByPlayer.get(row.playerRankId)
@@ -239,7 +295,7 @@ export default function MatchResultForm({
                   </select>
                   <select value={row.playerRankId} onChange={event => updateRow(row.id, { playerRankId: event.target.value })} style={inputStyle}>
                     <option value="">นักกีฬา</option>
-                    {players.map(player => (
+                    {optionsForRow(row.playerRankId).map(player => (
                       <option key={player.id} value={player.id}>{player.player_name} · {player.position} · {player.pts}</option>
                     ))}
                   </select>

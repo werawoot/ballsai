@@ -38,7 +38,7 @@ export default function HomeHeroCarousel() {
           <div className="home-hero-content">
             <div className="home-kicker"><span className="home-live-dot" /> {slides[0].label}</div>
             <h1>{slides[0].title}</h1><p>{slides[0].description}</p>
-            <div className="home-hero-actions"><Link href="/athletes" className="home-primary-cta">ค้นหานักกีฬา <ArrowUpRight size={18} /></Link><button type="button" className="home-secondary-cta home-slide-button" onClick={() => setActive(1)}>BallDoenSai.com ช่วยอะไร <ArrowRight size={17} /></button></div>
+            <div className="home-hero-actions"><Link href="/card" className="home-primary-cta">สร้าง Player Card <ArrowUpRight size={18} /></Link><button type="button" className="home-secondary-cta home-slide-button" onClick={() => setActive(1)}>BallDoenSai.com ช่วยอะไร <ArrowRight size={17} /></button></div>
           </div>
           <div className="home-hero-player" aria-hidden="true"><div className="home-player-number">10</div><div className="home-player-silhouette"><Zap size={88} strokeWidth={1} /></div><div className="home-player-caption"><span>YOUR GAME</span><b>YOUR STORY</b></div></div>
         </article>
@@ -47,7 +47,7 @@ export default function HomeHeroCarousel() {
           <div className="home-hero-content">
             <div className="home-kicker"><span className="home-live-dot" /> {slides[1].label}</div>
             <h1>{slides[1].title}</h1><p>{slides[1].description}</p>
-            <div className="home-hero-actions"><Link href="/profile" className="home-primary-cta">สร้างโปรไฟล์ <ArrowUpRight size={18} /></Link><Link href="/impact" className="home-secondary-cta">ดูเป้าหมายทั้งหมด</Link></div>
+            <div className="home-hero-actions"><Link href="/card" className="home-primary-cta">สร้าง Player Card <ArrowUpRight size={18} /></Link><Link href="/impact" className="home-secondary-cta">ดูเป้าหมายทั้งหมด</Link></div>
           </div>
           <div className="home-slide-infographic home-infographic-visible" aria-hidden="true"><div className="home-info-eye"><Eye size={58} /></div><div className="home-info-line" /><div className="home-info-tag home-info-tag-one"><Sparkles size={15} /> โปรไฟล์</div><div className="home-info-tag home-info-tag-two"><PlayCircle size={15} /> Highlight</div><div className="home-info-tag home-info-tag-three"><Trophy size={15} /> ผลงาน</div><b>SEEN</b></div>
         </article>
