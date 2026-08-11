@@ -92,6 +92,7 @@ export default async function RankingPage({
             {province && ` · ${province}`}
             {position && ` · ${position}`}
           </p>
+          <Link href="/hall-of-fame" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 14, border: '1px solid rgba(245,197,24,.7)', color: '#f5c518', padding: '7px 10px', fontFamily: 'var(--font-oswald)', fontSize: 10, fontWeight: 800, letterSpacing: 1, textDecoration: 'none' }}><Award size={14} /> HALL OF FAME</Link>
         </div>
       </div>
 

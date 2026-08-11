@@ -2,8 +2,6 @@
 -- Apply after sql/athlete-profile-v2.sql and sql/ballsai-rating-v1.sql.
 -- XP is awarded only from verified match records, never from browser input.
 
-begin;
-
 create table if not exists public.athlete_progress (
   athlete_id uuid primary key references public.athlete_profiles(user_id) on delete cascade,
   xp_total integer not null default 0 check (xp_total >= 0),
@@ -199,5 +197,3 @@ cross join lateral (values
 ) as badges(badge_key, is_earned)
 where r.player_id is not null and badges.is_earned
 on conflict (athlete_id, badge_key) do nothing;
-
-commit;

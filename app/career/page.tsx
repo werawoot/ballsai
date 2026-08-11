@@ -14,6 +14,7 @@ type Team = { id: string; name: string; status: string; created_at: string; tour
 type IdentityProgress = { xp_total: number; current_level: number }
 type Video = { id: number; title: string; video_url: string; video_type: string; created_at: string }
 type UploadedHighlight = { id: number; title: string; media_type: 'image' | 'video'; created_at: string }
+type EarnedBadge = { badge_key: string; awarded_at: string }
 
 function dateLabel(value: string) {
   return new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value))
@@ -29,7 +30,7 @@ export default async function CareerPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/career')
 
-  const [{ data: athlete }, { data: rating }, { data: achievements }, { data: teams }, { data: progress }, { data: videos }, { data: highlights }] = await Promise.all([
+  const [{ data: athlete }, { data: rating }, { data: achievements }, { data: teams }, { data: progress }, { data: videos }, { data: highlights }, { data: earnedBadges }] = await Promise.all([
     supabase.from('athlete_profiles').select('display_name, created_at, verification_level').eq('user_id', user.id).maybeSingle(),
     supabase.from('player_ratings').select('id, power_rating, matches_played, wins, goals, assists, clean_sheets, mvps, confidence').eq('player_id', user.id).eq('sport', 'football').maybeSingle(),
     supabase.from('athlete_achievements').select('id, title, event_name, verification_status, created_at').eq('athlete_id', user.id).order('created_at', { ascending: false }).limit(12),
@@ -37,6 +38,7 @@ export default async function CareerPage() {
     supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', user.id).maybeSingle(),
     supabase.from('athlete_videos').select('id, title, video_url, video_type, created_at').eq('athlete_id', user.id).order('created_at', { ascending: false }).limit(6),
     supabase.from('athlete_highlights').select('id, title, media_type, created_at').eq('athlete_id', user.id).order('created_at', { ascending: false }).limit(6),
+    supabase.from('athlete_badges').select('badge_key, awarded_at').eq('athlete_id', user.id).order('awarded_at', { ascending: false }),
   ])
 
   const typedAthlete = athlete as AthleteProfile | null
@@ -46,6 +48,7 @@ export default async function CareerPage() {
   const typedProgress = progress as IdentityProgress | null
   const typedVideos = (videos ?? []) as Video[]
   const typedHighlights = (highlights ?? []) as UploadedHighlight[]
+  const typedEarnedBadges = (earnedBadges ?? []) as EarnedBadge[]
   const { data: ratingEvents } = typedRating
     ? await supabase.from('rating_events').select('id, created_at, rating_change, goals, assists, mvp, result').eq('player_rating_id', typedRating.id).order('created_at', { ascending: false }).limit(20)
     : { data: [] }
@@ -57,16 +60,19 @@ export default async function CareerPage() {
   const xpTotal = typedProgress?.xp_total ?? fallbackXp
   const level = typedProgress?.current_level ?? calculateLevel(xpTotal)
   const levelInfo = levelProgress(xpTotal, level)
-  const unlockedKeys = unlockedBadgeKeys({
+  const calculatedBadgeKeys = unlockedBadgeKeys({
     hasProfile: Boolean(typedAthlete), matchesPlayed: typedRating?.matches_played, wins: typedRating?.wins,
     goals: typedRating?.goals, assists: typedRating?.assists, cleanSheets: typedRating?.clean_sheets,
     mvps: typedRating?.mvps, powerRating: typedRating?.power_rating,
   })
+  const earnedBadgeKeys = new Set(typedEarnedBadges.map(item => item.badge_key))
+  const unlockedKeys = new Set([...calculatedBadgeKeys, ...earnedBadgeKeys])
 
   const badges = IDENTITY_BADGES.map((badge, index) => ({
     ...badge,
     icon: index === 0 ? <UserRound /> : index === 1 ? <Footprints /> : index === 2 ? <Trophy /> : index === 3 ? <Sparkles /> : <Medal />,
-    unlocked: unlockedKeys.includes(badge.key),
+    unlocked: unlockedKeys.has(badge.key),
+    verified: earnedBadgeKeys.has(badge.key),
   }))
 
   const events = [
@@ -87,7 +93,7 @@ export default async function CareerPage() {
         <div className="identity-level-note">XP จากผลแข่งที่ผู้จัดยืนยันแล้ว</div>
       </section>
       <div className="career-section-heading"><div><span>UNLOCKED ON THE PITCH</span><h2>Achievement Road</h2></div><p>{badges.filter(badge => badge.unlocked).length}/{badges.length} ปลดล็อกแล้ว</p></div>
-      <div className="career-badges">{badges.map(badge => <article className={`career-badge ${badge.unlocked ? 'is-unlocked' : ''}`} key={badge.name}><div>{badge.icon}</div><b>{badge.name}</b><p>{badge.description}</p>{badge.unlocked ? <small>+{badge.xp} XP · UNLOCKED</small> : <small>LOCKED</small>}</article>)}</div>
+      <div className="career-badges">{badges.map(badge => <article className={`career-badge ${badge.unlocked ? 'is-unlocked' : ''}`} key={badge.name}><div>{badge.icon}</div><b>{badge.name}</b><p>{badge.description}</p>{badge.unlocked ? <small>+{badge.xp} XP · {badge.verified ? 'VERIFIED' : 'UNLOCKED'}</small> : <small>LOCKED</small>}</article>)}</div>
 
       <div className="career-section-heading career-timeline-heading"><div><span>YOUR STORY, IN REAL DATA</span><h2>Career Timeline</h2></div><Link href="/profile">เพิ่มผลงาน <ChevronRight size={15} /></Link></div>
       {events.length ? <div className="career-timeline">{events.map(event => <article key={event.id} className="career-event"><div className="career-event-pin">{event.icon}</div><div><time>{dateLabel(event.at)}</time><h3>{event.title}</h3><p>{event.detail}</p></div></article>)}</div> : <div className="career-empty"><CircleDot size={30} /><h3>ยังไม่มีเรื่องราวบนสนาม</h3><p>สร้างโปรไฟล์ สมัครรายการแข่ง และบันทึกผลงาน เพื่อเริ่ม Athlete Passport ของคุณ</p><Link href="/profile">เริ่มสร้างโปรไฟล์</Link></div>}

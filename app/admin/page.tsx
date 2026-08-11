@@ -204,6 +204,25 @@ export default async function AdminPage() {
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <Link
+              href="/admin/hall"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                background: "#f5c518",
+                color: "#17120a",
+                borderRadius: 20,
+                padding: "6px 14px",
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: "none",
+                fontFamily: "var(--font-oswald)",
+                letterSpacing: 0.5,
+              }}
+            >
+              <Trophy size={14} /> Hall of Fame
+            </Link>
+            <Link
               href="/admin/operations"
               style={{
                 display: "flex",

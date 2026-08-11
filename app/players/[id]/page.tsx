@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { isSampleId, samplePlayerRanks, showDemoData } from '@/lib/sample-data'
+import { IDENTITY_BADGES, calculateLevel, identityTitle } from '@/lib/digital-identity'
 
 type PlayerRecord = {
   id: string
@@ -57,6 +58,8 @@ type AthleteVideo = { id: number; title: string; video_url: string; video_type: 
 type AthleteHighlight = { id: number; title: string; media_type: 'image' | 'video' }
 type AthleteAchievement = { id: number; title: string; event_name?: string | null; achievement_year?: number | null; proof_url?: string | null; verification_status: string }
 type SkillAssessment = { speed?: number | null; stamina?: number | null; strength?: number | null; technique?: number | null; vision?: number | null; source_level: string }
+type IdentityProgress = { xp_total: number; current_level: number }
+type AthleteBadge = { badge_key: string; awarded_at: string }
 
 function ageFromBirthDate(value?: string | null) {
   if (!value) return null
@@ -108,20 +111,26 @@ export default async function PlayerPage({ params }: { params: { id: string } })
   let uploadedHighlights: AthleteHighlight[] = []
   let achievements: AthleteAchievement[] = []
   let skillAssessment: SkillAssessment | null = null
+  let identityProgress: IdentityProgress | null = null
+  let athleteBadges: AthleteBadge[] = []
 
   if (athleteId) {
-    const [profileResult, videoResult, highlightResult, achievementResult, skillResult] = await Promise.all([
+    const [profileResult, videoResult, highlightResult, achievementResult, skillResult, progressResult, badgeResult] = await Promise.all([
       supabase.from('athlete_profiles').select('*').eq('user_id', athleteId).maybeSingle(),
       supabase.from('athlete_videos').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6),
       supabase.from('athlete_highlights').select('id, title, media_type').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6),
       supabase.from('athlete_achievements').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(8),
       supabase.from('athlete_skill_assessments').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', athleteId).maybeSingle(),
+      supabase.from('athlete_badges').select('badge_key, awarded_at').eq('athlete_id', athleteId).order('awarded_at', { ascending: false }),
     ])
     athleteProfile = profileResult.data as AthleteProfile | null
     videos = (videoResult.data ?? []) as AthleteVideo[]
     uploadedHighlights = (highlightResult.data ?? []) as AthleteHighlight[]
     achievements = (achievementResult.data ?? []) as AthleteAchievement[]
     skillAssessment = skillResult.data as SkillAssessment | null
+    identityProgress = progressResult.data as IdentityProgress | null
+    athleteBadges = (badgeResult.data ?? []) as AthleteBadge[]
   }
 
   if (!rankedPlayer && !athleteProfile) redirect('/athletes')
@@ -169,6 +178,8 @@ export default async function PlayerPage({ params }: { params: { id: string } })
     { label: 'Technique', value: skillAssessment.technique },
     { label: 'Vision', value: skillAssessment.vision },
   ].filter(item => item.value !== null && item.value !== undefined) : []
+  const level = identityProgress?.current_level ?? calculateLevel(0)
+  const earnedBadgeKeys = new Set(athleteBadges.map(item => item.badge_key))
 
   return (
     <main className="bds-page" style={{ background: '#f6f6f4', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
@@ -199,6 +210,11 @@ export default async function PlayerPage({ params }: { params: { id: string } })
       </section>
 
       <div className="bds-content" style={{ maxWidth: 760, margin: '-20px auto 0', padding: '0 16px', position: 'relative' }}>
+        {athleteId && <section style={{ background: '#111827', color: 'white', borderRadius: 8, padding: 18, marginBottom: 12, overflow: 'hidden', position: 'relative' }}>
+          <div style={{ position: 'absolute', width: 170, height: 170, border: '1px solid rgba(245,197,24,.28)', borderRadius: '50%', right: -52, top: -95 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}><div style={{ borderRight: '1px solid rgba(255,255,255,.2)', minWidth: 70, paddingRight: 14, textAlign: 'center' }}><small style={{ color: '#f5c518', fontSize: 9, fontWeight: 800, letterSpacing: 1.1 }}>LEVEL</small><b style={{ display: 'block', fontFamily: 'var(--font-oswald)', fontSize: 45, lineHeight: .9 }}>{level.toString().padStart(2, '0')}</b></div><div><small style={{ color: '#f5c518', fontSize: 9, fontWeight: 800, letterSpacing: 1.1 }}>{identityTitle(level).toUpperCase()}</small><b style={{ display: 'block', fontSize: 15, marginTop: 4 }}>Digital Sports Identity</b><span style={{ color: 'rgba(255,255,255,.62)', display: 'block', fontSize: 11, marginTop: 3 }}>{identityProgress?.xp_total?.toLocaleString() ?? 0} XP · {earnedBadgeKeys.size} Achievement</span></div></div>
+          <div style={{ display: 'flex', gap: 7, marginTop: 15, overflowX: 'auto', paddingBottom: 2, position: 'relative' }}>{IDENTITY_BADGES.map(badge => <div key={badge.key} title={badge.thaiName} style={{ alignItems: 'center', background: earnedBadgeKeys.has(badge.key) ? 'rgba(245,197,24,.17)' : 'rgba(255,255,255,.06)', border: `1px solid ${earnedBadgeKeys.has(badge.key) ? 'rgba(245,197,24,.65)' : 'rgba(255,255,255,.1)'}`, color: earnedBadgeKeys.has(badge.key) ? '#f5c518' : 'rgba(255,255,255,.33)', display: 'flex', flex: '0 0 auto', fontSize: 9, fontWeight: 800, minHeight: 31, padding: '0 8px' }}>{badge.name}</div>)}</div>
+        </section>}
         {(assessedStats.length > 0 || hasRanking) && <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}>
           <h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, marginBottom: 14 }}>ATHLETE SNAPSHOT</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>

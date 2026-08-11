@@ -2,8 +2,6 @@
 -- The bucket is private. Media is served only to its owner, an admin, or when
 -- the athlete has explicitly made the profile public.
 
-begin;
-
 create table if not exists public.athlete_highlights (
   id bigint generated always as identity primary key,
   athlete_id uuid not null references public.athlete_profiles(user_id) on delete cascade,
@@ -79,5 +77,3 @@ using (
     )
   )
 );
-
-commit;
