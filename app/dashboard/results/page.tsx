@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Trophy } from 'lucide-react'
 import MatchResultForm from './MatchResultForm'
+import MatchResultHistory from './MatchResultHistory'
 
 type TournamentOption = {
   id: string
@@ -24,6 +25,17 @@ type PlayerOption = {
   team: string
   position: string
   pts: number
+}
+
+type MatchResultRow = {
+  id: string
+  tournament_id: string
+  team_a_id: string
+  team_b_id: string
+  team_a_score: number
+  team_b_score: number
+  status: string
+  created_at: string
 }
 
 export default async function MatchResultsPage() {
@@ -65,11 +77,13 @@ export default async function MatchResultsPage() {
   const { data: tournaments } = await tournamentsQuery
   const tournamentIds = tournaments?.map(tournament => tournament.id) ?? []
 
+  // Every team of the organizer's tournaments is loaded, not only confirmed ones,
+  // so a recorded result can still show its team names if a team changes status
+  // afterwards. Only confirmed teams are selectable in the form.
   const { data: teams } = await supabase
     .from('teams')
     .select('id, name, tournament_id, status')
     .in('tournament_id', tournamentIds.length > 0 ? tournamentIds : ['none'])
-    .eq('status', 'confirmed')
     .order('name')
 
   const { data: players } = await supabase
@@ -78,6 +92,18 @@ export default async function MatchResultsPage() {
     .eq('sport', 'football')
     .eq('season', '2026')
     .order('player_name')
+
+  const { data: matchResults } = await supabase
+    .from('match_results')
+    .select('id, tournament_id, team_a_id, team_b_id, team_a_score, team_b_score, status, created_at')
+    .in('tournament_id', tournamentIds.length > 0 ? tournamentIds : ['none'])
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  const allTeams = (teams ?? []) as TeamOption[]
+  const confirmedTeams = allTeams.filter(team => team.status === 'confirmed')
+  const teamNames = Object.fromEntries(allTeams.map(team => [team.id, team.name]))
+  const tournamentNames = Object.fromEntries((tournaments ?? []).map(tournament => [tournament.id, tournament.name]))
 
   return (
     <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 40, overflowX: 'hidden' }}>
@@ -107,9 +133,17 @@ export default async function MatchResultsPage() {
 
       <MatchResultForm
         tournaments={(tournaments ?? []) as TournamentOption[]}
-        teams={(teams ?? []) as TeamOption[]}
+        teams={confirmedTeams}
         players={(players ?? []) as PlayerOption[]}
       />
+
+      <div style={{ padding: '0 16px' }}>
+        <MatchResultHistory
+          matchResults={(matchResults ?? []) as MatchResultRow[]}
+          teamNames={teamNames}
+          tournamentNames={tournamentNames}
+        />
+      </div>
     </main>
   )
 }
