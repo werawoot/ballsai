@@ -86,6 +86,7 @@ the base RLS file leaves permissive.
 | 12 | `sql/production-hardening.sql` | Makes `slips` private, replaces the public slip read policy, adds `register_team_safely`, `confirm_payment_safely`, `record_match_result_safely`, discovery indexes | 3, 5 |
 | 13 | `sql/match-result-void-v1.sql` | `void_match_result_safely()` so a mistyped result can be reversed together with its rating, XP and badges | 9, 12 |
 | 14 | `sql/guardian-consent-enforcement-v1.sql` | Blocks a public athlete profile without a birth date, and a minor's public profile without guardian consent, at the database level | 6 |
+| 15 | `sql/highlight-moderation-v1.sql` | Report queue, hide/unhide state for uploaded highlights, and storage reads that follow the hidden state | 10 |
 
 Files that must **not** be applied during closed beta:
 
@@ -175,6 +176,7 @@ admin. Everyone signing up through `/login` starts as `user`.
 - `athlete_xp_events`
 - `athlete_badges`
 - `athlete_highlights`
+- `athlete_highlight_reports`
 - `hall_of_fame_entries`
 - `storage.objects`
 
@@ -299,6 +301,11 @@ Run these once per environment, in addition to the W1 pilot.
 - Edit and delete a player rank.
 - Confirm only admin can change ranking data.
 - Award a Hall of Fame entry at `/admin/hall` and see it on `/hall-of-fame`.
+- Report a highlight from a public profile as another account, then open
+  `/admin/moderation`, hide it, and confirm it disappears from the public profile while
+  the owner still sees it marked as hidden.
+- Unhide the same clip and confirm it returns, then confirm a permanent delete removes
+  both the row and the stored file.
 - Open `/admin/operations` and confirm the readiness rows.
 
 The legacy `/api/ratings` endpoint is intentionally disabled. Rating must be recorded
@@ -353,6 +360,10 @@ The app writes structured JSON logs for high-risk server actions:
 - `match_result_create_failed`
 - `match_result_voided`
 - `match_result_void_failed`
+- `highlight_reported`
+- `highlight_report_failed`
+- `highlight_moderated`
+- `highlight_moderation_failed`
 - `tournament_updated`
 - `tournament_update_failed`
 - `public_rankings_fetch_failed`, `public_identity_ranking_fetch_failed`,

@@ -60,13 +60,14 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs both on every pus
 Working: login (Google OAuth + email OTP), `/welcome` onboarding, Player Card builder,
 athlete profile, highlights, Career Passport, Hall of Fame, tournaments, team
 registration, slip upload and confirmation, match result recording with rating preview,
-XP/Badge triggers, void of a recorded match result.
+XP/Badge triggers, void of a recorded match result, highlight reporting with an admin
+moderation queue at `/admin/moderation`.
 
 Not proven yet: nothing has run against real users. No real organizer, tournament,
 athlete or match result exists in the database. Closed beta W1 (5 testers) is the next
 milestone; see runbook §6.
 
-Pending human action: apply SQL steps 1–14 from runbook §3, create the private `slips`
+Pending human action: apply SQL steps 1–15 from runbook §3, create the private `slips`
 bucket, set `profiles.role` for organizers/admins, add Google OAuth test users. In
 particular `sql/match-result-void-v1.sql` must be applied before the void button works —
 the API returns HTTP 503 with instructions until then — and
@@ -87,8 +88,7 @@ Known manual seams, by design for now:
 ## Next tasks, in order
 
 Before expanding past 5 testers: real team roster linking members to accounts
-(`team_members`, new migration); Highlight moderation queue with report and admin
-delete; in-app notifications.
+(`team_members`, new migration); in-app notifications.
 
 Before public launch: account and data deletion for PDPA; RLS tests with real JWTs; load
 and rate-limit testing; Google OAuth published and a custom SMTP sender configured in

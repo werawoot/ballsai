@@ -111,7 +111,7 @@ export default async function ProfilePage() {
     supabase.from('player_ranks').select('*').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).maybeSingle(),
     supabase.from('teams').select('*, tournaments(name, location)').eq('created_by', user.id).order('created_at', { ascending: false }).limit(5),
     supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', user.id).maybeSingle(),
-    supabase.from('athlete_highlights').select('id, title, media_path, media_type').eq('athlete_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('athlete_highlights').select('id, title, media_path, media_type, moderation_status').eq('athlete_id', user.id).order('created_at', { ascending: false }),
   ])
 
   const typedProfile = (profile ?? null) as ProfileRecord | null

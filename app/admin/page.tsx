@@ -1,17 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  Trophy,
-  House,
-  ClipboardList,
-  User,
-  Plus,
-  Database,
-  Activity,
-  UserCheck,
-  UserX,
-} from "lucide-react";
+import { Activity, ClipboardList, Database, House, Plus, ShieldAlert, Trophy, User, UserCheck, UserX } from "lucide-react";
 import Link from "next/link";
 import DeletePlayerButton from "./DeletePlayerButton";
 import EditPlayerButton from "./EditPlayerButton";
@@ -222,6 +212,25 @@ export default async function AdminPage() {
               }}
             >
               <Trophy size={14} /> Hall of Fame
+            </Link>
+            <Link
+              href="/admin/moderation"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                background: "#fff8e6",
+                color: "#854d0e",
+                borderRadius: 20,
+                padding: "6px 14px",
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: "none",
+                fontFamily: "var(--font-oswald)",
+                letterSpacing: 0.5,
+              }}
+            >
+              <ShieldAlert size={14} /> Moderation
             </Link>
             <Link
               href="/admin/operations"

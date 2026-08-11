@@ -71,6 +71,7 @@ type UploadedHighlight = {
   title: string
   media_path: string
   media_type: 'image' | 'video'
+  moderation_status?: 'visible' | 'hidden'
 }
 
 type FieldProps = {
@@ -465,7 +466,7 @@ export default function EditProfileForm({
           <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" onChange={event => setHighlightFile(event.target.files?.[0] || null)} style={{ width: '100%', fontSize: 11, marginTop: 8 }} />
           <small style={{ display: 'block', color: '#777', marginTop: 7, lineHeight: 1.45 }}>{highlightFile ? `${highlightFile.name} · ${(highlightFile.size / 1024 / 1024).toFixed(1)} MB` : 'JPG, PNG, WEBP, MP4 หรือ WEBM · ไม่เกิน 25 MB'}<br />ไฟล์จะเป็นส่วนตัว จนกว่าคุณจะเปิดโปรไฟล์สาธารณะ</small>
         </div>
-        {highlights.map(highlight => <div key={highlight.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid #eee' }}><VideoIcon size={15} color="#CC0001" /><div style={{ flex: 1, minWidth: 0 }}><a href={`/api/highlights/${highlight.id}/media`} target="_blank" rel="noreferrer" style={{ display: 'block', color: '#222', fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{highlight.title}</a><span style={{ fontSize: 9, color: '#999' }}>{highlight.media_type === 'video' ? 'วิดีโอที่อัปโหลด' : 'รูปที่อัปโหลด'}</span></div><button type="button" title="ลบ Highlight" onClick={() => removeUploadedHighlight(highlight)} style={{ border: 0, background: 'transparent', color: '#aaa', cursor: 'pointer', display: 'flex' }}><Trash2 size={16} /></button></div>)}
+        {highlights.map(highlight => <div key={highlight.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid #eee', opacity: highlight.moderation_status === 'hidden' ? 0.6 : 1 }}>{highlight.moderation_status === 'hidden' && <span style={{ background: '#fff8e6', color: '#854d0e', border: '1px solid #f4d98b', borderRadius: 20, padding: '3px 8px', fontSize: 9, fontWeight: 800, flexShrink: 0 }}>ถูกซ่อนโดยผู้ดูแล</span>}<VideoIcon size={15} color="#CC0001" /><div style={{ flex: 1, minWidth: 0 }}><a href={`/api/highlights/${highlight.id}/media`} target="_blank" rel="noreferrer" style={{ display: 'block', color: '#222', fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{highlight.title}</a><span style={{ fontSize: 9, color: '#999' }}>{highlight.media_type === 'video' ? 'วิดีโอที่อัปโหลด' : 'รูปที่อัปโหลด'}</span></div><button type="button" title="ลบ Highlight" onClick={() => removeUploadedHighlight(highlight)} style={{ border: 0, background: 'transparent', color: '#aaa', cursor: 'pointer', display: 'flex' }}><Trash2 size={16} /></button></div>)}
         <div style={{ borderTop: highlights.length ? '1px solid #eee' : 0, marginTop: highlights.length ? 4 : 0, paddingTop: highlights.length ? 14 : 0 }}>
         <div style={{ fontSize: 10, fontWeight: 800, color: '#777', marginBottom: 8 }}>หรือเพิ่มจากลิงก์</div>
         <div style={{ display: 'grid', gap: 8 }}>
