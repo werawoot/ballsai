@@ -85,16 +85,15 @@ export default async function Home() {
         </div>
       </section>
 
-      <aside className="home-ad-slot" aria-label="พื้นที่สำหรับโฆษณา">
-        <div className="home-ad-slot-inner">
-          <Megaphone className="home-ad-icon" size={22} aria-hidden="true" />
-          <div className="home-ad-copy">
-            <span>ADVERTISEMENT SPACE</span>
-            <strong>พื้นที่สำหรับโฆษณา</strong>
-          </div>
-          <span className="home-ad-brand">BALLDOENSAI.COM</span>
+      <div className="home-ticker" aria-label="พื้นที่สำหรับโฆษณา">
+        <div className="home-ticker-track">
+          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
+          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
+          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
+          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
+          <span><Megaphone size={14} /> พื้นที่สำหรับโฆษณา</span><i />
         </div>
-      </aside>
+      </div>
 
       <section className="home-headlines">
         <div className="home-headlines-primary">
