@@ -155,6 +155,16 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
     ctx.fillStyle = 'rgba(255,255,255,.78)'; ctx.font = '600 29px Arial, sans-serif'; ctx.fillText(`${cardPlayer.team} · ${cardPlayer.province}`, width / 2, cardY + 805)
     const stats: Array<[string, number]> = [['PAC', player.stats.pac], ['SHO', player.stats.sho], ['PAS', player.stats.pas], ['DRI', player.stats.dri], ['DEF', player.stats.def]]
     stats.forEach(([key, value], index) => { const x = cardX + 105 + index * 153; ctx.fillStyle = '#fff'; ctx.font = '900 42px Impact, Arial'; ctx.fillText(String(value), x, cardY + 950); ctx.fillStyle = 'rgba(255,255,255,.72)'; ctx.font = '700 21px Arial'; ctx.fillText(key, x, cardY + 992) })
+    // A shared card must carry its own provenance. Starter stats are defaults, not
+    // performance, so the exported image says so even when the page around it does not.
+    if (!player.isRanked) {
+      const pillW = 262, pillH = 54, pillX = cardX + cardW - pillW - 40, pillY = cardY + 52
+      ctx.fillStyle = 'rgba(0,0,0,.62)'
+      ctx.beginPath(); ctx.roundRect(pillX, pillY, pillW, pillH, 27); ctx.fill()
+      ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.stroke()
+      ctx.fillStyle = '#fff'; ctx.font = '800 23px Arial, sans-serif'
+      ctx.fillText('STARTER · UNRANKED', pillX + pillW / 2, pillY + 35)
+    }
     ctx.fillStyle = 'rgba(0,0,0,.68)'; ctx.fillRect(cardX, cardY + cardH - 70, cardW, 70); ctx.fillStyle = '#fff'; ctx.font = '800 22px Arial'; ctx.fillText('BALLDOENSAI.COM · YOUR GAME, YOUR STORY', width / 2, cardY + cardH - 27)
     if (exportFormat === 'story') { ctx.fillStyle = '#fff'; ctx.font = '900 44px Impact, Arial'; ctx.fillText('MY PLAYER CARD', width / 2, 175); ctx.fillStyle = colors.accent; ctx.font = '700 25px Arial'; ctx.fillText('BALLDOENSAI.COM', width / 2, 220) }
     return await new Promise<Blob>((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Could not create image')), 'image/png'))
@@ -283,6 +293,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
     <div className="card-builder-preview">
       <div className={`player-card-poster is-${format}`}><div className={`player-card is-${theme}`}>
         <div className="player-card-glint" /><div className="player-card-rating"><b>{cardPlayer.stats.ovr}</b><span>{cardPlayer.position}</span></div>
+        {!player.isRanked && <span className="player-card-starter">STARTER · UNRANKED</span>}
         <div className="player-card-photo" style={imageUrl ? { backgroundImage: `url("${imageUrl}")` } : undefined}><div className="player-card-photo-fallback">{cardPlayer.position}</div></div>
         <div className="player-card-detail"><h2>{cardPlayer.name}</h2>{player.isVerified && <CheckCircle2 size={17} />}<p>{cardPlayer.team} · {cardPlayer.province}</p><div>{Object.entries(cardPlayer.stats).filter(([key]) => key !== 'ovr').map(([key, value]) => <span key={key}><b>{value}</b><small>{key.toUpperCase()}</small></span>)}</div></div>
         <footer>BALLDOENSAI.COM · YOUR GAME, YOUR STORY</footer>
