@@ -5,6 +5,10 @@ import { createClient } from "@/lib/supabase";
 import { Trophy, Mail, KeyRound, ArrowLeft, Lock, Shield } from "lucide-react";
 import Link from "next/link";
 
+// Preview links have a stable Vercel alias. Using the current browser origin here
+// makes Supabase fall back to its Site URL for every new preview deployment.
+const authCallbackOrigin = (process.env.NEXT_PUBLIC_APP_URL || "https://ballsai-git-codex-player-card-beta-werawoots-projects.vercel.app").replace(/\/$/, "");
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -31,7 +35,7 @@ export default function LoginPage() {
     const nextPath = getNextPath();
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}` },
+      options: { emailRedirectTo: `${authCallbackOrigin}/auth/callback?next=${encodeURIComponent(nextPath)}` },
     });
     if (error) {
       setMessage("เกิดข้อผิดพลาด: " + error.message);
