@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, Check, ChevronRight, KeyRound, Mail, Shield, Sparkles, Trophy } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Facebook, KeyRound, Mail, Shield, Sparkles, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 
 type LoginStep = "start" | "email" | "otp" | "admin";
@@ -32,6 +32,24 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
     });
     if (error) {
       setMessage("ยังไม่สามารถเข้าสู่ระบบด้วย Google ได้: " + error.message);
+      setLoading(false);
+    }
+  };
+
+  const signInWithFacebook = async () => {
+    if (!acceptedTerms) {
+      setMessage("กรุณายอมรับข้อกำหนดและนโยบายความเป็นส่วนตัวก่อน");
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+    const { error } = await createClient().auth.signInWithOAuth({
+      provider: "facebook",
+      options: { redirectTo: callbackUrl() },
+    });
+    if (error) {
+      setMessage("ยังไม่สามารถเข้าสู่ระบบด้วย Facebook ได้: " + error.message);
       setLoading(false);
     }
   };
@@ -96,12 +114,35 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
 
         <div className="auth-v2-copy">
           <p className="auth-v2-kicker"><Sparkles size={14} /> YOUR GAME · YOUR STORY</p>
-          <h1>ทุกก้าวในสนาม<br /><em>มีความหมาย</em></h1>
-          <p>สร้างตัวตน เก็บผลงาน และแชร์เส้นทางนักบอลของคุณให้โลกเห็น</p>
+          <h1>ทุกก้าวในสนาม<br /><em>คือชื่อคุณ</em></h1>
+          <p>ทุกแมตช์ที่คุณลงเล่น กลายเป็น Player Card, Power Rating และ Highlight ที่เป็นของคุณเอง</p>
           <div className="auth-v2-points">
             <span><Check size={14} /> สร้าง Player Card</span>
             <span><Check size={14} /> เก็บทุก Highlight</span>
             <span><Check size={14} /> เติบโตจากทุกนัด</span>
+          </div>
+
+          <div className="auth-v2-preview" aria-hidden="true">
+            <p className="auth-v2-preview-tag"><Sparkles size={12} /> ตัวอย่าง · นี่คือสิ่งที่คุณกำลังจะสร้าง</p>
+            <div className="auth-v2-preview-card">
+              <div className="auth-v2-preview-card-shine" />
+              <svg aria-hidden="true" className="auth-v2-preview-card-figure" viewBox="0 0 120 140">
+                <circle cx="70" cy="22" r="12" />
+                <path d="M70 34c-11 0-19 7-21 18l-4 24c-1 6 4 11 10 10l2 0 4-20 5 3-3 26c-1 6 4 11 10 10l12-2c5-1 8-6 7-11l-5-23 12 5 15-11c4-3 4-9 0-12l-1-1-17 8-13-7c-4-2-8-3-13-3z" />
+                <circle cx="108" cy="102" r="8" />
+              </svg>
+              <div className="auth-v2-preview-card-top">
+                <span className="auth-v2-preview-card-name">นักเตะ [ชื่อคุณ]</span>
+                <span className="auth-v2-preview-card-position">กองหน้า</span>
+              </div>
+              <div className="auth-v2-preview-card-power">
+                <span>POWER RATING</span>
+                <b>78</b>
+              </div>
+              <div className="auth-v2-preview-card-badges">
+                <Trophy size={14} /><Shield size={14} /><Sparkles size={14} />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -120,6 +161,10 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
               <button className="auth-v2-google" disabled={loading} onClick={signInWithGoogle} type="button">
                 <span className="auth-v2-google-mark">G</span>
                 {loading ? "กำลังพาไป Google..." : "ดำเนินการต่อด้วย Google"}
+              </button>
+              <button className="auth-v2-google auth-v2-facebook" disabled={loading} onClick={signInWithFacebook} type="button">
+                <Facebook size={17} fill="currentColor" />
+                {loading ? "กำลังพาไป Facebook..." : "ดำเนินการต่อด้วย Facebook"}
               </button>
               <button className="auth-v2-email" onClick={() => go("email")} type="button">
                 <Mail size={17} /> ใช้อีเมลรับรหัส <ChevronRight size={17} />
