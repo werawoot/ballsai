@@ -15,9 +15,11 @@ Fame. Users are minors, their guardians, coaches and tournament organizers.
 
 1. **Never** commit or print secrets. Do not read, edit, or echo `.env.local`. Google
    OAuth client ID/secret live in the Supabase dashboard, not in the repo.
-2. Database changes target Supabase project ref **`hivedzrwrrcnjrlirhtv`** only. Verify
-   the project ref before proposing SQL. Applying SQL to another project has caused real
-   risk before.
+2. Database changes for development and verification may target the dedicated Staging
+   project ref **`vorpnkedpscsqhnrssrl`**. Production uses project ref
+   **`hivedzrwrrcnjrlirhtv`** and must not be changed unless the owner gives separate,
+   explicit approval for that production action. Verify the project ref immediately
+   before every database operation; never apply SQL to any other project.
 3. **Never edit an SQL file that has already been applied.** Every schema or function
    change is a new file in `sql/`, then added to the runbook table with its order and
    dependencies. `sql/` is the record of what production looks like.
@@ -56,6 +58,23 @@ npm run build
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs both on every push, plus
 `node --check` on the scripts in `scripts/`. Operational checks:
 `npm run verify:production`, `npm run smoke:public`, `npm run security:rls`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs are tracked in GitHub Issues for `werawoot/ballsai`. See
+`docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the default mattpocock/skills triage label vocabulary. See
+`docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Use a single-context domain-doc layout rooted in this repo, with ADRs in
+`docs/decisions/`. See `docs/agents/domain.md`.
 
 ## Current state — 11 August 2026
 
@@ -102,3 +121,37 @@ throttled.
 
 **Do not start the team roster rewrite without agreeing the design first.** It changes
 registration, results and RLS at once.
+
+---
+
+## Architecture documentation (source of truth for AI agents)
+
+`docs/architecture/**` is the technical map of the system (C4 context/container/
+component, data flow, sequence, ERD, deployment, API map, AI architecture) plus
+`docs/decisions/**` (ADRs) and `docs/data/README.md` (schema gaps). Read it before
+changing structure. Rules every AI coding agent must follow:
+
+1. **Read the architecture before editing code.** Start at
+   `docs/architecture/README.md`. Know the containers/components and the verified-result
+   integrity chain (`match_results` -> `rating_events` -> triggers -> rating/XP/badge)
+   before touching DB, API, or rating logic.
+2. **Never break the existing architecture without notice.** Do not introduce a second
+   auth path, a second rating engine, or client-side rating/XP writes. Safe writes go
+   through the `security definer` RPCs in `sql/`.
+3. **Check Data Flow before changing DB/API.** `docs/architecture/data-flow.md` and
+   `sequence.md` show how registration, match results, ranking and XP connect. A schema
+   or API change that forks that chain must be discussed first.
+4. **Update documentation when architecture changes.** New table/column/FK or RLS ->
+   update `erd.md` + `docs/data/README.md`. New/changed route handler -> `api-map.md`.
+   New diagram/component -> `system-architecture.md`. New decision -> add an ADR in
+   `docs/decisions/` and link it from `docs/decisions/README.md`. See
+   `docs/architecture/governance.md`.
+5. **Never create a duplicate service without checking the existing one.** Reuse
+   Supabase Auth, `lib/rating.ts`, the existing RPC functions, and `lib/*` before adding
+   a new dependency or module.
+6. **AI features are PLANNED only.** No AI/ML/CV code exists. Do not add an AI dependency
+   or claim AI is built. If you start one, follow `docs/architecture/ai-architecture.md`
+   and `docs/decisions/ADR-004-ai-architecture.md` (organizer-verified, minor-private).
+
+Status labels used in the docs: **EXISTING** (in code), **PLANNED** (designed, not
+built), **UNKNOWN** (insufficient evidence — never assume).

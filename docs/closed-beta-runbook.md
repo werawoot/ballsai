@@ -22,6 +22,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<production_supabase_anon_key>
 NEXT_PUBLIC_SHOW_DEMO_DATA=false
 RESEND_API_KEY=<resend_api_key>
 RESEND_FROM_EMAIL=BallDoenSai.com <verified-sender@your-domain.com>
+NEXT_PUBLIC_APP_URL=https://your-public-domain.example
 UPSTASH_REDIS_REST_URL=<upstash_redis_rest_url>
 UPSTASH_REDIS_REST_TOKEN=<upstash_redis_rest_token>
 
@@ -72,6 +73,7 @@ the base RLS file leaves permissive.
 
 | # | File | Purpose | Depends on |
 | ---: | --- | --- | --- |
+| 0 | `sql/00-core-schema-live-capture-v1.sql` | Creates the five legacy core tables only for an empty Staging/recovery environment; never run against existing Production | — |
 | 1 | `sql/check-duplicates-before-unique-indexes.sql` | Reports rows that would break the unique indexes | — |
 | 2 | *(manual)* | Fix any duplicate rows the check reported | — |
 | 3 | `sql/supabase-rls.sql` | Base RLS, `is_admin()` / `is_organizer()`, core indexes | — |
@@ -88,6 +90,16 @@ the base RLS file leaves permissive.
 | 14 | `sql/guardian-consent-enforcement-v1.sql` | Blocks a public athlete profile without a birth date, and a minor's public profile without guardian consent, at the database level | 6 |
 | 15 | `sql/highlight-moderation-v1.sql` | Report queue, hide/unhide state for uploaded highlights, and storage reads that follow the hidden state | 10 |
 | 16 | `sql/data-deletion-v1.sql` | `delete_my_athlete_data()` for PDPA requests, plus the `account_deletion_requests` queue an admin closes by hand | 9, 15 |
+| 17 | `sql/17-notifications-v1.sql` | In-app notifications for confirmed match results, newly earned badges, and team status changes; owner-only RLS | 8, 9, 12 |
+| 18 | `sql/18-team-members-v1.sql` | Real roster invitations and accept/decline workflow | 3, 17 |
+| 19 | `sql/19-athlete-sport-profiles-v1.sql` | Additive Athlete Identity to Sport Profile split, with a compatibility backfill | 6, 14 |
+| 20 | `sql/20-guardian-verification-v2.sql` | Email-verified, revocable guardian consent and private audit trail | 19 |
+| 21 | `sql/21-sport-scoped-identity-v1.sql` | Sport-specific XP and Badges derived from verified rating events | 5, 19, 20 |
+| 22 | `sql/22-mobile-onboarding-v1.sql` | Atomic mobile onboarding for Profile, Athlete Identity and Sport Profile | 19, 20 |
+| 23 | `sql/23-mobile-onboarding-execute-grants-v1.sql` | Restrict mobile onboarding RPC execution to authenticated users | 22 |
+| 24 | `sql/24-team-roster-integrity-v1.sql` | Historical team rosters and fail-closed membership proof for every newly confirmed performance | 18, 12 |
+| 25 | `sql/25-team-discovery-v1.sql` | Read-only `list_joinable_teams()` / `list_my_team_labels()` so an athlete can find a team to join and see who invited them, without opening the `teams` table; also replaces `request_team_membership()` so the same eligibility rules are enforced server-side (step 24 accepted any existing team id) | 24 |
+| 26 | `sql/26-team-function-privileges-v1.sql` | Revokes EXECUTE on the nine Team Roster RPCs from `anon`. Supabase's default privileges grant EXECUTE to `anon` directly, so the `revoke ... from public` in steps 24–25 did not remove it; `authenticated` keeps EXECUTE. Self-verifying and safe to re-run | 24, 25 |
 
 Files that must **not** be applied during closed beta:
 
@@ -118,6 +130,32 @@ select proname from pg_proc where proname in (
 ```
 
 Five triggers and five functions must come back.
+
+After step 26, confirm no Team Roster RPC is callable anonymously. Expect nine rows,
+`anon_execute` false and `authenticated_execute` true on every one:
+
+```sql
+select p.signature,
+       has_function_privilege('anon', p.signature, 'EXECUTE') as anon_execute,
+       has_function_privilege('authenticated', p.signature, 'EXECUTE') as authenticated_execute
+from unnest(array[
+  'public.invite_team_member(uuid, text)',
+  'public.respond_team_invite(uuid, text)',
+  'public.request_team_membership(uuid)',
+  'public.approve_team_request(uuid)',
+  'public.decline_team_request(uuid)',
+  'public.remove_team_member(uuid, text)',
+  'public.list_joinable_teams()',
+  'public.list_my_team_labels()',
+  'public.record_match_result_safely(uuid, uuid, uuid, integer, integer, jsonb)'
+]) as p(signature)
+order by p.signature;
+```
+
+`confirm_guardian_verification(text)` and `revoke_guardian_consent(text, text)` must
+stay anon-callable — a guardian follows an emailed link while logged out — and so must
+`is_admin()` / `is_organizer()`, which RLS evaluates for anonymous reads. Step 26 does
+not touch them.
 
 Steps 13–16 are also bundled as `sql/apply-closed-beta-2026-08.sql`, a single
 transaction with the same content and the verification queries at the end. Use the bundle
@@ -423,6 +461,11 @@ Invite the first organizer only when all of these are true:
 
 - SQL steps 1–12 applied to project `hivedzrwrrcnjrlirhtv`, with the four triggers and
   three functions confirmed present.
+- SQL steps 17–18 applied: notifications and invited Team Roster membership are present;
+  verify `public.notifications`, `public.team_members`, and the invite/respond functions.
+- SQL steps 19–22 applied: Sport Profiles, guardian verification consent trail,
+  sport-scoped XP/Badge history, and atomic mobile onboarding are present. Verify the
+  step 23 execute grant and all new paths with real test JWTs.
 - `slips` bucket exists and is private; a signed slip URL opens for the organizer and
   fails for a signed-out request.
 - Demo fallback is not `true` in production.
