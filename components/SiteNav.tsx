@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ClipboardList, House, Search, Trophy, User } from 'lucide-react'
+import { Bell, ClipboardList, House, Search, Trophy, User, Users } from 'lucide-react'
 
 type SiteNavProps = { active?: 'athletes' | 'ranking' | 'tournaments' | 'profile' }
 
@@ -9,6 +9,8 @@ const items = [
   { id: 'ranking', href: '/ranking', label: 'Ranking', icon: Trophy },
   { id: 'tournaments', href: '/tournaments', label: 'รายการแข่ง', icon: ClipboardList },
   { id: 'profile', href: '/profile', label: 'โปรไฟล์', icon: User },
+  { id: 'notifications', href: '/notifications', label: 'แจ้งเตือน', icon: Bell },
+  { id: 'team-members', href: '/team-members', label: 'สมาชิกทีม', icon: Users },
 ] as const
 
 export default function SiteNav({ active }: SiteNavProps) {

@@ -6,6 +6,7 @@ import { ArrowLeft, Trophy } from 'lucide-react'
 import MatchResultForm from './MatchResultForm'
 import MatchResultHistory from './MatchResultHistory'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
+import { buildRosterPlayers } from '@/lib/team-roster'
 
 type TournamentOption = {
   id: string
@@ -22,8 +23,9 @@ type TeamOption = {
 
 type PlayerOption = {
   id: string
+  player_id: string
   player_name: string
-  team: string
+  team_id: string
   position: string
   pts: number
 }
@@ -87,9 +89,21 @@ export default async function MatchResultsPage() {
     .in('tournament_id', tournamentIds.length > 0 ? tournamentIds : ['none'])
     .order('name')
 
-  const { data: players } = await supabase
+  const confirmedTeamIds = ((teams ?? []) as TeamOption[])
+    .filter(team => team.status === 'confirmed')
+    .map(team => team.id)
+
+  const { data: acceptedMembers } = await supabase
+    .from('team_members')
+    .select('team_id, athlete_id')
+    .in('team_id', confirmedTeamIds.length > 0 ? confirmedTeamIds : ['none'])
+    .eq('status', 'accepted')
+
+  const athleteIds = [...new Set((acceptedMembers ?? []).map(member => member.athlete_id))]
+  const { data: rankedAthletes } = await supabase
     .from('player_ranks')
-    .select('id, player_name, team, position, pts')
+    .select('id, player_id, player_name, position, pts')
+    .in('player_id', athleteIds.length > 0 ? athleteIds : ['none'])
     .eq('sport', ACTIVE_SPORT)
     .eq('season', ACTIVE_SEASON)
     .order('player_name')
@@ -103,6 +117,12 @@ export default async function MatchResultsPage() {
 
   const allTeams = (teams ?? []) as TeamOption[]
   const confirmedTeams = allTeams.filter(team => team.status === 'confirmed')
+  // Only accepted members of a confirmed team are selectable — the same rule
+  // record_match_result_safely enforces. See lib/team-roster.ts.
+  const rosterPlayers = buildRosterPlayers(
+    acceptedMembers ?? [],
+    rankedAthletes ?? [],
+  ) as PlayerOption[]
   const teamNames = Object.fromEntries(allTeams.map(team => [team.id, team.name]))
   const tournamentNames = Object.fromEntries((tournaments ?? []).map(tournament => [tournament.id, tournament.name]))
 
@@ -135,7 +155,7 @@ export default async function MatchResultsPage() {
       <MatchResultForm
         tournaments={(tournaments ?? []) as TournamentOption[]}
         teams={confirmedTeams}
-        players={(players ?? []) as PlayerOption[]}
+        players={rosterPlayers}
       />
 
       <div style={{ padding: '0 16px' }}>
