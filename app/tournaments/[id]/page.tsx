@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
-import { Trophy, Users, ArrowLeft, CheckCircle, Upload, Copy, Banknote } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Trophy, ArrowLeft, CheckCircle, Upload, Copy, Banknote } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -15,10 +15,11 @@ type Tournament = {
 }
 
 export default function RegisterPage({ params }: { params: { id: string } }) {
-  const [step, setStep] = useState<'form' | 'payment' | 'success'>('form')
+  const searchParams = useSearchParams()
+  const requestedTeamId = searchParams.get('teamId') ?? ''
+  const [step, setStep] = useState<'form' | 'payment' | 'success'>(() => requestedTeamId ? 'payment' : 'form')
   const [teamName, setTeamName] = useState('')
-  const [members, setMembers] = useState('')
-  const [teamId, setTeamId] = useState('')
+  const [teamId, setTeamId] = useState(requestedTeamId)
   const [slipFile, setSlipFile] = useState<File | null>(null)
   const [slipPreview, setSlipPreview] = useState('')
   const [loading, setLoading] = useState(false)
@@ -40,7 +41,7 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
   }, [params.id])
 
   const handleSubmitTeam = async () => {
-    if (!teamName.trim() || !members.trim()) return
+    if (!teamName.trim()) return
     setLoading(true)
     setMessage('')
 
@@ -49,7 +50,6 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: teamName,
-        members,
       }),
     })
 
@@ -67,7 +67,7 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
       setMessage(result?.error ?? 'เกิดข้อผิดพลาดในการสมัครทีม')
     } else {
       setTeamId(result.teamId)
-      setStep('payment')
+      router.push(`/team-members?team=${encodeURIComponent(result.teamId)}`)
     }
     setLoading(false)
   }
@@ -142,9 +142,9 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
       {/* STEP INDICATOR */}
       <div className="bds-hero" style={{ background: '#CC0001', padding: '0 16px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          {['ข้อมูลทีม', 'ชำระเงิน'].map((label, i) => {
-            const isActive = (i === 0 && step === 'form') || (i === 1 && step === 'payment')
-            const isDone = i === 0 && step === 'payment'
+          {['สร้างทีม', 'เชิญสมาชิก', 'ส่งสมัคร & ชำระเงิน'].map((label, i) => {
+            const isActive = i === 0 && step === 'form'
+            const isDone = false
             return (
               <div key={i} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
@@ -167,6 +167,13 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
       <div style={{ padding: '16px' }}>
 
         {step === 'form' && (
+          <aside style={{ marginBottom: 12, background: '#eef6ff', border: '1px solid #bfdbfe', borderRadius: 12, padding: '12px 14px', color: '#1e3a5f', fontSize: 13, lineHeight: 1.55 }}>
+            <strong>สำหรับนักกีฬา:</strong> ดูรายละเอียดรายการนี้ได้เลย แต่การเข้าร่วมต้องให้โค้ชหรือผู้จัดสร้างทีมและเชิญบัญชีของคุณก่อน
+            <Link href="/team-members" style={{ display: 'inline-block', marginLeft: 6, color: '#CC0001', fontWeight: 800, textDecoration: 'none' }}>ดูคำเชิญของฉัน →</Link>
+          </aside>
+        )}
+
+        {step === 'form' && (
           <div style={{ background: 'white', borderRadius: 16, border: '1.5px solid #e5e5e5', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#CC0001', textTransform: 'uppercase', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
               <Trophy size={16} /> ข้อมูลทีม
@@ -176,14 +183,12 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
               <Trophy size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }} />
               <input type="text" value={teamName} onChange={e => setTeamName(e.target.value)} placeholder="เช่น FC อยุธยา" style={{ width: '100%', border: '1.5px solid #e5e5e5', borderRadius: 10, padding: '11px 14px 11px 40px', fontSize: 14, outline: 'none', fontFamily: 'var(--font-sarabun)', color: '#111', background: '#fafafa' }} />
             </div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>รายชื่อสมาชิก *</label>
-            <div style={{ position: 'relative', marginBottom: 24 }}>
-              <Users size={16} style={{ position: 'absolute', left: 14, top: 14, color: '#aaa' }} />
-              <textarea value={members} onChange={e => setMembers(e.target.value)} placeholder="เช่น สมชาย, สมหญิง, สมศักดิ์" rows={4} style={{ width: '100%', border: '1.5px solid #e5e5e5', borderRadius: 10, padding: '11px 14px 11px 40px', fontSize: 14, outline: 'none', fontFamily: 'var(--font-sarabun)', color: '#111', background: '#fafafa', resize: 'none' }} />
+            <div style={{ background: '#fff8f7', border: '1px solid #f2d0d0', borderRadius: 10, padding: '12px 14px', color: '#7f1d1d', fontSize: 13, lineHeight: 1.55, marginBottom: 24 }}>
+              สร้างทีมก่อน แล้วเชิญนักกีฬาด้วยอีเมลให้กดตอบรับ จากนั้นจึงส่งสมัครและอัปโหลดสลิป
             </div>
             {message && <p style={{ textAlign: 'center', fontSize: 13, color: '#CC0001', fontWeight: 600, marginBottom: 14 }}>{message}</p>}
-            <button onClick={handleSubmitTeam} disabled={loading || !teamName || !members} style={{ width: '100%', background: loading || !teamName || !members ? '#eee' : '#CC0001', color: loading || !teamName || !members ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: '15px', fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: loading || !teamName || !members ? 'default' : 'pointer' }}>
-              {loading ? 'กำลังบันทึก...' : 'ถัดไป → ชำระเงิน'}
+            <button onClick={handleSubmitTeam} disabled={loading || !teamName} style={{ width: '100%', background: loading || !teamName ? '#eee' : '#CC0001', color: loading || !teamName ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: '15px', fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: loading || !teamName ? 'default' : 'pointer' }}>
+              {loading ? 'กำลังสร้าง...' : 'สร้างทีมและเชิญสมาชิก'}
             </button>
           </div>
         )}

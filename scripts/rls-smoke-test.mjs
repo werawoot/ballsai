@@ -7,7 +7,9 @@
  *
  * Optional target IDs:
  * PLAYER_B_PROFILE_ID, PLAYER_RANK_ID, FOREIGN_TOURNAMENT_ID,
- * OWNED_TOURNAMENT_ID, PLAYER_B_TEAM_ID, OWNED_TEAM_ID
+ * OWNED_TOURNAMENT_ID, PLAYER_B_TEAM_ID, OWNED_TEAM_ID,
+ * PLAYER_OWN_DISPUTE_ID, PLAYER_FOREIGN_DISPUTE_ID,
+ * PLAYER_OWN_VERIFICATION_EVENT_ID, PLAYER_FOREIGN_VERIFICATION_EVENT_ID
  *
  * This script defaults to safe checks. It never performs a write that is
  * expected to succeed unless ALLOW_RLS_WRITE_TESTS=true is explicitly set.
@@ -99,6 +101,10 @@ const foreignTournamentId = process.env.FOREIGN_TOURNAMENT_ID
 const ownedTournamentId = process.env.OWNED_TOURNAMENT_ID
 const playerBTeamId = process.env.PLAYER_B_TEAM_ID
 const ownedTeamId = process.env.OWNED_TEAM_ID
+const playerOwnDisputeId = process.env.PLAYER_OWN_DISPUTE_ID
+const playerForeignDisputeId = process.env.PLAYER_FOREIGN_DISPUTE_ID
+const playerOwnVerificationEventId = process.env.PLAYER_OWN_VERIFICATION_EVENT_ID
+const playerForeignVerificationEventId = process.env.PLAYER_FOREIGN_VERIFICATION_EVENT_ID
 
 await expectReadAccess('player can read public ranking', playerJwt, '/player_ranks?select=id&limit=1')
 await expectReadAccess('organizer can read public tournaments', organizerJwt, '/tournaments?select=id&limit=1')
@@ -128,5 +134,23 @@ if (playerBTeamId) {
 if (ownedTeamId) {
   await expectReadAccess('organizer can read owned tournament team', organizerJwt, `/teams?id=eq.${ownedTeamId}&select=id`)
 } else console.log('SKIP owned team read check: set OWNED_TEAM_ID')
+
+if (playerOwnDisputeId) {
+  await expectReadAccess('player can read own data dispute', playerJwt, `/data_disputes?id=eq.${playerOwnDisputeId}&select=id,status`)
+} else console.log('SKIP own data dispute read: set PLAYER_OWN_DISPUTE_ID after SQL31')
+
+if (playerForeignDisputeId) {
+  expectBlocked('player cannot read another athlete data dispute', await requestAs(playerJwt, `/data_disputes?id=eq.${playerForeignDisputeId}&select=id,status`))
+} else console.log('SKIP foreign data dispute read: set PLAYER_FOREIGN_DISPUTE_ID after SQL31')
+
+if (playerOwnVerificationEventId) {
+  await expectReadAccess('player can read verification event for own data', playerJwt, `/verification_events?id=eq.${playerOwnVerificationEventId}&select=id,event_type,to_level`)
+} else console.log('SKIP own verification event read: set PLAYER_OWN_VERIFICATION_EVENT_ID after SQL31')
+
+if (playerForeignVerificationEventId) {
+  expectBlocked('player cannot read another athlete verification event', await requestAs(playerJwt, `/verification_events?id=eq.${playerForeignVerificationEventId}&select=id,event_type,to_level`))
+} else console.log('SKIP foreign verification event read: set PLAYER_FOREIGN_VERIFICATION_EVENT_ID after SQL31')
+
+await expectReadAccess('admin can read data-trust queue after SQL31', adminJwt, '/data_disputes?select=id&limit=1')
 
 if (!allowWriteTests) console.log('Safe mode complete. Run ALLOW_RLS_WRITE_TESTS=true only in an isolated test tournament.')

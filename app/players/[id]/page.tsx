@@ -25,6 +25,7 @@ import { isSampleId, samplePlayerRanks, showDemoData } from '@/lib/sample-data'
 import { IDENTITY_BADGES, calculateLevel, identityTitle } from '@/lib/digital-identity'
 import { ACTIVE_SPORT } from '@/lib/season'
 import ReportHighlightButton from './ReportHighlightButton'
+import DisputeDataButton from './DisputeDataButton'
 
 type PlayerRecord = {
   id: string
@@ -182,6 +183,23 @@ export default async function PlayerPage({ params }: { params: { id: string } })
   ].filter(item => item.value !== null && item.value !== undefined) : []
   const level = identityProgress?.current_level ?? calculateLevel(0)
   const earnedBadgeKeys = new Set(athleteBadges.map(item => item.badge_key))
+  const trustSummary = hasRanking
+    ? {
+        label: verificationLabels[verificationLevel],
+        confidence: verificationLevel === 'performance_verified' ? 'สูง' : verificationLevel === 'coach_verified' ? 'กลาง' : 'เริ่มต้น',
+        source: 'Player Rank ที่ผู้ดูแลสร้างจากข้อมูลการแข่งขันในระบบ',
+        detail: verificationLevel === 'performance_verified'
+          ? 'มีผลการแข่งขันที่ผ่านการตรวจสอบเป็นฐานของคะแนน'
+          : verificationLevel === 'coach_verified'
+            ? 'มีผู้ฝึกสอนรับรองโปรไฟล์ แต่ยังควรตรวจผลแข่งประกอบ'
+            : 'ข้อมูลโปรไฟล์มาจากนักกีฬาเอง ยังไม่ใช่หลักฐานผลงานการแข่งขัน',
+      }
+    : {
+        label: 'Starter Card',
+        confidence: 'ยังไม่จัดอันดับ',
+        source: 'ข้อมูลโปรไฟล์ที่นักกีฬากรอกเอง',
+        detail: 'ยังไม่มี player_ranks row จึงไม่แสดงค่าเริ่มต้นเป็น Performance Rating',
+      }
 
   return (
     <main className="bds-page" style={{ background: '#f6f6f4', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
@@ -212,6 +230,21 @@ export default async function PlayerPage({ params }: { params: { id: string } })
       </section>
 
       <div className="bds-content" style={{ maxWidth: 760, margin: '-20px auto 0', padding: '0 16px', position: 'relative' }}>
+        <section aria-label="Data trust explanation" style={{ background: '#fffdf5', border: '1px solid #eadca6', borderRadius: 8, padding: 16, marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+            <div>
+              <p style={{ margin: 0, color: '#8a5a00', fontSize: 10, fontWeight: 800, letterSpacing: 1 }}>DATA TRUST · ทำไมคะแนนนี้ถึงเชื่อถือได้</p>
+              <h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 18, margin: '5px 0 8px' }}>{trustSummary.label}</h2>
+            </div>
+            <span style={{ flex: '0 0 auto', borderRadius: 999, padding: '5px 8px', background: '#f6e9b0', color: '#745000', fontSize: 10, fontWeight: 800 }}>{trustSummary.confidence}</span>
+          </div>
+          <dl style={{ display: 'grid', gap: 7, margin: 0, fontSize: 12 }}>
+            <div><dt style={{ display: 'inline', color: '#7a6a43' }}>แหล่งข้อมูล: </dt><dd style={{ display: 'inline', margin: 0, fontWeight: 700 }}>{trustSummary.source}</dd></div>
+            <div><dt style={{ display: 'inline', color: '#7a6a43' }}>สถานะการตรวจ: </dt><dd style={{ display: 'inline', margin: 0 }}>{trustSummary.detail}</dd></div>
+          </dl>
+          <p style={{ margin: '10px 0 0', color: '#756b55', fontSize: 10, lineHeight: 1.6 }}>ระบบจะแยกข้อมูลที่นักกีฬาแจ้งเองออกจากข้อมูลที่โค้ชหรือผลการแข่งขันยืนยันแล้ว และจะไม่ถือค่าเริ่มต้นเป็นผลงานจริง</p>
+          {athleteId && <DisputeDataButton subjectType={hasRanking ? 'player_rank' : 'athlete_profile'} subjectId={hasRanking ? typedPlayer.id : athleteId} />}
+        </section>
         {athleteId && <section style={{ background: '#111827', color: 'white', borderRadius: 8, padding: 18, marginBottom: 12, overflow: 'hidden', position: 'relative' }}>
           <div style={{ position: 'absolute', width: 170, height: 170, border: '1px solid rgba(245,197,24,.28)', borderRadius: '50%', right: -52, top: -95 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}><div style={{ borderRight: '1px solid rgba(255,255,255,.2)', minWidth: 70, paddingRight: 14, textAlign: 'center' }}><small style={{ color: '#f5c518', fontSize: 9, fontWeight: 800, letterSpacing: 1.1 }}>LEVEL</small><b style={{ display: 'block', fontFamily: 'var(--font-oswald)', fontSize: 45, lineHeight: .9 }}>{level.toString().padStart(2, '0')}</b></div><div><small style={{ color: '#f5c518', fontSize: 9, fontWeight: 800, letterSpacing: 1.1 }}>{identityTitle(level).toUpperCase()}</small><b style={{ display: 'block', fontSize: 15, marginTop: 4 }}>Digital Sports Identity</b><span style={{ color: 'rgba(255,255,255,.62)', display: 'block', fontSize: 11, marginTop: 3 }}>{identityProgress?.xp_total?.toLocaleString() ?? 0} XP · {earnedBadgeKeys.size} Achievement</span></div></div>

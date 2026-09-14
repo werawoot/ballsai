@@ -1,0 +1,17 @@
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { CalendarDays } from 'lucide-react'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
+
+type Booking = { id: string; status: 'pending' | 'confirmed' | 'declined' | 'cancelled'; purpose: string; note: string; requested_at: string; venue_slots: { starts_at: string; ends_at: string; price_baht: number; venue_courts: { name: string; venue_profiles: { name: string } | null } | null } | null }
+const label: Record<Booking['status'], string> = { pending: 'รอตอบรับ', confirmed: 'ยืนยันแล้ว', declined: 'ปฏิเสธ', cancelled: 'ยกเลิก' }
+
+export default async function MyVenueBookingsPage() {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login?next=/venues/bookings')
+  const { data } = await supabase.from('venue_booking_requests').select('id, status, purpose, note, requested_at, venue_slots(starts_at, ends_at, price_baht, venue_courts(name, venue_profiles(name)))').eq('requester_id', user.id).order('requested_at', { ascending: false })
+  const bookings = (data ?? []) as unknown as Booking[]
+  const format = (value: string) => new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+  return <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 60 }}><header style={{ background: '#101827', color: 'white', padding: '13px 18px', display: 'flex', justifyContent: 'space-between' }}><Link href="/" style={{ color: 'white', textDecoration: 'none', fontWeight: 900 }}>BALLDOENSAI.COM</Link><Link href="/venues" style={{ color: '#f5c518', textDecoration: 'none', fontSize: 12, fontWeight: 800 }}>หาสนาม</Link></header><section style={{ maxWidth: 720, margin: '0 auto', padding: '28px 16px' }}><div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}><CalendarDays size={25} color="#cc0001" /><div><p style={{ margin: 0, color: '#cc0001', font: '800 10px var(--font-oswald)', letterSpacing: 1.4 }}>MY REQUESTS</p><h1 style={{ margin: 0, fontSize: 30 }}>คำขอจองสนาม</h1></div></div>{bookings.length === 0 ? <div style={{ background: '#fff', border: '1px solid #e3e6ea', borderRadius: 14, padding: 26, textAlign: 'center' }}><p style={{ color: '#687586' }}>ยังไม่มีคำขอจอง</p><Link href="/venues" style={{ color: '#cc0001', fontWeight: 900, textDecoration: 'none' }}>เลือกสนาม →</Link></div> : <div style={{ display: 'grid', gap: 10 }}>{bookings.map(booking => <article key={booking.id} style={{ background: '#fff', border: '1px solid #e3e6ea', borderRadius: 12, padding: 14 }}><div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><div><b>{booking.venue_slots?.venue_courts?.venue_profiles?.name ?? 'สนาม'}</b><p style={{ color: '#687586', fontSize: 12, margin: '4px 0' }}>{booking.venue_slots?.venue_courts?.name} · {booking.venue_slots ? format(booking.venue_slots.starts_at) : ''}</p><p style={{ margin: 0, fontSize: 13 }}>{booking.purpose}</p></div><span style={{ height: 'fit-content', borderRadius: 20, background: booking.status === 'confirmed' ? '#dcfce7' : booking.status === 'pending' ? '#fff3c7' : '#e5e7eb', color: booking.status === 'confirmed' ? '#166534' : '#5f4800', padding: '4px 8px', fontSize: 10, fontWeight: 900 }}>{label[booking.status]}</span></div></article>)}</div>}</section></main>
+}

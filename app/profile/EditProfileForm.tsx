@@ -160,6 +160,9 @@ function sectionTitle(icon: ReactNode, title: string, description: string) {
 // (sql/guardian-consent-enforcement-v1.sql). Translate its codes instead of showing a
 // raw Postgres message to a young athlete.
 function publishErrorText(message: string) {
+  if (message.includes('PUBLIC_REQUIRES_GUARDIAN_LINK')) {
+    return 'โปรไฟล์ผู้เยาว์ต้องเชื่อมบัญชีผู้ปกครองที่ตอบรับแล้วก่อนเผยแพร่'
+  }
   if (message.includes('PUBLIC_REQUIRES_GUARDIAN_CONSENT')) {
     return 'โปรไฟล์ผู้เยาว์ต้องได้รับความยินยอมจากผู้ปกครองก่อนเผยแพร่'
   }
@@ -201,7 +204,7 @@ export default function EditProfileForm({
   const [imagePreviewUrl, setImagePreviewUrl] = useState('')
   const [removeCurrentImage, setRemoveCurrentImage] = useState(false)
   const [isPublic, setIsPublic] = useState(athleteProfile?.is_public ?? false)
-  const [hasGuardianConsent, setHasGuardianConsent] = useState(Boolean(athleteProfile?.guardian_consent_at))
+  const hasGuardianConsent = Boolean(athleteProfile?.guardian_consent_at)
   const [videos, setVideos] = useState(initialVideos)
   const [achievements, setAchievements] = useState(initialAchievements)
   const [highlights, setHighlights] = useState(initialHighlights)
@@ -497,7 +500,7 @@ export default function EditProfileForm({
 
       <section style={{ padding: 18 }}>
         {sectionTitle(<ShieldCheck size={18} />, 'Privacy & Publishing', 'เบอร์โทรจะไม่แสดงในโปรไฟล์สาธารณะ')}
-        {isMinor && <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: 12, background: '#fff8e6', border: '1px solid #f4d98b', borderRadius: 8, marginBottom: 10, cursor: 'pointer' }}><input type="checkbox" checked={hasGuardianConsent} onChange={event => setHasGuardianConsent(event.target.checked)} style={{ marginTop: 3 }} /><span style={{ fontSize: 12, color: '#624a00', lineHeight: 1.5 }}>ฉันยืนยันว่าได้รับความยินยอมจากผู้ปกครองให้เผยแพร่โปรไฟล์นักกีฬานี้แล้ว</span></label>}
+        {isMinor && <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: 12, background: hasGuardianConsent ? '#f0fdf4' : '#fff8e6', border: `1px solid ${hasGuardianConsent ? '#bbf7d0' : '#f4d98b'}`, borderRadius: 8, marginBottom: 10 }}><ShieldCheck size={18} color={hasGuardianConsent ? '#15803d' : '#a16207'} style={{ flexShrink: 0, marginTop: 1 }} /><span style={{ fontSize: 12, color: hasGuardianConsent ? '#166534' : '#624a00', lineHeight: 1.5 }}>{hasGuardianConsent ? 'มีบันทึกความยินยอมผู้ปกครองแล้ว ระบบจะตรวจสอบการเชื่อมบัญชีก่อนเผยแพร่' : 'โปรไฟล์ผู้เยาว์เผยแพร่ได้หลังผู้ปกครองส่งคำขอจากหน้า ผู้ปกครอง และคุณกดตอบรับการเชื่อมบัญชี'}</span></div>}
         <button type="button" onClick={() => canPublish && setIsPublic(value => !value)} disabled={!canPublish} style={{ width: '100%', minHeight: 48, border: `1.5px solid ${isPublic ? '#15803d' : '#ddd'}`, borderRadius: 8, background: isPublic ? '#f0fdf4' : '#fafafa', color: isPublic ? '#166534' : '#666', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', cursor: canPublish ? 'pointer' : 'not-allowed', opacity: canPublish ? 1 : 0.55 }}><span style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 800 }}>{isPublic ? <Eye size={18} /> : <EyeOff size={18} />}{isPublic ? 'เผยแพร่โปรไฟล์แล้ว' : 'โปรไฟล์ยังเป็นส่วนตัว'}</span><span style={{ fontSize: 10 }}>{canPublish ? 'แตะเพื่อเปลี่ยน' : 'กรอกวันเกิดและความยินยอม'}</span></button>
 
         {athleteProfile?.verification_level && athleteProfile.verification_level !== 'self' && <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, color: '#166534', fontSize: 12, fontWeight: 700 }}><CheckCircle2 size={16} />{athleteProfile.verification_level === 'coach_verified' ? 'ยืนยันโดยโค้ช' : 'ยืนยันจากผลงานการแข่งขัน'}</div>}

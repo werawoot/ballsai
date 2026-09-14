@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { Crown, Sparkles, Trophy, MapPin, Zap, Shield, Star } from 'lucide-react'
+import { Crown, Sparkles, Trophy, MapPin, Zap, Shield, Star, UsersRound } from 'lucide-react'
 import Link from 'next/link'
 import EditProfileForm from './EditProfileForm'
 import PublicProfileShare from './PublicProfileShare'
@@ -65,13 +65,13 @@ type PlayerRankRecord = {
   def: number
 }
 
-type MyTeamRecord = {
-  id: string
-  name: string
-  status: 'pending' | 'confirmed' | 'rejected'
-  tournaments: {
-    name: string | null
-    location: string | null
+type MembershipRecord = {
+  status: 'pending' | 'accepted' | 'declined' | 'removed'
+  teams: {
+    id: string
+    name: string
+    status: 'draft' | 'pending' | 'confirmed' | 'rejected'
+    tournaments: { name: string | null; location: string | null }[] | null
   } | null
 }
 type IdentityProgress = { xp_total: number; current_level: number }
@@ -104,13 +104,13 @@ export default async function ProfilePage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: athleteProfile }, { data: athleteVideos }, { data: achievements }, { data: playerRank }, { data: myTeams }, { data: identityProgress }, { data: highlights }] = await Promise.all([
+  const [{ data: profile }, { data: athleteProfile }, { data: athleteVideos }, { data: achievements }, { data: playerRank }, { data: memberships }, { data: identityProgress }, { data: highlights }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('athlete_profiles').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('athlete_videos').select('*').eq('athlete_id', user.id).order('created_at', { ascending: false }),
     supabase.from('athlete_achievements').select('*').eq('athlete_id', user.id).order('created_at', { ascending: false }),
     supabase.from('player_ranks').select('*').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).maybeSingle(),
-    supabase.from('teams').select('*, tournaments(name, location)').eq('created_by', user.id).order('created_at', { ascending: false }).limit(5),
+    supabase.from('team_members').select('status, teams(id, name, status, tournaments(name, location))').eq('athlete_id', user.id).order('created_at', { ascending: false }).limit(5),
     supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', user.id).maybeSingle(),
     supabase.from('athlete_highlights').select('id, title, media_path, media_type, moderation_status').eq('athlete_id', user.id).order('created_at', { ascending: false }),
   ])
@@ -120,7 +120,7 @@ export default async function ProfilePage() {
   const typedVideos = (athleteVideos ?? []) as AthleteVideoRecord[]
   const typedAchievements = (achievements ?? []) as AthleteAchievementRecord[]
   const typedPlayerRank = (playerRank ?? null) as PlayerRankRecord | null
-  const typedTeams = (myTeams ?? []) as MyTeamRecord[]
+  const typedMemberships = (memberships ?? []) as unknown as MembershipRecord[]
   const typedIdentityProgress = identityProgress as IdentityProgress | null
   const typedHighlights = (highlights ?? []) as AthleteHighlightRecord[]
   const fallbackXp = (typedPlayerRank?.pts ?? 0) >= 1500 ? 900 : typedPlayerRank ? 100 : 0
@@ -239,21 +239,44 @@ export default async function ProfilePage() {
           />
         </div>
 
-        {typedTeams.length > 0 && (
+        <section style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <div style={{ width: 4, height: 20, background: '#CC0001', borderRadius: 2 }} />
+            เส้นทางสู่การแข่งขัน
+          </div>
+          <div style={{ background: '#101827', color: 'white', borderRadius: 14, padding: 16, overflow: 'hidden', position: 'relative' }}>
+            <div style={{ position: 'absolute', width: 150, height: 150, right: -45, bottom: -85, borderRadius: '50%', border: '1px solid rgba(255,255,255,.16)' }} />
+            <p style={{ position: 'relative', margin: 0, fontSize: 13, lineHeight: 1.55, color: 'rgba(255,255,255,.75)' }}>ดูรายการที่อยากลงแข่ง แล้วให้โค้ชหรือผู้จัดสร้างทีมและเชิญบัญชีของคุณ เมื่อรับคำเชิญแล้ว คุณจะมีสิทธิ์ลงผลแข่งในทีมนั้น</p>
+            <div style={{ position: 'relative', display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 13 }}>
+              <Link href="/tournaments" style={{ background: '#CC0001', color: 'white', textDecoration: 'none', padding: '9px 11px', fontSize: 12, fontWeight: 800 }}>ค้นหารายการแข่ง</Link>
+              <Link href="/team-members" style={{ border: '1px solid rgba(255,255,255,.35)', color: 'white', textDecoration: 'none', padding: '8px 10px', fontSize: 12, fontWeight: 800 }}>ดูคำเชิญของฉัน</Link>
+              <Link href="/career" style={{ border: '1px solid rgba(255,255,255,.35)', color: 'white', textDecoration: 'none', padding: '8px 10px', fontSize: 12, fontWeight: 800 }}>ดู Career</Link>
+            </div>
+          </div>
+        </section>
+
+        {typedMemberships.length > 0 && (
           <div>
             <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <div style={{ width: 4, height: 20, background: '#CC0001', borderRadius: 2 }} />
-              ทีมที่สมัครไว้
+              ทีมที่ฉันได้รับเชิญ
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {typedTeams.map((team) => (
-                <div key={team.id} style={{ background: 'white', borderRadius: 12, border: '1.5px solid #e5e5e5', padding: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+              {typedMemberships.map((membership, index) => {
+                const team = membership.teams
+                const tournament = team?.tournaments?.[0]
+                const memberAccepted = membership.status === 'accepted'
+                const teamConfirmed = team?.status === 'confirmed'
+                const label = !memberAccepted ? membership.status === 'pending' ? 'รอตอบรับคำเชิญ' : 'ปฏิเสธ/ถูกนำออก' : teamConfirmed ? '✓ ยืนยันลงแข่งแล้ว' : team?.status === 'pending' ? '⏳ รอผู้จัดตรวจทีม' : 'กำลังจัดทีม'
+                const color = !memberAccepted ? '#854d0e' : teamConfirmed ? '#16a34a' : '#854d0e'
+                const background = !memberAccepted ? '#fef9c3' : teamConfirmed ? '#dcfce7' : '#fef9c3'
+                return <div key={`${team?.id ?? 'membership'}-${index}`} style={{ background: 'white', borderRadius: 12, border: '1.5px solid #e5e5e5', padding: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: '#111', marginBottom: 4 }}>{team.name}</div>
-                      <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{team.tournaments?.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15, fontWeight: 800, color: '#111', marginBottom: 4 }}><UsersRound size={15} color="#CC0001" /> {team?.name ?? 'ทีมของฉัน'}</div>
+                      <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{tournament?.name ?? 'รายการแข่งขัน'}</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#aaa' }}>
-                        <MapPin size={11} /> {team.tournaments?.location}
+                        <MapPin size={11} /> {tournament?.location ?? '—'}
                       </div>
                     </div>
                     <div
@@ -262,15 +285,15 @@ export default async function ProfilePage() {
                         fontWeight: 800,
                         padding: '4px 10px',
                         borderRadius: 20,
-                        background: team.status === 'confirmed' ? '#dcfce7' : team.status === 'rejected' ? '#fee2e2' : '#fef9c3',
-                        color: team.status === 'confirmed' ? '#16a34a' : team.status === 'rejected' ? '#CC0001' : '#854d0e',
+                        background,
+                        color,
                       }}
                     >
-                      {team.status === 'confirmed' ? '✓ ยืนยันแล้ว' : team.status === 'rejected' ? '✗ ไม่ผ่าน' : '⏳ รอยืนยัน'}
+                      {label}
                     </div>
                   </div>
                 </div>
-              ))}
+              })}
             </div>
           </div>
         )}
