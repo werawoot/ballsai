@@ -111,6 +111,17 @@ the base RLS file leaves permissive.
 | 37 | `sql/37-quarantine-legacy-payment-slip-links-v1.sql` | **Applied 23 August 2026:** removes exactly four historic URL-format slip references after checking the expected count; does not delete Storage objects | 13, `payments` |
 | 38 | `sql/38-close-venue-slot-v1.sql` | **Pending review:** lets a venue owner close an unbooked open slot; refuses slots with pending or confirmed bookings, and records an admin override in the SQL35 audit trail. Until applied, `DELETE /api/venue-slots/:slotId` returns HTTP 503 | 23, 33, 35 |
 
+Before applying step 38, run `sql/38-close-venue-slot-precheck.sql` against project
+`hivedzrwrrcnjrlirhtv` and record the output. That file is read-only — eleven `SELECT`
+statements, no DDL, no DML and no RPC call — and confirms the SQL23 venue tables, their
+RLS policies and RPC grants, `public.is_admin()`, the SQL35 audit entry point, and that
+`public.close_venue_slot_safely(uuid)` does not exist yet. This runbook records no
+production evidence for step 23, so its state on production is UNKNOWN until that check
+is run; step 38 depends on it and must not be applied on the assumption that it is
+there. The precheck only reports state. It authorises nothing: applying step 23, 24
+or 38 is a separate action that needs explicit approval from the production owner,
+and no agent may apply a migration on the strength of a passing precheck.
+
 SQL35 must be applied **before** deploying the matching Admin UI/API changes. Until it
 is applied, Ranking and Hall of Fame writes intentionally return HTTP 503 instead of
 changing data without an audit record. The migration removes direct authenticated

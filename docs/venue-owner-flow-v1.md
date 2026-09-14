@@ -42,9 +42,11 @@ Owner creates venue -> adds playable space -> publishes a future slot
   audit trail (`venue.slot.close`) inside the same transaction, so the close and its
   audit record succeed or fail together. An owner closing their own slot is not audited.
 - SQL steps 23 and 24 must be applied and verified in the target project before
-  deploying or onboarding a venue owner.
+  deploying or onboarding a venue owner. Applying them is an authorised operator action
+  with explicit production approval, never an automatic repair step.
 - SQL step 38 is required before the close-slot control works, and depends on SQL23,
-  SQL33 and SQL35. Until it is applied the API returns **HTTP 503** naming
+  SQL33 and SQL35. Run the read-only `sql/38-close-venue-slot-precheck.sql` first to
+  confirm those prerequisites on the target project. Until it is applied the API returns **HTTP 503** naming
   `sql/38-close-venue-slot-v1.sql` rather than failing silently, and the existing
   create/request/respond flow remains unchanged.
 
