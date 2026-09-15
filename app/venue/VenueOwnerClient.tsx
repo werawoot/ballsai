@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Building2, CalendarPlus, CalendarX2, Check, CircleDollarSign, Clock3, MapPin, Plus, X } from 'lucide-react'
 import { resolveCourtId, resolveVenueId } from '@/lib/venue-owner-form'
+import { ownerManageableSlots } from '@/lib/venue-slot-status'
 
 export type VenueSlot = { id: string; starts_at: string; ends_at: string; price_baht: number; status: 'open' | 'blocked' | 'reserved' }
 export type VenueCourt = { id: string; name: string; sport: 'football' | 'futsal'; surface: string; capacity: number | null; venue_slots: VenueSlot[] | null }
@@ -72,7 +73,7 @@ export default function VenueOwnerClient({ venues, bookings }: { venues: OwnerVe
   }
 
   const courts = venues.flatMap(venue => (venue.venue_courts ?? []).map(court => ({ ...court, venueName: venue.name })))
-  const openSlots = courts.flatMap(court => (court.venue_slots ?? []).filter(slot => slot.status === 'open').map(slot => ({ ...slot, courtName: court.name, venueName: court.venueName }))).sort((a, b) => new Date(a.starts_at).valueOf() - new Date(b.starts_at).valueOf())
+  const liveSlots = ownerManageableSlots(courts)
   const input = (label: string, value: string, onChange: (value: string) => void, props: React.InputHTMLAttributes<HTMLInputElement> = {}) => <label><span style={labelStyle}>{label}</span><input {...props} value={value} onChange={event => onChange(event.target.value)} style={fieldStyle} /></label>
 
   return <div style={{ display: 'grid', gap: 16 }}>
@@ -109,8 +110,8 @@ export default function VenueOwnerClient({ venues, bookings }: { venues: OwnerVe
       </section>
 
       <section style={{ background: '#fff', border: '1px solid #e3e6ea', borderRadius: 14, padding: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13 }}><Clock3 size={19} color="#CC0001" /><div><p style={{ ...labelStyle, color: '#CC0001', margin: 0 }}>OPEN SLOTS</p><h2 style={{ margin: '2px 0 0', fontSize: 21 }}>ช่วงเวลาที่เปิดรับจอง</h2></div></div>
-        {openSlots.length === 0 ? <p style={{ color: '#788290', fontSize: 13, margin: 0 }}>ยังไม่มีช่วงเวลาที่เปิดอยู่ เพิ่มช่วงเวลาจากแบบฟอร์มด้านบนได้เลย</p> : <div style={{ display: 'grid', gap: 9 }}>{openSlots.map(slot => <article key={slot.id} style={{ border: '1px solid #e4e7eb', borderRadius: 11, padding: 13, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}><div><b>{slot.venueName} · {slot.courtName}</b><p style={{ margin: '4px 0 0', color: '#667085', fontSize: 12 }}>{new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(slot.starts_at))} – {new Intl.DateTimeFormat('th-TH', { timeStyle: 'short' }).format(new Date(slot.ends_at))} · ฿{slot.price_baht.toLocaleString('th-TH')}</p></div><button type="button" disabled={busy} onClick={() => void closeSlot(slot.id)} aria-label={`ปิดช่วงเวลา ${slot.venueName} ${slot.courtName}`} style={{ border: '1px solid #fecaca', borderRadius: 8, background: '#fff', color: '#b91c1c', padding: '8px 10px', fontWeight: 900, cursor: busy ? 'wait' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 }}><CalendarX2 size={15} /> ปิดเวลานี้</button></article>)}</div>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 13 }}><Clock3 size={19} color="#CC0001" /><div><p style={{ ...labelStyle, color: '#CC0001', margin: 0 }}>OPEN SLOTS</p><h2 style={{ margin: '2px 0 0', fontSize: 21 }}>ช่วงเวลาที่เปิดอยู่</h2></div></div>
+        {liveSlots.length === 0 ? <p style={{ color: '#788290', fontSize: 13, margin: 0 }}>ยังไม่มีช่วงเวลาที่เปิดอยู่ เพิ่มช่วงเวลาจากแบบฟอร์มด้านบนได้เลย</p> : <div style={{ display: 'grid', gap: 9 }}>{liveSlots.map(slot => <article key={slot.id} style={{ border: '1px solid #e4e7eb', borderRadius: 11, padding: 13, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}><div style={{ minWidth: 0, flex: '1 1 210px' }}><b>{slot.venueName} · {slot.courtName}</b><p style={{ margin: '4px 0 0', color: '#667085', fontSize: 12 }}>{new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(slot.starts_at))} – {new Intl.DateTimeFormat('th-TH', { timeStyle: 'short' }).format(new Date(slot.ends_at))} · ฿{slot.price_baht.toLocaleString('th-TH')}</p><span style={{ display: 'inline-block', marginTop: 7, borderRadius: 20, padding: '3px 9px', fontSize: 10, fontWeight: 900, background: slot.canClose ? '#ecfdf5' : '#fff7ed', color: slot.canClose ? '#166534' : '#9a3412' }}>{slot.statusLabel}</span></div>{slot.canClose ? <button type="button" disabled={busy} onClick={() => void closeSlot(slot.id)} aria-label={`ปิดช่วงเวลา ${slot.venueName} ${slot.courtName}`} style={{ border: '1px solid #fecaca', borderRadius: 8, background: '#fff', color: '#b91c1c', padding: '8px 10px', fontWeight: 900, cursor: busy ? 'wait' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 }}><CalendarX2 size={15} /> ปิดเวลานี้</button> : <span style={{ color: '#9a3412', fontSize: 11, fontWeight: 700, maxWidth: 190 }}>ปิดไม่ได้ขณะมีคำขอจอง ตอบรับหรือปฏิเสธคำขอก่อน</span>}</article>)}</div>}
       </section>
     </>}
 

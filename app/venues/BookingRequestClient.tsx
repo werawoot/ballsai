@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarDays, Send } from 'lucide-react'
+import Link from 'next/link'
+import { CalendarCheck2, CalendarDays, Send } from 'lucide-react'
+import { bookingRequestView } from '@/lib/venue-booking-request'
 
 export type AvailableSlot = { id: string; starts_at: string; ends_at: string; price_baht: number; venue_courts: { name: string; sport: string } | null }
 
@@ -11,28 +13,53 @@ export default function BookingRequestClient({ slots }: { slots: AvailableSlot[]
   const [selected, setSelected] = useState(slots[0]?.id ?? '')
   const [purpose, setPurpose] = useState('ซ้อมทีม')
   const [note, setNote] = useState('')
-  const [message, setMessage] = useState('')
+  const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const view = bookingRequestView({ submitted, selected, slots })
   const format = (value: string) => new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 
   const submit = async () => {
-    if (!selected || !purpose.trim()) return
-    setBusy(true); setMessage('')
-    const response = await fetch('/api/venue-bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slotId: selected, purpose, note }) })
-    const result = await response.json().catch(() => null) as { error?: string } | null
+    if (busy || !view.canSubmit || !view.selected || !purpose.trim()) return
+    setBusy(true); setFeedback(null)
+    const response = await fetch('/api/venue-bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slotId: view.selected, purpose, note }) }).catch(() => null)
+    const result = response ? await response.json().catch(() => null) as { error?: string } | null : null
     setBusy(false)
-    if (response.status === 401) { router.push(`${'/login?next='}${encodeURIComponent('/venues/bookings')}`); return }
-    if (!response.ok) { setMessage(result?.error ?? 'ส่งคำขอไม่สำเร็จ'); return }
-    setMessage('ส่งคำขอแล้ว รอเจ้าของสนามยืนยัน')
+    if (response?.status === 401) { router.push(`${'/login?next='}${encodeURIComponent('/venues/bookings')}`); return }
+    if (!response || !response.ok) {
+      setFeedback({ tone: 'error', text: result?.error ?? 'ส่งคำขอไม่สำเร็จ' })
+      // A 409 means the slot list is stale; refresh so the taken slot disappears.
+      if (response?.status === 409) router.refresh()
+      return
+    }
+    setFeedback({ tone: 'success', text: 'ส่งคำขอแล้ว รอเจ้าของสนามยืนยัน' })
+    setNote('')
+    // Lock the form behind a confirmation. The slot is reserved now, so re-sending it
+    // would only fail, and refresh() alone would leave a stale id selected.
+    setSubmitted(true)
+    router.refresh()
   }
 
-  if (!slots.length) return <p style={{ margin: 0, color: '#687586', fontSize: 13 }}>ยังไม่มีช่วงเวลาว่างที่เปิดให้ขอจอง</p>
+  // bookingRequestView re-resolves the selection from the refreshed slots, so this
+  // only has to leave the confirmation.
+  const startAnother = () => {
+    setSubmitted(false)
+    setFeedback(null)
+  }
+
+  if (view.mode === 'success') return <section style={{ background: '#101827', color: 'white', borderRadius: 14, padding: 17 }}>
+    <div style={{ display: 'flex', gap: 9, alignItems: 'flex-start' }}><CalendarCheck2 size={22} color="#4ade80" /><div style={{ minWidth: 0 }}><h2 style={{ margin: 0, fontSize: 19 }}>ส่งคำขอจองแล้ว</h2><p role="status" aria-live="polite" style={{ margin: '6px 0 0', color: 'rgba(255,255,255,.75)', fontSize: 13, lineHeight: 1.55 }}>รอเจ้าของสนามยืนยัน คุณจะเห็นสถานะล่าสุดได้ในหน้าคำขอของฉัน</p></div></div>
+    <Link href="/venues/bookings" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 7, marginTop: 14, padding: 11, borderRadius: 8, background: '#f5c518', color: '#101827', fontWeight: 900, textDecoration: 'none' }}><CalendarDays size={15} /> ดูคำขอของฉัน</Link>
+    {slots.length > 0 && <button type="button" onClick={startAnother} style={{ width: '100%', marginTop: 9, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,.25)', background: 'transparent', color: 'white', fontWeight: 800, cursor: 'pointer' }}>ขอจองช่วงเวลาอื่นอีก</button>}
+  </section>
+
+  if (view.mode === 'empty') return <p style={{ margin: 0, color: '#687586', fontSize: 13 }}>ยังไม่มีช่วงเวลาว่างที่เปิดให้ขอจอง</p>
   return <section style={{ background: '#101827', color: 'white', borderRadius: 14, padding: 17 }}>
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><CalendarDays size={19} color="#f5c518" /><div><p style={{ margin: 0, color: '#f5c518', font: '800 10px var(--font-oswald)', letterSpacing: 1.2 }}>REQUEST A SLOT</p><h2 style={{ margin: '2px 0 0', fontSize: 20 }}>ส่งคำขอจอง</h2></div></div>
-    <div style={{ display: 'grid', gap: 8, marginTop: 14 }}>{slots.map(slot => <label key={slot.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: 10, border: `1px solid ${selected === slot.id ? '#f5c518' : 'rgba(255,255,255,.17)'}`, background: selected === slot.id ? 'rgba(245,197,24,.12)' : 'transparent', borderRadius: 9, cursor: 'pointer' }}><input checked={selected === slot.id} onChange={() => setSelected(slot.id)} type="radio" name="slot" /><span style={{ flex: 1 }}><b style={{ display: 'block', fontSize: 13 }}>{slot.venue_courts?.name ?? 'พื้นที่เล่น'} · {slot.venue_courts?.sport === 'futsal' ? 'ฟุตซอล' : 'ฟุตบอล'}</b><small style={{ color: 'rgba(255,255,255,.68)' }}>{format(slot.starts_at)} – {new Intl.DateTimeFormat('th-TH', { timeStyle: 'short' }).format(new Date(slot.ends_at))}</small></span><b style={{ color: '#f5c518' }}>฿{slot.price_baht.toLocaleString()}</b></label>)}</div>
+    <div role="radiogroup" aria-label="เลือกช่วงเวลาที่ต้องการจอง" style={{ display: 'grid', gap: 8, marginTop: 14 }}>{slots.map(slot => <label key={slot.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: 10, border: `1px solid ${view.selected === slot.id ? '#f5c518' : 'rgba(255,255,255,.17)'}`, background: view.selected === slot.id ? 'rgba(245,197,24,.12)' : 'transparent', borderRadius: 9, cursor: 'pointer' }}><input checked={view.selected === slot.id} onChange={() => setSelected(slot.id)} type="radio" name="slot" /><span style={{ flex: 1 }}><b style={{ display: 'block', fontSize: 13 }}>{slot.venue_courts?.name ?? 'พื้นที่เล่น'} · {slot.venue_courts?.sport === 'futsal' ? 'ฟุตซอล' : 'ฟุตบอล'}</b><small style={{ color: 'rgba(255,255,255,.68)' }}>{format(slot.starts_at)} – {new Intl.DateTimeFormat('th-TH', { timeStyle: 'short' }).format(new Date(slot.ends_at))}</small></span><b style={{ color: '#f5c518' }}>฿{slot.price_baht.toLocaleString()}</b></label>)}</div>
     <label style={{ display: 'block', marginTop: 12 }}><span style={{ display: 'block', fontSize: 10, fontWeight: 800, letterSpacing: 1, color: 'rgba(255,255,255,.65)', marginBottom: 5 }}>วัตถุประสงค์</span><input value={purpose} onChange={event => setPurpose(event.target.value)} placeholder="เช่น ซ้อมทีม U16" style={{ width: '100%', boxSizing: 'border-box', padding: '10px 11px', borderRadius: 8, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: 'white' }} /></label>
     <label style={{ display: 'block', marginTop: 10 }}><span style={{ display: 'block', fontSize: 10, fontWeight: 800, letterSpacing: 1, color: 'rgba(255,255,255,.65)', marginBottom: 5 }}>หมายเหตุ (ถ้ามี)</span><textarea value={note} onChange={event => setNote(event.target.value)} rows={2} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 11px', borderRadius: 8, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: 'white', resize: 'vertical' }} /></label>
-    {message && <p role="status" style={{ background: message.includes('ไม่สำเร็จ') || message.includes('มีคำขอ') ? '#7f1d1d' : '#14532d', borderRadius: 8, padding: 9, fontSize: 12, margin: '12px 0 0' }}>{message}</p>}
-    <button type="button" disabled={busy || !selected || !purpose.trim()} onClick={submit} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 7, width: '100%', marginTop: 12, padding: 11, border: 0, borderRadius: 8, background: '#f5c518', color: '#101827', fontWeight: 900, cursor: 'pointer' }}><Send size={15} /> {busy ? 'กำลังส่ง...' : 'ส่งคำขอจอง'}</button>
+    {feedback && <p role="status" aria-live="polite" style={{ background: feedback.tone === 'error' ? '#7f1d1d' : '#14532d', borderRadius: 8, padding: 9, fontSize: 12, margin: '12px 0 0' }}>{feedback.text}</p>}
+    <button type="button" aria-busy={busy} disabled={busy || !view.canSubmit || !view.selected || !purpose.trim()} onClick={submit} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 7, width: '100%', marginTop: 12, padding: 11, border: 0, borderRadius: 8, background: '#f5c518', color: '#101827', fontWeight: 900, cursor: 'pointer' }}><Send size={15} /> {busy ? 'กำลังส่ง...' : 'ส่งคำขอจอง'}</button>
   </section>
 }
