@@ -111,7 +111,7 @@ the base RLS file leaves permissive.
 | 37 | `sql/37-quarantine-legacy-payment-slip-links-v1.sql` | **Applied 23 August 2026:** removes exactly four historic URL-format slip references after checking the expected count; does not delete Storage objects | 13, `payments` |
 | 38 | `sql/38-close-venue-slot-v1.sql` | **Applied 14 September 2026:** lets a venue owner close an unbooked open slot; refuses slots with pending or confirmed bookings, and records an admin override in the SQL35 audit trail. Function and effective privileges were read-only verified. | 23, 33, 35, 39 |
 | 39 | `sql/39-venue-rpc-privilege-hardening-v1.sql` | **Applied 14 September 2026:** removes unintended direct `anon` and `service_role` EXECUTE grants from the six SQL23 venue RPCs; all six were read-only verified as `anon = false`, `service_role = false`, `authenticated = true`. | 23 |
-| 40 | `sql/40-venue-slot-booking-state-v1.sql` | **Pending review — do not apply yet:** separates booking-reserved slots from owner-blocked slots, snapshots booking display data, hides active bookings from public availability, and atomically reopens declined/cancelled slots | 23, 38, 39 |
+| 40 | `sql/40-venue-slot-booking-state-v1.sql` | **Applied 15 September 2026:** separates booking-reserved slots from owner-blocked slots, snapshots booking display data, hides active bookings from public availability, and atomically reopens declined/cancelled slots. Post-check verified five non-null snapshot columns, no open/reserved slot inconsistencies, no missing snapshots, all four RPCs are `SECURITY DEFINER` with empty `search_path`, authenticated-only execution, and no requester slot policy. | 23, 38, 39 |
 
 Before applying step 40, run `sql/40-venue-slot-booking-state-precheck.sql` against
 project `hivedzrwrrcnjrlirhtv` and record every result set. It checks the exact status
@@ -125,7 +125,10 @@ separately approved SQL40 application run. After application, run
 and the missing-snapshot count must be zero, the blocked count must match the precheck
 baseline, and all four functions must retain authenticated-only execution with an empty
 `search_path`. SQL40 deliberately adds no requester policy to `venue_slots`; private
-booking history reads the immutable snapshot columns instead.
+booking history reads the immutable snapshot columns instead. Applied on 15 September
+2026 after its precheck against `hivedzrwrrcnjrlirhtv`; the owner-blocked baseline was
+preserved at 1 slot, and the post-check found 2 reserved slots, 0 open slots, and no
+slot/booking inconsistencies.
 
 Before applying step 38, apply and verify step 39 only after its own explicit approval,
 then run `sql/38-close-venue-slot-precheck.sql` against project
