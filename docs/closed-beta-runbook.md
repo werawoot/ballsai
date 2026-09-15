@@ -109,9 +109,26 @@ the base RLS file leaves permissive.
 | 35 | `sql/35-admin-audit-log-v1.sql` | **Applied 23 August 2026:** append-only Admin Audit Trail, admin-only read access, atomic audited Ranking/Hall of Fame mutations and audited Trust resolutions; table, RLS and all audited RPCs were read-only verified | 31, 34, `digital-identity-v2-hall.sql`, core schema |
 | 36 | `sql/36-data-deletion-search-path-hardening-v1.sql` | **Pending review:** moves the empty `search_path` hardening for the PDPA deletion RPC into a new migration without rewriting applied SQL16 | 16, 33 |
 | 37 | `sql/37-quarantine-legacy-payment-slip-links-v1.sql` | **Applied 23 August 2026:** removes exactly four historic URL-format slip references after checking the expected count; does not delete Storage objects | 13, `payments` |
-| 38 | `sql/38-close-venue-slot-v1.sql` | **Pending review:** lets a venue owner close an unbooked open slot; refuses slots with pending or confirmed bookings, and records an admin override in the SQL35 audit trail. Until applied, `DELETE /api/venue-slots/:slotId` returns HTTP 503 | 23, 33, 35 |
+| 38 | `sql/38-close-venue-slot-v1.sql` | **Applied 14 September 2026:** lets a venue owner close an unbooked open slot; refuses slots with pending or confirmed bookings, and records an admin override in the SQL35 audit trail. Function and effective privileges were read-only verified. | 23, 33, 35, 39 |
+| 39 | `sql/39-venue-rpc-privilege-hardening-v1.sql` | **Applied 14 September 2026:** removes unintended direct `anon` and `service_role` EXECUTE grants from the six SQL23 venue RPCs; all six were read-only verified as `anon = false`, `service_role = false`, `authenticated = true`. | 23 |
+| 40 | `sql/40-venue-slot-booking-state-v1.sql` | **Pending review — do not apply yet:** separates booking-reserved slots from owner-blocked slots, snapshots booking display data, hides active bookings from public availability, and atomically reopens declined/cancelled slots | 23, 38, 39 |
 
-Before applying step 38, run `sql/38-close-venue-slot-precheck.sql` against project
+Before applying step 40, run `sql/40-venue-slot-booking-state-precheck.sql` against
+project `hivedzrwrrcnjrlirhtv` and record every result set. It checks the exact status
+constraint, partial live-booking index, RLS posture, current policies and RPC grants,
+the owner-blocked baseline, aggregate open slots to backfill, and whether every historic
+booking can be snapshotted. It exposes no requester, venue or booking identifiers. A
+passing precheck is necessary but is not approval to apply. The application must first
+be deployed with the backward-compatible booking-history reader; only then may a
+separately approved SQL40 application run. After application, run
+`sql/40-venue-slot-booking-state-postcheck.sql`: both slot/booking inconsistency counts
+and the missing-snapshot count must be zero, the blocked count must match the precheck
+baseline, and all four functions must retain authenticated-only execution with an empty
+`search_path`. SQL40 deliberately adds no requester policy to `venue_slots`; private
+booking history reads the immutable snapshot columns instead.
+
+Before applying step 38, apply and verify step 39 only after its own explicit approval,
+then run `sql/38-close-venue-slot-precheck.sql` against project
 `hivedzrwrrcnjrlirhtv` and record the output. That file is read-only — eleven `SELECT`
 statements, no DDL, no DML and no RPC call — and confirms the SQL23 venue tables, their
 RLS policies and RPC grants, `public.is_admin()`, the SQL35 audit entry point, and that
@@ -121,6 +138,20 @@ is run; step 38 depends on it and must not be applied on the assumption that it 
 there. The precheck only reports state. It authorises nothing: applying step 23, 24
 or 38 is a separate action that needs explicit approval from the production owner,
 and no agent may apply a migration on the strength of a passing precheck.
+
+Production evidence (14 September 2026): step 39 was applied to project
+`hivedzrwrrcnjrlirhtv` in one transaction. The required six SQL23 venue RPCs were
+present before changes. The transaction revoked direct `EXECUTE` from `PUBLIC`,
+`anon`, and `service_role`, then granted it to `authenticated` only. A read-only
+post-check returned six rows, each with `anon = false`, `service_role = false`, and
+`authenticated = true`. No venue, court, slot, booking, or user record was changed.
+
+Production evidence (14 September 2026): step 38 was applied to project
+`hivedzrwrrcnjrlirhtv` after the read-only venue precheck passed. The guarded
+`public.close_venue_slot_safely(uuid)` function exists as `SECURITY DEFINER` with an
+empty `search_path`. Effective execution privileges were read-only verified as
+`anon = false`, `service_role = false`, and `authenticated = true`. No venue slot or
+booking was created, closed, or changed during the apply and verification.
 
 SQL35 must be applied **before** deploying the matching Admin UI/API changes. Until it
 is applied, Ranking and Hall of Fame writes intentionally return HTTP 503 instead of

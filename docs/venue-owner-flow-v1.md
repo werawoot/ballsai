@@ -32,11 +32,16 @@ Owner creates venue -> adds playable space -> publishes a future slot
 - Writes run only through guarded RPCs. RLS permits reading only published venues,
   their active spaces/slots, and a booking's two participants.
 - A partial unique index permits at most one `pending` or `confirmed` request per
-  slot. Declining or cancelling a request releases that slot.
+  slot. SQL40 adds the distinct `reserved` state while either booking state is active,
+  so a reservation is never confused with an owner closing a slot. Declining or
+  cancelling atomically reopens the slot; confirming keeps it reserved.
+- Each request snapshots the venue name, court name, time and displayed price. This
+  keeps the requester's private history readable after the live slot is hidden without
+  granting permanent RLS access to declined, cancelled or historic slot rows.
 - Closing a slot uses `close_venue_slot_safely()`. It locks the slot and refuses to
   close it while a pending or confirmed request exists, so no active booking is orphaned.
 - Closing is a status change, not a deletion. `DELETE /api/venue-slots/:slotId` moves the
-  slot to `blocked`; the row, its price and its history stay in `venue_slots`, and any
+  slot to `blocked`; a live booking moves it to `reserved`. The row, its price and its history stay in `venue_slots`, and any
   declined or cancelled request that pointed at it is preserved.
 - An admin may close another owner's slot. That override is written to the SQL35 admin
   audit trail (`venue.slot.close`) inside the same transaction, so the close and its
@@ -49,6 +54,9 @@ Owner creates venue -> adds playable space -> publishes a future slot
   confirm those prerequisites on the target project. Until it is applied the API returns **HTTP 503** naming
   `sql/38-close-venue-slot-v1.sql` rather than failing silently, and the existing
   create/request/respond flow remains unchanged.
+- SQL step 40 must be preceded by its read-only precheck and by deployment of the
+  backward-compatible `/venues/bookings` reader. It depends on SQL23, SQL38 and SQL39.
+  A passing precheck is not authorisation to apply it.
 
 ## Manual beta script
 
