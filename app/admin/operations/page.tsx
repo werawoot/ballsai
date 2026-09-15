@@ -1,115 +1,65 @@
 import Link from 'next/link'
-import { UserMinus, Activity, ArrowLeft, CheckCircle2, CircleAlert, Database, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
+import { Activity, ArrowLeft, Building2, CalendarDays, ClipboardCheck, Database, Eye, FileWarning, Handshake, HeartHandshake, Landmark, LockKeyhole, Mail, ShieldCheck, UserMinus, UsersRound } from 'lucide-react'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
-type Status = 'ready' | 'attention'
+type Tone = 'green' | 'amber' | 'red' | 'navy'
+const tones: Record<Tone, { bg: string; border: string; text: string }> = {
+  green: { bg: '#ecfdf3', border: '#b7ebc7', text: '#087443' }, amber: { bg: '#fff8e8', border: '#f0d899', text: '#955f00' }, red: { bg: '#fff1f1', border: '#fecaca', text: '#b42318' }, navy: { bg: '#eef3fa', border: '#cfd9e8', text: '#17355c' },
+}
 
-function StatusCard({
-  icon,
-  title,
-  detail,
-  status,
-}: {
-  icon: React.ReactNode
-  title: string
-  detail: string
-  status: Status
-}) {
-  const ready = status === 'ready'
+function Metric({ icon, value, title, detail, tone = 'navy' }: { icon: React.ReactNode; value: number; title: string; detail: string; tone?: Tone }) {
+  const c = tones[tone]
+  return <article style={{ background: '#fff', border: '1px solid #e4e8ee', borderRadius: 14, boxShadow: '0 6px 20px rgba(17,24,39,.045)', padding: 15 }}><div style={{ alignItems: 'center', display: 'flex', justifyContent: 'space-between' }}><span style={{ alignItems: 'center', background: c.bg, border: `1px solid ${c.border}`, borderRadius: 9, color: c.text, display: 'inline-flex', height: 35, justifyContent: 'center', width: 35 }}>{icon}</span><b style={{ color: c.text, font: '800 30px/1 var(--font-oswald)' }}>{value}</b></div><b style={{ color: '#172033', display: 'block', fontSize: 13, marginTop: 11 }}>{title}</b><small style={{ color: '#728094', display: 'block', fontSize: 11, marginTop: 3 }}>{detail}</small></article>
+}
 
-  return (
-    <article style={{ background: 'white', border: `1px solid ${ready ? '#bfe8ce' : '#f4d08a'}`, borderRadius: 16, padding: 18, boxShadow: '0 4px 18px rgba(17,24,39,.05)' }}>
-      <div style={{ alignItems: 'center', display: 'flex', gap: 10, justifyContent: 'space-between' }}>
-        <div style={{ alignItems: 'center', display: 'flex', gap: 10 }}>
-          <span style={{ alignItems: 'center', background: ready ? '#e9f8ee' : '#fff7e6', borderRadius: 10, color: ready ? '#168448' : '#ad6800', display: 'inline-flex', height: 36, justifyContent: 'center', width: 36 }}>{icon}</span>
-          <h2 style={{ color: '#111827', fontFamily: 'var(--font-oswald)', fontSize: 18, letterSpacing: .4, margin: 0 }}>{title}</h2>
-        </div>
-        {ready ? <CheckCircle2 aria-label="พร้อม" color="#168448" size={21} /> : <CircleAlert aria-label="ต้องตั้งค่า" color="#ad6800" size={21} />}
-      </div>
-      <p style={{ color: '#596275', fontSize: 14, lineHeight: 1.55, margin: '14px 0 0' }}>{detail}</p>
-    </article>
-  )
+function Queue({ icon, title, count, detail, href, tone }: { icon: React.ReactNode; title: string; count: number; detail: string; href: string; tone: Tone }) {
+  const c = tones[tone]
+  return <Link href={href} style={{ alignItems: 'center', background: '#fff', border: '1px solid #e5e8ed', borderLeft: `4px solid ${c.text}`, borderRadius: 11, color: '#172033', display: 'grid', gap: 10, gridTemplateColumns: '32px minmax(0,1fr) auto', padding: 12, textDecoration: 'none' }}><span style={{ color: c.text }}>{icon}</span><span><b style={{ display: 'block', fontSize: 13 }}>{title}</b><small style={{ color: '#728094', display: 'block', fontSize: 11, lineHeight: 1.35, marginTop: 2 }}>{detail}</small></span><b style={{ background: c.bg, borderRadius: 99, color: c.text, font: '800 18px/1 var(--font-oswald)', padding: '6px 9px' }}>{count}</b></Link>
+}
+
+function Tool({ href, icon, title, detail }: { href: string; icon: React.ReactNode; title: string; detail: string }) {
+  return <Link href={href} style={{ background: '#111b2a', border: '1px solid rgba(255,255,255,.11)', borderRadius: 11, color: 'white', padding: 13, textDecoration: 'none' }}><span style={{ color: '#f5c518' }}>{icon}</span><b style={{ display: 'block', fontSize: 13, marginTop: 7 }}>{title}</b><small style={{ color: 'rgba(255,255,255,.62)', display: 'block', fontSize: 11, marginTop: 2 }}>{detail}</small></Link>
 }
 
 export default async function OperationsPage() {
-  const supabase = await createServerSupabaseClient()
-  const [tournaments, ratings, profiles, slipBucket, deletionRequests] = await Promise.all([
-    supabase.from('tournaments').select('id', { count: 'exact', head: true }),
-    supabase.from('player_ratings').select('id', { count: 'exact', head: true }),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }),
-    supabase.storage.getBucket('slips'),
-    // Removing the auth account needs the service role key, which this app does not hold,
-    // so the last step of a PDPA deletion is a human one. This is its queue.
-    supabase
-      .from('account_deletion_requests')
-      .select('id, email, requested_at')
-      .is('completed_at', null)
-      .order('requested_at', { ascending: true })
-      .limit(25),
+  const s = await createServerSupabaseClient()
+  const [summaryResult, slips] = await Promise.all([
+    s.rpc('get_admin_command_center_summary'),
+    s.storage.getBucket('slips'),
   ])
-
-  const openDeletions = (deletionRequests.data ?? []) as Array<{ id: number; email: string | null; requested_at: string }>
-
-  const databaseReady = !tournaments.error && !ratings.error && !profiles.error
-  const slipsPrivate = !slipBucket.error && slipBucket.data?.public === false
+  const summary = !summaryResult.error && summaryResult.data && typeof summaryResult.data === 'object'
+    ? summaryResult.data as Record<string, unknown>
+    : null
+  const summaryNumber = (key: string) => Number.isFinite(Number(summary?.[key])) ? Number(summary?.[key]) : 0
+  const asCount = (count: number) => ({ count, error: null })
+  const fallback = summary ? null : await Promise.all([
+    s.from('profiles').select('id', { count: 'exact', head: true }), s.from('profiles').select('id', { count: 'exact', head: true }).in('role', ['admin', 'organizer']), s.from('tournaments').select('id', { count: 'exact', head: true }), s.from('teams').select('id', { count: 'exact', head: true }).eq('status', 'pending'), s.from('payments').select('id', { count: 'exact', head: true }).neq('status', 'confirmed'), s.from('match_results').select('id', { count: 'exact', head: true }), s.from('athlete_highlight_reports').select('id', { count: 'exact', head: true }).is('resolved_at', null), s.from('account_deletion_requests').select('id', { count: 'exact', head: true }).is('completed_at', null), s.from('guardian_links').select('id', { count: 'exact', head: true }).eq('status', 'pending'), s.from('venue_booking_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'), s.from('organization_members').select('id', { count: 'exact', head: true }).eq('status', 'pending'), s.from('sponsorship_interests').select('id', { count: 'exact', head: true }).eq('status', 'submitted'), s.from('venue_profiles').select('id', { count: 'exact', head: true }), s.from('organizations').select('id', { count: 'exact', head: true }),
+  ])
+  const [profiles, managers, tournaments, teams, payments, results, reports, deletions, guardians, bookings, invites, interests, venues, organizations] = fallback ?? [
+    asCount(summaryNumber('profiles')), asCount(summaryNumber('managers')), asCount(summaryNumber('tournaments')),
+    asCount(summaryNumber('pending_teams')), asCount(summaryNumber('pending_payments')), asCount(summaryNumber('results')),
+    asCount(summaryNumber('open_highlight_reports')), asCount(summaryNumber('open_deletion_requests')),
+    asCount(summaryNumber('pending_guardian_links')), asCount(summaryNumber('pending_venue_bookings')),
+    asCount(summaryNumber('pending_organization_invites')), asCount(summaryNumber('submitted_sponsor_interests')),
+    asCount(summaryNumber('venues')), asCount(summaryNumber('organizations')),
+  ]
+  const n = (r: { count: number | null; error: unknown }) => r.error ? 0 : r.count ?? 0
+  const slipsPrivate = !slips.error && slips.data?.public === false
   const emailReady = Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL)
-  const distributedRateLimitReady = Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
-  const demoDisabled = process.env.NEXT_PUBLIC_SHOW_DEMO_DATA !== 'true'
+  const rateLimitReady = Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+  const attention = n(teams) + n(payments) + n(reports) + n(deletions) + n(guardians) + n(bookings) + n(invites) + n(interests)
 
-  return (
-    <main style={{ background: '#f6f7f9', minHeight: '100vh', paddingBottom: 56 }}>
-      <header style={{ alignItems: 'center', background: '#111827', color: 'white', display: 'flex', justifyContent: 'space-between', padding: '16px clamp(18px,5vw,72px)' }}>
-        <Link href="/admin" style={{ alignItems: 'center', color: 'white', display: 'inline-flex', fontSize: 14, fontWeight: 700, gap: 8, textDecoration: 'none' }}><ArrowLeft size={18} /> Admin panel</Link>
-        <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 15, letterSpacing: 1.3 }}>OPERATIONS</span>
-      </header>
-
-      <section style={{ margin: '0 auto', maxWidth: 920, padding: 'clamp(28px,6vw,70px) 20px' }}>
-        <p style={{ color: '#d71920', fontFamily: 'var(--font-oswald)', fontSize: 13, fontWeight: 700, letterSpacing: 1.5, margin: 0 }}>BALLDOENSAI.COM · PRODUCTION READINESS</p>
-        <h1 style={{ color: '#111827', fontFamily: 'var(--font-sarabun)', fontSize: 'clamp(32px,6vw,56px)', letterSpacing: '-.05em', lineHeight: .98, margin: '10px 0 14px' }}>สถานะระบบ<br /><span style={{ color: '#d71920' }}>ก่อนเปิดใช้งานจริง</span></h1>
-        <p style={{ color: '#596275', lineHeight: 1.65, margin: 0, maxWidth: 620 }}>หน้านี้แสดงเฉพาะสถานะการเชื่อมต่อและการตั้งค่าที่สำคัญ โดยไม่เปิดเผยรหัสหรือข้อมูลลับ</p>
-
-        <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(245px, 1fr))', marginTop: 30 }}>
-          <StatusCard icon={<Database size={19} />} title="Supabase database" status={databaseReady ? 'ready' : 'attention'} detail={databaseReady ? `พร้อมใช้งาน · ${tournaments.count ?? 0} รายการแข่ง · ${ratings.count ?? 0} rating records · ${profiles.count ?? 0} accounts` : 'ตรวจสอบการเชื่อมต่อ Supabase หรือ RLS ของตารางหลัก'} />
-          <StatusCard icon={<LockKeyhole size={19} />} title="Payment slips" status={slipsPrivate ? 'ready' : 'attention'} detail={slipsPrivate ? 'Bucket slips เป็น private และเปิดผ่าน signed URL เท่านั้น' : 'ยังไม่พบ bucket slips แบบ private — ตรวจสอบ Storage และ migration'} />
-          <StatusCard icon={<Mail size={19} />} title="Transactional email" status={emailReady ? 'ready' : 'attention'} detail={emailReady ? 'พร้อมส่งอีเมลสถานะทีมจากโดเมนที่กำหนด' : 'ต้องตั้ง RESEND_FROM_EMAIL หลังยืนยันโดเมนใน Resend'} />
-          <StatusCard icon={<ShieldCheck size={19} />} title="Rate limiting" status={distributedRateLimitReady ? 'ready' : 'attention'} detail={distributedRateLimitReady ? 'ใช้ Upstash Redis ร่วมกันทุก instance' : 'กำลังใช้ fallback ใน memory; ต้องเชื่อม Upstash ก่อน deploy แบบหลาย instance'} />
-          <StatusCard icon={<Activity size={19} />} title="Closed beta data mode" status={demoDisabled ? 'ready' : 'attention'} detail={demoDisabled ? 'Demo fallback ถูกปิด ระบบจะแสดงข้อมูลจาก Supabase จริงเท่านั้น' : 'ต้องตั้ง NEXT_PUBLIC_SHOW_DEMO_DATA=false ก่อนเชิญผู้จัดจริง'} />
-        </div>
-
-        <div style={{ background: 'white', border: `1.5px solid ${openDeletions.length > 0 ? '#f4d98b' : '#e5e7eb'}`, borderRadius: 16, marginTop: 24, padding: 20 }}>
-          <div style={{ alignItems: 'center', display: 'flex', gap: 10, marginBottom: 10 }}>
-            <UserMinus color={openDeletions.length > 0 ? '#854d0e' : '#596275'} size={20} />
-            <strong style={{ color: '#111827', fontFamily: 'var(--font-oswald)', fontSize: 16, letterSpacing: .3 }}>
-              คำขอลบบัญชีที่ยังไม่ปิด ({openDeletions.length})
-            </strong>
-          </div>
-          {deletionRequests.error ? (
-            <p style={{ color: '#854d0e', fontSize: 13, lineHeight: 1.7, margin: 0 }}>
-              ยังอ่านคิวคำขอไม่ได้ — apply <code>sql/data-deletion-v1.sql</code> ก่อน
-            </p>
-          ) : openDeletions.length === 0 ? (
-            <p style={{ color: '#596275', fontSize: 13, margin: 0 }}>ไม่มีคำขอค้าง</p>
-          ) : (
-            <>
-              <ul style={{ color: '#374151', fontSize: 13, lineHeight: 1.9, margin: '0 0 10px', paddingLeft: 20 }}>
-                {openDeletions.map(request => (
-                  <li key={request.id}>{request.email ?? 'ไม่ทราบอีเมล'} · ขอเมื่อ {new Date(request.requested_at).toLocaleDateString('th-TH')}</li>
-                ))}
-              </ul>
-              <p style={{ color: '#596275', fontSize: 12, lineHeight: 1.7, margin: 0 }}>
-                ข้อมูลนักกีฬาถูกลบและชื่อในตาราง ranking ถูกตัดออกแล้ว เหลือขั้นตอนลบบัญชีใน Supabase → Authentication → Users แล้วบันทึก <code>completed_at</code> ในตาราง <code>account_deletion_requests</code>
-              </p>
-            </>
-          )}
-        </div>
-
-        <div style={{ alignItems: 'center', background: '#111827', borderRadius: 16, color: 'white', display: 'flex', gap: 14, marginTop: 24, padding: 20 }}>
-          <Activity color="#f4b942" size={30} />
-          <div><strong style={{ display: 'block', fontSize: 16 }}>คำแนะนำลำดับถัดไป</strong><span style={{ color: 'rgba(255,255,255,.7)', fontSize: 14 }}>ตั้งค่า Resend sender และ Upstash Redis แล้วกลับมาตรวจหน้านี้อีกครั้งก่อน deploy</span></div>
-        </div>
-      </section>
-    </main>
-  )
+  return <main style={{ background: '#f4f6f8', minHeight: '100vh', paddingBottom: 56 }}>
+    <header style={{ alignItems: 'center', background: '#0c1421', color: 'white', display: 'flex', justifyContent: 'space-between', padding: '13px clamp(16px,5vw,64px)' }}><Link href="/admin" style={{ alignItems: 'center', color: 'white', display: 'inline-flex', fontSize: 13, fontWeight: 800, gap: 7, textDecoration: 'none' }}><ArrowLeft size={17} /> Admin Panel</Link><span style={{ color: '#f5c518', font: '800 11px var(--font-oswald)', letterSpacing: 1.4 }}>SYSTEM CONTROL CENTER</span></header>
+    <section style={{ background: 'linear-gradient(118deg,#0c1421 0%,#142d44 63%,#4b2111 100%)', color: 'white', padding: '30px clamp(16px,5vw,64px) 35px' }}><div style={{ margin: '0 auto', maxWidth: 1140 }}><p style={{ color: '#f5c518', font: '800 10px var(--font-oswald)', letterSpacing: 1.5, margin: 0 }}>CLOSED BETA COMMAND DESK</p><div style={{ alignItems: 'end', display: 'flex', flexWrap: 'wrap', gap: 18, justifyContent: 'space-between' }}><div><h1 style={{ font: '800 clamp(35px,6vw,60px)/.9 var(--font-oswald)', margin: '9px 0' }}>SEE THE WHOLE<br /><span style={{ color: '#f5c518' }}>PLAYING FIELD.</span></h1><p style={{ color: 'rgba(255,255,255,.7)', fontSize: 13, lineHeight: 1.5, margin: 0, maxWidth: 590 }}>ภาพรวม Closed Beta ในหน้าเดียว ใช้เฉพาะตัวเลขสรุปโดยไม่เปิดข้อมูลติดต่อหรือโน้ตส่วนตัวของเด็ก</p></div><div style={{ background: attention ? '#4a260e' : '#103c2c', border: `1px solid ${attention ? '#a7682e' : '#237956'}`, borderRadius: 12, minWidth: 142, padding: '12px 14px' }}><span style={{ color: 'rgba(255,255,255,.7)', fontSize: 11 }}>คิวที่ต้องดู</span><b style={{ color: '#f5c518', display: 'block', font: '800 40px/1 var(--font-oswald)', marginTop: 4 }}>{attention}</b></div></div></div></section>
+    <section style={{ margin: '0 auto', maxWidth: 1140, padding: '22px 16px' }}>
+      <div style={{ display: 'grid', gap: 11, gridTemplateColumns: 'repeat(auto-fit,minmax(155px,1fr))' }}><Metric icon={<UsersRound size={18} />} value={n(profiles)} title="บัญชีในระบบ" detail={`${n(managers)} admin / organizer`} /><Metric icon={<CalendarDays size={18} />} value={n(tournaments)} title="รายการแข่งขัน" detail={`${n(results)} ผลที่บันทึกแล้ว`} /><Metric icon={<Building2 size={18} />} value={n(venues)} title="สนาม" detail={`${n(organizations)} Academy / Club`} /><Metric icon={<Handshake size={18} />} value={n(interests)} title="Sponsor interest" detail="รอแบรนด์ตรวจ" tone={n(interests) ? 'amber' : 'green'} /></div>
+      <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'minmax(0,1.15fr) minmax(280px,.85fr)', marginTop: 18 }}>
+        <section style={{ background: '#fff', border: '1px solid #e1e6ec', borderRadius: 15, padding: 17 }}><p style={{ color: '#cc0001', font: '800 10px var(--font-oswald)', letterSpacing: 1.2, margin: 0 }}>ACTION QUEUE</p><h2 style={{ color: '#172033', fontSize: 21, margin: '3px 0 13px' }}>สิ่งที่ต้องตัดสินใจ</h2><div style={{ display: 'grid', gap: 8 }}><Queue icon={<ClipboardCheck size={18} />} title="ทีมและสลิปรอตรวจ" count={n(teams) + n(payments)} detail="ตรวจทีมและหลักฐานชำระเงิน" href="/dashboard" tone={n(teams) + n(payments) ? 'amber' : 'green'} /><Queue icon={<FileWarning size={18} />} title="รายงาน Highlight" count={n(reports)} detail="เนื้อหาที่ต้องตรวจโดยผู้ดูแล" href="/admin/moderation" tone={n(reports) ? 'red' : 'green'} /><Queue icon={<HeartHandshake size={18} />} title="Guardian / Organization invites" count={n(guardians) + n(invites)} detail="คำเชื่อมผู้ปกครองและคำเชิญองค์กร" href="/guardian" tone={n(guardians) + n(invites) ? 'amber' : 'green'} /><Queue icon={<Landmark size={18} />} title="คำขอจองสนาม" count={n(bookings)} detail="คำขอที่เจ้าของสนามต้องตอบ" href="/venues/bookings" tone={n(bookings) ? 'amber' : 'green'} /><Queue icon={<UserMinus size={18} />} title="คำขอลบข้อมูล" count={n(deletions)} detail="ต้องปิด Auth account เป็นขั้นตอนสุดท้าย" href="/admin/operations" tone={n(deletions) ? 'red' : 'green'} /></div></section>
+        <aside style={{ display: 'grid', gap: 12, height: 'fit-content' }}><section style={{ background: '#fff', border: '1px solid #e1e6ec', borderRadius: 15, padding: 17 }}><p style={{ color: '#cc0001', font: '800 10px var(--font-oswald)', letterSpacing: 1.2, margin: 0 }}>BETA READINESS</p><h2 style={{ color: '#172033', fontSize: 21, margin: '3px 0 13px' }}>Safety signals</h2><div style={{ display: 'grid', gap: 8 }}><Queue icon={<LockKeyhole size={17} />} title="Payment slips" count={slipsPrivate ? 0 : 1} detail={slipsPrivate ? 'Private bucket + signed URL' : 'ตรวจ Storage bucket'} href="/admin/operations" tone={slipsPrivate ? 'green' : 'red'} /><Queue icon={<Mail size={17} />} title="Transactional email" count={emailReady ? 0 : 1} detail={emailReady ? 'Sender พร้อมใช้งาน' : 'ต้องตั้ง Resend sender'} href="/admin/operations" tone={emailReady ? 'green' : 'amber'} /><Queue icon={<ShieldCheck size={17} />} title="Rate limiting" count={rateLimitReady ? 0 : 1} detail={rateLimitReady ? 'Redis shared limit พร้อม' : 'ใช้ memory fallback'} href="/admin/operations" tone={rateLimitReady ? 'green' : 'amber'} /></div></section><section style={{ background: '#111b2a', borderRadius: 15, padding: 17 }}><p style={{ color: '#f5c518', font: '800 10px var(--font-oswald)', letterSpacing: 1.2, margin: 0 }}>CONTROL ROOM</p><h2 style={{ color: 'white', fontSize: 21, margin: '3px 0 13px' }}>เครื่องมือผู้ดูแล</h2><div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1fr' }}><Tool href="/admin" icon={<Activity size={18} />} title="Rankings" detail="Power Rating" /><Tool href="/dashboard/results" icon={<ClipboardCheck size={18} />} title="Results" detail="บันทึกผลแข่ง" /><Tool href="/admin/moderation" icon={<Eye size={18} />} title="Moderation" detail="Highlight reports" /><Tool href="/admin/infrastructure" icon={<Database size={18} />} title="Infrastructure" detail="ข้อมูลพื้นฐาน" /></div></section></aside>
+      </div><p style={{ color: '#778397', fontSize: 11, lineHeight: 1.55, margin: '15px 2px 0' }}>{summary ? 'ใช้ Admin summary RPC: คิวงานเป็นค่าจริง ส่วนยอดสะสมขนาดใหญ่เป็นค่าประมาณจากสถิติฐานข้อมูล' : 'ใช้โหมด compatibility จนกว่าจะอนุมัติ SQL34; ค่า 0 อาจหมายถึงยังไม่มีข้อมูล Closed Beta ไม่ใช่ความผิดพลาดของระบบ'}</p>
+    </section>
+  </main>
 }

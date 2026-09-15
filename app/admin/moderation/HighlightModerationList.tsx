@@ -28,14 +28,17 @@ export default function HighlightModerationList({ items, emptyText }: { items: M
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action }),
     })
-    const payload = await response.json().catch(() => null) as { error?: string } | null
+    const payload = await response.json().catch(() => null) as { error?: string; auditRecorded?: boolean; warning?: string } | null
     setBusyId(0)
     if (!response.ok) {
       setMessage({ kind: 'error', text: payload?.error ?? 'ดำเนินการไม่สำเร็จ' })
       return
     }
     const done = action === 'hide' ? 'ซ่อนแล้ว' : action === 'unhide' ? 'แสดงอีกครั้งแล้ว' : 'ลบแล้ว'
-    setMessage({ kind: 'success', text: `${item.title}: ${done}` })
+    setMessage({
+      kind: payload?.auditRecorded === false ? 'error' : 'success',
+      text: payload?.auditRecorded === false ? `${item.title}: ${done} แต่ Audit ไม่สำเร็จ กรุณาแจ้งผู้ดูแลฐานข้อมูล` : `${item.title}: ${done}`,
+    })
     router.refresh()
   }
 

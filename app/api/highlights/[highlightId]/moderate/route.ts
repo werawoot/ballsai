@@ -37,7 +37,7 @@ export async function POST(
 
   const { data: highlight, error: lookupError } = await supabase
     .from('athlete_highlights')
-    .select('id, athlete_id, media_path')
+    .select('id, athlete_id, media_path, moderation_status')
     .eq('id', highlightId)
     .maybeSingle()
 
@@ -113,5 +113,24 @@ export async function POST(
     metadata: { highlightId, action, athleteId: highlight.athlete_id },
   })
 
-  return NextResponse.json({ ok: true })
+  const { error: auditError } = await supabase.rpc('record_admin_audit_event', {
+    p_action: `moderation.highlight.${action}`,
+    p_target_type: 'athlete_highlight',
+    p_target_id: String(highlightId),
+    p_summary: `${action === 'hide' ? 'ซ่อน' : action === 'unhide' ? 'แสดงอีกครั้ง' : 'ลบ'} Highlight #${highlightId}`,
+    p_before_data: { moderation_status: highlight.moderation_status, athlete_id: highlight.athlete_id },
+    p_after_data: action === 'delete' ? null : { moderation_status: action === 'hide' ? 'hidden' : 'visible', athlete_id: highlight.athlete_id },
+  })
+  if (auditError) {
+    logServerError({
+      event: 'admin_audit_failed',
+      userId: user.id,
+      route: '/api/highlights/[highlightId]/moderate',
+      metadata: { highlightId, action, code: auditError.code },
+      error: auditError,
+    })
+    return NextResponse.json({ ok: true, auditRecorded: false, warning: 'ดำเนินการแล้ว แต่บันทึก Audit ไม่สำเร็จ' })
+  }
+
+  return NextResponse.json({ ok: true, auditRecorded: true })
 }

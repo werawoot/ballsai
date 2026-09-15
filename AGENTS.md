@@ -46,6 +46,24 @@ Fame. Users are minors, their guardians, coaches and tournament organizers.
 11. Do not call anything "100%" until a real closed-beta group has completed the whole
     flow on real data.
 
+## AI engineering preflight
+
+Before starting any non-trivial change, bug investigation, or decision that depends on
+external/current facts, choose and use the relevant installed skill **before** changing
+implementation:
+
+- `tdd` — new behaviour or a bug fix: agree the observable seam, write/adjust the
+  regression test first where practical, then implement and verify.
+- `diagnosing-bugs` — a report that something is broken, failing, slow, or inconsistent:
+  reproduce and isolate the cause before proposing a fix. Do not guess-and-patch.
+- `research` — architecture, vendor/API, security, legal/PDPA, or other fact-dependent
+  decisions: use primary sources and save a cited finding before committing to a design.
+
+The agent must state which of these skills it is applying in commentary. A small,
+obvious edit may skip them, but must say why. These skills never override the hard rules
+above: in particular they do not authorize secret access, production changes, SQL apply,
+deployments, emails, or commits without the required user approval.
+
 ## Verification before handing work back
 
 ```bash

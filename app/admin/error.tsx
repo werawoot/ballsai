@@ -1,0 +1,5 @@
+'use client'
+
+export default function AdminError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  return <main style={{ alignItems: 'center', background: '#eef1f5', display: 'flex', justifyContent: 'center', minHeight: '100vh', padding: 24 }}><section style={{ background: '#fff', border: '1px solid #e4e8ed', borderTop: '5px solid #cc0001', borderRadius: 14, maxWidth: 440, padding: 25 }}><p style={{ color: '#cc0001', font: '800 10px var(--font-oswald)', letterSpacing: 1.4, margin: 0 }}>ADMIN CONTROL PLANE</p><h1 style={{ color: '#152238', fontSize: 24, margin: '8px 0' }}>หน้านี้เปิดไม่สำเร็จ</h1><p style={{ color: '#647287', fontSize: 13, lineHeight: 1.6, margin: 0 }}>ข้อมูลของนักกีฬาไม่ได้ถูกเปลี่ยนแปลง กรุณาลองเปิดอีกครั้ง หากปัญหายังอยู่ให้ตรวจที่ System Health</p><button onClick={() => reset()} style={{ background: '#cc0001', border: 0, borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 800, marginTop: 18, padding: '10px 14px' }}>ลองใหม่</button></section></main>
+}

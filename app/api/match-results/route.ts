@@ -186,6 +186,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'พบนักกีฬาบางคนที่ไม่มีในระบบ ranking' }, { status: 400 })
   }
 
+  // The UI only lists accepted roster members; repeat that check on the server
+  // so a crafted request cannot record a player for a team they did not join.
+  const playerByRankId = new Map(typedPlayerRanks.map(player => [player.id, player]))
+  const athleteIds = typedPlayerRanks
+    .map(player => player.player_id)
+    .filter((playerId): playerId is string => Boolean(playerId))
+  const { data: acceptedMembers } = await supabase
+    .from('team_members')
+    .select('team_id, athlete_id')
+    .in('team_id', [body.teamAId, body.teamBId])
+    .in('athlete_id', athleteIds.length > 0 ? athleteIds : ['none'])
+    .eq('status', 'accepted')
+  const acceptedRoster = new Set(
+    (acceptedMembers ?? []).map(member => `${member.team_id}:${member.athlete_id}`),
+  )
+  const outsideRoster = performances.some(performance => {
+    const player = performance.playerRankId ? playerByRankId.get(performance.playerRankId) : null
+    return !player?.player_id || !performance.teamId || !acceptedRoster.has(`${performance.teamId}:${player.player_id}`)
+  })
+  if (outsideRoster) {
+    return NextResponse.json(
+      { error: 'เลือกลงผลแข่งได้เฉพาะนักกีฬาที่รับคำเชิญเข้าทีมนี้แล้ว' },
+      { status: 400 },
+    )
+  }
+
   const ratingRows: PlayerRating[] = []
   for (const playerRank of typedPlayerRanks) {
     const sport = playerRank.sport

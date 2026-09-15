@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { Trophy, House, ClipboardList, User, Users, CheckCircle, Clock, Plus, MapPin, Calendar, Image as ImageIcon, ClipboardCheck, Pencil } from 'lucide-react'
+import { Trophy, House, ClipboardList, User, Users, CheckCircle, Clock, Plus, MapPin, Calendar, Image as ImageIcon, ClipboardCheck, Pencil, ClipboardPenLine } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import ConfirmTeamButton from './ConfirmTeamButton'
@@ -102,9 +102,14 @@ export default async function DashboardPage() {
           ))}
         </div>
 
-        <Link href="/dashboard/results" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#111', color: 'white', borderRadius: 12, padding: '13px 16px', fontSize: 14, fontWeight: 800, textDecoration: 'none', marginBottom: 20, boxShadow: '0 4px 16px rgba(0,0,0,0.18)' }}>
-          <ClipboardCheck size={18} /> บันทึกผลแข่งและอัปเดต Rating
-        </Link>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+          <Link href="/match-plan" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: '#101827', color: 'white', borderRadius: 12, padding: '13px 10px', fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.18)' }}>
+            <ClipboardPenLine size={17} /> วางแผนก่อนแข่ง
+          </Link>
+          <Link href="/dashboard/results" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: '#CC0001', color: 'white', borderRadius: 12, padding: '13px 10px', fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(204,0,1,.2)' }}>
+            <ClipboardCheck size={17} /> บันทึกผลแข่ง
+          </Link>
+        </div>
 
         {/* MY TOURNAMENTS */}
         <div style={{ marginBottom: 20 }}>

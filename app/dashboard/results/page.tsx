@@ -22,10 +22,11 @@ type TeamOption = {
 
 type PlayerOption = {
   id: string
+  player_id: string | null
   player_name: string
-  team: string
   position: string
   pts: number
+  teamId: string
 }
 
 type MatchResultRow = {
@@ -87,11 +88,22 @@ export default async function MatchResultsPage() {
     .in('tournament_id', tournamentIds.length > 0 ? tournamentIds : ['none'])
     .order('name')
 
+  const allTeams = (teams ?? []) as TeamOption[]
+  const confirmedTeams = allTeams.filter(team => team.status === 'confirmed')
+
+  const { data: acceptedMembers } = await supabase
+    .from('team_members')
+    .select('team_id, athlete_id')
+    .in('team_id', confirmedTeams.length > 0 ? confirmedTeams.map(team => team.id) : ['none'])
+    .eq('status', 'accepted')
+
+  const acceptedAthleteIds = [...new Set((acceptedMembers ?? []).map(member => member.athlete_id))]
   const { data: players } = await supabase
     .from('player_ranks')
-    .select('id, player_name, team, position, pts')
+    .select('id, player_id, player_name, position, pts')
     .eq('sport', ACTIVE_SPORT)
     .eq('season', ACTIVE_SEASON)
+    .in('player_id', acceptedAthleteIds.length > 0 ? acceptedAthleteIds : ['none'])
     .order('player_name')
 
   const { data: matchResults } = await supabase
@@ -101,9 +113,11 @@ export default async function MatchResultsPage() {
     .order('created_at', { ascending: false })
     .limit(20)
 
-  const allTeams = (teams ?? []) as TeamOption[]
-  const confirmedTeams = allTeams.filter(team => team.status === 'confirmed')
   const teamNames = Object.fromEntries(allTeams.map(team => [team.id, team.name]))
+  const teamIdByAthlete = new Map((acceptedMembers ?? []).map(member => [member.athlete_id, member.team_id]))
+  const rosterPlayers = ((players ?? []) as Omit<PlayerOption, 'teamId'>[])
+    .map(player => ({ ...player, teamId: player.player_id ? teamIdByAthlete.get(player.player_id) ?? '' : '' }))
+    .filter(player => player.teamId)
   const tournamentNames = Object.fromEntries((tournaments ?? []).map(tournament => [tournament.id, tournament.name]))
 
   return (
@@ -135,7 +149,7 @@ export default async function MatchResultsPage() {
       <MatchResultForm
         tournaments={(tournaments ?? []) as TournamentOption[]}
         teams={confirmedTeams}
-        players={(players ?? []) as PlayerOption[]}
+        players={rosterPlayers}
       />
 
       <div style={{ padding: '0 16px' }}>
