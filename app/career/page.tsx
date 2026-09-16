@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Award, ChevronRight, CircleDot, Crown, Footprints, Medal, Play, ShieldCheck, Sparkles, Trophy, UserRound } from 'lucide-react'
 import SiteNav from '@/components/SiteNav'
+import { fetchUnreadNotificationCount } from '@/lib/notification-count'
 import { IDENTITY_BADGES, calculateLevel, identityTitle, levelProgress, unlockedBadgeKeys } from '@/lib/digital-identity'
 import { ACTIVE_SPORT } from '@/lib/season'
 
@@ -30,6 +31,7 @@ export default async function CareerPage() {
   )
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/career')
+  const unreadCount = await fetchUnreadNotificationCount(supabase, user.id)
 
   const [{ data: athlete }, { data: rating }, { data: achievements }, { data: memberships }, { data: progress }, { data: videos }, { data: highlights }, { data: earnedBadges }] = await Promise.all([
     supabase.from('athlete_profiles').select('display_name, created_at, verification_level').eq('user_id', user.id).maybeSingle(),
@@ -102,6 +104,6 @@ export default async function CareerPage() {
       <div className="career-section-heading career-timeline-heading"><div><span>PLAY IT BACK</span><h2>Highlight Moments</h2></div><Link href="/profile">เพิ่ม Highlight <ChevronRight size={15} /></Link></div>
       {typedVideos.length || typedHighlights.length ? <div className="identity-highlight-grid">{typedHighlights.map(item => <a key={`upload-${item.id}`} href={`/api/highlights/${item.id}/media`} target="_blank" rel="noreferrer" className="identity-highlight-card"><span><Play size={17} fill="currentColor" /></span><small>{item.media_type === 'video' ? 'UPLOADED VIDEO' : 'UPLOADED PHOTO'}</small><h3>{item.title}</h3><p>เปิดดู Highlight</p></a>)}{typedVideos.map(video => <a key={`link-${video.id}`} href={video.video_url} target="_blank" rel="noreferrer" className="identity-highlight-card"><span><Play size={17} fill="currentColor" /></span><small>{video.video_type.toUpperCase()}</small><h3>{video.title}</h3><p>เปิดดู Highlight</p></a>)}</div> : <div className="identity-highlight-empty"><Play size={23} /><div><b>เก็บทุกช็อตที่คุณภูมิใจ</b><p>อัปโหลดรูป/วิดีโอ หรือวางลิงก์ YouTube และ TikTok เพื่อให้เส้นทางของคุณมีชีวิต</p></div><Link href="/profile">เพิ่ม Highlight</Link></div>}
     </section>
-    <SiteNav active="profile" />
+    <SiteNav active="profile" unreadCount={unreadCount} />
   </main>
 }

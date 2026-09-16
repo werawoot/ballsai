@@ -1,7 +1,10 @@
 import Link from 'next/link'
 import { Bell, Building2, ClipboardList, Handshake, House, Search, Trophy, User, Users } from 'lucide-react'
+import { unreadBadge } from '@/lib/notification-unread'
 
-type SiteNavProps = { active?: 'athletes' | 'ranking' | 'tournaments' | 'venues' | 'profile' }
+// unreadCount is optional so the statically rendered pages keep rendering statically;
+// only pages that already query Supabase pass it in.
+type SiteNavProps = { active?: 'athletes' | 'ranking' | 'tournaments' | 'venues' | 'profile'; unreadCount?: number | null }
 
 const items = [
   { id: 'home', href: '/', label: 'หน้าแรก', icon: House },
@@ -15,13 +18,19 @@ const items = [
   { id: 'team-members', href: '/team-members', label: 'สมาชิกทีม', icon: Users },
 ] as const
 
-export default function SiteNav({ active }: SiteNavProps) {
+export default function SiteNav({ active, unreadCount }: SiteNavProps) {
+  const badge = unreadBadge(unreadCount)
+
   return <nav className="bds-nav" aria-label="เมนูหลัก">
     {items.map(item => {
       const Icon = item.icon
       const isActive = item.id === active
-      return <Link key={item.id} href={item.href} className={`bds-nav-item ${isActive ? 'is-active' : ''}`}>
-        <Icon size={19} />
+      const itemBadge = item.id === 'notifications' ? badge : null
+      return <Link key={item.id} href={item.href} className={`bds-nav-item ${isActive ? 'is-active' : ''}`} aria-label={itemBadge ? `${item.label} · ${itemBadge.label}` : undefined}>
+        <span style={{ position: 'relative', display: 'inline-flex' }}>
+          <Icon size={19} />
+          {itemBadge && <span aria-hidden="true" style={{ position: 'absolute', top: -6, left: 11, minWidth: 16, borderRadius: 9, padding: '0 4px', background: '#CC0001', color: '#fff', fontSize: 10, fontWeight: 900, lineHeight: '16px', textAlign: 'center' }}>{itemBadge.text}</span>}
+        </span>
         <span>{item.label}</span>
       </Link>
     })}

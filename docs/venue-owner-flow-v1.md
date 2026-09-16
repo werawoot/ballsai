@@ -58,6 +58,20 @@ Owner creates venue -> adds playable space -> publishes a future slot
   backward-compatible `/venues/bookings` reader. It depends on SQL23, SQL38 and SQL39.
   A passing precheck is not authorisation to apply it.
 
+## Notifications (SQL41, pending approval)
+
+- A new request notifies the venue owner; a confirm or decline notifies the requester;
+  a cancellation notifies the owner, who needs to know the slot reopened.
+- Every notification carries the venue name, the space name and the slot time only. It
+  never carries the requester's identity, the booking purpose, the note, or a contact
+  number: the owner opens the booking inbox for those, where RLS still applies.
+- The requester's notification reads the immutable SQL40 snapshot columns, so the text
+  does not change afterwards.
+- Repeating a confirm creates no second notification: the status does not change, so the
+  trigger does not fire, and the SQL17 unique `source_key` is the backstop.
+- Requesting the same slot again after a decline is a new booking row, so it does
+  produce a new notification. That is intended.
+
 ## Manual beta script
 
 1. Use a venue-owner account to create a venue, a court and a slot tomorrow.
