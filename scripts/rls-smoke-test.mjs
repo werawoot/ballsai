@@ -1,3 +1,5 @@
+import { buildVenueRlsChecks } from './rls-venue-checks.mjs'
+
 /**
  * Closed-beta RLS smoke tests.
  *
@@ -9,7 +11,10 @@
  * PLAYER_B_PROFILE_ID, PLAYER_RANK_ID, FOREIGN_TOURNAMENT_ID,
  * OWNED_TOURNAMENT_ID, PLAYER_B_TEAM_ID, OWNED_TEAM_ID,
  * PLAYER_OWN_DISPUTE_ID, PLAYER_FOREIGN_DISPUTE_ID,
- * PLAYER_OWN_VERIFICATION_EVENT_ID, PLAYER_FOREIGN_VERIFICATION_EVENT_ID
+ * PLAYER_OWN_VERIFICATION_EVENT_ID, PLAYER_FOREIGN_VERIFICATION_EVENT_ID,
+ * VENUE_OWNER_JWT, VENUE_REQUESTER_JWT, UNRELATED_JWT,
+ * OWNER_NOTIFICATION_ID, REQUESTER_NOTIFICATION_ID, BOOKING_ID,
+ * RESERVED_SLOT_ID, OPEN_SLOT_ID
  *
  * This script defaults to safe checks. It never performs a write that is
  * expected to succeed unless ALLOW_RLS_WRITE_TESTS=true is explicitly set.
@@ -39,9 +44,9 @@ async function requestAs(jwt, path, options = {}) {
     ...options,
     headers: {
       apikey: anonKey,
-      authorization: `Bearer ${jwt}`,
       'content-type': 'application/json',
       prefer: 'return=representation',
+      ...(jwt ? { authorization: `Bearer ${jwt}` } : {}),
       ...(options.headers ?? {}),
     },
   })
@@ -71,6 +76,20 @@ function expectBlocked(label, result) {
     result.status === 404 ||
     (result.status === 200 && Array.isArray(result.body) && result.body.length === 0)
   report(label, blocked, result)
+}
+
+function expectHidden(label, result) {
+  const hidden = result.status === 200 && Array.isArray(result.body) && result.body.length === 0
+  report(label, hidden, result)
+}
+
+function expectDenied(label, result) {
+  report(label, result.status === 401 || result.status === 403, result)
+}
+
+function expectVisible(label, result) {
+  const visible = result.status === 200 && Array.isArray(result.body) && result.body.length > 0
+  report(label, visible, result)
 }
 
 function expectAllowed(label, result) {
@@ -105,6 +124,16 @@ const playerOwnDisputeId = process.env.PLAYER_OWN_DISPUTE_ID
 const playerForeignDisputeId = process.env.PLAYER_FOREIGN_DISPUTE_ID
 const playerOwnVerificationEventId = process.env.PLAYER_OWN_VERIFICATION_EVENT_ID
 const playerForeignVerificationEventId = process.env.PLAYER_FOREIGN_VERIFICATION_EVENT_ID
+const venueOwnerJwt = process.env.VENUE_OWNER_JWT ?? organizerJwt
+const venueRequesterJwt = process.env.VENUE_REQUESTER_JWT ?? playerJwt
+const unrelatedJwt = process.env.UNRELATED_JWT
+const venueRlsIds = {
+  ownerNotificationId: process.env.OWNER_NOTIFICATION_ID,
+  requesterNotificationId: process.env.REQUESTER_NOTIFICATION_ID,
+  bookingId: process.env.BOOKING_ID,
+  reservedSlotId: process.env.RESERVED_SLOT_ID,
+  openSlotId: process.env.OPEN_SLOT_ID,
+}
 
 await expectReadAccess('player can read public ranking', playerJwt, '/player_ranks?select=id&limit=1')
 await expectReadAccess('organizer can read public tournaments', organizerJwt, '/tournaments?select=id&limit=1')
@@ -152,5 +181,32 @@ if (playerForeignVerificationEventId) {
 } else console.log('SKIP foreign verification event read: set PLAYER_FOREIGN_VERIFICATION_EVENT_ID after SQL31')
 
 await expectReadAccess('admin can read data-trust queue after SQL31', adminJwt, '/data_disputes?select=id&limit=1')
+
+const missingVenueRlsInputs = [
+  ['UNRELATED_JWT', unrelatedJwt],
+  ['OWNER_NOTIFICATION_ID', venueRlsIds.ownerNotificationId],
+  ['REQUESTER_NOTIFICATION_ID', venueRlsIds.requesterNotificationId],
+  ['BOOKING_ID', venueRlsIds.bookingId],
+  ['RESERVED_SLOT_ID', venueRlsIds.reservedSlotId],
+  ['OPEN_SLOT_ID', venueRlsIds.openSlotId],
+].filter(([, value]) => !value).map(([name]) => name)
+
+if (missingVenueRlsInputs.length > 0) {
+  console.log(`SKIP venue notification and booking RLS checks: set ${missingVenueRlsInputs.join(', ')}`)
+} else {
+  const jwtByAudience = {
+    owner: venueOwnerJwt,
+    requester: venueRequesterJwt,
+    unrelated: unrelatedJwt,
+    anonymous: '',
+  }
+
+  for (const check of buildVenueRlsChecks(venueRlsIds)) {
+    const result = await requestAs(jwtByAudience[check.audience], check.path)
+    if (check.expected === 'visible') expectVisible(check.label, result)
+    if (check.expected === 'hidden') expectHidden(check.label, result)
+    if (check.expected === 'denied') expectDenied(check.label, result)
+  }
+}
 
 if (!allowWriteTests) console.log('Safe mode complete. Run ALLOW_RLS_WRITE_TESTS=true only in an isolated test tournament.')
