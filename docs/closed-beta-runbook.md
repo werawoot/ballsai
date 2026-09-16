@@ -113,6 +113,7 @@ the base RLS file leaves permissive.
 | 39 | `sql/39-venue-rpc-privilege-hardening-v1.sql` | **Applied 14 September 2026:** removes unintended direct `anon` and `service_role` EXECUTE grants from the six SQL23 venue RPCs; all six were read-only verified as `anon = false`, `service_role = false`, `authenticated = true`. | 23 |
 | 40 | `sql/40-venue-slot-booking-state-v1.sql` | **Applied 15 September 2026:** separates booking-reserved slots from owner-blocked slots, snapshots booking display data, hides active bookings from public availability, and atomically reopens declined/cancelled slots. Post-check verified five non-null snapshot columns, no open/reserved slot inconsistencies, no missing snapshots, all four RPCs are `SECURITY DEFINER` with empty `search_path`, authenticated-only execution, and no requester slot policy. | 23, 38, 39 |
 | 41 | `sql/41-venue-booking-notifications-v1.sql` | **Pending review — do not apply yet:** in-app notifications for the venue booking flow via two triggers on `venue_booking_requests`; adds the `venue_booking` notification type, notifies the owner on request and cancellation and the requester on confirm and decline, carries no requester identity, purpose, note or contact number, and de-duplicates on the SQL17 unique `source_key`. Redefines no applied RPC. | 17, 19, 21, 23, 40 |
+| 42 | `sql/42-notification-privilege-hardening-v1.sql` | **Pending review — do not apply yet:** repairs notification privileges observed on production: browsers cannot execute `create_notification` or insert/update notification data directly; authenticated users retain RLS-protected reads and `read_at` acknowledgements only. Sets an empty `search_path` on the applied helper without redefining its body. | 17, 19 |
 
 Before applying step 41, run `sql/41-venue-booking-notifications-precheck.sql` against
 project `hivedzrwrrcnjrlirhtv` and record every result set. It is read-only and
@@ -130,8 +131,10 @@ notification is worse than a visible failure. Rollback is `drop trigger` plus
 for every `venue_booking` row already written, or the `add constraint` will fail
 validation.
 
-The `search_path` hardening of the applied `public.create_notification` is deliberately
-NOT part of SQL41. It needs its own migration, and SQL17 must not be edited.
+The `search_path` and privilege repair for the applied `public.create_notification` is
+deliberately NOT part of SQL41. It is SQL42, a separate migration; SQL17 and SQL19 must
+not be edited. SQL41 precheck must not proceed to application until SQL42 postcheck has
+confirmed browser EXECUTE and direct notification writes are absent.
 
 Before applying step 40, run `sql/40-venue-slot-booking-state-precheck.sql` against
 project `hivedzrwrrcnjrlirhtv` and record every result set. It checks the exact status
