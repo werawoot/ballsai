@@ -112,6 +112,26 @@ the base RLS file leaves permissive.
 | 38 | `sql/38-close-venue-slot-v1.sql` | **Applied 14 September 2026:** lets a venue owner close an unbooked open slot; refuses slots with pending or confirmed bookings, and records an admin override in the SQL35 audit trail. Function and effective privileges were read-only verified. | 23, 33, 35, 39 |
 | 39 | `sql/39-venue-rpc-privilege-hardening-v1.sql` | **Applied 14 September 2026:** removes unintended direct `anon` and `service_role` EXECUTE grants from the six SQL23 venue RPCs; all six were read-only verified as `anon = false`, `service_role = false`, `authenticated = true`. | 23 |
 | 40 | `sql/40-venue-slot-booking-state-v1.sql` | **Applied 15 September 2026:** separates booking-reserved slots from owner-blocked slots, snapshots booking display data, hides active bookings from public availability, and atomically reopens declined/cancelled slots. Post-check verified five non-null snapshot columns, no open/reserved slot inconsistencies, no missing snapshots, all four RPCs are `SECURITY DEFINER` with empty `search_path`, authenticated-only execution, and no requester slot policy. | 23, 38, 39 |
+| 41 | `sql/41-venue-booking-notifications-v1.sql` | **Pending review — do not apply yet:** in-app notifications for the venue booking flow via two triggers on `venue_booking_requests`; adds the `venue_booking` notification type, notifies the owner on request and cancellation and the requester on confirm and decline, carries no requester identity, purpose, note or contact number, and de-duplicates on the SQL17 unique `source_key`. Redefines no applied RPC. | 17, 19, 21, 23, 40 |
+
+Before applying step 41, run `sql/41-venue-booking-notifications-precheck.sql` against
+project `hivedzrwrrcnjrlirhtv` and record every result set. It is read-only and
+authorises nothing. It confirms SQL17/SQL23/SQL40 are in place, records the current
+`notification_type` constraint and the per-type row counts as the rollback baseline,
+proves every `venue_profiles.owner_id` has an `auth.users` row (the notification insert
+would otherwise roll a real booking back), and proves neither trigger function exists
+yet. After application, run `sql/41-venue-booking-notifications-postcheck.sql`.
+
+SQL41 notifications are created only by triggers. A notification failure rolls the whole
+booking transaction back: that is deliberate for closed beta, where a silently missing
+notification is worse than a visible failure. Rollback is `drop trigger` plus
+`drop function` for the two trigger functions; **leave the widened
+`notification_type` constraint in place**. Narrowing it again requires first accounting
+for every `venue_booking` row already written, or the `add constraint` will fail
+validation.
+
+The `search_path` hardening of the applied `public.create_notification` is deliberately
+NOT part of SQL41. It needs its own migration, and SQL17 must not be edited.
 
 Before applying step 40, run `sql/40-venue-slot-booking-state-precheck.sql` against
 project `hivedzrwrrcnjrlirhtv` and record every result set. It checks the exact status

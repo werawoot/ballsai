@@ -6,6 +6,7 @@ import Link from 'next/link'
 import EditProfileForm from './EditProfileForm'
 import PublicProfileShare from './PublicProfileShare'
 import SiteNav from '@/components/SiteNav'
+import { fetchUnreadNotificationCount } from '@/lib/notification-count'
 import { calculateLevel, identityTitle, levelProgress } from '@/lib/digital-identity'
 import { ACTIVE_SPORT } from '@/lib/season'
 import DeleteMyDataSection from './DeleteMyDataSection'
@@ -103,6 +104,7 @@ export default async function ProfilePage() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  const unreadCount = await fetchUnreadNotificationCount(supabase, user.id)
 
   const [{ data: profile }, { data: athleteProfile }, { data: athleteVideos }, { data: achievements }, { data: playerRank }, { data: memberships }, { data: identityProgress }, { data: highlights }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
@@ -300,7 +302,7 @@ export default async function ProfilePage() {
         <DeleteMyDataSection />
       </div>
 
-      <SiteNav active="profile" />
+      <SiteNav active="profile" unreadCount={unreadCount} />
     </main>
   )
 }
