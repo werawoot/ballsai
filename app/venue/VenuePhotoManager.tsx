@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { ImagePlus, Star, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import Image from 'next/image'
+import { ImageOff, ImagePlus, Loader2, Star, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import VenuePitchCover from '@/components/VenuePitchCover'
 import {
   moderationBadge,
@@ -16,6 +17,13 @@ import {
   validateVenuePhotoFile,
 } from '@/lib/venue-photo-upload'
 import { createClient } from '@/lib/supabase'
+import {
+  nextPreviewState,
+  previewAltText,
+  schedulePreviewRefresh,
+  shouldFetchPreview,
+  type PreviewState,
+} from '@/lib/venue-photo-preview'
 
 type Feedback = { tone: 'success' | 'error'; text: string }
 
@@ -42,7 +50,36 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
 }) {
   const [busy, setBusy] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
+  const [previews, setPreviews] = useState<Record<string, PreviewState>>({})
+  // Bumped by the expiry timer. It is a dependency of the fetch effect below, which is
+  // what actually makes an expired preview reload.
+  const [previewTick, setPreviewTick] = useState(0)
   const rows = ownerPhotoRows(photos)
+
+  // Signed URLs are minted per photo and never stored. They are short-lived, so the
+  // effect refetches once one lapses while the page stays open.
+  const loadPreview = useCallback(async (photoId: string) => {
+    setPreviews(current => ({ ...current, [photoId]: { status: 'loading' } }))
+    const response = await fetch(`/api/venues/${venueId}/photos/${photoId}/preview`).catch(() => null)
+    const data = response ? await response.json().catch(() => null) as { url?: string; expiresIn?: number; error?: string } | null : null
+    const state = response?.ok && data?.url && data.expiresIn
+      ? nextPreviewState({ ok: true, url: data.url, expiresIn: data.expiresIn }, Date.now())
+      : nextPreviewState({ ok: false, error: data?.error }, Date.now())
+    setPreviews(current => ({ ...current, [photoId]: state }))
+  }, [venueId])
+
+  useEffect(() => {
+    const now = Date.now()
+    for (const photo of photos) {
+      if (shouldFetchPreview(previews[photo.id], now)) void loadPreview(photo.id)
+    }
+  }, [photos, previews, loadPreview, previewTick])
+
+  // shouldFetchPreview alone never runs again once every preview is ready, because
+  // nothing re-renders at expiresAt. Arm a timer for the soonest expiry; bumping the
+  // tick re-runs the effect above, which is what performs the refetch. Re-armed
+  // whenever previews change and cleared on unmount.
+  useEffect(() => schedulePreviewRefresh(previews, () => setPreviewTick(tick => tick + 1)), [previews])
 
   const refresh = () => window.location.reload()
 
@@ -138,18 +175,22 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
 
     {rows.length === 0
       ? <VenuePitchCover height={110} label="ยังไม่มีรูปสนาม เพิ่มรูปแรกได้เลย" />
-      : <div style={{ display: 'grid', gap: 9 }}>{rows.map(photo => {
+      : <div style={{ display: 'grid', gap: 9 }}>{rows.map((photo, index) => {
         const badge = moderationBadge(photo.moderation_status)
+        const preview = previews[photo.id]
         return <article key={photo.id} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', background: '#fff', border: '1px solid #e4e7eb', borderRadius: 10, padding: 10, flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', width: 78, height: 56, borderRadius: 7, overflow: 'hidden', background: '#0b2620', flex: '0 0 auto' }}>
-            {/* The thumbnail stays a drawn placeholder: serving the real private
-                object needs signed-image delivery, which is a separate change. */}
-            <VenuePitchCover height={56} label="" />
+          <div style={{ position: 'relative', width: 78, height: 56, borderRadius: 7, overflow: 'hidden', background: '#0b2620', flex: '0 0 auto', display: 'grid', placeItems: 'center' }}>
+            {preview?.status === 'ready'
+              ? <Image src={preview.url} alt={previewAltText(venueName, index, photo.is_cover)} fill sizes="78px" style={{ objectFit: 'cover' }} unoptimized onError={() => setPreviews(current => ({ ...current, [photo.id]: { status: 'error', message: 'โหลดรูปไม่สำเร็จ' } }))} />
+              : preview?.status === 'error'
+                ? <span role="img" aria-label={`โหลดรูปไม่สำเร็จ: ${preview.message}`} style={{ display: 'grid', placeItems: 'center', color: '#fecaca' }}><ImageOff size={18} /></span>
+                : <span role="status" aria-label={`กำลังโหลด${previewAltText(venueName, index, photo.is_cover)}`} style={{ display: 'grid', placeItems: 'center', color: 'rgba(255,255,255,.6)' }}><Loader2 size={18} /></span>}
           </div>
           <div style={{ minWidth: 0, flex: '1 1 160px' }}>
             <span style={{ display: 'inline-block', borderRadius: 20, padding: '3px 8px', fontSize: 10, fontWeight: 900, background: badge.background, color: badge.color }}>{badge.label}</span>
             {photo.is_cover && <span style={{ marginLeft: 6, display: 'inline-flex', alignItems: 'center', gap: 3, borderRadius: 20, padding: '3px 8px', fontSize: 10, fontWeight: 900, background: '#fff7ed', color: '#9a3412' }}><Star size={10} /> รูปปก</span>}
             <p style={{ margin: '6px 0 0', color: '#697586', fontSize: 11, lineHeight: 1.5 }}>{badge.hint}</p>
+            {preview?.status === 'error' && <p style={{ margin: '4px 0 0', color: '#b91c1c', fontSize: 11 }}>{preview.message}</p>}
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <button type="button" disabled={busy !== null || !photo.canMoveUp} onClick={() => void move(photo.id, 'up')} aria-label={`เลื่อนรูปขึ้น ${venueName}`} style={btn()}><ChevronUp size={13} /></button>
