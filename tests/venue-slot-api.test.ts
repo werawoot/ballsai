@@ -12,6 +12,7 @@ vi.mock('@/lib/supabase-server', () => ({
   }),
 }))
 
+import { POST } from '@/app/api/venue-slots/route'
 import { DELETE } from '@/app/api/venue-slots/[slotId]/route'
 
 const SLOT_ID = '4f9c1d3a-7b2e-4c5f-9a10-2d6e8b4f0c31'
@@ -22,11 +23,44 @@ const deleteRequest = (slotId: string = SLOT_ID) =>
 const callDelete = (slotId: string = SLOT_ID) =>
   DELETE(deleteRequest(slotId), { params: { slotId } })
 
+const createSlotRequest = () => new Request('http://localhost/api/venue-slots', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    courtId: SLOT_ID,
+    startsAt: '2026-09-22T10:00',
+    endsAt: '2026-09-22T11:00',
+    priceBaht: 500,
+  }),
+})
+
 const signedInAs = (id: string) =>
   supabaseBoundary.getUser.mockResolvedValue({ data: { user: { id } } })
 
 const rpcFails = (error: { code?: string; message: string }) =>
   supabaseBoundary.rpc.mockResolvedValue({ error })
+
+describe('POST /api/venue-slots', () => {
+  beforeEach(() => {
+    supabaseBoundary.getUser.mockReset()
+    supabaseBoundary.rpc.mockReset()
+  })
+
+  it('treats datetime-local slot times as Asia/Bangkok time on a UTC server', async () => {
+    signedInAs('owner-1')
+    supabaseBoundary.rpc.mockResolvedValue({ data: SLOT_ID, error: null })
+
+    const response = await POST(createSlotRequest())
+
+    expect(response.status).toBe(200)
+    expect(supabaseBoundary.rpc).toHaveBeenCalledWith('create_venue_slot_safely', {
+      p_court_id: SLOT_ID,
+      p_starts_at: '2026-09-22T03:00:00.000Z',
+      p_ends_at: '2026-09-22T04:00:00.000Z',
+      p_price_baht: 500,
+    })
+  })
+})
 
 describe('DELETE /api/venue-slots/:slotId', () => {
   beforeEach(() => {
