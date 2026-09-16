@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { CalendarCheck2, CalendarDays, Send } from 'lucide-react'
 import { bookingRequestView } from '@/lib/venue-booking-request'
+import { formatVenueBookingDateTime, formatVenueBookingTime } from '@/lib/venue-booking-time'
 
 export type AvailableSlot = { id: string; starts_at: string; ends_at: string; price_baht: number; venue_courts: { name: string; sport: string } | null }
 
@@ -17,8 +18,6 @@ export default function BookingRequestClient({ slots }: { slots: AvailableSlot[]
   const [busy, setBusy] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const view = bookingRequestView({ submitted, selected, slots })
-  const format = (value: string) => new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
-
   const submit = async () => {
     if (busy || !view.canSubmit || !view.selected || !purpose.trim()) return
     setBusy(true); setFeedback(null)
@@ -56,7 +55,7 @@ export default function BookingRequestClient({ slots }: { slots: AvailableSlot[]
   if (view.mode === 'empty') return <p style={{ margin: 0, color: '#687586', fontSize: 13 }}>ยังไม่มีช่วงเวลาว่างที่เปิดให้ขอจอง</p>
   return <section style={{ background: '#101827', color: 'white', borderRadius: 14, padding: 17 }}>
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><CalendarDays size={19} color="#f5c518" /><div><p style={{ margin: 0, color: '#f5c518', font: '800 10px var(--font-oswald)', letterSpacing: 1.2 }}>REQUEST A SLOT</p><h2 style={{ margin: '2px 0 0', fontSize: 20 }}>ส่งคำขอจอง</h2></div></div>
-    <div role="radiogroup" aria-label="เลือกช่วงเวลาที่ต้องการจอง" style={{ display: 'grid', gap: 8, marginTop: 14 }}>{slots.map(slot => <label key={slot.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: 10, border: `1px solid ${view.selected === slot.id ? '#f5c518' : 'rgba(255,255,255,.17)'}`, background: view.selected === slot.id ? 'rgba(245,197,24,.12)' : 'transparent', borderRadius: 9, cursor: 'pointer' }}><input checked={view.selected === slot.id} onChange={() => setSelected(slot.id)} type="radio" name="slot" /><span style={{ flex: 1 }}><b style={{ display: 'block', fontSize: 13 }}>{slot.venue_courts?.name ?? 'พื้นที่เล่น'} · {slot.venue_courts?.sport === 'futsal' ? 'ฟุตซอล' : 'ฟุตบอล'}</b><small style={{ color: 'rgba(255,255,255,.68)' }}>{format(slot.starts_at)} – {new Intl.DateTimeFormat('th-TH', { timeStyle: 'short' }).format(new Date(slot.ends_at))}</small></span><b style={{ color: '#f5c518' }}>฿{slot.price_baht.toLocaleString()}</b></label>)}</div>
+    <div role="radiogroup" aria-label="เลือกช่วงเวลาที่ต้องการจอง" style={{ display: 'grid', gap: 8, marginTop: 14 }}>{slots.map(slot => <label key={slot.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: 10, border: `1px solid ${view.selected === slot.id ? '#f5c518' : 'rgba(255,255,255,.17)'}`, background: view.selected === slot.id ? 'rgba(245,197,24,.12)' : 'transparent', borderRadius: 9, cursor: 'pointer' }}><input checked={view.selected === slot.id} onChange={() => setSelected(slot.id)} type="radio" name="slot" /><span style={{ flex: 1 }}><b style={{ display: 'block', fontSize: 13 }}>{slot.venue_courts?.name ?? 'พื้นที่เล่น'} · {slot.venue_courts?.sport === 'futsal' ? 'ฟุตซอล' : 'ฟุตบอล'}</b><small style={{ color: 'rgba(255,255,255,.68)' }}>{formatVenueBookingDateTime(slot.starts_at)} – {formatVenueBookingTime(slot.ends_at)}</small></span><b style={{ color: '#f5c518' }}>฿{slot.price_baht.toLocaleString()}</b></label>)}</div>
     <label style={{ display: 'block', marginTop: 12 }}><span style={{ display: 'block', fontSize: 10, fontWeight: 800, letterSpacing: 1, color: 'rgba(255,255,255,.65)', marginBottom: 5 }}>วัตถุประสงค์</span><input value={purpose} onChange={event => setPurpose(event.target.value)} placeholder="เช่น ซ้อมทีม U16" style={{ width: '100%', boxSizing: 'border-box', padding: '10px 11px', borderRadius: 8, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: 'white' }} /></label>
     <label style={{ display: 'block', marginTop: 10 }}><span style={{ display: 'block', fontSize: 10, fontWeight: 800, letterSpacing: 1, color: 'rgba(255,255,255,.65)', marginBottom: 5 }}>หมายเหตุ (ถ้ามี)</span><textarea value={note} onChange={event => setNote(event.target.value)} rows={2} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 11px', borderRadius: 8, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: 'white', resize: 'vertical' }} /></label>
     {feedback && <p role="status" aria-live="polite" style={{ background: feedback.tone === 'error' ? '#7f1d1d' : '#14532d', borderRadius: 8, padding: 9, fontSize: 12, margin: '12px 0 0' }}>{feedback.text}</p>}
