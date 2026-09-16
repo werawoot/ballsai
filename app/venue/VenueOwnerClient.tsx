@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Building2, CalendarPlus, CalendarX2, Check, CircleDollarSign, Clock3, MapPin, Plus, X } from 'lucide-react'
 import { resolveCourtId, resolveVenueId } from '@/lib/venue-owner-form'
 import { ownerManageableSlots } from '@/lib/venue-slot-status'
-import VenuePitchCover from '@/components/VenuePitchCover'
+import VenuePhotoManager from './VenuePhotoManager'
+import type { OwnerPhotoRow } from '@/lib/venue-photo-manager'
 
 export type VenueSlot = { id: string; starts_at: string; ends_at: string; price_baht: number; status: 'open' | 'blocked' | 'reserved' }
 export type VenueCourt = { id: string; name: string; sport: 'football' | 'futsal'; surface: string; capacity: number | null; venue_slots: VenueSlot[] | null }
@@ -24,7 +25,9 @@ const statusStyle: Record<OwnerBooking['status'], { background: string; color: s
   cancelled: { background: '#e5e7eb', color: '#4b5563', label: 'ยกเลิก' },
 }
 
-export default function VenueOwnerClient({ venues, bookings }: { venues: OwnerVenue[]; bookings: OwnerBooking[] }) {
+export type OwnerVenuePhoto = OwnerPhotoRow & { venue_id: string }
+
+export default function VenueOwnerClient({ venues, bookings, photos }: { venues: OwnerVenue[]; bookings: OwnerBooking[]; photos: OwnerVenuePhoto[] }) {
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
@@ -102,7 +105,7 @@ export default function VenueOwnerClient({ venues, bookings }: { venues: OwnerVe
     {venues.length > 0 && <>
       <section style={{ background: '#fff', border: '1px solid #e3e6ea', borderRadius: 14, padding: 18 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 13 }}><div><p style={{ ...labelStyle, color: '#CC0001', margin: 0 }}>MY VENUES</p><h2 style={{ margin: '2px 0 0', fontSize: 21 }}>สนามที่เผยแพร่</h2></div><button type="button" onClick={() => setShowCreate(true)} style={{ border: '1px solid #d9dde2', background: '#fff', padding: '8px 10px', borderRadius: 8, fontWeight: 800, color: '#172033', cursor: 'pointer' }}><Plus size={15} /> เพิ่มสนาม</button></div>
-        <div style={{ display: 'grid', gap: 10 }}>{venues.map(venue => <article key={venue.id} style={{ background: '#f7f7f5', borderRadius: 11, overflow: 'hidden' }}><div style={{ borderRadius: '11px 11px 0 0', overflow: 'hidden' }}><VenuePitchCover height={110} label="ยังไม่รองรับอัปโหลดภาพสนาม" /></div><div style={{ padding: 13 }}><b>{venue.name}</b><p style={{ color: '#697586', fontSize: 12, margin: '4px 0 8px', display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={13} /> {venue.province} · {venue.address}</p><div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{(venue.venue_courts ?? []).length ? venue.venue_courts?.map(court => <span key={court.id} style={{ background: 'white', border: '1px solid #e0e4e8', padding: '4px 7px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>{court.name} · {court.sport === 'football' ? 'ฟุตบอล' : 'ฟุตซอล'}</span>) : <span style={{ color: '#a16207', fontSize: 12 }}>ยังไม่มีพื้นที่เล่น</span>}</div><p style={{ margin: '10px 0 0', color: '#697586', fontSize: 11, lineHeight: 1.5 }}>ภาพสนามยังไม่เปิดใช้: ฐานข้อมูลยังไม่มีคอลัมน์รูปและยังไม่มี Storage bucket สำหรับสนาม หน้าเว็บจะแสดงภาพกราฟิกสนามแทนจนกว่าจะมีการอนุมัติ migration</p></div></article>)}</div>
+        <div style={{ display: 'grid', gap: 10 }}>{venues.map(venue => <article key={venue.id} style={{ background: '#f7f7f5', borderRadius: 11, overflow: 'hidden' }}><div style={{ padding: 13 }}><b>{venue.name}</b><p style={{ color: '#697586', fontSize: 12, margin: '4px 0 8px', display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={13} /> {venue.province} · {venue.address}</p><div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{(venue.venue_courts ?? []).length ? venue.venue_courts?.map(court => <span key={court.id} style={{ background: 'white', border: '1px solid #e0e4e8', padding: '4px 7px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>{court.name} · {court.sport === 'football' ? 'ฟุตบอล' : 'ฟุตซอล'}</span>) : <span style={{ color: '#a16207', fontSize: 12 }}>ยังไม่มีพื้นที่เล่น</span>}</div><div style={{ marginTop: 13, paddingTop: 12, borderTop: '1px solid #e0e4e8' }}><VenuePhotoManager venueId={venue.id} venueName={venue.name} photos={photos.filter(photo => photo.venue_id === venue.id)} /></div></div></article>)}</div>
       </section>
 
       <section style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))' }}>
