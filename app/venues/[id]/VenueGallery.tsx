@@ -1,21 +1,65 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import VenuePitchCover from '@/components/VenuePitchCover'
-import { activeVenuePhoto, venueImageView, venuePhotoAlt, type VenuePhoto } from '@/lib/venue-images'
+import { activeVenuePhoto, venueImageView, venuePhotoAlt } from '@/lib/venue-images'
+import {
+  publicPhotoViewPath,
+  resolvedGalleryPhotos,
+  type ListedPhoto,
+  type ResolvedUrls,
+} from '@/lib/venue-photo-public'
 
-// Renders whatever photos the venue actually has. Today that list is always empty
-// because no venue image column or bucket exists yet, so this falls through to the
-// drawn pitch cover. The broken-image path is wired now so a future migration does not
-// need to touch this component.
-export default function VenueGallery({ venueName, photos }: { venueName: string; photos?: VenuePhoto[] | null }) {
+// The venue's approved photos live in a private bucket, so this component never receives
+// a URL. It gets ids the server has already filtered down to moderation-approved photos
+// and asks the view route for one short-lived signed URL each. A photo whose request is
+// refused is simply left out, and a venue with nothing showable falls through to the
+// drawn pitch cover exactly as before.
+export default function VenueGallery({
+  venueName,
+  venueId,
+  photos,
+}: {
+  venueName: string
+  venueId?: string
+  photos?: ListedPhoto[] | null
+}) {
+  const listed = photos ?? []
+  const [urls, setUrls] = useState<ResolvedUrls>({})
   const [failedIds, setFailedIds] = useState<string[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
-  const view = venueImageView(photos, failedIds)
+  const pending = Boolean(venueId) && listed.length > 0 && listed.some(photo => !(photo.id in urls))
+
+  useEffect(() => {
+    if (!venueId) return
+    let cancelled = false
+
+    // Reads the prop, not the array rebuilt on every render, so the effect re-runs only
+    // when the photo list or a resolved url actually changes.
+    for (const photo of photos ?? []) {
+      if (photo.id in urls) continue
+      void fetch(publicPhotoViewPath(venueId, photo.id))
+        .then(response => (response.ok ? response.json() as Promise<{ url?: string }> : null))
+        .catch(() => null)
+        .then(data => {
+          // null marks a refusal, which resolvedGalleryPhotos drops. Recording it stops
+          // the effect asking again for a photo the route will keep refusing.
+          if (!cancelled) setUrls(current => ({ ...current, [photo.id]: data?.url ?? null }))
+        })
+    }
+
+    return () => { cancelled = true }
+  }, [venueId, photos, urls])
+
+  const view = venueImageView(resolvedGalleryPhotos(listed, urls), failedIds)
 
   if (view.kind === 'placeholder') {
-    return <VenuePitchCover height="clamp(190px,42vw,320px)" reason={view.reason} />
+    return pending
+      ? <div role="status" aria-label={`กำลังโหลดภาพสนาม ${venueName}`}>
+          <VenuePitchCover height="clamp(190px,42vw,320px)" label="" />
+        </div>
+      : <VenuePitchCover height="clamp(190px,42vw,320px)" reason={view.reason} />
   }
 
   const active = activeVenuePhoto(view, activeId)
@@ -29,6 +73,9 @@ export default function VenueGallery({ venueName, photos }: { venueName: string;
         fill
         sizes="(max-width: 880px) 100vw, 880px"
         style={{ objectFit: 'cover' }}
+        // A signed URL is short-lived, so it must not be run through the image
+        // optimizer's cache.
+        unoptimized
         onError={() => markFailed(active.photo.id)}
         priority
       />
@@ -50,6 +97,7 @@ export default function VenueGallery({ venueName, photos }: { venueName: string;
           fill
           sizes="92px"
           style={{ objectFit: 'cover' }}
+          unoptimized
           onError={() => markFailed(item.id)}
         />
       </button>)}

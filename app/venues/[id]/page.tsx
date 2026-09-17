@@ -5,6 +5,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import BookingRequestClient, { type AvailableSlot } from '../BookingRequestClient'
 import VenueGallery from './VenueGallery'
 import { venueCardStats } from '@/lib/venue-card-stats'
+import { publicGalleryPhotos, type PublicPhotoRow } from '@/lib/venue-photo-public'
 
 type SlotRow = AvailableSlot & { status: string }
 type Venue = { id: string; name: string; province: string; address: string; contact_phone: string; description: string; amenities: string[]; venue_courts: { id: string; name: string; sport: string; surface: string; capacity: number | null; venue_slots: SlotRow[] | null }[] | null }
@@ -14,6 +15,17 @@ export default async function VenueDetailPage({ params }: { params: { id: string
   const { data } = await supabase.from('venue_profiles').select('id, name, province, address, contact_phone, description, amenities, venue_courts(id, name, sport, surface, capacity, venue_slots(id, starts_at, ends_at, price_baht, status))').eq('id', params.id).eq('is_published', true).maybeSingle()
   if (!data) notFound()
   const venue = data as unknown as Venue
+
+  // Only approved photos are listed, and only their ids and captions reach the browser.
+  // The stored object path stays on the server; the gallery asks the view route for a
+  // short-lived signed URL per id. A missing venue_photos table (SQL43 not applied) just
+  // leaves the gallery empty and the drawn placeholder in its place.
+  const { data: photoRows } = await supabase
+    .from('venue_photos')
+    .select('id, venue_id, moderation_status, caption, sort_order, is_cover')
+    .eq('venue_id', venue.id)
+    .eq('moderation_status', 'visible')
+  const photos = publicGalleryPhotos(photoRows as PublicPhotoRow[] | null)
   const stats = venueCardStats(venue.venue_courts)
   const slots = (venue.venue_courts ?? []).flatMap(court => (court.venue_slots ?? []).filter(slot => slot.status === 'open' && new Date(slot.starts_at) > new Date()).map(slot => ({ ...slot, venue_courts: { name: court.name, sport: court.sport } }))).sort((a, b) => a.starts_at.localeCompare(b.starts_at))
 
@@ -22,7 +34,7 @@ export default async function VenueDetailPage({ params }: { params: { id: string
     <section style={{ background: '#101827', color: '#fff', borderBottom: '1px solid #1f2a3d' }}>
       {/* The gallery sits above the fold but never over the booking panel, which keeps
           its own column on desktop and follows the venue facts on mobile. */}
-      <VenueGallery venueName={venue.name} photos={null} />
+      <VenueGallery venueName={venue.name} venueId={venue.id} photos={photos} />
       <div style={{ maxWidth: 880, margin: '0 auto', padding: '20px 18px 26px' }}>
         <p style={{ margin: 0, color: '#f5c518', font: '800 10px var(--font-oswald)', letterSpacing: 1.4 }}>VENUE · {venue.province}</p>
         <h1 style={{ margin: '6px 0 8px', font: '800 clamp(30px,6.5vw,50px)/.98 var(--font-oswald)' }}>{venue.name}</h1>
