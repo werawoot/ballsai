@@ -19,11 +19,38 @@ order by policyname;
 -- If the qual names any other Storage operation, the listing guard is not what was
 -- reviewed: STOP and reconcile before announcing the apply as successful.
 
+-- storage.objects already carries anonymous policies that belong to other features and
+-- predate SQL45. They are expected and are not this migration's concern:
+--   * athlete_avatars_public_read                      -- athlete-avatars is a public bucket
+--   * athlete_highlights_owner_or_public_profile_read  -- media on public athlete profiles
+-- Counting every anon policy on the table therefore returns more than one and says
+-- nothing about SQL45. Any anon check below is scoped to the venue photo policies.
 select
-  count(*) filter (where roles::text like '%anon%') as anon_policies_on_objects
+  policyname,
+  cmd,
+  roles
 from pg_policies
-where schemaname = 'storage' and tablename = 'objects';
--- Expected: 1. Any other number means an unintended anonymous rule exists.
+where schemaname = 'storage' and tablename = 'objects'
+  and policyname like 'venue_photos%'
+  and roles::text like '%anon%'
+order by policyname;
+-- Expected: exactly one row -- venue_photos_public_object_read, cmd SELECT, roles
+-- {anon,authenticated}. SQL43's three venue photo policies are authenticated-only and
+-- must not appear here. Any extra row is an unintended anonymous venue-photo rule: STOP.
+
+select
+  count(*) as venue_photo_anon_policies,
+  count(*) filter (
+    where policyname = 'venue_photos_public_object_read'
+      and roles::text like '%anon%'
+      and roles::text like '%authenticated%'
+  ) as expected_policy_present
+from pg_policies
+where schemaname = 'storage' and tablename = 'objects'
+  and policyname like 'venue_photos%'
+  and roles::text like '%anon%';
+-- Expected: venue_photo_anon_policies = 1 and expected_policy_present = 1.
+-- Anything else means the anonymous venue-photo surface is not what was reviewed.
 
 select
   count(*) as pending_or_hidden_objects_still_private
