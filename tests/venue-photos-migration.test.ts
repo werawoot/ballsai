@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 const read = (name: string) => readFileSync(new URL(`../sql/${name}`, import.meta.url), 'utf8')
 
 const migration = read('43-venue-photos-v1.sql')
+const policyFix = read('44-venue-photo-storage-policy-fix-v1.sql')
 
 const executableLines = (name: string) => read(name)
   .split('\n')
@@ -83,5 +84,29 @@ describe('SQL43 venue photos', () => {
     expect(migration).toContain("'anon'")
     expect(migration).toContain("'service_role'")
     expect(migration).toContain("'authenticated'")
+  })
+})
+
+describe('SQL44 venue-photo storage policy fix', () => {
+  it('binds the owner check to the storage object path, not venue_profiles.name', () => {
+    expect(policyFix).toContain('drop policy if exists venue_photos_owner_insert on storage.objects')
+    expect(policyFix).toContain('create policy venue_photos_owner_insert')
+
+    const insertPolicy = policyFix.match(/create policy venue_photos_owner_insert[\s\S]*?;\n/)?.[0] ?? ''
+    expect(insertPolicy).toContain('storage.foldername(storage.objects.name)')
+    expect(insertPolicy).not.toContain('storage.foldername(v.name)')
+  })
+
+  it('ships read-only precheck and postcheck scripts', () => {
+    for (const name of [
+      '44-venue-photo-storage-policy-fix-precheck.sql',
+      '44-venue-photo-storage-policy-fix-postcheck.sql',
+    ]) {
+      const statements = executableLines(name)
+      expect(statements.some(line => line.trimStart().startsWith('select'))).toBe(true)
+      for (const line of statements) {
+        expect(line).not.toMatch(/^\s*(insert|update|delete|create|alter|drop|truncate|grant|revoke|call|do)\b/i)
+      }
+    }
   })
 })
