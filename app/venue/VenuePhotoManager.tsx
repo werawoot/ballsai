@@ -17,6 +17,7 @@ import {
   validateVenuePhotoFile,
 } from '@/lib/venue-photo-upload'
 import { createClient } from '@/lib/supabase'
+import { VENUE_PENDING_COPY, pendingButton, shouldStartAction } from '@/lib/pending-action'
 import {
   nextPreviewState,
   previewAltText,
@@ -48,13 +49,19 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
   venueName: string
   photos: OwnerPhotoRow[]
 }) {
-  const [busy, setBusy] = useState<string | null>(null)
+  const [pending, setPending] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [previews, setPreviews] = useState<Record<string, PreviewState>>({})
   // Bumped by the expiry timer. It is a dependency of the fetch effect below, which is
   // what actually makes an expired preview reload.
   const [previewTick, setPreviewTick] = useState(0)
   const rows = ownerPhotoRows(photos)
+  const add = pendingButton({
+    pending,
+    key: 'upload',
+    ...VENUE_PENDING_COPY.upload,
+    disabled: photos.length >= VENUE_PHOTO_LIMIT,
+  })
 
   // Signed URLs are minted per photo and never stored. They are short-lived, so the
   // effect refetches once one lapses while the page stays open.
@@ -84,14 +91,14 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
   const refresh = () => window.location.reload()
 
   const call = async (key: string, path: string, method: string, body?: unknown) => {
-    setBusy(key); setFeedback(null)
+    setPending(key); setFeedback(null)
     const response = await fetch(path, {
       method,
       headers: body ? { 'Content-Type': 'application/json' } : undefined,
       body: body ? JSON.stringify(body) : undefined,
     }).catch(() => null)
     const data = response ? await response.json().catch(() => null) as { error?: string } | null : null
-    setBusy(null)
+    setPending(null)
     if (!response || !response.ok) {
       setFeedback({ tone: 'error', text: data?.error ?? 'ดำเนินการไม่สำเร็จ' })
       return false
@@ -100,10 +107,13 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
   }
 
   const upload = async (file: File) => {
+    // disabled locks the file input on render; this refuses a change event that
+    // arrives while a previous upload is still running.
+    if (!shouldStartAction(pending)) return
     const check = validateVenuePhotoFile(file, photos.length)
     if (!check.ok) { setFeedback({ tone: 'error', text: check.error }); return }
 
-    setBusy('upload'); setFeedback(null)
+    setPending('upload'); setFeedback(null)
     const objectPath = buildVenuePhotoPath(venueId)
     try {
       const blob = await toWebp(file)
@@ -124,18 +134,20 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
       setFeedback({ tone: 'success', text: 'อัปโหลดแล้ว รอทีมงานตรวจก่อนแสดงต่อผู้เล่น' })
       refresh()
     } catch (error) {
-      setBusy(null)
+      setPending(null)
       setFeedback({ tone: 'error', text: error instanceof Error ? error.message : 'อัปโหลดไม่สำเร็จ' })
     }
   }
 
   const setCover = async (photoId: string) => {
+    if (!shouldStartAction(pending)) return
     if (await call(photoId, `/api/venues/${venueId}/photos/${photoId}`, 'PATCH', {})) {
       setFeedback({ tone: 'success', text: 'ตั้งเป็นรูปปกแล้ว' }); refresh()
     }
   }
 
   const move = async (photoId: string, direction: 'up' | 'down') => {
+    if (!shouldStartAction(pending)) return
     const photoIds = movePhoto(rows, photoId, direction)
     if (!photoIds) return
     if (await call(photoId, `/api/venues/${venueId}/photos`, 'PATCH', { photoIds })) {
@@ -144,6 +156,7 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
   }
 
   const remove = async (photoId: string) => {
+    if (!shouldStartAction(pending)) return
     if (!window.confirm('ลบรูปนี้ใช่ไหม? การลบย้อนกลับไม่ได้')) return
     if (await call(photoId, `/api/venues/${venueId}/photos/${photoId}`, 'DELETE')) {
       setFeedback({ tone: 'success', text: 'ลบรูปแล้ว' }); refresh()
@@ -153,7 +166,9 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
   const btn = (extra: React.CSSProperties = {}): React.CSSProperties => ({
     display: 'inline-flex', alignItems: 'center', gap: 4, border: '1px solid #e0e4e8',
     borderRadius: 8, background: '#fff', padding: '6px 9px', fontSize: 11, fontWeight: 800,
-    cursor: busy ? 'wait' : 'pointer', ...extra,
+    // Each caller passes the cursor its own pending state implies, so this is only
+    // the idle default.
+    cursor: 'pointer', ...extra,
   })
 
   return <div style={{ display: 'grid', gap: 11 }}>
@@ -161,12 +176,12 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
 
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
       <span style={{ fontSize: 12, color: '#697586', fontWeight: 700 }}>รูปสนาม {photos.length}/{VENUE_PHOTO_LIMIT}</span>
-      <label style={{ ...btn({ background: '#CC0001', color: '#fff', border: 0, opacity: photos.length >= VENUE_PHOTO_LIMIT ? 0.5 : 1 }) }}>
-        <ImagePlus size={14} /> {busy === 'upload' ? 'กำลังอัปโหลด...' : 'เพิ่มรูป'}
+      <label aria-busy={add['aria-busy']} style={{ ...btn({ background: '#CC0001', color: '#fff', border: 0, opacity: add.disabled ? 0.5 : 1, cursor: add.disabled ? 'not-allowed' : 'pointer' }) }}>
+        <ImagePlus aria-hidden size={14} /> {add.label}
         <input
           type="file"
           accept={VENUE_PHOTO_ACCEPT}
-          disabled={busy !== null || photos.length >= VENUE_PHOTO_LIMIT}
+          disabled={add.disabled}
           onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void upload(file) }}
           style={{ display: 'none' }}
         />
@@ -178,6 +193,14 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
       : <div style={{ display: 'grid', gap: 9 }}>{rows.map((photo, index) => {
         const badge = moderationBadge(photo.moderation_status)
         const preview = previews[photo.id]
+        // All four buttons share the photo id as their pending key, so whichever one the
+        // owner pressed is the one that reads as busy.
+        const busyFor = (copy: { idle: string; busy: string }, disabled = false) =>
+          pendingButton({ pending, key: photo.id, ...copy, disabled })
+        const up = busyFor(VENUE_PENDING_COPY.move, !photo.canMoveUp)
+        const down = busyFor(VENUE_PENDING_COPY.move, !photo.canMoveDown)
+        const cover = busyFor(VENUE_PENDING_COPY.cover)
+        const del = busyFor(VENUE_PENDING_COPY.remove)
         return <article key={photo.id} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', background: '#fff', border: '1px solid #e4e7eb', borderRadius: 10, padding: 10, flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', width: 78, height: 56, borderRadius: 7, overflow: 'hidden', background: '#0b2620', flex: '0 0 auto', display: 'grid', placeItems: 'center' }}>
             {preview?.status === 'ready'
@@ -193,10 +216,12 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
             {preview?.status === 'error' && <p style={{ margin: '4px 0 0', color: '#b91c1c', fontSize: 11 }}>{preview.message}</p>}
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <button type="button" disabled={busy !== null || !photo.canMoveUp} onClick={() => void move(photo.id, 'up')} aria-label={`เลื่อนรูปขึ้น ${venueName}`} style={btn()}><ChevronUp size={13} /></button>
-            <button type="button" disabled={busy !== null || !photo.canMoveDown} onClick={() => void move(photo.id, 'down')} aria-label={`เลื่อนรูปลง ${venueName}`} style={btn()}><ChevronDown size={13} /></button>
-            {photo.canSetCover && <button type="button" disabled={busy !== null} onClick={() => void setCover(photo.id)} style={btn()}><Star size={13} /> ตั้งเป็นปก</button>}
-            <button type="button" disabled={busy !== null} onClick={() => void remove(photo.id)} aria-label="ลบรูปนี้" style={btn({ border: '1px solid #fecaca', color: '#b91c1c' })}><Trash2 size={13} /> ลบ</button>
+            {/* These two are icon-only, so their accessible name is the aria-label and
+                that is what has to change while the reorder is in flight. */}
+            <button type="button" aria-busy={up['aria-busy']} disabled={up.disabled} onClick={() => void move(photo.id, 'up')} aria-label={up.isPending ? up.label : `เลื่อนรูปขึ้น ${venueName}`} style={btn({ cursor: up.disabled ? 'not-allowed' : 'pointer' })}><ChevronUp aria-hidden size={13} /></button>
+            <button type="button" aria-busy={down['aria-busy']} disabled={down.disabled} onClick={() => void move(photo.id, 'down')} aria-label={down.isPending ? down.label : `เลื่อนรูปลง ${venueName}`} style={btn({ cursor: down.disabled ? 'not-allowed' : 'pointer' })}><ChevronDown aria-hidden size={13} /></button>
+            {photo.canSetCover && <button type="button" aria-busy={cover['aria-busy']} disabled={cover.disabled} onClick={() => void setCover(photo.id)} style={btn({ cursor: cover.disabled ? 'not-allowed' : 'pointer' })}><Star aria-hidden size={13} /> {cover.label}</button>}
+            <button type="button" aria-busy={del['aria-busy']} disabled={del.disabled} onClick={() => void remove(photo.id)} aria-label={del.isPending ? del.label : 'ลบรูปนี้'} style={btn({ border: '1px solid #fecaca', color: '#b91c1c', cursor: del.disabled ? 'not-allowed' : 'pointer' })}><Trash2 aria-hidden size={13} /> {del.label}</button>
           </div>
         </article>
       })}</div>}
