@@ -6,6 +6,13 @@ const read = (name: string) => readFileSync(new URL(`../sql/${name}`, import.met
 const migration = read('45-venue-photo-public-delivery-v1.sql')
 const anonPolicy = migration.match(/create policy venue_photos_public_object_read[\s\S]*?;\n/)?.[0] ?? ''
 
+const runbookRow = () => {
+  const runbook = readFileSync(new URL('../docs/closed-beta-runbook.md', import.meta.url), 'utf8')
+  const row = runbook.split('\n').find(line => line.includes('45-venue-photo-public-delivery-v1.sql'))
+  if (!row) throw new Error('SQL45 must appear in the runbook table')
+  return row
+}
+
 const executableLines = (name: string) => read(name)
   .split('\n')
   .filter(line => !line.trimStart().startsWith('--'))
@@ -164,6 +171,52 @@ describe('SQL45 venue photo public delivery', () => {
     expect(postcheck).not.toContain("storage.operation() = 'select'")
   })
 
+  it('scopes the anonymous-policy check to venue photos, not the whole objects table', () => {
+    // Regression, confirmed after SQL45 was applied: storage.objects already carries
+    // anon policies from other features -- athlete_avatars_public_read (the public
+    // athlete-avatars bucket) and athlete_highlights_owner_or_public_profile_read. The
+    // postcheck counted every anon policy on the table and expected 1, so it reported 3
+    // and failed a correct apply. The count has to be scoped by policy name.
+    const postcheck = read('45-venue-photo-public-delivery-postcheck.sql')
+    const anonStatements = postcheck
+      .split(';')
+      .filter(statement => statement.includes('anon') && statement.includes('pg_policies'))
+
+    expect(anonStatements.length, 'the postcheck must still check anon exposure').toBeGreaterThan(0)
+    for (const statement of anonStatements) {
+      expect(statement, 'an anon check must be scoped to venue photo policies').toContain("policyname like 'venue_photos%'")
+    }
+  })
+
+  it('expects exactly one venue-photo anon policy, named and role-checked', () => {
+    const postcheck = read('45-venue-photo-public-delivery-postcheck.sql')
+
+    expect(postcheck).toContain('venue_photos_public_object_read')
+    expect(postcheck).toMatch(/anon/)
+    expect(postcheck).toMatch(/authenticated/)
+    // The old unscoped expectation must be gone.
+    expect(postcheck).not.toContain('anon_policies_on_objects')
+    expect(postcheck).not.toContain('Expected: 1. Any other number means an unintended anonymous rule exists.')
+  })
+
+  it('names the unrelated anon policies so the false alarm is not raised again', () => {
+    const postcheck = read('45-venue-photo-public-delivery-postcheck.sql')
+
+    expect(postcheck).toContain('athlete_avatars_public_read')
+    expect(postcheck).toContain('athlete_highlights_owner_or_public_profile_read')
+  })
+
+  it('keeps every policy shape check while narrowing the anon check', () => {
+    const postcheck = read('45-venue-photo-public-delivery-postcheck.sql')
+
+    expect(postcheck).toContain('public = false')
+    expect(postcheck).toContain('allow_any_operation')
+    expect(postcheck).toContain('object.get_authenticated_info')
+    expect(postcheck).toContain('object.get_authenticated')
+    expect(postcheck).toContain("moderation_status = 'visible'")
+    expect(postcheck).toContain('is_published')
+  })
+
   it('has a postcheck that proves only the intended policy landed', () => {
     const postcheck = read('45-venue-photo-public-delivery-postcheck.sql')
     expect(postcheck).toContain('venue_photos_public_object_read')
@@ -173,12 +226,40 @@ describe('SQL45 venue photo public delivery', () => {
     expect(postcheck).toContain('moderation_status')
   })
 
-  it('is recorded in the runbook as pending review, never as applied', () => {
+  it('is recorded in the runbook as applied, with its date and dependency', () => {
+    expect(runbookRow()).toContain('**Applied 17 September 2026:**')
+    expect(runbookRow()).not.toContain('Pending review')
+    expect(runbookRow()).not.toContain('do not apply yet')
+    // SQL45 depends on SQL43 and the table's last column records that.
+    expect(runbookRow().trimEnd().endsWith('| 43 |')).toBe(true)
+  })
+
+  it('records the postcheck findings that matter for a public delivery change', () => {
+    const row = runbookRow()
+    // The bucket must be documented as still private after the apply.
+    expect(row).toMatch(/private/)
+    // Pending and hidden photos must be documented as still non-public.
+    expect(row).toContain('pending')
+    expect(row).toContain('hidden')
+    // And the policy's actual opening condition.
+    expect(row).toContain("moderation_status = 'visible'")
+    expect(row).toContain('published')
+  })
+
+  it('tells a future operator to scope the anon check when re-running the postcheck', () => {
+    const row = runbookRow()
+    expect(row).toContain("policyname like 'venue_photos%'")
+    expect(row).toContain('athlete_avatars_public_read')
+    expect(row).toContain('athlete_highlights_owner_or_public_profile_read')
+    expect(row).toContain('read-only')
+  })
+
+  it('leaves the other migrations rows alone', () => {
+    // The runbook is edited by more than one agent. SQL43 stays applied and SQL44 stays
+    // pending; reconciling SQL45 must not have touched either.
     const runbook = readFileSync(new URL('../docs/closed-beta-runbook.md', import.meta.url), 'utf8')
-    const row = runbook.split('\n').find(line => line.includes('45-venue-photo-public-delivery-v1.sql')) ?? ''
-    expect(row, 'SQL45 must appear in the runbook table').toBeTruthy()
-    expect(row).toContain('Pending review')
-    expect(row).not.toContain('Applied')
-    expect(row).toContain('43')
+    const rowFor = (file: string) => runbook.split('\n').find(line => line.includes(file)) ?? ''
+    expect(rowFor('43-venue-photos-v1.sql')).toContain('**Applied 17 September 2026:**')
+    expect(rowFor('44-venue-photo-storage-policy-fix-v1.sql')).toContain('Pending review — do not apply yet')
   })
 })
