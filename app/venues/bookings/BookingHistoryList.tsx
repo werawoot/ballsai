@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { X } from 'lucide-react'
 import {
   CANCEL_CONFIRM_MESSAGE,
@@ -53,6 +54,7 @@ export default function BookingHistoryList({ bookings }: { bookings: VenueBookin
         </div>
         <span style={badgeStyle(booking.status)}>{label[booking.status]}</span>
       </div>
+      <p><Link href={`/venues/bookings/${booking.id}`}>รายละเอียด / ประสานงาน / ขอเปลี่ยนการจอง</Link></p>
       {canCancelBooking(booking.status) && <button
         type="button"
         aria-busy={busy === booking.id}
