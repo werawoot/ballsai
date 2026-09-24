@@ -10,6 +10,12 @@ BallDoenSai.com คือแพลตฟอร์มสำหรับนัก�
 
 สถานะเอกสาร: อัปเดตล่าสุด **11 สิงหาคม 2026**
 
+### Staging closed-beta checkpoint (24 กันยายน 2026)
+
+- Staging project `vorpnkedpscsqhnrssrl` ผ่าน SQL46 และ SQL47 พร้อม postcheck แล้ว
+- SQL46 ใช้ `btree_gist` ใน schema `extensions` เพื่อบังคับช่วงเวลา slot ไม่ให้ทับกัน
+- Production project `hivedzrwrrcnjrlirhtv` ยังไม่ได้ถูกแตะ และ SQL46/47 ยังไม่อนุมัติสำหรับ Production
+
 เอกสารส่งต่องาน Closed Beta ล่าสุดสำหรับผู้ช่วยพัฒนา: [`docs/claude-handoff-next-steps.md`](docs/claude-handoff-next-steps.md)
 
 Production: [ballsai-teal.vercel.app](https://ballsai-teal.vercel.app/)

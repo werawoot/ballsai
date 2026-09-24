@@ -6,6 +6,13 @@ real database data only — never on the demo fallback.
 Document status: updated **17 August 2026**, verified against the SQL files and
 route handlers in this repository.
 
+### Staging verification checkpoint — 24 September 2026
+
+The dedicated Staging project ref `vorpnkedpscsqhnrssrl` has passed SQL46 and SQL47
+apply plus postcheck. SQL46 requires the `btree_gist` extension in schema
+`extensions`. Production ref `hivedzrwrrcnjrlirhtv` was not changed; do not apply
+SQL46 or SQL47 there without separate explicit production approval.
+
 Reading order: `README.md` first (vision, status, routes), then this runbook
 (operations). Section 6 is the W1 pilot script and is written in Thai because the
 testers read it directly.
