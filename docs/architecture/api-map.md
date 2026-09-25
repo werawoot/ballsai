@@ -58,6 +58,11 @@ separate auth route — login is handled by Supabase client in `app/login`.
 | *(read)* | — | `player_ratings`/`player_ranks` public queries | anon | EXISTING (page + `revalidateTag`) |
 | *(legacy `/api/ratings`)* | — | **disabled on purpose** | — | REMOVED (use match-result flow) |
 
+### Scout
+| Endpoint | Method | Purpose | Auth | Status |
+| --- | --- | --- | --- | --- |
+| `/api/scout-shortlist` | GET/POST/DELETE | Read back, save/update, or remove the signed-in scout's private shortlist row. GET scopes the read to the caller and one athlete so a lost write response can be reconciled without repeating the write. | signed-in scout | EXISTING |
+
 ### BDS Points (XP) / Identity
 | Endpoint | Method | Purpose | Auth | Status |
 | --- | --- | --- | --- | --- |
