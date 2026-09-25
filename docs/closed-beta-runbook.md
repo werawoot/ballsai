@@ -3,7 +3,7 @@
 Use this checklist before inviting real organizers and athletes. Closed beta runs on
 real database data only — never on the demo fallback.
 
-Document status: updated **11 August 2026**, verified against the SQL files and
+Document status: updated **17 August 2026**, verified against the SQL files and
 route handlers in this repository.
 
 Reading order: `README.md` first (vision, status, routes), then this runbook
@@ -22,7 +22,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<production_supabase_anon_key>
 NEXT_PUBLIC_SHOW_DEMO_DATA=false
 RESEND_API_KEY=<resend_api_key>
 RESEND_FROM_EMAIL=BallDoenSai.com <verified-sender@your-domain.com>
-NEXT_PUBLIC_APP_URL=https://your-public-domain.example
 UPSTASH_REDIS_REST_URL=<upstash_redis_rest_url>
 UPSTASH_REDIS_REST_TOKEN=<upstash_redis_rest_token>
 
@@ -73,7 +72,6 @@ the base RLS file leaves permissive.
 
 | # | File | Purpose | Depends on |
 | ---: | --- | --- | --- |
-| 0 | `sql/00-core-schema-live-capture-v1.sql` | Creates the five legacy core tables only for an empty Staging/recovery environment; never run against existing Production | — |
 | 1 | `sql/check-duplicates-before-unique-indexes.sql` | Reports rows that would break the unique indexes | — |
 | 2 | *(manual)* | Fix any duplicate rows the check reported | — |
 | 3 | `sql/supabase-rls.sql` | Base RLS, `is_admin()` / `is_organizer()`, core indexes | — |
@@ -91,15 +89,147 @@ the base RLS file leaves permissive.
 | 15 | `sql/highlight-moderation-v1.sql` | Report queue, hide/unhide state for uploaded highlights, and storage reads that follow the hidden state | 10 |
 | 16 | `sql/data-deletion-v1.sql` | `delete_my_athlete_data()` for PDPA requests, plus the `account_deletion_requests` queue an admin closes by hand | 9, 15 |
 | 17 | `sql/17-notifications-v1.sql` | In-app notifications for confirmed match results, newly earned badges, and team status changes; owner-only RLS | 8, 9, 12 |
-| 18 | `sql/18-team-members-v1.sql` | Real roster invitations and accept/decline workflow | 3, 17 |
-| 19 | `sql/19-athlete-sport-profiles-v1.sql` | Additive Athlete Identity to Sport Profile split, with a compatibility backfill | 6, 14 |
-| 20 | `sql/20-guardian-verification-v2.sql` | Email-verified, revocable guardian consent and private audit trail | 19 |
-| 21 | `sql/21-sport-scoped-identity-v1.sql` | Sport-specific XP and Badges derived from verified rating events | 5, 19, 20 |
-| 22 | `sql/22-mobile-onboarding-v1.sql` | Atomic mobile onboarding for Profile, Athlete Identity and Sport Profile | 19, 20 |
-| 23 | `sql/23-mobile-onboarding-execute-grants-v1.sql` | Restrict mobile onboarding RPC execution to authenticated users | 22 |
-| 24 | `sql/24-team-roster-integrity-v1.sql` | Historical team rosters and fail-closed membership proof for every newly confirmed performance | 18, 12 |
-| 25 | `sql/25-team-discovery-v1.sql` | Read-only `list_joinable_teams()` / `list_my_team_labels()` so an athlete can find a team to join and see who invited them, without opening the `teams` table; also replaces `request_team_membership()` so the same eligibility rules are enforced server-side (step 24 accepted any existing team id) | 24 |
-| 26 | `sql/26-team-function-privileges-v1.sql` | Revokes EXECUTE on the nine Team Roster RPCs from `anon`. Supabase's default privileges grant EXECUTE to `anon` directly, so the `revoke ... from public` in steps 24–25 did not remove it; `authenticated` keeps EXECUTE. Self-verifying and safe to re-run | 24, 25 |
+| 18 | `sql/18-team-members-v1.sql` | Team membership invites for existing accounts, response flow, and `team_invite` notifications | 17, 3 |
+| 19 | `sql/19-notification-team-member-privilege-hardening-v1.sql` | Restricts notification creation and acknowledgement; routes roster changes only through guarded RPCs | 17, 18 |
+| 20 | `sql/20-tournament-roster-flow-v1.sql` | Tournament-only draft roster: invite/accept before registration, payment guard, and accepted-roster-only match performances | 18, 19, 12 |
+| 21 | `sql/21-guardian-links-v1.sql` | Guardian↔athlete consented account links, private progress access, and database-enforced minor publishing rule | 14, 17, 8 |
+| 22 | `sql/22-guardian-consent-trigger-v1.sql` | Ensures the guardian-link publishing function is invoked on public-profile changes | 21, 14 |
+| 23 | `sql/23-venues-and-bookings-v1.sql` | Venue-owner profiles, one-off court slots, guarded booking requests and owner decisions | 22, 3 |
+| 24 | `sql/24-venue-owner-onboarding-v1.sql` | Permits `venue_owner` and `manage_venue` in onboarding constraints | 23, 11 |
+| 25 | `sql/25-scout-shortlists-v1.sql` | Private Scout shortlist for public athlete profiles only | 24, 6 |
+| 26 | `sql/26-organizations-v1.sql` | Academy, club and school organizations, member invitations and organization teams | 25, 3 |
+| 27 | `sql/27-sponsor-brand-opportunities-v1.sql` | Sponsor/Brand public opportunities and athlete-initiated interest, without direct contact data | 26, 13 |
+| 28 | `sql/28-match-plans-v1.sql` | Private pre-match Match Plan for team manager/organizer/admin; accepted roster only, no result or identity changes | 20 |
+| 29 | `sql/29-bds-wallet-v1.sql` | Internal BDS Wallet ledger and guarded admin awards; no crypto or transfer | 3 |
+| 30 | `sql/30-bds-match-rewards-v1.sql` | **Pending review:** automatic match rewards; do not apply until void/reversal behavior is approved | 29, 12 |
+| 31 | `sql/31-data-trust-foundation-v1.sql` | **Applied 23 August 2026:** provenance, evidence metadata, verification history, disputes, anomaly queue and safe rank explanations; all six tables, three RPCs and `data_disputes` RLS were read-only verified | 5, 6, 8, 12, 29 |
+| 32 | `sql/32-bds-void-reversal-v1.sql` | **Pending review:** reverses recoverable BDS from a voided rating event and creates an admin hold for any unrecovered balance | 29, 30, 31, 13 |
+| 33 | `sql/33-data-deletion-function-privilege-hardening-v1.sql` | **Applied 22 August 2026:** removes Supabase's direct default EXECUTE grants from `anon` / `service_role`; keeps the self-service deletion RPC authenticated-only | 16 |
+| 34 | `sql/34-admin-command-center-performance-v1.sql` | **Applied 22 August 2026:** server-side athlete search index, partial queue indexes and one guarded Admin Command Center summary RPC | 15, 16, 17, 21, 23, 26, 27, 33, core schema |
+| 35 | `sql/35-admin-audit-log-v1.sql` | **Applied 23 August 2026:** append-only Admin Audit Trail, admin-only read access, atomic audited Ranking/Hall of Fame mutations and audited Trust resolutions; table, RLS and all audited RPCs were read-only verified | 31, 34, `digital-identity-v2-hall.sql`, core schema |
+| 36 | `sql/36-data-deletion-search-path-hardening-v1.sql` | **Pending review:** moves the empty `search_path` hardening for the PDPA deletion RPC into a new migration without rewriting applied SQL16 | 16, 33 |
+| 37 | `sql/37-quarantine-legacy-payment-slip-links-v1.sql` | **Applied 23 August 2026:** removes exactly four historic URL-format slip references after checking the expected count; does not delete Storage objects | 13, `payments` |
+| 38 | `sql/38-close-venue-slot-v1.sql` | **Applied 14 September 2026:** lets a venue owner close an unbooked open slot; refuses slots with pending or confirmed bookings, and records an admin override in the SQL35 audit trail. Function and effective privileges were read-only verified. | 23, 33, 35, 39 |
+| 39 | `sql/39-venue-rpc-privilege-hardening-v1.sql` | **Applied 14 September 2026:** removes unintended direct `anon` and `service_role` EXECUTE grants from the six SQL23 venue RPCs; all six were read-only verified as `anon = false`, `service_role = false`, `authenticated = true`. | 23 |
+| 40 | `sql/40-venue-slot-booking-state-v1.sql` | **Applied 15 September 2026:** separates booking-reserved slots from owner-blocked slots, snapshots booking display data, hides active bookings from public availability, and atomically reopens declined/cancelled slots. Post-check verified five non-null snapshot columns, no open/reserved slot inconsistencies, no missing snapshots, all four RPCs are `SECURITY DEFINER` with empty `search_path`, authenticated-only execution, and no requester slot policy. | 23, 38, 39 |
+| 41 | `sql/41-venue-booking-notifications-v1.sql` | **Pending review — do not apply yet:** in-app notifications for the venue booking flow via two triggers on `venue_booking_requests`; adds the `venue_booking` notification type, notifies the owner on request and cancellation and the requester on confirm and decline, carries no requester identity, purpose, note or contact number, and de-duplicates on the SQL17 unique `source_key`. Redefines no applied RPC. | 17, 19, 21, 23, 40 |
+| 42 | `sql/42-notification-privilege-hardening-v1.sql` | **Pending review — do not apply yet:** repairs notification privileges observed on production: browsers cannot execute `create_notification` or insert/update notification data directly; authenticated users retain RLS-protected reads and `read_at` acknowledgements only. Sets an empty `search_path` on the applied helper without redefining its body. | 17, 19 |
+| 43 | `sql/43-venue-photos-v1.sql` | **Applied 17 September 2026:** private venue-photo bucket, pending-by-default moderation, owner/admin-only object access, public metadata only for visible photos of published venues, and five authenticated-only guarded RPCs. Signed-media delivery is handled separately by the application; objects remain private. | 23, 35 |
+| 44 | `sql/44-venue-photo-storage-policy-fix-v1.sql` | **Pending review — do not apply yet:** repairs SQL43's upload policy so its owner/path validation unambiguously uses `storage.objects.name`, not the `name` field of the `venue_profiles` subquery. Makes no bucket, object, photo-row, or grant change. | 43 |
+| 45 | `sql/45-venue-photo-public-delivery-v1.sql` | **Applied 17 September 2026:** adds one narrow anonymous `SELECT` policy on `storage.objects` so a visitor can be issued a short-lived signed URL for a venue photo whose row is `visible` and whose venue is published. Postcheck confirmed the `venue-photos` bucket is still **private**, that the only anonymous venue-photo policy is `venue_photos_public_object_read` for `{anon,authenticated}`, and that its predicate opens nothing beyond `moderation_status = 'visible'` on a published venue — `pending` and `hidden` photos stay non-public, as do photos of an unpublished venue. Bucket listing is blocked through the documented `storage.allow_any_operation(...)` helper plus an exact object-depth check. Granted nothing to `anon` at table or function level and changed no SQL43 policy. Re-run `sql/45-venue-photo-public-delivery-postcheck.sql` (read-only) to re-verify, and scope its anonymous-policy check to `policyname like 'venue_photos%'`: `athlete_avatars_public_read` and `athlete_highlights_owner_or_public_profile_read` are pre-existing policies of other features, so counting every anon policy on `storage.objects` returns more than one and says nothing about SQL45. | 43 |
+| 46 | `sql/46-venue-beta-operations-v1.sql` | **Pending review — do not apply:** venue-owner edits, weekly slots, overlap protection, private booking coordination, and consent-based reschedule/cancellation. Requires a reviewed precheck for exactly one GiST UUID operator class, existing overlaps, and lock risk; run its postcheck after any approved application. | 23, 40, 41, 42 |
+| 47 | `sql/47-coach-beta-management-v1.sql` | **Pending review — do not apply:** creator-scoped roster removal and athlete-consented, field-level coach verification for playing position. Extends the PDPA deletion path only when the deployed deletion function exactly matches its reviewed fingerprint; run its precheck and postcheck around any approved application. | 16, 18, 20, 31, 33, 36 |
+
+Before applying step 41, run `sql/41-venue-booking-notifications-precheck.sql` against
+project `hivedzrwrrcnjrlirhtv` and record every result set. It is read-only and
+authorises nothing. It confirms SQL17/SQL23/SQL40 are in place, records the current
+`notification_type` constraint and the per-type row counts as the rollback baseline,
+proves every `venue_profiles.owner_id` has an `auth.users` row (the notification insert
+would otherwise roll a real booking back), and proves neither trigger function exists
+yet. After application, run `sql/41-venue-booking-notifications-postcheck.sql`.
+
+SQL41 notifications are created only by triggers. A notification failure rolls the whole
+booking transaction back: that is deliberate for closed beta, where a silently missing
+notification is worse than a visible failure. Rollback is `drop trigger` plus
+`drop function` for the two trigger functions; **leave the widened
+`notification_type` constraint in place**. Narrowing it again requires first accounting
+for every `venue_booking` row already written, or the `add constraint` will fail
+validation.
+
+The `search_path` and privilege repair for the applied `public.create_notification` is
+deliberately NOT part of SQL41. It is SQL42, a separate migration; SQL17 and SQL19 must
+not be edited. SQL41 precheck must not proceed to application until SQL42 postcheck has
+confirmed browser EXECUTE and direct notification writes are absent.
+
+Before applying step 40, run `sql/40-venue-slot-booking-state-precheck.sql` against
+project `hivedzrwrrcnjrlirhtv` and record every result set. It checks the exact status
+constraint, partial live-booking index, RLS posture, current policies and RPC grants,
+the owner-blocked baseline, aggregate open slots to backfill, and whether every historic
+booking can be snapshotted. It exposes no requester, venue or booking identifiers. A
+passing precheck is necessary but is not approval to apply. The application must first
+be deployed with the backward-compatible booking-history reader; only then may a
+separately approved SQL40 application run. After application, run
+`sql/40-venue-slot-booking-state-postcheck.sql`: both slot/booking inconsistency counts
+and the missing-snapshot count must be zero, the blocked count must match the precheck
+baseline, and all four functions must retain authenticated-only execution with an empty
+`search_path`. SQL40 deliberately adds no requester policy to `venue_slots`; private
+booking history reads the immutable snapshot columns instead. Applied on 15 September
+2026 after its precheck against `hivedzrwrrcnjrlirhtv`; the owner-blocked baseline was
+preserved at 1 slot, and the post-check found 2 reserved slots, 0 open slots, and no
+slot/booking inconsistencies.
+
+Before applying step 38, apply and verify step 39 only after its own explicit approval,
+then run `sql/38-close-venue-slot-precheck.sql` against project
+`hivedzrwrrcnjrlirhtv` and record the output. That file is read-only — eleven `SELECT`
+statements, no DDL, no DML and no RPC call — and confirms the SQL23 venue tables, their
+RLS policies and RPC grants, `public.is_admin()`, the SQL35 audit entry point, and that
+`public.close_venue_slot_safely(uuid)` does not exist yet. This runbook records no
+production evidence for step 23, so its state on production is UNKNOWN until that check
+is run; step 38 depends on it and must not be applied on the assumption that it is
+there. The precheck only reports state. It authorises nothing: applying step 23, 24
+or 38 is a separate action that needs explicit approval from the production owner,
+and no agent may apply a migration on the strength of a passing precheck.
+
+Production evidence (14 September 2026): step 39 was applied to project
+`hivedzrwrrcnjrlirhtv` in one transaction. The required six SQL23 venue RPCs were
+present before changes. The transaction revoked direct `EXECUTE` from `PUBLIC`,
+`anon`, and `service_role`, then granted it to `authenticated` only. A read-only
+post-check returned six rows, each with `anon = false`, `service_role = false`, and
+`authenticated = true`. No venue, court, slot, booking, or user record was changed.
+
+Production evidence (14 September 2026): step 38 was applied to project
+`hivedzrwrrcnjrlirhtv` after the read-only venue precheck passed. The guarded
+`public.close_venue_slot_safely(uuid)` function exists as `SECURITY DEFINER` with an
+empty `search_path`. Effective execution privileges were read-only verified as
+`anon = false`, `service_role = false`, and `authenticated = true`. No venue slot or
+booking was created, closed, or changed during the apply and verification.
+
+SQL35 must be applied **before** deploying the matching Admin UI/API changes. Until it
+is applied, Ranking and Hall of Fame writes intentionally return HTTP 503 instead of
+changing data without an audit record. The migration removes direct authenticated
+table writes for those two surfaces and exposes only guarded, atomic RPCs. It does not
+store admin email addresses, authentication tokens, payment-slip paths or user contact
+details. The Audit page is `/admin/audit`; records are append-only and have no web
+update/delete action.
+
+Production evidence (22 August 2026): step 15 was applied to Supabase project
+`hivedzrwrrcnjrlirhtv`. A read-only verification confirmed
+`athlete_highlight_reports`, `athlete_highlights.moderation_status`, RLS on the report
+table, four report policies, and the replacement highlight/storage read policies. The
+admin moderation page then loaded both queues without its setup warning. The queues had
+no real rows. A controlled temporary database fixture subsequently verified queue → hide
+→ restore through the authenticated Admin UI, including report resolution and clearing
+`hidden_at` / `hidden_by`; the fixture and its cascaded report were then removed and
+read-only counts confirmed zero test rows remained. The public user's report-button step
+still requires a second signed-in account with a real uploaded Highlight.
+
+Production evidence (22 August 2026): step 16 was applied to project
+`hivedzrwrrcnjrlirhtv`. Read-only verification confirmed the deletion-request table,
+open-request partial index, RLS, two table policies, and the `SECURITY DEFINER` function
+with an empty search path. The function was deliberately not invoked. Supabase default
+privileges also left direct EXECUTE grants for `anon` and `service_role`; SQL33 is the
+least-privilege correction. It was applied and read-only verification confirmed
+`authenticated = true`, `anon = false`, `service_role = false`; the only recorded
+EXECUTE grantees are now `authenticated` and the owning `postgres` role. The deletion
+RPC was not invoked during either verification.
+
+Production evidence (22 August 2026): step 34 was applied to project
+`hivedzrwrrcnjrlirhtv`. Read-only verification confirmed `pg_trgm`, its GIN operator
+class, all eight expected indexes, and the `SECURITY DEFINER` Admin summary function
+with an empty search path. Function privileges are `authenticated = true`,
+`anon = false`, `service_role = false`; the only recorded EXECUTE grantees are
+`authenticated` and the owning `postgres` role. The authenticated Admin Operations page
+loaded through the summary RPC and displayed the RPC-mode notice; no deployment or
+other production setting was changed.
+
+Production evidence (23 August 2026): step 37 was applied to project
+`hivedzrwrrcnjrlirhtv` after the payment-data owner approved disposal of four legacy
+URL-format slip references. The transaction count guard passed and a read-only query
+afterward confirmed `legacy_url_rows = 0` and `null_slip_rows = 4`. No Storage objects
+were deleted and no individual payment evidence was opened. The payment-slip viewer was
+deployed separately to reject any future URL-format value with HTTP 410 rather than
+redirecting it; Vercel deployment `dpl_rSwmAVbMrhoY6JhbUEPa3xxdpxuN` reached Ready and
+was aliased to `ballsai-teal.vercel.app`.
 
 Files that must **not** be applied during closed beta:
 
@@ -125,37 +255,32 @@ where tgname = 'athlete_profiles_guardian_consent_guard';
 
 select proname from pg_proc where proname in (
   'register_team_safely', 'confirm_payment_safely', 'record_match_result_safely',
-  'void_match_result_safely', 'delete_my_athlete_data'
+  'void_match_result_safely', 'delete_my_athlete_data',
+  'invite_team_member', 'respond_team_invite',
+  'create_tournament_team_safely', 'submit_tournament_team_safely',
+  'request_guardian_link', 'respond_guardian_link', 'revoke_guardian_link',
+  'get_match_plan_safely', 'save_match_plan_safely'
 );
 ```
 
-Five triggers and five functions must come back.
-
-After step 26, confirm no Team Roster RPC is callable anonymously. Expect nine rows,
-`anon_execute` false and `authenticated_execute` true on every one:
+The listed identity triggers and guarded functions must come back. In particular,
+`athlete_profiles_guardian_consent_guard` is required after step 22; a successful
+SQL query alone is not evidence that the guardian rule is active. After step 19,
+also verify that `authenticated` does not have EXECUTE on `create_notification`, and
+that it has UPDATE only on `notifications.read_at`:
 
 ```sql
-select p.signature,
-       has_function_privilege('anon', p.signature, 'EXECUTE') as anon_execute,
-       has_function_privilege('authenticated', p.signature, 'EXECUTE') as authenticated_execute
-from unnest(array[
-  'public.invite_team_member(uuid, text)',
-  'public.respond_team_invite(uuid, text)',
-  'public.request_team_membership(uuid)',
-  'public.approve_team_request(uuid)',
-  'public.decline_team_request(uuid)',
-  'public.remove_team_member(uuid, text)',
-  'public.list_joinable_teams()',
-  'public.list_my_team_labels()',
-  'public.record_match_result_safely(uuid, uuid, uuid, integer, integer, jsonb)'
-]) as p(signature)
-order by p.signature;
+select has_function_privilege('authenticated',
+  'public.create_notification(uuid, text, text, text, text, text)', 'execute')
+  as authenticated_can_create_notification;
+
+select privilege_type, column_name
+from information_schema.column_privileges
+where table_schema = 'public' and table_name = 'notifications'
+  and grantee = 'authenticated' and privilege_type = 'UPDATE';
 ```
 
-`confirm_guardian_verification(text)` and `revoke_guardian_consent(text, text)` must
-stay anon-callable — a guardian follows an emailed link while logged out — and so must
-`is_admin()` / `is_organizer()`, which RLS evaluates for anonymous reads. Step 26 does
-not touch them.
+The first query must return `false`; the second must return only `read_at`.
 
 Steps 13–16 are also bundled as `sql/apply-closed-beta-2026-08.sql`, a single
 transaction with the same content and the verification queries at the end. Use the bundle
@@ -237,7 +362,7 @@ Ranking ของเด็กจริงขยับได้ครบ** โด
 | บทบาท | จำนวน | `profiles.role` | หน้าที่ในรอบทดสอบ |
 | --- | ---: | --- | --- |
 | ผู้จัดการแข่งขัน | 1 | `organizer` | สร้างรายการ, ตรวจสลิป, ยืนยันทีม, บันทึกผล |
-| นักกีฬา | 3 | `user` | สมัคร, ทำ Card, สมัครแข่ง (1 คนเป็นคนส่งสลิปแทนทีม) |
+| นักกีฬา | 3 | `user` | ทำ Card, รับคำเชิญเข้าทีม, ลงแข่ง |
 | ผู้ปกครอง | 1 | `user` | ดูโปรไฟล์สาธารณะของน้อง, ทดสอบการแชร์บนมือถือ |
 | แอดมิน | (คนในทีมงาน) | `admin` | สร้าง `player_ranks` ให้นักกีฬา 3 คน |
 
@@ -266,8 +391,8 @@ Ranking ของเด็กจริงขยับได้ครบ** โด
 | 3 | Rookie identity | ระบบ | — | เลือกบทบาท "นักกีฬา" แล้วมีแถวใน `athlete_profiles` และได้ `athlete_progress.xp_total = 50` + badge `rookie` |
 | 4 | สร้าง Card | นักกีฬา | `/card` | บันทึกได้, ดาวน์โหลดภาพได้, แชร์บนมือถือได้ |
 | 5 | **สร้าง Ranking** | **แอดมิน** | `/admin/create` | เลือก athlete account แล้วสร้าง `player_ranks` (สเตปที่ยังต้องทำมือ — ดูข้อ 6.4) |
-| 6 | สมัครแข่ง | นักกีฬา | `/tournaments/[id]` | กรอกชื่อทีม + รายชื่อสมาชิก → ได้ `teams` แถวใหม่ สถานะ `pending` |
-| 7 | ส่งสลิป | นักกีฬา | หน้าเดิม ขั้น payment | อัปโหลด JPG/PNG/WEBP ไม่เกิน 5 MB จากมือถือได้, ส่งซ้ำต้องขึ้นข้อความว่ามีรายการชำระแล้ว |
+| 6 | สร้าง roster | ผู้จัด/โค้ช | `/tournaments/[id]` → `/team-members` | สร้าง draft team ของรายการนั้น → เชิญนักกีฬาที่มีบัญชี → นักกีฬากดรับคำเชิญ → ส่งสมัครได้เมื่อมีสมาชิก accepted อย่างน้อย 1 คน |
+| 7 | ส่งสลิป | ผู้จัด/โค้ชที่สร้างทีม | หน้าเดิม ขั้น payment | หลังส่งสมัครแล้วเท่านั้น อัปโหลด JPG/PNG/WEBP ไม่เกิน 5 MB จากมือถือได้, ส่งซ้ำต้องขึ้นข้อความว่ามีรายการชำระแล้ว |
 | 8 | ตรวจสลิป | ผู้จัด | `/dashboard` | เปิดสลิปได้ (signed URL), กดยืนยันการชำระเงินสำเร็จ |
 | 9 | ยืนยันทีม | ผู้จัด | `/dashboard` | ทีมเป็น `confirmed` และเจ้าของทีมได้อีเมลแจ้ง (ถ้าตั้ง Resend แล้ว) |
 | 10 | Preview ผล | ผู้จัด | `/dashboard/results` | เลือกรายการ + 2 ทีม + นักกีฬา แล้วกดคำนวณ เห็น rating ก่อน/หลังของทุกคน |
@@ -281,8 +406,8 @@ Ranking ของเด็กจริงขยับได้ครบ** โด
 1. **`player_ranks` ต้องสร้างโดยแอดมินทีละคน** ที่ `/admin/create` โดยเลือกจาก athlete
    account ที่มีอยู่ ถ้านักกีฬาไม่มีแถวนี้ ผู้จัดจะไม่เห็นชื่อในหน้าบันทึกผล และ XP
    จากการแข่งจะไม่เกิดขึ้นเลย (ได้แค่ 50 XP กับ badge Rookie)
-2. **รายชื่อสมาชิกทีมเป็นข้อความอิสระ** ยังไม่ผูกกับบัญชี ผู้จัดต้องเทียบชื่อเอง
-   ตอนเลือกนักกีฬาในหน้าบันทึกผล
+2. **ทีมใช้ roster จากบัญชีจริง** ผู้จัด/โค้ชเชิญด้วยอีเมล และนักกีฬาต้องกดรับคำเชิญ
+   ก่อนทีมส่งสมัครได้ ผู้จัดเลือกลงผลแข่งได้เฉพาะสมาชิกที่มีสถานะ `accepted`
 3. **`sport` และ `season` ถูก fix ไว้ที่ `football` / `2026`** ในหน้า ranking, results,
    admin, hall และ card — W1 ใช้ค่านี้เท่านั้น
 4. Card ของนักกีฬาที่ยังไม่มี `player_ranks` จะแสดงสเตตค่าเริ่มต้น
@@ -318,10 +443,11 @@ Run these once per environment, in addition to the W1 pilot.
 - Confirm the public athlete profile never shows a phone number.
 - Open `/athletes` and filter by province and position.
 - Open `/ranking`.
-- Register a team for an open tournament.
-- Upload a JPG/PNG/WEBP payment slip under 5 MB.
-- Confirm a duplicate team registration shows a readable error.
-- Confirm a duplicate slip upload does not create a second payment record.
+- Browse an open tournament, then open `/team-members` and accept an invitation from
+  a coach/organizer. Confirm the accepted team is visible on `/profile` and `/career`.
+- Confirm an athlete cannot create or pay for a team; the coach/organizer owns those steps.
+- Confirm accepting an invitation does not allow the athlete to appear for another team
+  in the same tournament.
 - Request data deletion from `/profile`, then confirm: the athlete profile, highlights and
   badges are gone, the public profile no longer resolves, ranking rows read
   `ATHLETE REMOVED` with no account link, and the request shows in `/admin/operations`.
@@ -375,6 +501,10 @@ Required environment variables: `NEXT_PUBLIC_SUPABASE_URL`,
 `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `PLAYER_JWT`, `ORGANIZER_JWT`, `ADMIN_JWT`.
 Optional target IDs: `PLAYER_B_PROFILE_ID`, `PLAYER_RANK_ID`,
 `FOREIGN_TOURNAMENT_ID`, `OWNED_TOURNAMENT_ID`, `PLAYER_B_TEAM_ID`, `OWNED_TEAM_ID`.
+After SQL31, also supply `PLAYER_OWN_DISPUTE_ID`, `PLAYER_FOREIGN_DISPUTE_ID`,
+`PLAYER_OWN_VERIFICATION_EVENT_ID` and `PLAYER_FOREIGN_VERIFICATION_EVENT_ID` to
+prove that the data subject can read their own trust history but cannot read another
+athlete's dispute or verification event.
 
 Safe mode checks read access and skips all writes. Run write checks only against an
 isolated beta tournament, with explicit confirmation:
@@ -391,6 +521,8 @@ Minimum checks:
 - Organizer cannot update a tournament owned by another organizer.
 - Organizer can update only teams/payments for tournaments they own.
 - Admin can update ranking data.
+- After SQL31: Player can read their own dispute and verification event but cannot read
+  another athlete's equivalent record; admin can read the Trust queue.
 - A signed-out request cannot read a `slips` object directly.
 
 ---
@@ -459,13 +591,8 @@ step in the support rota before inviting the public.
 
 Invite the first organizer only when all of these are true:
 
-- SQL steps 1–12 applied to project `hivedzrwrrcnjrlirhtv`, with the four triggers and
-  three functions confirmed present.
-- SQL steps 17–18 applied: notifications and invited Team Roster membership are present;
-  verify `public.notifications`, `public.team_members`, and the invite/respond functions.
-- SQL steps 19–22 applied: Sport Profiles, guardian verification consent trail,
-  sport-scoped XP/Badge history, and atomic mobile onboarding are present. Verify the
-  step 23 execute grant and all new paths with real test JWTs.
+- SQL steps 1–29 applied to project `hivedzrwrrcnjrlirhtv`, with the required triggers,
+  guarded functions, notification/roster tables, and step-19 privilege checks confirmed.
 - `slips` bucket exists and is private; a signed slip URL opens for the organizer and
   fails for a signed-out request.
 - Demo fallback is not `true` in production.
@@ -476,3 +603,6 @@ Invite the first organizer only when all of these are true:
 - Slip upload works from a real phone.
 - A match result changes Power Rating, XP, Badge and `/ranking`.
 - No blocker errors in production logs.
+- Data Trust Phase 1 is reviewed and its RLS policies are tested with real JWTs before
+  applying step 31. Do not apply step 30 until BDS reversal on a voided result is
+  demonstrated and documented.

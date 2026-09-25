@@ -36,10 +36,14 @@ export async function GET(
   const canRead = typedPayment.user_id === user.id || profile?.role === 'admin' || tournament?.organizer_id === user.id
   if (!canRead || !typedPayment.slip_url) return NextResponse.json({ error: 'ไม่มีสิทธิ์ดูสลิปนี้' }, { status: 403 })
 
-  // Legacy public URLs remain viewable during migration. New uploads store only
-  // an object path and receive a 60-second signed URL.
+  // Payment evidence must never be relayed through a legacy public URL. New uploads
+  // store an object path only and receive a short-lived signed URL. SQL37 removes
+  // historic URL values after the owner has approved their disposal.
   if (/^https?:\/\//.test(typedPayment.slip_url)) {
-    return NextResponse.redirect(typedPayment.slip_url)
+    return NextResponse.json(
+      { error: 'สลิปเก่ารายการนี้ถูกกักไว้เพื่อความปลอดภัย กรุณาติดต่อผู้จัดรายการ' },
+      { status: 410 },
+    )
   }
 
   const { data: signedUrl, error: signedUrlError } = await supabase.storage

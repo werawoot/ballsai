@@ -4,7 +4,6 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { calculateRating, type MatchResult, type PlayerPosition } from '@/lib/rating'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { acceptedRosterKeys, rosterMismatches } from '@/lib/team-roster'
 
 type PerformanceInput = {
   playerRankId?: string
@@ -187,37 +186,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'พบนักกีฬาบางคนที่ไม่มีในระบบ ranking' }, { status: 400 })
   }
 
-  if (typedPlayerRanks.some(rank => !rank.player_id)) {
-    return NextResponse.json({ error: 'นักกีฬาบางคนยังไม่ได้เชื่อมกับบัญชี' }, { status: 400 })
-  }
-
-  const athleteIds = typedPlayerRanks.map(rank => rank.player_id!)
-  const { data: acceptedMemberships, error: rosterError } = await supabase
+  // The UI only lists accepted roster members; repeat that check on the server
+  // so a crafted request cannot record a player for a team they did not join.
+  const playerByRankId = new Map(typedPlayerRanks.map(player => [player.id, player]))
+  const athleteIds = typedPlayerRanks
+    .map(player => player.player_id)
+    .filter((playerId): playerId is string => Boolean(playerId))
+  const { data: acceptedMembers } = await supabase
     .from('team_members')
     .select('team_id, athlete_id')
     .in('team_id', [body.teamAId, body.teamBId])
-    .in('athlete_id', athleteIds)
+    .in('athlete_id', athleteIds.length > 0 ? athleteIds : ['none'])
     .eq('status', 'accepted')
-
-  // A failed lookup must not read as "nobody is on the roster": that is still
-  // fail-closed, but it would tell the organizer to fix a roster that is already
-  // correct. Report the outage for what it is instead.
-  if (rosterError) {
-    logServerError({
-      event: 'match_result_roster_lookup_failed',
-      userId: user.id,
-      route: '/api/match-results',
-      metadata: { tournamentId: body.tournamentId, teamAId: body.teamAId, teamBId: body.teamBId, code: rosterError.code },
-      error: rosterError,
-    })
-    return NextResponse.json({ error: 'ตรวจสอบรายชื่อสมาชิกทีมไม่สำเร็จ กรุณาลองใหม่อีกครั้ง' }, { status: 503 })
-  }
-
-  // Same rule as record_match_result_safely, applied here so preview mode and the
-  // confirm path both fail readably instead of raising from the RPC. lib/team-roster.ts
-  const accepted = acceptedRosterKeys(acceptedMemberships ?? [])
-  if (rosterMismatches(performances, typedPlayerRanks, accepted).length > 0) {
-    return NextResponse.json({ error: 'นักกีฬาบางคนไม่ได้เป็นสมาชิกที่ตอบรับของทีมที่เลือก' }, { status: 400 })
+  const acceptedRoster = new Set(
+    (acceptedMembers ?? []).map(member => `${member.team_id}:${member.athlete_id}`),
+  )
+  const outsideRoster = performances.some(performance => {
+    const player = performance.playerRankId ? playerByRankId.get(performance.playerRankId) : null
+    return !player?.player_id || !performance.teamId || !acceptedRoster.has(`${performance.teamId}:${player.player_id}`)
+  })
+  if (outsideRoster) {
+    return NextResponse.json(
+      { error: 'เลือกลงผลแข่งได้เฉพาะนักกีฬาที่รับคำเชิญเข้าทีมนี้แล้ว' },
+      { status: 400 },
+    )
   }
 
   const ratingRows: PlayerRating[] = []
@@ -354,14 +346,8 @@ export async function POST(request: Request) {
       error: matchResultError,
     })
     const isConflict = matchResultError?.message.includes('RATING_CHANGED') || matchResultError?.code === '40001'
-    const isRosterError = matchResultError?.message.includes('ATHLETE_NOT_ON_TEAM_ROSTER')
-      || matchResultError?.message.includes('PLAYER_RANK_NOT_LINKED_TO_ACCOUNT')
     return NextResponse.json(
-      { error: isConflict
-        ? 'คะแนนนักกีฬาถูกอัปเดตโดยรายการอื่น กรุณากดคำนวณใหม่แล้วบันทึกอีกครั้ง'
-        : isRosterError
-          ? 'รายชื่อนักกีฬาไม่ตรงกับสมาชิกที่ตอบรับของทีม กรุณาตรวจสอบทีมอีกครั้ง'
-          : 'บันทึกผลแข่งไม่สำเร็จ' },
+      { error: isConflict ? 'คะแนนนักกีฬาถูกอัปเดตโดยรายการอื่น กรุณากดคำนวณใหม่แล้วบันทึกอีกครั้ง' : 'บันทึกผลแข่งไม่สำเร็จ' },
       { status: isConflict ? 409 : 400 },
     )
   }

@@ -18,11 +18,11 @@ type TeamOption = {
 
 type PlayerOption = {
   id: string
-  player_id: string
+  player_id: string | null
   player_name: string
-  team_id: string
   position: string
   pts: number
+  teamId: string
 }
 
 type PerformanceRow = {
@@ -83,27 +83,23 @@ export default function MatchResultForm({
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
-  const selectedTeamIds = useMemo(
-    () => [teamAId, teamBId].filter(Boolean),
-    [teamAId, teamBId],
-  )
 
+  // Only athletes who accepted the selected tournament team's invitation appear.
   const filteredPlayers = useMemo(() => {
     const query = playerQuery.trim().toLowerCase()
-    const selectedRoster = players.filter(player => selectedTeamIds.includes(player.team_id))
-    if (!query) return selectedRoster
+    if (!query) return players
     return players.filter(player =>
-      selectedTeamIds.includes(player.team_id)
-      && `${player.player_name} ${player.position}`.toLowerCase().includes(query)
+      `${player.player_name} ${player.position}`.toLowerCase().includes(query)
     )
-  }, [players, playerQuery, selectedTeamIds])
+  }, [players, playerQuery])
 
   // A selected athlete must stay in their own dropdown even when the current
   // search no longer matches them, otherwise the row would silently look empty.
-  const optionsForRow = (playerRankId: string) => {
-    if (!playerRankId || filteredPlayers.some(player => player.id === playerRankId)) return filteredPlayers
+  const optionsForRow = (playerRankId: string, teamId: string) => {
+    const roster = filteredPlayers.filter(player => !teamId || player.teamId === teamId)
+    if (!playerRankId || roster.some(player => player.id === playerRankId)) return roster
     const selected = players.find(player => player.id === playerRankId)
-    return selected ? [selected, ...filteredPlayers] : filteredPlayers
+    return selected ? [selected, ...roster] : roster
   }
 
   const inputStyle = {
@@ -118,6 +114,7 @@ export default function MatchResultForm({
     background: '#fafafa',
   }
 
+  const selectedTeamIds = [teamAId, teamBId].filter(Boolean)
   const previewByPlayer = new Map(preview.map(item => [item.playerRankId, item]))
 
   const updateRow = (id: string, patch: Partial<PerformanceRow>) => {
@@ -241,7 +238,7 @@ export default function MatchResultForm({
             <input
               value={playerQuery}
               onChange={event => setPlayerQuery(event.target.value)}
-              placeholder="ค้นหาสมาชิกในสองทีมนี้"
+              placeholder="ค้นหานักกีฬาใน roster: ชื่อ หรือตำแหน่ง"
               style={{ ...inputStyle, paddingLeft: 34 }}
             />
           </div>
@@ -250,9 +247,9 @@ export default function MatchResultForm({
               const team = teams.find(item => item.id === teamId)
               if (!team) return null
               return (
-                <span key={team.id} style={{ background: 'white', color: '#555', border: '1.5px solid #e5e5e5', borderRadius: 20, padding: '5px 11px', fontSize: 11, fontWeight: 700 }}>
-                  {team.name}
-                </span>
+                <button key={team.id} onClick={() => setPlayerQuery(team.name)} style={{ background: 'white', color: '#555', border: '1.5px solid #e5e5e5', borderRadius: 20, padding: '5px 11px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                  กรอง: {team.name}
+                </button>
               )
             })}
             {playerQuery && (
@@ -266,7 +263,7 @@ export default function MatchResultForm({
           </div>
           {filteredPlayers.length === 0 && (
             <p style={{ fontSize: 11, color: '#a16207', lineHeight: 1.6, marginTop: 8 }}>
-              ไม่พบสมาชิกที่ตอบรับและมี Ranking ในทีมที่เลือก
+              ไม่พบนักกีฬาที่ตรงกับคำค้นหา นักกีฬาจะขึ้นในรายการนี้เมื่อแอดมินสร้าง Ranking ให้บัญชีนั้นแล้ว
             </p>
           )}
         </div>
@@ -289,8 +286,6 @@ export default function MatchResultForm({
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-                  {/* Changing the team clears the athlete: a pick from the other team's
-                      roster would be rejected by record_match_result_safely. */}
                   <select value={row.teamId} onChange={event => updateRow(row.id, { teamId: event.target.value, playerRankId: '' })} style={inputStyle}>
                     <option value="">ทีม</option>
                     {selectedTeamIds.map(teamId => {
@@ -300,7 +295,7 @@ export default function MatchResultForm({
                   </select>
                   <select value={row.playerRankId} onChange={event => updateRow(row.id, { playerRankId: event.target.value })} style={inputStyle}>
                     <option value="">นักกีฬา</option>
-                    {optionsForRow(row.playerRankId).filter(player => !row.teamId || player.team_id === row.teamId).map(player => (
+                    {optionsForRow(row.playerRankId, row.teamId).map(player => (
                       <option key={player.id} value={player.id}>{player.player_name} · {player.position} · {player.pts}</option>
                     ))}
                   </select>

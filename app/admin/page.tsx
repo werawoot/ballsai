@@ -1,13 +1,23 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Activity, ClipboardList, Database, House, Plus, ShieldAlert, Trophy, User, UserCheck, UserX } from "lucide-react";
+import { Activity, Database, Plus, ShieldAlert, Trophy, UserCheck, UserX } from "lucide-react";
 import Link from "next/link";
 import DeletePlayerButton from "./DeletePlayerButton";
 import EditPlayerButton from "./EditPlayerButton";
 import { ACTIVE_SEASON, ACTIVE_SPORT } from "@/lib/season";
 
-export default async function AdminPage() {
+const RANKING_PAGE_SIZE = 25
+
+function pageNumber(value: string | undefined) {
+  const number = Number(value)
+  return Number.isInteger(number) && number > 0 ? number : 1
+}
+
+export default async function AdminPage({ searchParams }: { searchParams?: { page?: string; q?: string } }) {
+  const page = pageNumber(searchParams?.page)
+  const query = searchParams?.q?.trim().slice(0, 80) ?? ''
+  const offset = (page - 1) * RANKING_PAGE_SIZE
   const cookieStore = cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,22 +49,23 @@ export default async function AdminPage() {
 
   if (profile?.role !== "admin") redirect("/");
 
-  const [{ data: players }, { data: athleteAccounts }] = await Promise.all([
-    supabase
+  let rankingQuery = supabase
       .from("player_ranks")
-      .select("*")
+      .select("*", { count: 'exact' })
       .eq("sport", ACTIVE_SPORT)
       .eq("season", ACTIVE_SEASON)
-      .order("pts", { ascending: false }),
-    supabase
-      .from("athlete_profiles")
-      .select("user_id, display_name, current_team, province, position")
-      .order("display_name"),
-  ]);
+  if (query) rankingQuery = rankingQuery.ilike('player_name', `%${query.replace(/[,%_]/g, '')}%`)
 
-  const linkedPlayerIds = (players ?? [])
-    .map((player) => player.player_id as string | null)
-    .filter((playerId): playerId is string => Boolean(playerId));
+  const { data: players, count: playerCount } = await rankingQuery
+    .order("pts", { ascending: false })
+    .range(offset, offset + RANKING_PAGE_SIZE - 1)
+  const totalPlayers = playerCount ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalPlayers / RANKING_PAGE_SIZE))
+  const pageHref = (target: number) => {
+    const params = new URLSearchParams({ page: String(target) })
+    if (query) params.set('q', query)
+    return `/admin?${params.toString()}`
+  }
 
   return (
     <main
@@ -191,7 +202,7 @@ export default async function AdminPage() {
                 borderRadius: 2,
               }}
             />
-            นักกีฬาทั้งหมด ({players?.length ?? 0})
+            {query ? `ผลค้นหา “${query}”` : 'นักกีฬาที่มี Ranking'} ({totalPlayers.toLocaleString()})
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <Link
@@ -252,6 +263,25 @@ export default async function AdminPage() {
               <Activity size={14} /> Operations
             </Link>
             <Link
+              href="/admin/trust"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                background: "#fff8e6",
+                color: "#854d0e",
+                borderRadius: 20,
+                padding: "6px 14px",
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: "none",
+                fontFamily: "var(--font-oswald)",
+                letterSpacing: 0.5,
+              }}
+            >
+              <ShieldAlert size={14} /> Trust Desk
+            </Link>
+            <Link
               href="/admin/infrastructure"
               style={{
                 display: "flex",
@@ -293,6 +323,12 @@ export default async function AdminPage() {
           </div>
         </div>
 
+        <form action="/admin" method="GET" style={{ alignItems: 'center', background: 'white', border: '1px solid #e2e7ed', borderRadius: 12, display: 'flex', gap: 8, marginBottom: 14, padding: 9 }}>
+          <input name="q" defaultValue={query} placeholder="ค้นหาชื่อนักกีฬาใน Ranking" aria-label="ค้นหาชื่อนักกีฬาใน Ranking" style={{ border: 0, color: '#172033', flex: 1, fontFamily: 'var(--font-sarabun)', fontSize: 13, minWidth: 0, outline: 'none', padding: '6px 8px' }} />
+          <button type="submit" style={{ background: '#172033', border: 0, borderRadius: 8, color: 'white', cursor: 'pointer', fontFamily: 'var(--font-oswald)', fontSize: 12, fontWeight: 800, padding: '8px 11px' }}>ค้นหา</button>
+          {query && <Link href="/admin" style={{ color: '#cc0001', fontSize: 11, fontWeight: 800, padding: '6px', textDecoration: 'none' }}>ล้าง</Link>}
+        </form>
+
         {/* PLAYER LIST */}
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {players?.map((p, i) => (
@@ -325,7 +361,7 @@ export default async function AdminPage() {
                     flexShrink: 0,
                   }}
                 >
-                  {i + 1}
+                  {offset + i + 1}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
@@ -432,77 +468,20 @@ export default async function AdminPage() {
               <div style={{ display: "flex", gap: 8 }}>
                 <EditPlayerButton
                   player={p}
-                  athleteAccounts={athleteAccounts ?? []}
-                  linkedPlayerIds={linkedPlayerIds}
                 />
                 <DeletePlayerButton playerId={p.id} />
               </div>
             </div>
           ))}
+          {!players?.length && <div style={{ background: 'white', border: '1.5px dashed #d7dde5', borderRadius: 12, color: '#68768a', fontSize: 13, padding: 32, textAlign: 'center' }}>ไม่พบนักกีฬาในเงื่อนไขนี้</div>}
         </div>
+        {totalPages > 1 && <nav aria-label="หน้ารายการ Ranking" style={{ alignItems: 'center', display: 'flex', gap: 8, justifyContent: 'center', marginTop: 18 }}>
+          {page > 1 ? <Link href={pageHref(page - 1)} style={{ background: 'white', border: '1px solid #dce3eb', borderRadius: 8, color: '#172033', fontSize: 12, fontWeight: 800, padding: '8px 11px', textDecoration: 'none' }}>ก่อนหน้า</Link> : <span style={{ color: '#9ca7b5', fontSize: 12, fontWeight: 800, padding: '8px 11px' }}>ก่อนหน้า</span>}
+          <span style={{ color: '#5e6c7d', fontSize: 12, fontWeight: 700 }}>หน้า {page.toLocaleString()} / {totalPages.toLocaleString()}</span>
+          {page < totalPages ? <Link href={pageHref(page + 1)} style={{ background: '#cc0001', border: '1px solid #cc0001', borderRadius: 8, color: 'white', fontSize: 12, fontWeight: 800, padding: '8px 11px', textDecoration: 'none' }}>ถัดไป</Link> : <span style={{ color: '#9ca7b5', fontSize: 12, fontWeight: 800, padding: '8px 11px' }}>ถัดไป</span>}
+        </nav>}
       </div>
 
-      {/* BOTTOM NAV */}
-      <nav
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: "white",
-          borderTop: "1.5px solid #e5e5e5",
-          display: "flex",
-          justifyContent: "space-around",
-          padding: "6px 0",
-          zIndex: 100,
-          boxShadow: "0 -4px 20px rgba(0,0,0,0.06)",
-        }}
-      >
-        {[
-          {
-            icon: <House size={22} />,
-            label: "หน้าแรก",
-            href: "/",
-            active: false,
-          },
-          {
-            icon: <Trophy size={22} />,
-            label: "Ranking",
-            href: "/ranking",
-            active: false,
-          },
-          {
-            icon: <ClipboardList size={22} />,
-            label: "รายการแข่ง",
-            href: "/tournaments",
-            active: false,
-          },
-          {
-            icon: <User size={22} />,
-            label: "โปรไฟล์",
-            href: "/profile",
-            active: false,
-          },
-        ].map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 2,
-              padding: "4px 12px",
-              textDecoration: "none",
-              color: "#aaa",
-              minWidth: 55,
-            }}
-          >
-            {item.icon}
-            <span style={{ fontSize: 10, fontWeight: 700 }}>{item.label}</span>
-          </Link>
-        ))}
-      </nav>
     </main>
   );
 }

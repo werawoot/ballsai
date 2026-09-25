@@ -1,0 +1,7 @@
+label,email,required_role,owner,login_verified,notes
+CB-ADMIN-01,,admin,,,Use a dedicated staff account; do not use it for any athlete action.
+CB-ORGANIZER-01,,organizer,,,Creates the disposable tournament and teams; owns payment-slip checks and match result entry.
+CB-ATHLETE-01,,user,,,Accepts a team invitation and appears in the first Match Plan/result.
+CB-ATHLETE-02,,user,,,Uses the decline-invitation case, then must not appear in the accepted roster.
+CB-ATHLETE-03,,user,,,Second accepted player; use a minor test profile only with recorded guardian consent.
+CB-GUARDIAN-01,,user,,,Links only to the consented athlete and verifies private progress/public-profile rules.

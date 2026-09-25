@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Award, Save } from 'lucide-react'
-import { createClient } from '@/lib/supabase'
 import { ACTIVE_SEASON } from '@/lib/season'
 
 type Player = { id: string; player_id: string | null; player_name: string; team: string; province: string; position: string }
@@ -22,13 +21,18 @@ export default function HallAwardForm({ players }: { players: Player[] }) {
   const publish = async () => {
     if (!player || !citation.trim()) { setMessage('เลือกนักกีฬาและเขียนคำเชิดชูผลงานก่อน'); return }
     setLoading(true); setMessage('')
-    const { error } = await createClient().from('hall_of_fame_entries').insert({
-      season, category, age_group: ageGroup, province: player.province || null,
-      athlete_id: player.player_id, player_rank_id: player.id, athlete_name: player.player_name,
-      team_name: player.team || null, position: player.position || null, citation: citation.trim(),
+    const response = await fetch('/api/admin/hall', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        season, category, age_group: ageGroup, province: player.province || null,
+        athlete_id: player.player_id, player_rank_id: player.id, athlete_name: player.player_name,
+        team_name: player.team || null, position: player.position || null, citation: citation.trim(),
+      }),
     })
+    const payload = await response.json().catch(() => null) as { error?: string } | null
     setLoading(false)
-    if (error) { setMessage(error.code === '23505' ? 'นักกีฬาคนนี้มีรางวัลหมวดนี้ในฤดูกาล/รุ่นอายุนี้แล้ว' : `เผยแพร่ไม่สำเร็จ: ${error.message}`); return }
+    if (!response.ok) { setMessage(payload?.error ?? 'เผยแพร่ Hall of Fame ไม่สำเร็จ'); return }
     setMessage('ประกาศเกียรติยศใน Hall of Fame แล้ว')
     setCitation(''); router.refresh()
   }

@@ -2,17 +2,19 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Check, ChevronLeft, Compass, Sparkles, Trophy, UsersRound } from "lucide-react";
+import { ArrowRight, Building2, Check, ChevronLeft, Compass, Handshake, Sparkles, Trophy, UsersRound } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { ACTIVE_SPORT } from "@/lib/season";
 
-type Persona = "athlete" | "guardian" | "coach_organizer";
-type Goal = "player_card" | "find_competitions" | "follow_athlete" | "discover_talent";
+type Persona = "athlete" | "guardian" | "coach_organizer" | "venue_owner" | "sponsor_brand";
+type Goal = "player_card" | "find_competitions" | "follow_athlete" | "discover_talent" | "manage_venue" | "support_athletes";
 
 const personas: Array<{ id: Persona; icon: typeof Trophy; title: string; description: string }> = [
   { id: "athlete", icon: Trophy, title: "นักกีฬา", description: "สร้างตัวตนและเก็บทุกผลงานของฉัน" },
   { id: "guardian", icon: UsersRound, title: "ผู้ปกครอง", description: "ติดตามและสนับสนุนเส้นทางของน้อง" },
   { id: "coach_organizer", icon: Compass, title: "โค้ช / ผู้จัด", description: "ค้นหา พัฒนา และจัดการแข่งขัน" },
+  { id: "venue_owner", icon: Building2, title: "เจ้าของสนาม", description: "เปิดสนามและรับคำขอจอง" },
+  { id: "sponsor_brand", icon: Handshake, title: "Sponsor / Brand", description: "สร้างโอกาสสนับสนุนนักกีฬาอย่างรับผิดชอบ" },
 ];
 
 const goals: Array<{ id: Goal; title: string; description: string; path: string }> = [
@@ -20,6 +22,8 @@ const goals: Array<{ id: Goal; title: string; description: string; path: string 
   { id: "find_competitions", title: "หารายการแข่ง", description: "ค้นหาสนามที่รอคุณอยู่", path: "/tournaments" },
   { id: "follow_athlete", title: "ติดตามนักกีฬา", description: "ดูเส้นทางและผลงาน", path: "/athletes" },
   { id: "discover_talent", title: "ค้นหานักกีฬา", description: "เจอดาวรุ่งที่น่าจับตา", path: "/athletes" },
+  { id: "manage_venue", title: "จัดการสนาม", description: "สร้างสนามและเปิดเวลาว่าง", path: "/venue" },
+  { id: "support_athletes", title: "สนับสนุนนักกีฬา", description: "สร้างโอกาสที่เด็กเลือกแสดงความสนใจเอง", path: "/sponsor" },
 ];
 
 export default function OnboardingFlow({ email, nextPath, userId }: { email: string; nextPath: string; userId: string }) {
@@ -72,7 +76,10 @@ export default function OnboardingFlow({ email, nextPath, userId }: { email: str
       }
     }
 
-    router.replace(skip ? nextPath : (selectedGoal?.path ?? nextPath));
+    const destination = persona === 'guardian' && goal === 'follow_athlete'
+      ? '/guardian'
+      : (selectedGoal?.path ?? nextPath)
+    router.replace(skip ? nextPath : destination);
     router.refresh();
   };
 

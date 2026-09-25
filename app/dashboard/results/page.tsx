@@ -6,7 +6,6 @@ import { ArrowLeft, Trophy } from 'lucide-react'
 import MatchResultForm from './MatchResultForm'
 import MatchResultHistory from './MatchResultHistory'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
-import { buildRosterPlayers } from '@/lib/team-roster'
 
 type TournamentOption = {
   id: string
@@ -23,11 +22,11 @@ type TeamOption = {
 
 type PlayerOption = {
   id: string
-  player_id: string
+  player_id: string | null
   player_name: string
-  team_id: string
   position: string
   pts: number
+  teamId: string
 }
 
 type MatchResultRow = {
@@ -89,23 +88,22 @@ export default async function MatchResultsPage() {
     .in('tournament_id', tournamentIds.length > 0 ? tournamentIds : ['none'])
     .order('name')
 
-  const confirmedTeamIds = ((teams ?? []) as TeamOption[])
-    .filter(team => team.status === 'confirmed')
-    .map(team => team.id)
+  const allTeams = (teams ?? []) as TeamOption[]
+  const confirmedTeams = allTeams.filter(team => team.status === 'confirmed')
 
   const { data: acceptedMembers } = await supabase
     .from('team_members')
     .select('team_id, athlete_id')
-    .in('team_id', confirmedTeamIds.length > 0 ? confirmedTeamIds : ['none'])
+    .in('team_id', confirmedTeams.length > 0 ? confirmedTeams.map(team => team.id) : ['none'])
     .eq('status', 'accepted')
 
-  const athleteIds = [...new Set((acceptedMembers ?? []).map(member => member.athlete_id))]
-  const { data: rankedAthletes } = await supabase
+  const acceptedAthleteIds = [...new Set((acceptedMembers ?? []).map(member => member.athlete_id))]
+  const { data: players } = await supabase
     .from('player_ranks')
     .select('id, player_id, player_name, position, pts')
-    .in('player_id', athleteIds.length > 0 ? athleteIds : ['none'])
     .eq('sport', ACTIVE_SPORT)
     .eq('season', ACTIVE_SEASON)
+    .in('player_id', acceptedAthleteIds.length > 0 ? acceptedAthleteIds : ['none'])
     .order('player_name')
 
   const { data: matchResults } = await supabase
@@ -115,15 +113,11 @@ export default async function MatchResultsPage() {
     .order('created_at', { ascending: false })
     .limit(20)
 
-  const allTeams = (teams ?? []) as TeamOption[]
-  const confirmedTeams = allTeams.filter(team => team.status === 'confirmed')
-  // Only accepted members of a confirmed team are selectable — the same rule
-  // record_match_result_safely enforces. See lib/team-roster.ts.
-  const rosterPlayers = buildRosterPlayers(
-    acceptedMembers ?? [],
-    rankedAthletes ?? [],
-  ) as PlayerOption[]
   const teamNames = Object.fromEntries(allTeams.map(team => [team.id, team.name]))
+  const teamIdByAthlete = new Map((acceptedMembers ?? []).map(member => [member.athlete_id, member.team_id]))
+  const rosterPlayers = ((players ?? []) as Omit<PlayerOption, 'teamId'>[])
+    .map(player => ({ ...player, teamId: player.player_id ? teamIdByAthlete.get(player.player_id) ?? '' : '' }))
+    .filter(player => player.teamId)
   const tournamentNames = Object.fromEntries((tournaments ?? []).map(tournament => [tournament.id, tournament.name]))
 
   return (

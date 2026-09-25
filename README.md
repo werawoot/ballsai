@@ -10,6 +10,8 @@ BallDoenSai.com คือแพลตฟอร์มสำหรับนัก�
 
 สถานะเอกสาร: อัปเดตล่าสุด **11 สิงหาคม 2026**
 
+เอกสารส่งต่องาน Closed Beta ล่าสุดสำหรับผู้ช่วยพัฒนา: [`docs/claude-handoff-next-steps.md`](docs/claude-handoff-next-steps.md)
+
 Production: [ballsai-teal.vercel.app](https://ballsai-teal.vercel.app/)
 GitHub: [werawoot/ballsai](https://github.com/werawoot/ballsai)
 

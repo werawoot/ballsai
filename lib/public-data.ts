@@ -16,6 +16,22 @@ type RankingFilters = {
   search?: string
 }
 
+type PublicDataError = {
+  code?: string
+  details?: string
+  hint?: string
+  message?: string
+}
+
+function publicDataErrorDetails(error: unknown) {
+  if (error instanceof Error) return error.message
+  if (error && typeof error === 'object') {
+    const { code, details, hint, message } = error as PublicDataError
+    return { code, details, hint, message }
+  }
+  return String(error)
+}
+
 export const getPublicTournaments = unstable_cache(
   async () => {
     try {
@@ -26,7 +42,7 @@ export const getPublicTournaments = unstable_cache(
       if (error) throw error
       return data
     } catch (error) {
-      console.error(JSON.stringify({ level: 'error', event: 'public_tournaments_fetch_failed', error: error instanceof Error ? error.message : String(error) }))
+      console.error(JSON.stringify({ level: 'error', event: 'public_tournaments_fetch_failed', error: publicDataErrorDetails(error) }))
       return []
     }
   },
@@ -46,7 +62,7 @@ export const getPublicOpenTournaments = unstable_cache(
       if (error) throw error
       return data
     } catch (error) {
-      console.error(JSON.stringify({ level: 'error', event: 'public_open_tournaments_fetch_failed', error: error instanceof Error ? error.message : String(error) }))
+      console.error(JSON.stringify({ level: 'error', event: 'public_open_tournaments_fetch_failed', error: publicDataErrorDetails(error) }))
       return []
     }
   },
@@ -70,7 +86,7 @@ export const getPublicRankings = unstable_cache(
       if (error) throw error
       return data
     } catch (error) {
-      console.error(JSON.stringify({ level: 'error', event: 'public_rankings_fetch_failed', error: error instanceof Error ? error.message : String(error) }))
+      console.error(JSON.stringify({ level: 'error', event: 'public_rankings_fetch_failed', error: publicDataErrorDetails(error) }))
       return []
     }
   },
@@ -90,7 +106,7 @@ export const getPublicRankingProvinces = unstable_cache(
       if (error) throw error
       return data
     } catch (error) {
-      console.error(JSON.stringify({ level: 'error', event: 'public_ranking_provinces_fetch_failed', error: error instanceof Error ? error.message : String(error) }))
+      console.error(JSON.stringify({ level: 'error', event: 'public_ranking_provinces_fetch_failed', error: publicDataErrorDetails(error) }))
       return []
     }
   },
@@ -124,7 +140,7 @@ export const getPublicHallOfFame = unstable_cache(
       if (error) throw error
       return data
     } catch (error) {
-      console.error(JSON.stringify({ level: 'error', event: 'public_hall_of_fame_fetch_failed', error: error instanceof Error ? error.message : String(error) }))
+      console.error(JSON.stringify({ level: 'error', event: 'public_hall_of_fame_fetch_failed', error: publicDataErrorDetails(error) }))
       return []
     }
   },
@@ -165,7 +181,7 @@ export const getPublicIdentityRankingData = unstable_cache(
       }).sort((a, b) => b.rank_change - a.rank_change || b.pts - a.pts)
       return { emerging, performance: rankRows.map(rank => ({ ...rank, ...(ratingByRank.get(rank.id) ?? { goals: 0, assists: 0, clean_sheets: 0, mvps: 0, matches_played: 0, player_id: rank.player_id, player_rank_id: rank.id }) })) }
     } catch (error) {
-      console.error(JSON.stringify({ level: 'error', event: 'public_identity_ranking_fetch_failed', error: error instanceof Error ? error.message : String(error) }))
+      console.error(JSON.stringify({ level: 'error', event: 'public_identity_ranking_fetch_failed', error: publicDataErrorDetails(error) }))
       return { emerging: [] as PublicRank[], performance: [] as Array<PublicRank & PublicRating> }
     }
   },

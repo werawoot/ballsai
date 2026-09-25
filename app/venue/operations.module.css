@@ -1,0 +1,15 @@
+.panel { background:#fff; border:1px solid #dde2e8; border-radius:16px; padding:22px; margin-bottom:24px; color:#172033; }
+.panel h2 { font:800 28px var(--font-oswald); margin:6px 0 20px; }
+.eyebrow { color:#cc0001; font-weight:800; letter-spacing:2px; font-size:11px; }
+.notice { border-left:4px solid #e7b915; background:#fff8da; padding:14px; font-size:13px; line-height:1.7; }
+.panel form { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin:18px 0; align-items:end; }
+.panel label { display:grid; gap:6px; font-size:13px; font-weight:700; }
+.panel input,.panel select,.panel textarea { width:100%; box-sizing:border-box; padding:10px; border:1px solid #aeb8c5; border-radius:8px; background:white; color:#172033; font:inherit; min-height:44px; }
+.panel button { min-height:44px; border:0; border-radius:8px; padding:10px 16px; background:#172033; color:white; font-weight:800; cursor:pointer; }
+.panel button:disabled { opacity:.55; cursor:wait; }
+.panel details { border-top:1px solid #e5e7eb; padding:16px 0; }
+.panel summary { cursor:pointer; font-weight:800; }
+.calendar { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin:20px 0; }
+.calendar article { background:#f4f6f8; border-top:3px solid #cc0001; padding:16px; border-radius:4px 4px 12px 12px; }
+.panel a { color:#aa0001; font-weight:700; }
+.panel :focus-visible { outline:3px solid #cc0001; outline-offset:3px; }

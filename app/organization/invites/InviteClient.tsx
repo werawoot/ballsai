@@ -1,0 +1,4 @@
+'use client'
+import { useRouter } from 'next/navigation'
+type Invite={id:string;role:string;invited_at:string;organizations:{name:string;kind:string;province:string}|null}
+export default function InviteClient({invites}:{invites:Invite[]}){const r=useRouter();const respond=async(id:string,status:'accepted'|'declined')=>{await fetch(`/api/organization-invites/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});r.refresh()};return <div style={{display:'grid',gap:10}}>{invites.length?invites.map(i=><article key={i.id} style={{background:'white',border:'1px solid #ddd',borderRadius:10,padding:14}}><b>{i.organizations?.name??'องค์กร'}</b><p>{i.organizations?.kind} · {i.organizations?.province} · เชิญเป็น {i.role}</p><button onClick={()=>void respond(i.id,'accepted')}>รับคำเชิญ</button><button onClick={()=>void respond(i.id,'declined')}>ปฏิเสธ</button></article>):<p>ไม่มีคำเชิญที่รอการตอบรับ</p>}</div>}

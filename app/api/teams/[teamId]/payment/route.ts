@@ -10,6 +10,7 @@ type TeamPaymentQuery = {
   id: string
   tournament_id: string
   created_by: string
+  status: string
   tournaments: {
     fee: number | null
     promptpay: string | null
@@ -48,7 +49,7 @@ export async function POST(
 
   const { data: team, error: teamError } = await supabase
     .from('teams')
-    .select('id, tournament_id, created_by, tournaments(fee, promptpay, status)')
+    .select('id, tournament_id, created_by, status, tournaments(fee, promptpay, status)')
     .eq('id', params.teamId)
     .single()
 
@@ -65,6 +66,10 @@ export async function POST(
 
   if (tournament?.status !== 'open') {
     return NextResponse.json({ error: 'รายการนี้ปิดรับสมัครแล้ว' }, { status: 400 })
+  }
+
+  if (typedTeam.status !== 'pending') {
+    return NextResponse.json({ error: 'ส่งสมัครทีมและรอรับการยืนยัน roster ก่อนอัปโหลดสลิป' }, { status: 400 })
   }
 
   const { data: existingPayment } = await supabase

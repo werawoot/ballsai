@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase'
+import { useEffect, useMemo, useState } from 'react'
 import { Link2, Pencil, Save, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -28,16 +27,13 @@ type AthleteAccount = {
   current_team?: string | null
   province?: string | null
   position?: string | null
+  hasRanking: boolean
 }
 
 export default function EditPlayerButton({
   player,
-  athleteAccounts,
-  linkedPlayerIds,
 }: {
   player: PlayerRecord
-  athleteAccounts: AthleteAccount[]
-  linkedPlayerIds: string[]
 }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -57,10 +53,27 @@ export default function EditPlayerButton({
     rank_change: player.rank_change,
   })
   const [message, setMessage] = useState('')
+  const [accountQuery, setAccountQuery] = useState(player.player_name)
+  const [athleteAccounts, setAthleteAccounts] = useState<AthleteAccount[]>([])
+  const [searchingAccounts, setSearchingAccounts] = useState(false)
   const router = useRouter()
-  const availableAccounts = athleteAccounts.filter(account =>
-    account.user_id === player.player_id || !linkedPlayerIds.includes(account.user_id)
-  )
+  const availableAccounts = useMemo(() => athleteAccounts.filter(account =>
+    account.user_id === player.player_id || !account.hasRanking
+  ), [athleteAccounts, player.player_id])
+
+  useEffect(() => {
+    if (!open) return
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => {
+      setSearchingAccounts(true)
+      void fetch(`/api/admin/athletes/search?q=${encodeURIComponent(accountQuery)}`, { signal: controller.signal })
+        .then(response => response.ok ? response.json() : Promise.reject(new Error('SEARCH_FAILED')))
+        .then((payload: { accounts?: AthleteAccount[] }) => setAthleteAccounts(payload.accounts ?? []))
+        .catch(error => { if (error instanceof Error && error.name !== 'AbortError') setMessage('ค้นหาบัญชีนักกีฬาไม่สำเร็จ') })
+        .finally(() => { if (!controller.signal.aborted) setSearchingAccounts(false) })
+    }, 250)
+    return () => { window.clearTimeout(timeout); controller.abort() }
+  }, [accountQuery, open])
 
   const selectAthleteAccount = (playerId: string) => {
     const account = athleteAccounts.find(item => item.user_id === playerId)
@@ -79,14 +92,15 @@ export default function EditPlayerButton({
   const handleSave = async () => {
     setLoading(true)
     setMessage('')
-    const supabase = createClient()
-    const { error } = await supabase.from('player_ranks').update({
-      ...form,
-      player_id: form.player_id || null,
-    }).eq('id', player.id)
+    const response = await fetch(`/api/admin/rankings/${player.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...form, player_id: form.player_id || null }),
+    })
+    const payload = await response.json().catch(() => null) as { error?: string } | null
     setLoading(false)
-    if (error) {
-      setMessage(error.code === '23505' ? 'บัญชีนี้มี Ranking ใน Season 2026 แล้ว' : `บันทึกไม่สำเร็จ: ${error.message}`)
+    if (!response.ok) {
+      setMessage(payload?.error ?? 'บันทึก Ranking ไม่สำเร็จ')
       return
     }
     setOpen(false)
@@ -120,11 +134,13 @@ export default function EditPlayerButton({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ padding: 12, border: `1.5px solid ${form.player_id ? '#15803d' : '#e5e5e5'}`, borderRadius: 8, background: form.player_id ? '#f0fdf4' : '#fafafa' }}>
                 <label htmlFor={`athlete-account-${player.id}`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 800, color: '#555', marginBottom: 7 }}><Link2 size={14} /> ATHLETE ACCOUNT</label>
+                <input value={accountQuery} onChange={event => setAccountQuery(event.target.value)} placeholder="พิมพ์ชื่อนักกีฬาเพื่อค้นหา" aria-label="ค้นหา Athlete Account" style={{ ...inputStyle, marginBottom: 7, background: 'white' }} />
                 <select id={`athlete-account-${player.id}`} value={form.player_id} onChange={event => selectAthleteAccount(event.target.value)} style={{ ...inputStyle, padding: '9px 10px', background: 'white' }}>
                   <option value="">ยังไม่เชื่อมบัญชี</option>
+                  {form.player_id && !availableAccounts.some(account => account.user_id === form.player_id) && <option value={form.player_id}>{player.player_name} · บัญชีที่เชื่อมอยู่</option>}
                   {availableAccounts.map(account => <option key={account.user_id} value={account.user_id}>{account.display_name} · {account.current_team || account.province || 'BallDoenSai.com Athlete'}</option>)}
                 </select>
-                <p style={{ fontSize: 10, color: '#888', lineHeight: 1.5, marginTop: 7 }}>เลือกจากบัญชีที่สร้าง Athlete Profile แล้ว ระบบจะใช้ UUID เชื่อมข้อมูลแทนชื่อ</p>
+                <p style={{ fontSize: 10, color: '#888', lineHeight: 1.5, marginTop: 7 }}>{searchingAccounts ? 'กำลังค้นหา…' : 'แสดงไม่เกิน 20 บัญชีจากการค้นหา ระบบไม่โหลดรายชื่อทั้งหมดขึ้นมาในครั้งเดียว'}</p>
               </div>
 
               {[['ชื่อนักกีฬา', 'player_name'], ['ทีม', 'team'], ['จังหวัด', 'province']].map(([label, key]) => (

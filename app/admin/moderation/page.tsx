@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, ShieldAlert, Trophy } from 'lucide-react'
+import { ArrowLeft, ChevronRight, ShieldAlert, Trophy } from 'lucide-react'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import HighlightModerationList, { type ModerationItem } from './HighlightModerationList'
 
@@ -19,28 +19,39 @@ type HighlightRow = {
   created_at: string
 }
 
-export default async function HighlightModerationPage() {
+export default async function HighlightModerationPage({ searchParams }: { searchParams?: { queue?: string; before?: string } }) {
   const supabase = await createServerSupabaseClient()
+  const queueMode = searchParams?.queue === 'hidden' ? 'hidden' : 'reported'
+  const before = searchParams?.before && !Number.isNaN(Date.parse(searchParams.before)) ? searchParams.before : null
 
   // Reports are read first: the queue is driven by what someone flagged, and the hidden
   // list below is the record of what the team has already acted on.
-  const [{ data: reports, error: reportsError }, { data: hidden }] = await Promise.all([
-    supabase
+  let reportQuery = supabase
       .from('athlete_highlight_reports')
       .select('id, highlight_id, reason, created_at')
       .is('resolved_at', null)
       .order('created_at', { ascending: false })
-      .limit(100),
-    supabase
+      .limit(26)
+  let hiddenQuery = supabase
       .from('athlete_highlights')
       .select('id, title, media_type, moderation_status, athlete_id, created_at')
       .eq('moderation_status', 'hidden')
       .order('created_at', { ascending: false })
-      .limit(50),
+      .limit(26)
+  if (before) {
+    if (queueMode === 'reported') reportQuery = reportQuery.lt('created_at', before)
+    else hiddenQuery = hiddenQuery.lt('created_at', before)
+  }
+  const [{ data: reports, error: reportsError }, { data: hidden }] = await Promise.all([
+    reportQuery,
+    hiddenQuery,
   ])
 
-  const reportRows = (reports ?? []) as ReportRow[]
-  const hiddenRows = (hidden ?? []) as HighlightRow[]
+  const rawReportRows = (reports ?? []) as ReportRow[]
+  const rawHiddenRows = (hidden ?? []) as HighlightRow[]
+  const hasMore = queueMode === 'reported' ? rawReportRows.length > 25 : rawHiddenRows.length > 25
+  const reportRows = rawReportRows.slice(0, 25)
+  const hiddenRows = rawHiddenRows.slice(0, 25)
   const reportedIds = [...new Set(reportRows.map(report => report.highlight_id))]
 
   const { data: reported } = reportedIds.length
@@ -70,8 +81,10 @@ export default async function HighlightModerationPage() {
   })
 
   const queue = ((reported ?? []) as HighlightRow[]).map(toItem)
-  const hiddenItems = hiddenRows.filter(row => !reportedIds.includes(row.id)).map(toItem)
+  const hiddenItems = hiddenRows.map(toItem)
   const setupNeeded = Boolean(reportsError)
+  const cursorRows = queueMode === 'reported' ? reportRows : hiddenRows
+  const nextCursor = hasMore ? cursorRows.at(-1)?.created_at : null
 
   return (
     <main style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 40 }}>
@@ -106,19 +119,26 @@ export default async function HighlightModerationPage() {
           </div>
         )}
 
-        <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        <nav aria-label="ตัวกรองคิว Moderation" style={{ background: '#111827', borderRadius: 12, display: 'grid', gap: 5, gridTemplateColumns: '1fr 1fr', padding: 5 }}>
+          <Link href="/admin/moderation?queue=reported" style={{ background: queueMode === 'reported' ? '#cc0001' : 'transparent', borderRadius: 8, color: 'white', fontSize: 12, fontWeight: 800, padding: 9, textAlign: 'center', textDecoration: 'none' }}>รายงานรอตรวจ</Link>
+          <Link href="/admin/moderation?queue=hidden" style={{ background: queueMode === 'hidden' ? '#cc0001' : 'transparent', borderRadius: 8, color: 'white', fontSize: 12, fontWeight: 800, padding: 9, textAlign: 'center', textDecoration: 'none' }}>เนื้อหาที่ซ่อน</Link>
+        </nav>
+
+        {queueMode === 'reported' && <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#CC0001', textTransform: 'uppercase', marginBottom: 12 }}>
             <ShieldAlert size={17} /> รอตรวจ ({queue.length})
           </div>
           <HighlightModerationList items={queue} emptyText="ไม่มีเนื้อหาที่ถูกรายงานรอตรวจ" />
-        </div>
+        </div>}
 
-        <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        {queueMode === 'hidden' && <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
           <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#111', textTransform: 'uppercase', marginBottom: 12 }}>
             ซ่อนอยู่ ({hiddenItems.length})
           </div>
           <HighlightModerationList items={hiddenItems} emptyText="ยังไม่มีเนื้อหาที่ถูกซ่อน" />
-        </div>
+        </div>}
+
+        {nextCursor && <Link href={`/admin/moderation?queue=${queueMode}&before=${encodeURIComponent(nextCursor)}`} style={{ alignItems: 'center', alignSelf: 'center', background: '#111827', borderRadius: 9, color: 'white', display: 'inline-flex', fontSize: 12, fontWeight: 800, gap: 6, padding: '10px 14px', textDecoration: 'none' }}>ดูรายการถัดไป <ChevronRight size={15} /></Link>}
       </div>
     </main>
   )
