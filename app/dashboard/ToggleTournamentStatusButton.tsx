@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { requestErrorText, requestJson, shouldStartAction } from '@/lib/pending-action'
 import { Lock, Unlock } from 'lucide-react'
 
 export default function ToggleTournamentStatusButton({
@@ -14,27 +15,35 @@ export default function ToggleTournamentStatusButton({
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const router = useRouter()
+  const inFlight = useRef<string | null>(null)
   const nextStatus = status === 'open' ? 'closed' : 'open'
   const isOpen = status === 'open'
 
   const toggle = async () => {
+    if (!shouldStartAction(inFlight.current)) return
+    inFlight.current = nextStatus
     setLoading(true)
     setMessage('')
 
-    const response = await fetch(`/api/tournaments/${tournamentId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: nextStatus }),
-    })
+    try {
+      const outcome = await requestJson(`/api/tournaments/${tournamentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      })
 
-    if (!response.ok) {
-      const data = (await response.json().catch(() => null)) as { error?: string } | null
-      setMessage(data?.error ?? 'อัปเดตสถานะไม่สำเร็จ')
-    } else {
+      if (!outcome.ok) {
+        setMessage(requestErrorText(outcome, { fallback: 'อัปเดตสถานะไม่สำเร็จ', mutating: true }))
+        // A blind second toggle would flip the status back, so re-read the real state.
+        if (outcome.kind === 'network') router.refresh()
+        return
+      }
+
       router.refresh()
+    } finally {
+      setLoading(false)
+      inFlight.current = null
     }
-
-    setLoading(false)
   }
 
   return (

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Check, HeartHandshake, Link2, ShieldCheck, X } from 'lucide-react'
+import { requestErrorText, requestJson, shouldStartAction } from '@/lib/pending-action'
 
 export type GuardianLink = {
   id: string
@@ -17,36 +18,79 @@ export default function GuardianLinksClient({ isGuardian, links, incoming }: { i
   const [busy, setBusy] = useState(false)
   const [myLinks, setMyLinks] = useState(links)
   const [requests, setRequests] = useState(incoming)
+  // This screen records guardian consent for a minor, so a stuck button or a
+  // silently duplicated request is not acceptable. `disabled={busy}` only guards
+  // the next render; this refuses the second click immediately.
+  const inFlight = useRef<string | null>(null)
 
   const requestLink = async () => {
+    if (!shouldStartAction(inFlight.current)) return
+    inFlight.current = 'request'
     setBusy(true); setMessage('')
-    const response = await fetch('/api/guardian-links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ athleteEmail: email, consent }) })
-    const result = await response.json().catch(() => null) as { error?: string } | null
-    setMessage(response.ok ? 'ส่งคำขอแล้ว รอให้นักกีฬาตอบรับในบัญชีของเขา' : (result?.error ?? 'ส่งคำขอไม่สำเร็จ'))
-    if (response.ok) { setEmail(''); setConsent(false) }
-    setBusy(false)
+    try {
+      const outcome = await requestJson('/api/guardian-links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ athleteEmail: email, consent }) })
+      if (!outcome.ok) {
+        // The request may already have been created and the athlete already notified.
+        setMessage(requestErrorText(outcome, { fallback: 'ส่งคำขอไม่สำเร็จ', mutating: true }))
+        return
+      }
+      setMessage('ส่งคำขอแล้ว รอให้นักกีฬาตอบรับในบัญชีของเขา')
+      setEmail(''); setConsent(false)
+    } finally {
+      setBusy(false)
+      inFlight.current = null
+    }
   }
 
   const respond = async (id: string, status: 'accepted' | 'declined') => {
+    if (!shouldStartAction(inFlight.current)) return
+    inFlight.current = id
     setBusy(true); setMessage('')
-    const response = await fetch(`/api/guardian-links/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) })
-    const result = await response.json().catch(() => null) as { error?: string } | null
-    if (response.ok) {
+    try {
+      const outcome = await requestJson(`/api/guardian-links/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) })
+      if (!outcome.ok) {
+        // This guardian-link flow records its consent through the RPC on acceptance.
+        // If the response is lost, do not claim success or flip the local card.
+        setMessage(requestErrorText(outcome, { fallback: 'อัปเดตคำขอไม่สำเร็จ', mutating: true }))
+        return
+      }
       setRequests(items => items.map(item => item.id === id ? { ...item, status } : item))
       setMessage(status === 'accepted' ? 'เชื่อมบัญชีผู้ปกครองแล้ว' : 'ปฏิเสธคำขอแล้ว')
-    } else setMessage(result?.error ?? 'อัปเดตคำขอไม่สำเร็จ')
-    setBusy(false)
+    } finally {
+      setBusy(false)
+      inFlight.current = null
+    }
   }
 
   const revoke = async (id: string) => {
+    // `revoke_guardian_link` clears `guardian_consent_at` AND sets `is_public = false`
+    // when no other accepted, consented link remains for that athlete. This tab only
+    // sees this guardian's own links, so it cannot tell whether another guardian still
+    // has one -- say what may happen rather than promising either way.
+    const confirmed = window.confirm(
+      'ยกเลิกการเชื่อมบัญชีผู้ปกครอง?\n\n' +
+      'หากนี่เป็นลิงก์ผู้ปกครองที่ยอมรับรายสุดท้ายของนักกีฬาคนนี้ ความยินยอมของผู้ปกครองจะถูกลบ ' +
+      'และโปรไฟล์สาธารณะของนักกีฬาจะถูกปิดทันที ต้องมีผู้ปกครองยืนยันใหม่ก่อนจึงเปิดสาธารณะได้อีกครั้ง',
+    )
+    if (!confirmed) return
+
+    if (!shouldStartAction(inFlight.current)) return
+    inFlight.current = id
     setBusy(true); setMessage('')
-    const response = await fetch(`/api/guardian-links/${id}`, { method: 'DELETE' })
-    const result = await response.json().catch(() => null) as { error?: string } | null
-    if (response.ok) {
+    try {
+      const outcome = await requestJson(`/api/guardian-links/${id}`, { method: 'DELETE' })
+      if (!outcome.ok) {
+        // Revoking may remove the effective guardian consent when no other accepted
+        // link remains. Do not show it as revoked when the response is lost.
+        setMessage(requestErrorText(outcome, { fallback: 'ยกเลิกการเชื่อมบัญชีไม่สำเร็จ', mutating: true }))
+        return
+      }
       setMyLinks(items => items.map(item => item.id === id ? { ...item, status: 'revoked' } : item))
-      setMessage('ยกเลิกการเชื่อมบัญชีแล้ว')
-    } else setMessage(result?.error ?? 'ยกเลิกการเชื่อมบัญชีไม่สำเร็จ')
-    setBusy(false)
+      setMessage('ยกเลิกการเชื่อมบัญชีแล้ว · หากนี่เป็นลิงก์ผู้ปกครองที่ยอมรับรายสุดท้าย ความยินยอมถูกลบและโปรไฟล์สาธารณะของนักกีฬาถูกปิดแล้ว')
+    } finally {
+      setBusy(false)
+      inFlight.current = null
+    }
   }
 
   const card = (link: GuardianLink, incomingCard = false) => {

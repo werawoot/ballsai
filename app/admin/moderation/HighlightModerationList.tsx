@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { requestErrorText, requestJson, shouldStartAction } from '@/lib/pending-action'
 import { EyeOff, ExternalLink, Loader2, Eye, Trash2 } from 'lucide-react'
 
 export type ModerationItem = {
@@ -18,28 +19,45 @@ export default function HighlightModerationList({ items, emptyText }: { items: M
   const router = useRouter()
   const [busyId, setBusyId] = useState(0)
   const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
+  // Delete removes the stored file and cannot be undone, so the second click must
+  // never reach the handler.
+  const inFlight = useRef<number | null>(null)
 
   const moderate = async (item: ModerationItem, action: 'hide' | 'unhide' | 'delete') => {
     if (action === 'delete' && !window.confirm(`ลบ "${item.title}" ของ ${item.athleteName} อย่างถาวร?\n\nไฟล์จะถูกลบออกจากที่เก็บด้วย และกู้คืนไม่ได้`)) return
+    if (!shouldStartAction(inFlight.current === null ? null : String(inFlight.current))) return
+    inFlight.current = item.id
     setBusyId(item.id)
     setMessage(null)
-    const response = await fetch(`/api/highlights/${item.id}/moderate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action }),
-    })
-    const payload = await response.json().catch(() => null) as { error?: string; auditRecorded?: boolean; warning?: string } | null
-    setBusyId(0)
-    if (!response.ok) {
-      setMessage({ kind: 'error', text: payload?.error ?? 'ดำเนินการไม่สำเร็จ' })
-      return
+    try {
+      const outcome = await requestJson<{ error?: string; auditRecorded?: boolean; warning?: string }>(
+        `/api/highlights/${item.id}/moderate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        },
+      )
+      if (!outcome.ok) {
+        setMessage({
+          kind: 'error',
+          text: requestErrorText(outcome, { fallback: 'ดำเนินการไม่สำเร็จ', mutating: true }),
+        })
+        // A delete already removes the file. If the response was lost, re-read the queue
+        // so the admin sees whether it is gone instead of deleting twice.
+        if (outcome.kind === 'network') router.refresh()
+        return
+      }
+      const done = action === 'hide' ? 'ซ่อนแล้ว' : action === 'unhide' ? 'แสดงอีกครั้งแล้ว' : 'ลบแล้ว'
+      setMessage({
+        kind: outcome.data?.auditRecorded === false ? 'error' : 'success',
+        text: outcome.data?.auditRecorded === false ? `${item.title}: ${done} แต่ Audit ไม่สำเร็จ กรุณาแจ้งผู้ดูแลฐานข้อมูล` : `${item.title}: ${done}`,
+      })
+      router.refresh()
+    } finally {
+      setBusyId(0)
+      inFlight.current = null
     }
-    const done = action === 'hide' ? 'ซ่อนแล้ว' : action === 'unhide' ? 'แสดงอีกครั้งแล้ว' : 'ลบแล้ว'
-    setMessage({
-      kind: payload?.auditRecorded === false ? 'error' : 'success',
-      text: payload?.auditRecorded === false ? `${item.title}: ${done} แต่ Audit ไม่สำเร็จ กรุณาแจ้งผู้ดูแลฐานข้อมูล` : `${item.title}: ${done}`,
-    })
-    router.refresh()
   }
 
   if (items.length === 0) {

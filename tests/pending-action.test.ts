@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { VENUE_PENDING_COPY, pendingButton, shouldStartAction } from '@/lib/pending-action'
+import { describe, expect, it, vi } from 'vitest'
+import { requestJson, VENUE_PENDING_COPY, pendingButton, shouldStartAction, shouldStartMatchResultAction } from '@/lib/pending-action'
 
 const idle = { pending: null, key: 'save', idle: 'บันทึก', busy: 'กำลังบันทึก...' }
 
@@ -65,6 +65,33 @@ describe('shouldStartAction', () => {
     // re-renders, or a keyboard repeat, still reaches the handler.
     expect(shouldStartAction('save')).toBe(false)
     expect(shouldStartAction('anything-else')).toBe(false)
+  })
+})
+
+describe('shouldStartMatchResultAction', () => {
+  it('treats a lost confirm response as unknown and blocks another request', async () => {
+    const originalFetch = globalThis.fetch
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+
+    try {
+      const outcome = await requestJson('/api/match-results', { method: 'POST' })
+      const outcomeUnknown = !outcome.ok && outcome.kind === 'network'
+
+      // The same guard is used at the handler and both buttons; it must reject a
+      // second confirm or a preview until a full reload reads server state again.
+      expect(outcomeUnknown).toBe(true)
+      expect(shouldStartMatchResultAction(null, outcomeUnknown)).toBe(false)
+    } finally {
+      vi.stubGlobal('fetch', originalFetch)
+    }
+  })
+
+  it('allows a fresh action after the page has reloaded and state is known', () => {
+    expect(shouldStartMatchResultAction(null, false)).toBe(true)
+  })
+
+  it('still blocks a second click while a request is in flight', () => {
+    expect(shouldStartMatchResultAction('confirm', false)).toBe(false)
   })
 })
 

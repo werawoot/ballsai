@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { requestErrorText, requestJson, shouldStartAction } from '@/lib/pending-action'
 import { History, Loader2, Undo2 } from 'lucide-react'
 
 type MatchResultRow = {
@@ -27,6 +28,8 @@ export default function MatchResultHistory({
   const router = useRouter()
   const [voidingId, setVoidingId] = useState('')
   const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
+  // Synchronous guard: `disabled` cannot stop a second click in the same tick.
+  const inFlight = useRef<string | null>(null)
 
   const voidResult = async (result: MatchResultRow) => {
     const teamA = teamNames[result.team_a_id] ?? 'Team A'
@@ -37,19 +40,34 @@ export default function MatchResultHistory({
     )
     if (!confirmed) return
 
+    if (!shouldStartAction(inFlight.current)) return
+    inFlight.current = result.id
     setVoidingId(result.id)
     setMessage(null)
-    const response = await fetch(`/api/match-results/${result.id}/void`, { method: 'POST' })
-    const payload = await response.json().catch(() => null) as { error?: string; revertedPerformances?: number } | null
-    setVoidingId('')
 
-    if (!response.ok) {
-      setMessage({ kind: 'error', text: payload?.error ?? 'ยกเลิกผลแข่งไม่สำเร็จ' })
-      return
+    try {
+      const outcome = await requestJson<{ error?: string; revertedPerformances?: number }>(
+        `/api/match-results/${result.id}/void`,
+        { method: 'POST' },
+      )
+
+      if (!outcome.ok) {
+        setMessage({
+          kind: 'error',
+          text: requestErrorText(outcome, { fallback: 'ยกเลิกผลแข่งไม่สำเร็จ', mutating: true }),
+        })
+        // A void may have been applied with only the response lost. Re-read from the
+        // server so the list shows the real state before the organizer tries again.
+        if (outcome.kind === 'network') router.refresh()
+        return
+      }
+
+      setMessage({ kind: 'success', text: `ยกเลิกผลแข่งแล้ว · คืนค่านักกีฬา ${outcome.data?.revertedPerformances ?? 0} คน` })
+      router.refresh()
+    } finally {
+      setVoidingId('')
+      inFlight.current = null
     }
-
-    setMessage({ kind: 'success', text: `ยกเลิกผลแข่งแล้ว · คืนค่านักกีฬา ${payload?.revertedPerformances ?? 0} คน` })
-    router.refresh()
   }
 
   if (matchResults.length === 0) {

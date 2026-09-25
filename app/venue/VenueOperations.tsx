@@ -6,6 +6,7 @@ import Link from 'next/link'
 import type { OwnerVenue, OwnerBooking } from './VenueOwnerClient'
 import { formatVenueBookingDateTime, formatVenueBookingTime } from '@/lib/venue-booking-time'
 import styles from './operations.module.css'
+import { requestJson, requestErrorText } from '@/lib/pending-action'
 
 export function OfflinePaymentNotice() {
   return <p className={styles.notice}>Closed Beta: ชำระเงินและมัดจำกับสนามนอกระบบ การยืนยันจองไม่ใช่หลักฐานชำระเงิน กรุณาตกลงยอดเงินและเงื่อนไขคืนเงินกับสนามก่อนโอน</p>
@@ -16,31 +17,37 @@ const local = (value: string) => new Date(new Date(value).valueOf() + 7 * 360000
 export default function VenueOperations({ venues, bookings }: { venues: OwnerVenue[]; bookings: OwnerBooking[] }) {
   const router = useRouter()
   const lock = useRef(false)
+  // The ref refuses the next submit synchronously; the state is what re-renders the
+  // save button as disabled, so the lock never depends on the feedback setState.
+  const outcomeUnknown = useRef(false)
   const [busy, setBusy] = useState(false)
   const [feedback, setFeedback] = useState('')
+  const [needsReload, setNeedsReload] = useState(false)
   const [day, setDay] = useState('')
   const courts = venues.flatMap(v => (v.venue_courts ?? []).map(c => ({ ...c, venueName: v.name })))
   const slots = courts.flatMap(c => (c.venue_slots ?? []).map(s => ({ ...s, label: `${c.venueName} · ${c.name}` })))
     .sort((a,b) => a.starts_at.localeCompare(b.starts_at))
   async function submit(event: FormEvent<HTMLFormElement>, action: string, id: string) {
     event.preventDefault()
-    if (lock.current) return
+    if (lock.current || outcomeUnknown.current) return
     lock.current = true; setBusy(true); setFeedback('')
     const data = Object.fromEntries(new FormData(event.currentTarget))
     try {
-      const response = await fetch('/api/venue-management', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, id, data }) })
-      const result = await response.json()
-      setFeedback(response.ok ? 'บันทึกแล้ว' : result.error ?? 'บันทึกไม่สำเร็จ')
-      if (response.ok) router.refresh()
-    } catch { setFeedback('เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่') }
+      const result = await requestJson('/api/venue-management', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, id, data }) })
+      if (!result.ok) {
+        if (result.kind === 'network') { outcomeUnknown.current = true; setNeedsReload(true) }
+        setFeedback(requestErrorText(result, { fallback: 'บันทึกไม่สำเร็จ', mutating: true }))
+      } else { setFeedback('บันทึกแล้ว'); router.refresh() }
+    } catch { setFeedback('บันทึกไม่สำเร็จ') }
     finally { lock.current = false; setBusy(false) }
   }
-  const save = <button disabled={busy} aria-busy={busy}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button>
+  const save = <button disabled={busy || needsReload} aria-busy={busy}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button>
   return <section className={styles.panel}>
     <p className={styles.eyebrow}>VENUE DESK · เวลาประเทศไทย</p>
     <h2>ตารางสนามและการจัดการ</h2>
     <OfflinePaymentNotice />
     <p role="status" aria-live="polite">{feedback}</p>
+    {needsReload && <button type="button" onClick={() => window.location.reload()}>โหลดหน้าใหม่เพื่อตรวจสถานะก่อนบันทึกอีกครั้ง</button>}
     <label>เลือกวัน <input type="date" value={day} onChange={e => setDay(e.target.value)} /></label>
     <div className={styles.calendar}>
       {slots.filter(s => day && local(s.starts_at).startsWith(day)).map(s => <article key={s.id}>

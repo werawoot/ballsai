@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link2, Pencil, Save, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { requestJson, requestErrorText } from '@/lib/pending-action'
 
 type PlayerRecord = {
   id: string
@@ -53,6 +54,12 @@ export default function EditPlayerButton({
     rank_change: player.rank_change,
   })
   const [message, setMessage] = useState('')
+  const inFlight = useRef(false)
+  // The ref refuses the next click synchronously; the state is what makes the button
+  // render as disabled. Keeping only the ref would leave a button that looks pressable
+  // and silently does nothing.
+  const outcomeUnknown = useRef(false)
+  const [needsReload, setNeedsReload] = useState(false)
   const [accountQuery, setAccountQuery] = useState(player.player_name)
   const [athleteAccounts, setAthleteAccounts] = useState<AthleteAccount[]>([])
   const [searchingAccounts, setSearchingAccounts] = useState(false)
@@ -90,21 +97,26 @@ export default function EditPlayerButton({
   }
 
   const handleSave = async () => {
+    if (inFlight.current || outcomeUnknown.current) return
+    inFlight.current = true
     setLoading(true)
     setMessage('')
-    const response = await fetch(`/api/admin/rankings/${player.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, player_id: form.player_id || null }),
-    })
-    const payload = await response.json().catch(() => null) as { error?: string } | null
-    setLoading(false)
-    if (!response.ok) {
-      setMessage(payload?.error ?? 'บันทึก Ranking ไม่สำเร็จ')
-      return
+    try {
+      const result = await requestJson(`/api/admin/rankings/${player.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, player_id: form.player_id || null }),
+      })
+      if (!result.ok) {
+        if (result.kind === 'network') { outcomeUnknown.current = true; setNeedsReload(true) }
+        setMessage(requestErrorText(result, { fallback: 'บันทึก Ranking ไม่สำเร็จ', mutating: true }))
+        return
+      }
+      setOpen(false)
+      router.refresh()
+    } finally {
+      inFlight.current = false
+      setLoading(false)
     }
-    setOpen(false)
-    router.refresh()
   }
 
   const inputStyle = {
@@ -171,7 +183,13 @@ export default function EditPlayerButton({
 
             {message && <div role="alert" style={{ marginTop: 12, padding: '9px 11px', borderRadius: 7, background: '#fff1f1', color: '#a40000', fontSize: 12, fontWeight: 700 }}>{message}</div>}
 
-            <button onClick={handleSave} disabled={loading} style={{ width: '100%', marginTop: 20, background: '#CC0001', color: 'white', border: 'none', borderRadius: 12, padding: '14px', fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            {needsReload && (
+              <button type="button" onClick={() => window.location.reload()} style={{ width: '100%', marginTop: 12, background: '#111', color: 'white', border: 'none', borderRadius: 12, padding: '12px', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>
+                โหลดหน้าใหม่เพื่อตรวจสถานะก่อนแก้ไขอีกครั้ง
+              </button>
+            )}
+
+            <button onClick={handleSave} disabled={loading || needsReload} style={{ width: '100%', marginTop: 20, background: loading || needsReload ? '#eee' : '#CC0001', color: loading || needsReload ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: '14px', fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: loading || needsReload ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <Save size={18} /> {loading ? 'กำลังบันทึก...' : 'บันทึก'}
             </button>
           </div>

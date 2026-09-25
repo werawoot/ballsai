@@ -136,8 +136,11 @@ describe('BookingHistoryList wiring', () => {
   })
 
   it('blocks a second click while a cancellation is in flight', () => {
-    expect(source).toContain('if (busy) return')
-    expect(source).toContain('disabled={busy !== null}')
+    expect(source).toContain('if (busy || outcomeUnknown.current) return')
+    // The ref alone left the button rendering as pressable while the handler refused
+    // the click, so the lock is now state-backed and `disabled` reads that state.
+    expect(source).toContain('disabled={busy !== null || needsReload}')
+    expect(source).toContain("outcomeUnknown.current = true")
   })
 
   it('refreshes the list when the helper says the view is stale', () => {

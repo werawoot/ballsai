@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Trophy, ArrowLeft, CheckCircle, Upload, Copy, Banknote } from 'lucide-react'
+import { requestErrorText, requestJson, shouldStartAction } from '@/lib/pending-action'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -18,6 +19,13 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams()
   const requestedTeamId = searchParams.get('teamId') ?? ''
   const [step, setStep] = useState<'form' | 'payment' | 'success'>(() => requestedTeamId ? 'payment' : 'form')
+  // `disabled` cannot stop a second tap in the same tick, and the slip upload is the
+  // slowest request in the app on a phone, so it is the easiest one to double-tap.
+  const inFlight = useRef<string | null>(null)
+  // The ref refuses the next tap synchronously; the state is what re-renders both
+  // buttons as disabled, so the lock never depends on the message setState.
+  const outcomeUnknown = useRef(false)
+  const [needsReload, setNeedsReload] = useState(false)
   const [teamName, setTeamName] = useState('')
   const [teamId, setTeamId] = useState(requestedTeamId)
   const [slipFile, setSlipFile] = useState<File | null>(null)
@@ -42,34 +50,47 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
 
   const handleSubmitTeam = async () => {
     if (!teamName.trim()) return
+    if (!shouldStartAction(inFlight.current) || outcomeUnknown.current) return
+    inFlight.current = 'team'
     setLoading(true)
     setMessage('')
 
-    const response = await fetch(`/api/tournaments/${params.id}/teams`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: teamName,
-      }),
-    })
+    try {
+      const outcome = await requestJson<{ error?: string; teamId?: string }>(
+        `/api/tournaments/${params.id}/teams`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: teamName,
+          }),
+        },
+      )
 
-    if (response.status === 401) {
+      if (!outcome.ok && outcome.kind === 'http' && outcome.status === 401) {
+        router.push('/login')
+        return
+      }
+
+      if (!outcome.ok) {
+        // The team may already exist with only the response lost. Creating a second one
+        // would put two teams in the same tournament, so send them to check first.
+        if (outcome.kind === 'network') { outcomeUnknown.current = true; setNeedsReload(true) }
+        setMessage(requestErrorText(outcome, { fallback: 'เกิดข้อผิดพลาดในการสมัครทีม', mutating: true }))
+        return
+      }
+
+      if (!outcome.data?.teamId) {
+        setMessage('เกิดข้อผิดพลาดในการสมัครทีม')
+        return
+      }
+
+      setTeamId(outcome.data.teamId)
+      router.push(`/team-members?team=${encodeURIComponent(outcome.data.teamId)}`)
+    } finally {
       setLoading(false)
-      router.push('/login')
-      return
+      inFlight.current = null
     }
-
-    const result = (await response.json().catch(() => null)) as
-      | { error?: string; teamId?: string }
-      | null
-
-    if (!response.ok || !result?.teamId) {
-      setMessage(result?.error ?? 'เกิดข้อผิดพลาดในการสมัครทีม')
-    } else {
-      setTeamId(result.teamId)
-      router.push(`/team-members?team=${encodeURIComponent(result.teamId)}`)
-    }
-    setLoading(false)
   }
 
   const handleSlipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,31 +102,38 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
 
   const handleUploadSlip = async () => {
     if (!slipFile) return
+    if (!shouldStartAction(inFlight.current) || outcomeUnknown.current) return
+    inFlight.current = 'slip'
     setLoading(true)
     setMessage('')
 
     const formData = new FormData()
     formData.append('slip', slipFile)
 
-    const response = await fetch(`/api/teams/${teamId}/payment`, {
-      method: 'POST',
-      body: formData,
-    })
+    try {
+      const outcome = await requestJson(`/api/teams/${teamId}/payment`, {
+        method: 'POST',
+        body: formData,
+      })
 
-    if (response.status === 401) {
-      setLoading(false)
-      router.push('/login')
-      return
-    }
+      if (!outcome.ok && outcome.kind === 'http' && outcome.status === 401) {
+        router.push('/login')
+        return
+      }
 
-    const result = (await response.json().catch(() => null)) as { error?: string } | null
+      if (!outcome.ok) {
+        // A slip that reached the server but lost its response is already recorded, and
+        // the API rejects a second one. Ask them to re-check rather than re-upload.
+        if (outcome.kind === 'network') { outcomeUnknown.current = true; setNeedsReload(true) }
+        setMessage(requestErrorText(outcome, { fallback: 'บันทึกการชำระเงินไม่สำเร็จ', mutating: true }))
+        return
+      }
 
-    if (!response.ok) {
-      setMessage(result?.error ?? 'บันทึกการชำระเงินไม่สำเร็จ')
-    } else {
       setStep('success')
+    } finally {
+      setLoading(false)
+      inFlight.current = null
     }
-    setLoading(false)
   }
 
   const copyPromptPay = () => {
@@ -187,7 +215,8 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
               สร้างทีมก่อน แล้วเชิญนักกีฬาด้วยอีเมลให้กดตอบรับ จากนั้นจึงส่งสมัครและอัปโหลดสลิป
             </div>
             {message && <p style={{ textAlign: 'center', fontSize: 13, color: '#CC0001', fontWeight: 600, marginBottom: 14 }}>{message}</p>}
-            <button onClick={handleSubmitTeam} disabled={loading || !teamName} style={{ width: '100%', background: loading || !teamName ? '#eee' : '#CC0001', color: loading || !teamName ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: '15px', fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: loading || !teamName ? 'default' : 'pointer' }}>
+            {needsReload && <button type="button" onClick={() => window.location.reload()} style={{ width: '100%', marginBottom: 12, background: '#111', color: 'white', border: 'none', borderRadius: 12, padding: '12px', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>โหลดหน้าใหม่เพื่อตรวจว่าทีมถูกสร้างแล้วหรือยัง</button>}
+            <button onClick={handleSubmitTeam} disabled={loading || needsReload || !teamName} style={{ width: '100%', background: loading || needsReload || !teamName ? '#eee' : '#CC0001', color: loading || needsReload || !teamName ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: '15px', fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: loading || needsReload || !teamName ? 'default' : 'pointer' }}>
               {loading ? 'กำลังสร้าง...' : 'สร้างทีมและเชิญสมาชิก'}
             </button>
           </div>
@@ -240,8 +269,9 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
             </div>
 
             {message && <p style={{ textAlign: 'center', fontSize: 13, color: '#CC0001', fontWeight: 600 }}>{message}</p>}
+            {needsReload && <button type="button" onClick={() => window.location.reload()} style={{ width: '100%', background: '#111', color: 'white', border: 'none', borderRadius: 12, padding: '12px', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>โหลดหน้าใหม่เพื่อตรวจว่าสลิปถูกบันทึกแล้วหรือยัง</button>}
 
-            <button onClick={handleUploadSlip} disabled={loading || !slipFile} style={{ width: '100%', background: loading || !slipFile ? '#eee' : '#CC0001', color: loading || !slipFile ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: '15px', fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: loading || !slipFile ? 'default' : 'pointer' }}>
+            <button onClick={handleUploadSlip} disabled={loading || needsReload || !slipFile} style={{ width: '100%', background: loading || needsReload || !slipFile ? '#eee' : '#CC0001', color: loading || needsReload || !slipFile ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: '15px', fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: loading || needsReload || !slipFile ? 'default' : 'pointer' }}>
               {loading ? 'กำลังส่ง...' : 'ยืนยันการชำระเงิน'}
             </button>
           </div>

@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { CheckCircle, Eye, Plus, Save, Search, Trash2 } from 'lucide-react'
+import { requestErrorText, requestJson, shouldStartMatchResultAction } from '@/lib/pending-action'
 
 type TournamentOption = {
   id: string
@@ -83,6 +84,12 @@ export default function MatchResultForm({
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
+  // `disabled={loading}` is a render-time guard: a second click that lands before
+  // React re-renders still reaches the handler. This ref refuses it synchronously.
+  // It cannot prevent a duplicate WRITE -- only server-side idempotency can.
+  const inFlight = useRef<string | null>(null)
+  const outcomeUnknownRef = useRef(false)
+  const [outcomeUnknown, setOutcomeUnknown] = useState(false)
 
   // Only athletes who accepted the selected tournament team's invitation appear.
   const filteredPlayers = useMemo(() => {
@@ -124,48 +131,64 @@ export default function MatchResultForm({
   }
 
   const submit = async (mode: 'preview' | 'confirm') => {
+    // Once a confirmation has an unknown outcome, neither preview nor confirm may
+    // clear the lock. A full page reload is required to read server state again.
+    if (!shouldStartMatchResultAction(inFlight.current, outcomeUnknownRef.current || outcomeUnknown)) return
+    inFlight.current = mode
     setLoading(true)
     setMessage('')
     setConfirmed(false)
 
-    const response = await fetch('/api/match-results', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mode,
-        tournamentId,
-        teamAId,
-        teamBId,
-        teamAScore,
-        teamBScore,
-        performances: rows
-          .filter(row => row.teamId && row.playerRankId)
-          .map(row => ({
-            playerRankId: row.playerRankId,
-            teamId: row.teamId,
-            goals: row.goals,
-            assists: row.assists,
-            cleanSheet: row.cleanSheet,
-            mvp: row.mvp,
-          })),
-      }),
-    })
+    try {
+      const outcome = await requestJson<{
+        error?: string
+        preview?: PreviewItem[]
+        matchResultId?: string
+      }>('/api/match-results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode,
+          tournamentId,
+          teamAId,
+          teamBId,
+          teamAScore,
+          teamBScore,
+          performances: rows
+            .filter(row => row.teamId && row.playerRankId)
+            .map(row => ({
+              playerRankId: row.playerRankId,
+              teamId: row.teamId,
+              goals: row.goals,
+              assists: row.assists,
+              cleanSheet: row.cleanSheet,
+              mvp: row.mvp,
+            })),
+        }),
+      })
 
-    const result = await response.json().catch(() => null) as
-      | { error?: string; preview?: PreviewItem[]; matchResultId?: string }
-      | null
+      if (!outcome.ok) {
+        // A lost response on `confirm` is the dangerous case: the result may already be
+        // recorded, with rating/XP/badge triggers fired. Do not invite a blind retry.
+        const mutating = mode === 'confirm'
+        if (outcome.kind === 'network' && mutating) {
+          outcomeUnknownRef.current = true
+          setOutcomeUnknown(true)
+        }
+        setMessage(requestErrorText(outcome, { fallback: 'บันทึกผลไม่สำเร็จ', mutating }))
+        return
+      }
 
-    if (!response.ok) {
-      setMessage(result?.error ?? 'บันทึกผลไม่สำเร็จ')
-    } else {
-      setPreview(result?.preview ?? [])
+      setPreview(outcome.data?.preview ?? [])
       if (mode === 'confirm') {
         setConfirmed(true)
-        setMessage(`บันทึกผลเรียบร้อย ${result?.matchResultId ? `#${result.matchResultId.slice(0, 8)}` : ''}`)
+        setMessage(`บันทึกผลเรียบร้อย ${outcome.data?.matchResultId ? `#${outcome.data.matchResultId.slice(0, 8)}` : ''}`)
       }
+    } finally {
+      // Runs on every path, so the form can never be left permanently disabled.
+      setLoading(false)
+      inFlight.current = null
     }
-
-    setLoading(false)
   }
 
   return (
@@ -359,17 +382,30 @@ export default function MatchResultForm({
       )}
 
       {message && (
-        <div style={{ background: confirmed ? '#dcfce7' : '#fee2e2', color: confirmed ? '#166534' : '#991b1b', borderRadius: 12, padding: '12px 14px', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div role="status" aria-live="polite" style={{ background: confirmed ? '#dcfce7' : '#fee2e2', color: confirmed ? '#166534' : '#991b1b', borderRadius: 12, padding: '12px 14px', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
           {confirmed && <CheckCircle size={16} />}
           {message}
         </div>
       )}
 
+      {/* The connection dropped while confirming, so the result may already be saved.
+          Re-reading the page is the only way to tell, and it is offered instead of a
+          retry button on purpose: a second confirm would double the athletes' XP. */}
+      {outcomeUnknown && (
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#111', color: 'white', border: 'none', borderRadius: 12, padding: 14, fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
+        >
+          โหลดหน้าใหม่เพื่อตรวจสถานะก่อนลองอีกครั้ง
+        </button>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <button onClick={() => submit('preview')} disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'white', color: '#CC0001', border: '1.5px solid #CC0001', borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 800, cursor: loading ? 'default' : 'pointer' }}>
+        <button onClick={() => submit('preview')} disabled={loading || outcomeUnknown} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'white', color: '#CC0001', border: '1.5px solid #CC0001', borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 800, cursor: loading || outcomeUnknown ? 'default' : 'pointer' }}>
           <Eye size={16} /> Preview
         </button>
-        <button onClick={() => submit('confirm')} disabled={loading || preview.length === 0} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: loading || preview.length === 0 ? '#eee' : '#CC0001', color: loading || preview.length === 0 ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 800, cursor: loading || preview.length === 0 ? 'default' : 'pointer' }}>
+        <button onClick={() => submit('confirm')} disabled={loading || outcomeUnknown || preview.length === 0} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: loading || outcomeUnknown || preview.length === 0 ? '#eee' : '#CC0001', color: loading || outcomeUnknown || preview.length === 0 ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 800, cursor: loading || outcomeUnknown || preview.length === 0 ? 'default' : 'pointer' }}>
           <Save size={16} /> Confirm Result
         </button>
       </div>

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Award, Save } from 'lucide-react'
 import { ACTIVE_SEASON } from '@/lib/season'
+import { requestErrorText, requestJson, shouldStartAction } from '@/lib/pending-action'
 
 type Player = { id: string; player_id: string | null; player_name: string; team: string; province: string; position: string }
 
@@ -17,24 +18,38 @@ export default function HallAwardForm({ players }: { players: Player[] }) {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const player = players.find(item => item.id === playerId)
+  // A Hall of Fame entry is described in this file as permanent, so a duplicate is
+  // expensive to undo. This refuses a second click before React re-renders.
+  const inFlight = useRef<string | null>(null)
 
   const publish = async () => {
     if (!player || !citation.trim()) { setMessage('เลือกนักกีฬาและเขียนคำเชิดชูผลงานก่อน'); return }
+    if (!shouldStartAction(inFlight.current)) return
+    inFlight.current = playerId
     setLoading(true); setMessage('')
-    const response = await fetch('/api/admin/hall', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        season, category, age_group: ageGroup, province: player.province || null,
-        athlete_id: player.player_id, player_rank_id: player.id, athlete_name: player.player_name,
-        team_name: player.team || null, position: player.position || null, citation: citation.trim(),
-      }),
-    })
-    const payload = await response.json().catch(() => null) as { error?: string } | null
-    setLoading(false)
-    if (!response.ok) { setMessage(payload?.error ?? 'เผยแพร่ Hall of Fame ไม่สำเร็จ'); return }
-    setMessage('ประกาศเกียรติยศใน Hall of Fame แล้ว')
-    setCitation(''); router.refresh()
+    try {
+      const outcome = await requestJson('/api/admin/hall', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          season, category, age_group: ageGroup, province: player.province || null,
+          athlete_id: player.player_id, player_rank_id: player.id, athlete_name: player.player_name,
+          team_name: player.team || null, position: player.position || null, citation: citation.trim(),
+        }),
+      })
+      if (!outcome.ok) {
+        // The award may already be published with only the response lost, and this is a
+        // permanent record, so refresh rather than invite a second publish.
+        setMessage(requestErrorText(outcome, { fallback: 'เผยแพร่ Hall of Fame ไม่สำเร็จ', mutating: true }))
+        if (outcome.kind === 'network') router.refresh()
+        return
+      }
+      setMessage('ประกาศเกียรติยศใน Hall of Fame แล้ว')
+      setCitation(''); router.refresh()
+    } finally {
+      setLoading(false)
+      inFlight.current = null
+    }
   }
 
   const input = { width: '100%', border: '1px solid #ded8cd', background: '#fff', padding: '10px 11px', fontSize: 13, fontFamily: 'var(--font-sarabun)' } as const

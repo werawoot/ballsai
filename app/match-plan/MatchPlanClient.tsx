@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { CheckCircle2, LoaderCircle, Save, ShieldCheck, UsersRound } from 'lucide-react'
+import { requestJson, requestErrorText } from '@/lib/pending-action'
 
 type Tournament = { name: string; start_date: string | null }
 type TournamentRelation = Tournament[] | null
@@ -27,6 +28,11 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
   const [roles, setRoles] = useState<Record<string, LineupRole | undefined>>({})
   const [lineupPositions, setLineupPositions] = useState<Record<string, Position>>({})
   const [message, setMessage] = useState('')
+  const inFlight = useRef(false)
+  // The ref refuses the next click synchronously; the state is what re-renders the
+  // control as disabled, so the lock never depends on some other setState.
+  const outcomeUnknown = useRef(false)
+  const [needsReload, setNeedsReload] = useState(false)
 
   useEffect(() => {
     if (!teamId) return
@@ -61,17 +67,25 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
   }
 
   const save = async () => {
-    if (!teamId) return
+    if (!teamId || inFlight.current || outcomeUnknown.current) return
+    inFlight.current = true
     setSaving(true); setMessage('')
     const ordered = [...starters, ...substitutes]
-    const response = await fetch('/api/match-plans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-      teamId, formation, matchFocus, teamTalk,
-      players: ordered.map((member, index) => ({ athlete_id: member.athlete_id, lineup_role: roles[member.athlete_id], position: lineupPositions[member.athlete_id] ?? 'MF', slot_order: index })),
-    }) })
-    const result = await response.json().catch(() => null) as { error?: string } | null
-    setSaving(false)
-    if (!response.ok) { setMessage(result?.error ?? 'บันทึกแผนไม่สำเร็จ'); return }
-    setMessage('บันทึก Match Plan แล้ว — ยังไม่กระทบผลแข่งหรือ Rating')
+    try {
+      const result = await requestJson('/api/match-plans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        teamId, formation, matchFocus, teamTalk,
+        players: ordered.map((member, index) => ({ athlete_id: member.athlete_id, lineup_role: roles[member.athlete_id], position: lineupPositions[member.athlete_id] ?? 'MF', slot_order: index })),
+      }) })
+      if (!result.ok) {
+        if (result.kind === 'network') { outcomeUnknown.current = true; setNeedsReload(true) }
+        setMessage(requestErrorText(result, { fallback: 'บันทึกแผนไม่สำเร็จ', mutating: true }))
+        return
+      }
+      setMessage('บันทึก Match Plan แล้ว — ยังไม่กระทบผลแข่งหรือ Rating')
+    } finally {
+      inFlight.current = false
+      setSaving(false)
+    }
   }
 
   if (teams.length === 0) return <div style={{ background: '#fff', border: '1px solid #e0e4ea', borderRadius: 14, padding: 24, color: '#627084', lineHeight: 1.6 }}>ยังไม่มีทีมที่คุณจัดการได้ สร้างทีมและเชิญนักกีฬาให้ตอบรับก่อน แล้วจึงกลับมาวางแผนก่อนแข่ง</div>
@@ -107,7 +121,8 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
       </section>
 
       {message && <div style={{ borderRadius: 11, padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 8, background: message.startsWith('บันทึก') ? '#e7f7ec' : '#fff0f0', color: message.startsWith('บันทึก') ? '#17683a' : '#a22b2d', fontSize: 13, fontWeight: 700 }}>{message.startsWith('บันทึก') ? <CheckCircle2 size={17} /> : <ShieldCheck size={17} />}{message}</div>}
-      <button type="button" disabled={saving} onClick={save} style={{ width: '100%', background: saving ? '#9ea6b1' : '#CC0001', color: 'white', border: 'none', borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 800, cursor: saving ? 'wait' : 'pointer', display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}><Save size={17} /> {saving ? 'กำลังบันทึก…' : 'บันทึก Match Plan'}</button>
+      {needsReload && <button type="button" onClick={() => window.location.reload()} style={{ width: '100%', marginBottom: 9, padding: 11, fontSize: 12, border: 0, borderRadius: 8, background: '#111', color: 'white', fontWeight: 800, cursor: 'pointer' }}>โหลดหน้าใหม่เพื่อตรวจว่าแผนถูกบันทึกแล้วหรือยัง</button>}
+      <button type="button" disabled={saving || needsReload} onClick={save} style={{ width: '100%', background: saving ? '#9ea6b1' : '#CC0001', color: 'white', border: 'none', borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 800, cursor: saving ? 'wait' : 'pointer', display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}><Save size={17} /> {saving ? 'กำลังบันทึก…' : 'บันทึก Match Plan'}</button>
     </>}
   </div>
 }

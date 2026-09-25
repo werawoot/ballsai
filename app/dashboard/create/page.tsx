@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
+import { requestErrorText, requestJson, shouldStartAction } from '@/lib/pending-action'
 import { Trophy, MapPin, Calendar, Banknote, ArrowLeft, FileText, Phone, CheckCircle, Users } from 'lucide-react'
 import Link from 'next/link'
 
@@ -54,6 +55,13 @@ export default function CreateTournamentPage() {
   const [success, setSuccess] = useState(false)
   const [message, setMessage] = useState('')
   const router = useRouter()
+  // A duplicate tournament has to be cleaned up by hand, so refuse the second click
+  // synchronously rather than relying on `disabled` alone.
+  const inFlight = useRef<string | null>(null)
+  // The ref refuses the next click synchronously; the state is what re-renders the
+  // control as disabled, so the lock never depends on some other setState.
+  const outcomeUnknown = useRef(false)
+  const [needsReload, setNeedsReload] = useState(false)
 
   const handleSubmit = async () => {
     if (!name || !location || !startDate || !fee) {
@@ -61,39 +69,46 @@ export default function CreateTournamentPage() {
       return
     }
 
+    if (!shouldStartAction(inFlight.current) || outcomeUnknown.current) return
+    inFlight.current = 'create'
     setLoading(true)
     setMessage('')
 
-    const response = await fetch('/api/tournaments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        description,
-        location,
-        startDate,
-        endDate,
-        fee: Number(fee),
-        promptpay,
-        maxTeams: Number(maxTeams) || 16,
-      }),
-    })
+    try {
+      const outcome = await requestJson('/api/tournaments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          description,
+          location,
+          startDate,
+          endDate,
+          fee: Number(fee),
+          promptpay,
+          maxTeams: Number(maxTeams) || 16,
+        }),
+      })
 
-    if (response.status === 401) {
-      setLoading(false)
-      router.push('/login')
-      return
-    }
+      if (!outcome.ok && outcome.kind === 'http' && outcome.status === 401) {
+        router.push('/login')
+        return
+      }
 
-    if (!response.ok) {
-      const data = (await response.json().catch(() => null)) as { error?: string } | null
-      setMessage(data?.error ?? 'เกิดข้อผิดพลาดในการสร้างรายการ')
-    } else {
+      if (!outcome.ok) {
+        // The tournament may already exist with only the response lost. Check the
+        // dashboard before creating a second one.
+        if (outcome.kind === 'network') { outcomeUnknown.current = true; setNeedsReload(true) }
+        setMessage(requestErrorText(outcome, { fallback: 'เกิดข้อผิดพลาดในการสร้างรายการ', mutating: true }))
+        return
+      }
+
       setSuccess(true)
       setTimeout(() => router.push('/dashboard'), 2000)
+    } finally {
+      setLoading(false)
+      inFlight.current = null
     }
-
-    setLoading(false)
   }
 
   if (success) {
@@ -178,9 +193,11 @@ export default function CreateTournamentPage() {
           <p style={{ textAlign: 'center', fontSize: 13, color: '#CC0001', fontWeight: 600, marginBottom: 14 }}>{message}</p>
         )}
 
+        {needsReload && <button type="button" onClick={() => window.location.reload()} style={{ width: '100%', marginBottom: 12, padding: 12, fontSize: 13, border: 0, borderRadius: 8, background: '#111', color: 'white', fontWeight: 800, cursor: 'pointer' }}>โหลดหน้าใหม่เพื่อตรวจว่ารายการถูกสร้างแล้วหรือยัง</button>}
+
         <button
           onClick={handleSubmit}
-          disabled={loading}
+          disabled={loading || needsReload}
           style={{ width: '100%', background: loading ? '#eee' : '#CC0001', color: loading ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: '15px', fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: loading ? 'default' : 'pointer', boxShadow: loading ? 'none' : '0 4px 16px rgba(204,0,1,0.3)', transition: 'all 0.2s' }}
         >
           {loading ? 'กำลังสร้าง...' : 'สร้างรายการแข่งขัน'}

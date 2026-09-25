@@ -1,33 +1,43 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { requestErrorText, requestJson, shouldStartAction } from '@/lib/pending-action'
 
 export default function ConfirmTeamButton({ teamId, action }: { teamId: string, action: 'confirmed' | 'rejected' }) {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const router = useRouter()
+  // `disabled` is render-time only; this refuses a second click synchronously.
+  const inFlight = useRef<string | null>(null)
 
   const handleClick = async () => {
+    if (!shouldStartAction(inFlight.current)) return
+    inFlight.current = action
     setLoading(true)
     setMessage('')
 
-    const response = await fetch(`/api/teams/${teamId}/status`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: action }),
-    })
+    try {
+      const outcome = await requestJson(`/api/teams/${teamId}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: action }),
+      })
 
-    if (!response.ok) {
-      const data = (await response.json().catch(() => null)) as { error?: string } | null
-      setMessage(data?.error ?? 'อัปเดตสถานะทีมไม่สำเร็จ')
+      if (!outcome.ok) {
+        setMessage(requestErrorText(outcome, { fallback: 'อัปเดตสถานะทีมไม่สำเร็จ', mutating: true }))
+        // The status may already have changed with only the response lost, so re-read
+        // rather than leaving a stale button for the organizer to press again.
+        if (outcome.kind === 'network') router.refresh()
+        return
+      }
+
+      router.refresh()
+    } finally {
       setLoading(false)
-      return
+      inFlight.current = null
     }
-
-    setLoading(false)
-    router.refresh()
   }
 
   const isConfirm = action === 'confirmed'

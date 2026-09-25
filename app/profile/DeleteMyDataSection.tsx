@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AlertTriangle, Loader2, Trash2 } from 'lucide-react'
+import { requestErrorText, requestJson } from '@/lib/pending-action'
 
 const CONFIRM_PHRASE = 'ลบข้อมูลของฉัน'
 
@@ -15,30 +16,41 @@ export default function DeleteMyDataSection() {
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
+  const inFlight = useRef(false)
+  const outcomeUnknown = useRef(false)
+  const [needsReload, setNeedsReload] = useState(false)
 
   const submit = async () => {
+    if (inFlight.current || outcomeUnknown.current) return
+    inFlight.current = true
     setLoading(true)
     setMessage(null)
-    const response = await fetch('/api/account/delete-athlete-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ confirm }),
-    })
-    const payload = await response.json().catch(() => null) as { error?: string; removedHighlights?: number } | null
-    setLoading(false)
+    try {
+      const outcome = await requestJson<{ error?: string; removedHighlights?: number }>('/api/account/delete-athlete-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm }),
+      })
+      if (!outcome.ok) {
+        if (outcome.kind === 'network') {
+          outcomeUnknown.current = true
+          setNeedsReload(true)
+        }
+        setMessage({ kind: 'error', text: requestErrorText(outcome, { fallback: 'ลบข้อมูลไม่สำเร็จ', mutating: true }) })
+        return
+      }
 
-    if (!response.ok) {
-      setMessage({ kind: 'error', text: payload?.error ?? 'ลบข้อมูลไม่สำเร็จ' })
-      return
+      setConfirm('')
+      setOpen(false)
+      setMessage({
+        kind: 'success',
+        text: `ลบข้อมูลนักกีฬาของคุณแล้ว · ลบ Highlight ${outcome.data?.removedHighlights ?? 0} รายการ · ทีมดูแลจะปิดบัญชีให้ในขั้นตอนสุดท้าย`,
+      })
+      router.refresh()
+    } finally {
+      setLoading(false)
+      inFlight.current = false
     }
-
-    setConfirm('')
-    setOpen(false)
-    setMessage({
-      kind: 'success',
-      text: `ลบข้อมูลนักกีฬาของคุณแล้ว · ลบ Highlight ${payload?.removedHighlights ?? 0} รายการ · ทีมดูแลจะปิดบัญชีให้ในขั้นตอนสุดท้าย`,
-    })
-    router.refresh()
   }
 
   return (
@@ -68,6 +80,7 @@ export default function DeleteMyDataSection() {
           {message.text}
         </div>
       )}
+      {needsReload && <button type="button" onClick={() => window.location.reload()} style={{ marginBottom: 12 }}>โหลดหน้าใหม่เพื่อตรวจสถานะการลบ</button>}
 
       {!open ? (
         <button onClick={() => setOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'white', color: '#CC0001', border: '1.5px solid #f2d0d0', borderRadius: 10, padding: '11px 14px', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>
@@ -87,7 +100,7 @@ export default function DeleteMyDataSection() {
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
             <button
               onClick={submit}
-              disabled={loading || confirm.trim() !== CONFIRM_PHRASE}
+              disabled={loading || needsReload || confirm.trim() !== CONFIRM_PHRASE}
               style={{ display: 'flex', alignItems: 'center', gap: 6, background: confirm.trim() === CONFIRM_PHRASE ? '#CC0001' : '#eee', color: confirm.trim() === CONFIRM_PHRASE ? 'white' : '#aaa', border: 'none', borderRadius: 10, padding: '11px 14px', fontSize: 13, fontWeight: 800, cursor: loading || confirm.trim() !== CONFIRM_PHRASE ? 'default' : 'pointer' }}
             >
               {loading ? <Loader2 size={15} /> : <Trash2 size={15} />} {loading ? 'กำลังลบ...' : 'ยืนยันการลบ'}

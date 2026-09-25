@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
+import { requestErrorText, requestJson, shouldStartAction } from '@/lib/pending-action'
 import { Banknote, Calendar, FileText, MapPin, Phone, Save, Trophy, Users } from 'lucide-react'
 
 type TournamentRecord = {
@@ -68,48 +69,57 @@ export default function EditTournamentForm({ tournament }: { tournament: Tournam
   const [success, setSuccess] = useState(false)
   const router = useRouter()
 
+  // `disabled` guards the next render only; this refuses the second click now.
+  const inFlightRef = useRef<string | null>(null)
+
   const handleSubmit = async () => {
     if (!name || !location || !startDate || !fee) {
       setMessage('กรุณากรอกข้อมูลที่จำเป็นให้ครบ')
       return
     }
 
+    if (!shouldStartAction(inFlightRef.current)) return
+    inFlightRef.current = 'save'
     setLoading(true)
     setMessage('')
     setSuccess(false)
 
-    const response = await fetch(`/api/tournaments/${tournament.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        description,
-        location,
-        startDate,
-        endDate,
-        fee: Number(fee),
-        promptpay,
-        maxTeams: Number(maxTeams) || 16,
-        status,
-      }),
-    })
+    try {
+      const outcome = await requestJson(`/api/tournaments/${tournament.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          description,
+          location,
+          startDate,
+          endDate,
+          fee: Number(fee),
+          promptpay,
+          maxTeams: Number(maxTeams) || 16,
+          status,
+        }),
+      })
 
-    if (response.status === 401) {
-      setLoading(false)
-      router.push('/login')
-      return
-    }
+      if (!outcome.ok && outcome.kind === 'http' && outcome.status === 401) {
+        router.push('/login')
+        return
+      }
 
-    if (!response.ok) {
-      const data = (await response.json().catch(() => null)) as { error?: string } | null
-      setMessage(data?.error ?? 'บันทึกรายการไม่สำเร็จ')
-    } else {
+      if (!outcome.ok) {
+        setMessage(requestErrorText(outcome, { fallback: 'บันทึกรายการไม่สำเร็จ', mutating: true }))
+        // Re-read so the form shows what the server actually holds before a second save.
+        if (outcome.kind === 'network') router.refresh()
+        return
+      }
+
       setSuccess(true)
       setMessage('บันทึกรายการสำเร็จ')
       router.refresh()
+    } finally {
+      setLoading(false)
+      inFlightRef.current = null
     }
-
-    setLoading(false)
   }
 
   return (

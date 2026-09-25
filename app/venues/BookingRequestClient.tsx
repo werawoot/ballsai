@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { CalendarCheck2, CalendarDays, Send } from 'lucide-react'
 import { bookingRequestView } from '@/lib/venue-booking-request'
 import { formatVenueBookingDateTime, formatVenueBookingTime } from '@/lib/venue-booking-time'
-import { VENUE_PENDING_COPY, pendingButton, shouldStartAction } from '@/lib/pending-action'
+import { requestErrorText, requestJson, VENUE_PENDING_COPY, pendingButton, shouldStartAction } from '@/lib/pending-action'
 
 export type AvailableSlot = { id: string; starts_at: string; ends_at: string; price_baht: number; venue_courts: { name: string; sport: string } | null }
 
@@ -18,32 +18,39 @@ export default function BookingRequestClient({ slots }: { slots: AvailableSlot[]
   const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
   const [pending, setPending] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const inFlight = useRef(false)
+  // The ref refuses the next click synchronously; the state is what re-renders the
+  // button as disabled, so the lock never depends on the feedback setState.
+  const outcomeUnknown = useRef(false)
+  const [needsReload, setNeedsReload] = useState(false)
   const view = bookingRequestView({ submitted, selected, slots })
   const send = pendingButton({
     pending,
     key: 'booking',
     ...VENUE_PENDING_COPY.booking,
-    disabled: !view.canSubmit || !view.selected || !purpose.trim(),
+    disabled: !view.canSubmit || !view.selected || !purpose.trim() || needsReload,
   })
   const submit = async () => {
-    if (!shouldStartAction(pending) || !view.canSubmit || !view.selected || !purpose.trim()) return
+    if (inFlight.current || outcomeUnknown.current || !shouldStartAction(pending) || !view.canSubmit || !view.selected || !purpose.trim()) return
+    inFlight.current = true
     setPending('booking'); setFeedback(null)
-    const response = await fetch('/api/venue-bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slotId: view.selected, purpose, note }) }).catch(() => null)
-    const result = response ? await response.json().catch(() => null) as { error?: string } | null : null
-    setPending(null)
-    if (response?.status === 401) { router.push(`${'/login?next='}${encodeURIComponent('/venues/bookings')}`); return }
-    if (!response || !response.ok) {
-      setFeedback({ tone: 'error', text: result?.error ?? 'ส่งคำขอไม่สำเร็จ' })
-      // A 409 means the slot list is stale; refresh so the taken slot disappears.
-      if (response?.status === 409) router.refresh()
-      return
+    try {
+      const outcome = await requestJson('/api/venue-bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slotId: view.selected, purpose, note }) })
+      if (!outcome.ok && outcome.kind === 'http' && outcome.status === 401) { router.push(`${'/login?next='}${encodeURIComponent('/venues/bookings')}`); return }
+      if (!outcome.ok) {
+        if (outcome.kind === 'network') { outcomeUnknown.current = true; setNeedsReload(true) }
+        setFeedback({ tone: 'error', text: requestErrorText(outcome, { fallback: 'ส่งคำขอไม่สำเร็จ', mutating: true }) })
+        if (outcome.kind === 'http' && outcome.status === 409) router.refresh()
+        return
+      }
+      setFeedback({ tone: 'success', text: 'ส่งคำขอแล้ว รอเจ้าของสนามยืนยัน' })
+      setNote('')
+      setSubmitted(true)
+      router.refresh()
+    } finally {
+      inFlight.current = false
+      setPending(null)
     }
-    setFeedback({ tone: 'success', text: 'ส่งคำขอแล้ว รอเจ้าของสนามยืนยัน' })
-    setNote('')
-    // Lock the form behind a confirmation. The slot is reserved now, so re-sending it
-    // would only fail, and refresh() alone would leave a stale id selected.
-    setSubmitted(true)
-    router.refresh()
   }
 
   // bookingRequestView re-resolves the selection from the refreshed slots, so this
@@ -67,6 +74,7 @@ export default function BookingRequestClient({ slots }: { slots: AvailableSlot[]
     <label style={{ display: 'block', marginTop: 12 }}><span style={{ display: 'block', fontSize: 10, fontWeight: 800, letterSpacing: 1, color: 'rgba(255,255,255,.65)', marginBottom: 5 }}>วัตถุประสงค์</span><input value={purpose} onChange={event => setPurpose(event.target.value)} placeholder="เช่น ซ้อมทีม U16" style={{ width: '100%', boxSizing: 'border-box', padding: '10px 11px', borderRadius: 8, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: 'white' }} /></label>
     <label style={{ display: 'block', marginTop: 10 }}><span style={{ display: 'block', fontSize: 10, fontWeight: 800, letterSpacing: 1, color: 'rgba(255,255,255,.65)', marginBottom: 5 }}>หมายเหตุ (ถ้ามี)</span><textarea value={note} onChange={event => setNote(event.target.value)} rows={2} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 11px', borderRadius: 8, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: 'white', resize: 'vertical' }} /></label>
     {feedback && <p role="status" aria-live="polite" style={{ background: feedback.tone === 'error' ? '#7f1d1d' : '#14532d', borderRadius: 8, padding: 9, fontSize: 12, margin: '12px 0 0' }}>{feedback.text}</p>}
+    {needsReload && <button type="button" onClick={() => window.location.reload()} style={{ width: '100%', marginTop: 9, padding: 10, borderRadius: 8, border: 0, background: '#101827', color: 'white', fontWeight: 800, fontSize: 12, cursor: 'pointer' }}>โหลดหน้าใหม่เพื่อตรวจว่าคำขอถูกส่งแล้วหรือยัง</button>}
     <button type="button" aria-busy={send['aria-busy']} disabled={send.disabled} onClick={submit} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 7, width: '100%', marginTop: 12, padding: 11, border: 0, borderRadius: 8, background: '#f5c518', color: '#101827', fontWeight: 900, cursor: send.disabled ? 'not-allowed' : 'pointer' }}><Send size={15} /> {send.label}</button>
   </section>
 }

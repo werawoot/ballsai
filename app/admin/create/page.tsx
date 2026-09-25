@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Link2, Save, Search, Trophy } from 'lucide-react'
 import Link from 'next/link'
 import { ACTIVE_SEASON } from '@/lib/season'
+import { requestJson, requestErrorText } from '@/lib/pending-action'
 
 type AthleteAccount = {
   user_id: string
@@ -25,6 +26,12 @@ export default function CreatePlayerPage() {
   const [accountQuery, setAccountQuery] = useState('')
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
   const [message, setMessage] = useState('')
+  const inFlight = useRef(false)
+  // The ref refuses the next click synchronously; the state is what makes the button
+  // render as disabled. Keeping only the ref would leave a button that looks pressable
+  // and silently does nothing.
+  const outcomeUnknown = useRef(false)
+  const [needsReload, setNeedsReload] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -54,6 +61,7 @@ export default function CreatePlayerPage() {
   }
 
   const handleSubmit = async () => {
+    if (inFlight.current || outcomeUnknown.current) return
     if (!selectedPlayerId) {
       setMessage('กรุณาเลือก Athlete Account ก่อนสร้าง Ranking')
       return
@@ -62,19 +70,21 @@ export default function CreatePlayerPage() {
       setMessage('กรุณากรอกชื่อ ทีม และจังหวัดให้ครบ')
       return
     }
+    inFlight.current = true
     setLoading(true)
-    const response = await fetch('/api/admin/rankings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, player_id: selectedPlayerId }),
-    })
-    const payload = await response.json().catch(() => null) as { error?: string } | null
-    if (!response.ok) {
-      setMessage(payload?.error ?? 'สร้าง Ranking ไม่สำเร็จ')
-    } else {
-      router.push('/admin')
+    try {
+      const result = await requestJson('/api/admin/rankings', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, player_id: selectedPlayerId }),
+      })
+      if (!result.ok) {
+        if (result.kind === 'network') { outcomeUnknown.current = true; setNeedsReload(true) }
+        setMessage(requestErrorText(result, { fallback: 'สร้าง Ranking ไม่สำเร็จ', mutating: true }))
+      } else router.push('/admin')
+    } finally {
+      inFlight.current = false
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const inputStyle = {
@@ -86,6 +96,8 @@ export default function CreatePlayerPage() {
   const numInputStyle = {
     ...inputStyle, fontFamily: 'var(--font-oswald)', fontSize: 18, fontWeight: 700, textAlign: 'center' as const
   }
+
+  const submitBlocked = loading || loadingAccounts || !selectedPlayerId || needsReload
 
   return (
     <main style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 40 }}>
@@ -160,7 +172,13 @@ export default function CreatePlayerPage() {
 
         {message && <p style={{ textAlign: 'center', fontSize: 13, color: '#CC0001', fontWeight: 600 }}>{message}</p>}
 
-        <button onClick={handleSubmit} disabled={loading || loadingAccounts || !selectedPlayerId} style={{ background: loading || loadingAccounts || !selectedPlayerId ? '#ddd' : '#CC0001', color: loading || loadingAccounts || !selectedPlayerId ? '#888' : 'white', border: 'none', borderRadius: 12, padding: '15px', fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: loading || loadingAccounts || !selectedPlayerId ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: loading || loadingAccounts || !selectedPlayerId ? 'none' : '0 4px 16px rgba(204,0,1,0.3)' }}>
+        {needsReload && (
+          <button type="button" onClick={() => window.location.reload()} style={{ background: '#111', color: 'white', border: 'none', borderRadius: 12, padding: '13px', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>
+            โหลดหน้าใหม่เพื่อตรวจว่า Ranking ถูกสร้างแล้วหรือยัง
+          </button>
+        )}
+
+        <button onClick={handleSubmit} disabled={submitBlocked} style={{ background: submitBlocked ? '#ddd' : '#CC0001', color: submitBlocked ? '#888' : 'white', border: 'none', borderRadius: 12, padding: '15px', fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: submitBlocked ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: submitBlocked ? 'none' : '0 4px 16px rgba(204,0,1,0.3)' }}>
           <Save size={18} /> {loading ? 'กำลังบันทึก...' : 'เพิ่มนักกีฬา'}
         </button>
       </div>
