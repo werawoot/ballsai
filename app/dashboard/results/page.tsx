@@ -6,6 +6,7 @@ import { ArrowLeft, Trophy } from 'lucide-react'
 import MatchResultForm from './MatchResultForm'
 import MatchResultHistory from './MatchResultHistory'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
+import { buildRosterPlayers, type RankedAthlete } from '@/lib/team-roster'
 
 type TournamentOption = {
   id: string
@@ -114,10 +115,11 @@ export default async function MatchResultsPage() {
     .limit(20)
 
   const teamNames = Object.fromEntries(allTeams.map(team => [team.id, team.name]))
-  const teamIdByAthlete = new Map((acceptedMembers ?? []).map(member => [member.athlete_id, member.team_id]))
-  const rosterPlayers = ((players ?? []) as Omit<PlayerOption, 'teamId'>[])
-    .map(player => ({ ...player, teamId: player.player_id ? teamIdByAthlete.get(player.player_id) ?? '' : '' }))
-    .filter(player => player.teamId)
+  // One selectable entry per accepted membership (lib/team-roster.ts, beta). An athlete
+  // accepted on two confirmed teams must be pickable for either; the Map keyed by athlete
+  // that this replaced kept only the last team it saw. The form keeps main's `teamId`.
+  const rosterPlayers: PlayerOption[] = buildRosterPlayers(acceptedMembers ?? [], (players ?? []) as RankedAthlete[])
+    .map(({ team_id, ...player }) => ({ ...player, teamId: team_id }))
   const tournamentNames = Object.fromEntries((tournaments ?? []).map(tournament => [tournament.id, tournament.name]))
 
   return (

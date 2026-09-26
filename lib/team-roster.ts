@@ -79,3 +79,16 @@ export function rosterMismatches(
     return !accepted.has(rosterKey(item.teamId, rank.player_id))
   })
 }
+
+/**
+ * Whether the team page should offer beta's reasoned removal (remove_team_member,
+ * sql/24) for a team. Main's coach removal (manage_coach_beta, sql/47) already covers the
+ * creator of a draft team, without a reason, from the coach roster card; it refuses a
+ * locked roster (ROSTER_LOCKED) and anyone but the creator (NOT_ALLOWED). Offering the
+ * reasoned path exactly where the coach path cannot act means every manager has one way
+ * to remove a member, never zero and never two.
+ */
+export function offersReasonedRemoval(team: { status: string; managedAs?: 'creator' | 'organizer' } | null | undefined): boolean {
+  if (!team) return false
+  return team.status !== 'draft' || team.managedAs !== 'creator'
+}
