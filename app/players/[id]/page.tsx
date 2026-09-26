@@ -1,25 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import {
-  ArrowLeft,
-  Award,
-  CalendarDays,
-  CheckCircle2,
-  ClipboardList,
-  ExternalLink,
-  House,
-  MapPin,
-  PlayCircle,
-  Ruler,
-  Shield,
-  Star,
-  Trophy,
-  User,
-  Users,
-  Weight,
-  Zap,
-} from 'lucide-react'
+import { ArrowLeft, Award, CalendarDays, CheckCircle2, ExternalLink, MapPin, PlayCircle, Ruler, Shield, Star, Trophy, Users, Weight, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { isSampleId, samplePlayerRanks, showDemoData } from '@/lib/sample-data'
 import { IDENTITY_BADGES, calculateLevel, identityTitle } from '@/lib/digital-identity'
@@ -202,7 +184,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
       }
 
   return (
-    <main className="bds-page" style={{ background: '#f6f6f4', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
+    <main className="bds-page" style={{ background: '#f6f6f4', minHeight: '100vh', overflowX: 'hidden' }}>
       <header className="bds-header" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
         <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}><Trophy size={22} /> BallDoenSai.com</Link>
         <Link href="/athletes" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}><ArrowLeft size={16} /> นักกีฬา</Link>
@@ -275,9 +257,6 @@ export default async function PlayerPage({ params }: { params: { id: string } })
         {achievements.length > 0 && <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}><h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, marginBottom: 12 }}>ACHIEVEMENTS</h2><div>{achievements.map(item => <div key={item.id} style={{ display: 'flex', gap: 11, padding: '10px 0', borderBottom: '1px solid #eee' }}><Award size={19} color={item.verification_status === 'verified' ? '#15803d' : '#CC0001'} /><div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 800 }}>{item.title}</div><div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{[item.event_name, item.achievement_year].filter(Boolean).join(' · ') || 'BallDoenSai.com Athlete'}</div></div>{item.verification_status === 'verified' && <CheckCircle2 size={16} color="#15803d" />}</div>)}</div></section>}
       </div>
 
-      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '6px 0', zIndex: 100 }}>
-        {[{ icon: <House size={22} />, label: 'หน้าแรก', href: '/' }, { icon: <User size={22} />, label: 'นักกีฬา', href: '/athletes' }, { icon: <Trophy size={22} />, label: 'Ranking', href: '/ranking' }, { icon: <ClipboardList size={22} />, label: 'รายการแข่ง', href: '/tournaments' }, { icon: <User size={22} />, label: 'โปรไฟล์', href: '/profile' }].map(item => <Link key={item.href} href={item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 6px', color: item.href === '/athletes' ? '#CC0001' : '#999', textDecoration: 'none', minWidth: 52 }}><span style={{ display: 'flex' }}>{item.icon}</span><span style={{ fontSize: 9, fontWeight: 700 }}>{item.label}</span></Link>)}
-      </nav>
     </main>
   )
 }

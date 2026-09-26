@@ -1,7 +1,8 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Sarabun, Oswald, Barlow_Condensed } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import SiteNav from '@/components/SiteNav'
 import './globals.css'
 
 const sarabun = Sarabun({
@@ -27,11 +28,20 @@ export const metadata: Metadata = {
   description: 'ตารางอันดับนักกีฬาเยาวชนไทย',
 }
 
+// `viewport-fit=cover` is what makes `env(safe-area-inset-bottom)` report the iPhone home
+// indicator's height instead of 0, so the bottom bar can sit above it rather than under it.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="th">
       <body className={`${sarabun.variable} ${oswald.variable} ${barlowCondensed.variable}`}>
         {children}
+        <SiteNav />
         <Analytics />
         <SpeedInsights />
       </body>

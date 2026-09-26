@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { Trophy, House, ClipboardList, User, Users, CheckCircle, Clock, Plus, MapPin, Calendar, Image as ImageIcon, ClipboardCheck, Pencil, ClipboardPenLine } from 'lucide-react'
+import { Trophy, Users, CheckCircle, Clock, Plus, MapPin, Calendar, Image as ImageIcon, ClipboardCheck, Pencil, ClipboardPenLine } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import ConfirmTeamButton from './ConfirmTeamButton'
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
   const confirmedTeams = allTeams?.filter(t => t.status === 'confirmed') ?? []
 
   return (
-    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
+    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* TOPBAR */}
       <header className="bds-header" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
@@ -260,20 +260,6 @@ export default async function DashboardPage() {
 
       </div>
 
-      {/* BOTTOM NAV */}
-      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white', borderTop: '1.5px solid #e5e5e5', display: 'flex', justifyContent: 'space-around', padding: '6px 0', zIndex: 100, boxShadow: '0 -4px 20px rgba(0,0,0,0.06)' }}>
-        {[
-          { icon: <House size={22} />, label: 'หน้าแรก', href: '/', active: false },
-          { icon: <Trophy size={22} />, label: 'Ranking', href: '/ranking', active: false },
-          { icon: <ClipboardList size={22} />, label: 'รายการแข่ง', href: '/tournaments', active: false },
-          { icon: <User size={22} />, label: 'โปรไฟล์', href: '/profile', active: false },
-        ].map((item) => (
-          <Link key={item.href} href={item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '4px 12px', textDecoration: 'none', color: '#aaa', minWidth: 55 }}>
-            {item.icon}
-            <span style={{ fontSize: 10, fontWeight: 700 }}>{item.label}</span>
-          </Link>
-        ))}
-      </nav>
 
     </main>
   )
