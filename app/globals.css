@@ -140,6 +140,11 @@ body {
 .bds-nav-item.is-pending .bds-nav-icon::after { animation:bds-nav-pending 1.05s cubic-bezier(.2,.7,.3,1) infinite; border:2px solid var(--nav-gold); border-radius:18px; content:''; inset:-3px; position:absolute; }
 @keyframes bds-nav-pending { 0% { opacity:.95; transform:scale(.86); } 100% { opacity:0; transform:scale(1.22); } }
 .bds-nav-spacer { height:calc(var(--nav-height) + env(safe-area-inset-bottom)); }
+/* Below 360px each column is ~62px and "รายการแข่ง" at 12px needs 58.3px of the 57.6px
+   left, so it rendered as "รายการแ…". Step the label down one size and give the columns
+   their side padding back rather than truncate a destination's name. Touch targets are
+   unchanged (still the full column, 53px tall). */
+@media (max-width:359px) { .bds-nav { padding-left:2px; padding-right:2px; } .bds-nav-label { font-size:11px; } }
 /* Top progress bar: fills fast, then crawls, so a slow page still looks alive; completes
    and fades the moment the route lands. */
 .bds-route-progress { background:linear-gradient(90deg,var(--nav-red) 0%,#ef3b3f 55%,var(--nav-gold) 100%); box-shadow:0 0 12px rgba(204,0,1,.55),0 0 4px rgba(244,185,66,.6); height:3px; left:0; opacity:0; pointer-events:none; position:fixed; right:0; top:0; transform:scaleX(0); transform-origin:0 50%; z-index:1000; }

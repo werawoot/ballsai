@@ -251,6 +251,13 @@ describe('the styles that make it fit', () => {
     expect(Number(item.match(/font:\d+ (\d+)px/)?.[1])).toBeGreaterThanOrEqual(12)
   })
 
+  it('never truncates a label on a 320px screen, stepping down one size instead', () => {
+    // Measured in a browser at 320px: "รายการแข่ง" needed 58.3px of 57.6px at 12px.
+    const narrow = css.slice(css.indexOf('@media (max-width:359px)'), css.indexOf('}', css.indexOf('.bds-nav-label', css.indexOf('@media (max-width:359px)'))) + 1)
+    expect(narrow).toContain('.bds-nav { padding-left:2px; padding-right:2px; }')
+    expect(Number(narrow.match(/\.bds-nav-label \{ font-size:(\d+)px/)?.[1])).toBe(11)
+  })
+
   it('gives the discover switch at least Apple\'s 44pt minimum touch target', () => {
     expect(Number(rule('.bds-discover-tab').match(/min-height:(\d+)px/)?.[1])).toBeGreaterThanOrEqual(44)
   })
