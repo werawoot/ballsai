@@ -1,15 +1,22 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { Crown, Sparkles, Trophy, MapPin, Zap, Shield, Star, UsersRound } from 'lucide-react'
+import { Building2, ChevronRight, Crown, Handshake, Route, Sparkles, Trophy, MapPin, Zap, Shield, Star, UsersRound, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import EditProfileForm from './EditProfileForm'
 import PublicProfileShare from './PublicProfileShare'
-import SiteNav from '@/components/SiteNav'
-import { fetchUnreadNotificationCount } from '@/lib/notification-count'
 import { calculateLevel, identityTitle, levelProgress } from '@/lib/digital-identity'
 import { ACTIVE_SPORT } from '@/lib/season'
+import { PROFILE_MENU } from '@/lib/site-nav'
 import DeleteMyDataSection from './DeleteMyDataSection'
+
+// The destinations that left the bottom bar live here, one tap from the Profile tab.
+const PROFILE_MENU_ICONS: Record<(typeof PROFILE_MENU)[number]['href'], LucideIcon> = {
+  '/venues': Building2,
+  '/sponsorships': Handshake,
+  '/team-members': UsersRound,
+  '/career': Route,
+}
 
 type ProfileRecord = {
   full_name?: string | null
@@ -104,7 +111,6 @@ export default async function ProfilePage() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
-  const unreadCount = await fetchUnreadNotificationCount(supabase, user.id)
 
   const [{ data: profile }, { data: athleteProfile }, { data: athleteVideos }, { data: achievements }, { data: playerRank }, { data: memberships }, { data: identityProgress }, { data: highlights }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
@@ -132,7 +138,7 @@ export default async function ProfilePage() {
   const cardBg = 'linear-gradient(160deg,#3d2a00 0%,#c8860a 18%,#f5c518 30%,#c8860a 42%,#7a4f00 55%,#c8860a 70%,#f5c518 82%,#3d2a00 100%)'
 
   return (
-    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
+    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden' }}>
       <header className="bds-header" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
         <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
           <Trophy size={22} strokeWidth={2.5} /> BallDoenSai.com
@@ -257,6 +263,26 @@ export default async function ProfilePage() {
           </div>
         </section>
 
+        <section aria-labelledby="profile-menu-title" style={{ marginBottom: 20 }}>
+          <div id="profile-menu-title" style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <div style={{ width: 4, height: 20, background: '#CC0001', borderRadius: 2 }} />
+            เมนูของฉัน
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
+            {PROFILE_MENU.map(item => {
+              const Icon = PROFILE_MENU_ICONS[item.href]
+              return <Link key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 64, padding: '12px 14px', background: 'white', border: '1.5px solid #e5e5e5', borderRadius: 12, color: '#111827', textDecoration: 'none', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                <span style={{ display: 'grid', placeItems: 'center', flex: 'none', width: 38, height: 38, borderRadius: 10, background: '#101827', color: '#f4b942' }}><Icon size={19} aria-hidden="true" /></span>
+                <span style={{ display: 'grid', gap: 2, minWidth: 0, flex: 1 }}>
+                  <b style={{ fontSize: 14 }}>{item.label}</b>
+                  <span style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.35 }}>{item.hint}</span>
+                </span>
+                <ChevronRight size={17} color="#9ca3af" aria-hidden="true" />
+              </Link>
+            })}
+          </div>
+        </section>
+
         {typedMemberships.length > 0 && (
           <div>
             <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
@@ -302,7 +328,6 @@ export default async function ProfilePage() {
         <DeleteMyDataSection />
       </div>
 
-      <SiteNav active="profile" unreadCount={unreadCount} />
     </main>
   )
 }

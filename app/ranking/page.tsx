@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { Award, Flame, Sparkles, Trophy, MapPin, Zap, Shield, Star } from 'lucide-react'
 import RankingFilter from './RankingFilter'
+import DiscoverTabs from '@/components/DiscoverTabs'
 import { samplePlayerRanks, showDemoData } from '@/lib/sample-data'
-import SiteNav from '@/components/SiteNav'
 import { getPublicIdentityRankingData, getPublicRankingProvinces, getPublicRankings } from '@/lib/public-data'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 
@@ -67,7 +67,7 @@ export default async function RankingPage({
   const orderedTop3 = top3.length === 3 ? [top3[1], top3[0], top3[2]] : top3
 
   return (
-    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
+    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* TOPBAR */}
       <header className="bds-header" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
@@ -101,6 +101,8 @@ export default async function RankingPage({
       <svg className="bds-wave" viewBox="0 0 375 28" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 28, marginTop: -1 }}>
         <path d="M0,0 C100,28 275,0 375,20 L375,0 Z" fill="#CC0001" />
       </svg>
+
+      <DiscoverTabs current="/ranking" />
 
       {/* FILTERS */}
 <RankingFilter provinces={uniqueProvinces} currentProvince={province} currentPosition={position} currentSearch={search} />
@@ -216,7 +218,6 @@ export default async function RankingPage({
       <div style={{ height: 24 }} />
 
       {/* BOTTOM NAV */}
-      <SiteNav active="ranking" />
 
     </main>
   )

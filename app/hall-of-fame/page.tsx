@@ -2,8 +2,8 @@ import Link from 'next/link'
 import { Award, Crown, MapPin, Medal, Shield, Sparkles, Trophy } from 'lucide-react'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import SiteNav from '@/components/SiteNav'
 import { ACTIVE_SEASON } from '@/lib/season'
+import DiscoverTabs from '@/components/DiscoverTabs'
 
 type HallEntry = {
   id: string
@@ -54,6 +54,7 @@ export default async function HallOfFamePage({ searchParams }: { searchParams: {
   return <main className="hall-page">
     <header className="hall-header"><Link href="/" className="hall-logo"><Trophy size={19} /> BallDoenSai.com</Link><Link href="/ranking" className="hall-ranking-link">LIVE RANKING</Link></header>
     <section className="hall-hero"><div className="hall-hero-orbit" /><div><span>THE RECORD THAT STAYS</span><h1>HALL OF<br /><em>FAME</em></h1><p>ผลงานที่ถูกบันทึกไว้ แม้อันดับวันนี้จะเปลี่ยนไป</p></div><div className="hall-season"><small>SEASON</small><b>{season}</b></div></section>
+    <DiscoverTabs current="/hall-of-fame" />
     <section className="hall-content">
       <div className="hall-filter-row" aria-label="ตัวกรอง Hall of Fame">
         <Link href={linkFor({ category: '' })} className={!category ? 'is-active' : ''}>ทั้งหมด</Link>
@@ -70,6 +71,5 @@ export default async function HallOfFamePage({ searchParams }: { searchParams: {
         return profileHref ? <Link className="hall-entry-link" href={profileHref} key={entry.id}>{content}</Link> : <div className="hall-entry-link" key={entry.id}>{content}</div>
       })}</div> : <div className="hall-empty"><Award size={38} /><h2>กำลังรอชื่อแรกใน Hall</h2><p>Hall of Fame จะแสดงเฉพาะผลงานที่ผู้จัดหรือผู้ดูแลยืนยันและประกาศอย่างเป็นทางการ</p><Link href="/ranking">ดู LIVE RANKING ระหว่างนี้</Link></div>}
     </section>
-    <SiteNav active="ranking" />
   </main>
 }
