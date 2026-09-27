@@ -30,12 +30,19 @@ export function venueImageView(
   return { kind: 'photos', cover, gallery }
 }
 
-export function venuePhotoAlt(venueName: string, index: number, caption?: string | null) {
+/**
+ * A supplied caption wins; otherwise `words` phrases it in the reader's language, with
+ * `number` null for the cover and the 1-based photo number for the rest.
+ */
+export function venuePhotoAlt(
+  venueName: string,
+  index: number,
+  caption: string | null | undefined,
+  words: (venueName: string, number: number | null) => string,
+) {
   const supplied = caption?.trim()
   if (supplied) return supplied
-  return index === 0
-    ? `ภาพสนาม ${venueName}`
-    : `ภาพสนาม ${venueName} รูปที่ ${index + 1}`
+  return words(venueName, index === 0 ? null : index + 1)
 }
 
 export type ActiveVenuePhoto = { photo: VenuePhoto; index: number }

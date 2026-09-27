@@ -18,14 +18,14 @@ describe('venueCardStats', () => {
     expect(stats.courtCount).toBe(2)
   })
 
-  it('lists each sport once, in Thai', () => {
+  it('lists each sport once, by code (the card words it)', () => {
     const stats = venueCardStats([
       court('A', 'football', []),
       court('B', 'football', []),
       court('C', 'futsal', []),
     ], NOW)
 
-    expect(stats.sports).toEqual(['ฟุตบอล', 'ฟุตซอล'])
+    expect(stats.sports).toEqual(['football', 'futsal'])
   })
 
   it('counts only open slots that are still in the future', () => {

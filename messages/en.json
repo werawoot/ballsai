@@ -232,5 +232,37 @@
     "allProvinces": "All provinces",
     "allPositions": "All positions",
     "allAges": "All ages"
+  },
+  "venues": {
+    "listYourVenue": "List your venue",
+    "titleTop": "Find a pitch",
+    "titleBottom": "and play",
+    "intro": "Pick a venue and request an open slot. The venue owner replies in the app.",
+    "emptyTitle": "No venues are taking requests yet",
+    "emptyBody": "Own a venue? Add your first one now.",
+    "addVenue": "Add a venue",
+    "cardLabel": "View {name}, {province}",
+    "openShort": "{count} open",
+    "noSlots": "No open slots yet",
+    "courts": "{count, plural, one {# court} other {# courts}}",
+    "slots": "{count, plural, one {# slot} other {# slots}}",
+    "noPrice": "Price not set",
+    "allVenues": "All venues",
+    "defaultDescription": "A venue you can request to book through BallDoenSai",
+    "openSlots": "{count, plural, one {# open slot} other {# open slots}}",
+    "details": "Venue details",
+    "courtsTitle": "Courts and pitches",
+    "capacity": "up to {count} players",
+    "courtsComing": "Courts are being added",
+    "sport": {
+      "football": "Football",
+      "futsal": "Futsal"
+    },
+    "photoAlt": "{name} venue",
+    "photoAltNumbered": "{name} venue, photo {number}",
+    "viewPhoto": "View {alt}",
+    "loadingPhotos": "Loading photos of {name}",
+    "photosBroken": "Could not load venue photos",
+    "noPhotos": "No venue photos yet"
   }
 }

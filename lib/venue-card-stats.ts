@@ -14,14 +14,13 @@ export type VenueCardCourt = {
 
 export type VenueCardStats = {
   courtCount: number
+  /** Sport codes as stored ('football', 'futsal', ...); the component words them. */
   sports: string[]
   openSlotCount: number
   minPrice: number | null
   maxPrice: number | null
   priceLabel: string | null
 }
-
-const SPORT_LABEL: Record<string, string> = { football: 'ฟุตบอล', futsal: 'ฟุตซอล' }
 
 // SQL40 made 'reserved' distinct from 'blocked'. Only an 'open' slot in the future is
 // actually bookable, so the price range and the count must both use that set: showing a
@@ -38,8 +37,7 @@ export function venueCardStats(courts: VenueCardCourt[] | null | undefined, now 
 
   const sports: string[] = []
   for (const court of all) {
-    const label = SPORT_LABEL[court.sport] ?? court.sport
-    if (!sports.includes(label)) sports.push(label)
+    if (!sports.includes(court.sport)) sports.push(court.sport)
   }
 
   return {

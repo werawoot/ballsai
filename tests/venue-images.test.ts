@@ -75,23 +75,26 @@ describe('venueImageView — broken photos', () => {
 })
 
 describe('venuePhotoAlt', () => {
-  it('writes Thai alt text naming the venue', () => {
-    const alt = venuePhotoAlt('สนามบอลลุงหมี', 0)
+  // The wording is the reader's language (messages/*.json venues.photoAlt*), passed in.
+  const words = (name: string, number: number | null) => number === null ? `ภาพสนาม ${name}` : `ภาพสนาม ${name} รูปที่ ${number}`
+
+  it('writes alt text naming the venue', () => {
+    const alt = venuePhotoAlt('สนามบอลลุงหมี', 0, null, words)
 
     expect(alt).toContain('สนามบอลลุงหมี')
     expect(alt).toMatch(/[ก-๙]/)
   })
 
   it('numbers gallery photos so each alt is distinct', () => {
-    expect(venuePhotoAlt('สนาม A', 1)).not.toBe(venuePhotoAlt('สนาม A', 2))
+    expect(venuePhotoAlt('สนาม A', 1, null, words)).not.toBe(venuePhotoAlt('สนาม A', 2, null, words))
   })
 
   it('prefers a caption the owner supplied over the generated text', () => {
-    expect(venuePhotoAlt('สนาม A', 0, 'หญ้าเทียมใหม่ ไฟสปอตไลท์ครบ')).toBe('หญ้าเทียมใหม่ ไฟสปอตไลท์ครบ')
+    expect(venuePhotoAlt('สนาม A', 0, 'หญ้าเทียมใหม่ ไฟสปอตไลท์ครบ', words)).toBe('หญ้าเทียมใหม่ ไฟสปอตไลท์ครบ')
   })
 
   it('ignores a blank caption instead of rendering an empty alt', () => {
-    expect(venuePhotoAlt('สนาม A', 0, '   ')).toContain('สนาม A')
+    expect(venuePhotoAlt('สนาม A', 0, '   ', words)).toContain('สนาม A')
   })
 })
 
@@ -139,8 +142,9 @@ describe('activeVenuePhoto', () => {
     const first = activeVenuePhoto(view, 'a')
     const third = activeVenuePhoto(view, 'c')
 
-    expect(venuePhotoAlt('สนาม A', first.index, first.photo.alt))
-      .not.toBe(venuePhotoAlt('สนาม A', third.index, third.photo.alt))
+    const words = (name: string, number: number | null) => `${name} ${number ?? 'cover'}`
+    expect(venuePhotoAlt('สนาม A', first.index, first.photo.alt, words))
+      .not.toBe(venuePhotoAlt('สนาม A', third.index, third.photo.alt, words))
   })
 })
 
@@ -151,7 +155,7 @@ describe('VenueGallery wiring', () => {
   )
 
   it('gives the hero image the alt of the selected photo, not a hard-coded index', () => {
-    expect(source).not.toContain('venuePhotoAlt(venueName, 0, active.alt)')
+    expect(source).not.toContain('venuePhotoAlt(venueName, 0, active.alt')
     expect(source).toContain('activeVenuePhoto(')
   })
 
@@ -160,17 +164,17 @@ describe('VenueGallery wiring', () => {
   const thumbnailBlock = source.slice(source.indexOf('{view.gallery.length > 0'))
 
   it('keeps the accessible name on the thumbnail button', () => {
-    expect(thumbnailBlock).toContain('aria-label={`ดู${venuePhotoAlt(venueName, index, item.alt)}`}')
+    expect(thumbnailBlock).toContain("aria-label={t('viewPhoto', { alt: venuePhotoAlt(venueName, index, item.alt, altWords) })}")
   })
 
   it('marks the image inside a labelled thumbnail as decorative', () => {
     expect(thumbnailBlock).toContain('alt=""')
-    expect(thumbnailBlock).not.toContain('alt={venuePhotoAlt(venueName, index, item.alt)}')
+    expect(thumbnailBlock).not.toContain('alt={venuePhotoAlt(venueName, index, item.alt')
   })
 
   it('still announces the hero image, which has no wrapping label', () => {
     const heroBlock = source.slice(0, source.indexOf('{view.gallery.length > 0'))
-    expect(heroBlock).toContain('alt={venuePhotoAlt(venueName, active.index, active.photo.alt)}')
+    expect(heroBlock).toContain('alt={venuePhotoAlt(venueName, active.index, active.photo.alt, altWords)}')
     expect(heroBlock).not.toContain('alt=""')
   })
 })

@@ -2,7 +2,8 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Search } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { provinceName } from '@/lib/thai-provinces'
 
 const POSITIONS = ['FW', 'MF', 'DF', 'GK']
 
@@ -14,6 +15,7 @@ export default function RankingFilter({ provinces, currentProvince, currentPosit
 }) {
   const router = useRouter()
   const t = useTranslations('filters')
+  const locale = useLocale()
   const searchParams = useSearchParams()
 
   const updateFilter = (key: string, value: string) => {
@@ -65,7 +67,7 @@ export default function RankingFilter({ provinces, currentProvince, currentPosit
           </button>
           {provinces.map(prov => (
             <button key={prov} onClick={() => updateFilter('province', prov === currentProvince ? '' : prov)} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: '1.5px solid', borderColor: currentProvince === prov ? '#CC0001' : '#e5e5e5', background: currentProvince === prov ? '#CC0001' : 'white', color: currentProvince === prov ? 'white' : '#555', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-              {prov}
+              {provinceName(prov, locale)}
             </button>
           ))}
         </div>
