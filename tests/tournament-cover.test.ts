@@ -18,15 +18,15 @@ describe('what a tournament card cover shows', () => {
       kind: 'graphic',
       venue: 'สนามกีฬาเฉลิมพระเกียรติ อยุธยา',
       sport: null,
-      status: { label: 'เปิดรับสมัคร', open: true },
+      status: 'open',
     })
     // The one switch: nothing may produce a picture until tournaments link to venues.
     expect(tournamentCoverPhoto({ location: 'any', status: 'open', sport: 'football' })).toBeNull()
   })
 
   it('says a closed tournament is closed, instead of the old hard-coded "open" on every card', () => {
-    expect(tournamentCoverStatus('closed')).toEqual({ label: 'ปิดรับสมัคร', open: false })
-    expect(tournamentCover({ location: 'x', status: 'closed' }).status?.open).toBe(false)
+    expect(tournamentCoverStatus('closed')).toBe('closed')
+    expect(tournamentCover({ location: 'x', status: 'closed' }).status).toBe('closed')
   })
 
   it('claims nothing for a status the API does not write', () => {
@@ -36,8 +36,8 @@ describe('what a tournament card cover shows', () => {
   })
 
   it('shows a sport only when the row carries a known one', () => {
-    expect(tournamentCoverSport('football')).toBe('ฟุตบอล')
-    expect(tournamentCoverSport('futsal')).toBe('ฟุตซอล')
+    expect(tournamentCoverSport('football')).toBe('football')
+    expect(tournamentCoverSport(' futsal ')).toBe('futsal')
     for (const sport of [undefined, null, '', '  ', 'chess', 42]) {
       expect(tournamentCoverSport(sport)).toBeNull()
     }

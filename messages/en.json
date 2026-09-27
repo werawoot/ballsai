@@ -1,0 +1,45 @@
+{
+  "meta": {
+    "title": "BallDoenSai.com — Thailand's youth sports platform",
+    "description": "Rankings for Thai youth athletes"
+  },
+  "language": {
+    "switchShort": "ไทย",
+    "switchLabel": "เปลี่ยนเป็นภาษาไทย"
+  },
+  "header": {
+    "home": "BallDoenSai.com home",
+    "backTo": "Back to {label}"
+  },
+  "nav": {
+    "label": "Main menu",
+    "loading": "Loading page…",
+    "unread": "{count} unread",
+    "items": {
+      "home": "Home",
+      "discover": "Discover",
+      "tournaments": "Events",
+      "notifications": "Alerts",
+      "profile": "Profile"
+    }
+  },
+  "tournaments": {
+    "titleTop": "All",
+    "titleBottom": "Tournaments",
+    "intro": "Every BallDoenSai circuit tournament open for entries",
+    "details": "View details",
+    "empty": "No tournaments yet"
+  },
+  "tournamentCover": {
+    "status": {
+      "open": "Registration open",
+      "closed": "Registration closed"
+    },
+    "sport": {
+      "football": "Football",
+      "futsal": "Futsal"
+    },
+    "photoAlt": "{venue} venue",
+    "photoAltUnknown": "Tournament venue"
+  }
+}

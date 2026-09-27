@@ -18,7 +18,7 @@ export type NavItemId = 'home' | 'discover' | 'tournaments' | 'notifications' | 
 export type NavItem = {
   id: NavItemId
   href: string
-  label: string
+  // The visible name is not here: it is `nav.items.<id>` in messages/*.json.
   /**
    * Route prefixes that belong to this tab. A page reached from inside a tab keeps that
    * tab lit, so the scout always knows where they are and one tap takes them back.
@@ -27,14 +27,13 @@ export type NavItem = {
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
-  { id: 'home', href: '/', label: 'หน้าแรก', owns: [] },
-  { id: 'discover', href: '/athletes', label: 'ค้นหา', owns: ['/athletes', '/ranking', '/hall-of-fame', '/players', '/scout'] },
-  { id: 'tournaments', href: '/tournaments', label: 'รายการแข่ง', owns: ['/tournaments'] },
-  { id: 'notifications', href: '/notifications', label: 'แจ้งเตือน', owns: ['/notifications'] },
+  { id: 'home', href: '/', owns: [] },
+  { id: 'discover', href: '/athletes', owns: ['/athletes', '/ranking', '/hall-of-fame', '/players', '/scout'] },
+  { id: 'tournaments', href: '/tournaments', owns: ['/tournaments'] },
+  { id: 'notifications', href: '/notifications', owns: ['/notifications'] },
   {
     id: 'profile',
     href: '/profile',
-    label: 'โปรไฟล์',
     owns: [
       '/profile', '/career', '/card', '/team-members', '/guardian', '/organization',
       '/venues', '/venue', '/sponsorships', '/sponsor', '/match-plan', '/bds-wallet', '/dashboard',

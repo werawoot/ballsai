@@ -18,13 +18,17 @@ export type TournamentCoverSource = {
   sport?: unknown
 }
 
-export type TournamentCoverStatus = { label: string; open: boolean }
+/** A key into `tournamentCover.status` in messages/*.json; the component words it. */
+export type TournamentCoverStatus = 'open' | 'closed'
+
+/** A key into `tournamentCover.sport`. */
+export type TournamentCoverSport = 'football' | 'futsal'
 
 export type TournamentCover =
-  | { kind: 'graphic'; venue: string | null; sport: string | null; status: TournamentCoverStatus | null }
-  | { kind: 'photo'; src: string; venue: string | null; sport: string | null; status: TournamentCoverStatus | null }
+  | { kind: 'graphic'; venue: string | null; sport: TournamentCoverSport | null; status: TournamentCoverStatus | null }
+  | { kind: 'photo'; src: string; venue: string | null; sport: TournamentCoverSport | null; status: TournamentCoverStatus | null }
 
-const SPORT_LABEL: Record<string, string> = { football: 'ฟุตบอล', futsal: 'ฟุตซอล' }
+const SPORTS: readonly TournamentCoverSport[] = ['football', 'futsal']
 
 /**
  * The one place a real venue photo can come from. Returns null until tournaments are
@@ -40,14 +44,13 @@ export function tournamentCoverPhoto(tournament: TournamentCoverSource): string 
  * rather than telling a family registration is open when it may not be.
  */
 export function tournamentCoverStatus(status: string | null | undefined): TournamentCoverStatus | null {
-  if (status === 'open') return { label: 'เปิดรับสมัคร', open: true }
-  if (status === 'closed') return { label: 'ปิดรับสมัคร', open: false }
-  return null
+  return status === 'open' || status === 'closed' ? status : null
 }
 
-export function tournamentCoverSport(sport: unknown): string | null {
-  if (typeof sport !== 'string' || !sport.trim()) return null
-  return SPORT_LABEL[sport.trim()] ?? null
+export function tournamentCoverSport(sport: unknown): TournamentCoverSport | null {
+  if (typeof sport !== 'string') return null
+  const key = sport.trim()
+  return (SPORTS as readonly string[]).includes(key) ? key as TournamentCoverSport : null
 }
 
 export function tournamentCover(tournament: TournamentCoverSource): TournamentCover {

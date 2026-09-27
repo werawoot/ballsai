@@ -75,8 +75,12 @@ describe('back navigation', () => {
 
   it('keeps the visible label inside the accessible name (WCAG 2.5.3)', () => {
     const component = read('components/PageHeader.tsx')
-    expect(component).toContain('aria-label={`กลับไป${back.label}`}')
+    expect(component).toContain("aria-label={t('backTo', { label: back.label })}")
     expect(component).toContain('<span>{back.label}</span>')
+    // Both languages keep the visible label inside the name.
+    for (const locale of ['th', 'en']) {
+      expect(JSON.parse(read(`messages/${locale}.json`)).header.backTo).toContain('{label}')
+    }
   })
 })
 

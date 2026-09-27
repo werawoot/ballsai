@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Bell, ClipboardList, House, Search, User, type LucideIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { fetchUnreadNotificationCount } from '@/lib/notification-count'
@@ -36,6 +37,7 @@ const FINISH_MS = 450
 
 export default function SiteNav() {
   const pathname = usePathname() ?? '/'
+  const t = useTranslations('nav')
   const visible = showsSiteNav(pathname)
   const [pending, setPending] = useState<NavPending>(null)
   const [unread, setUnread] = useState<number | null>(null)
@@ -112,7 +114,7 @@ export default function SiteNav() {
     {/* Holds the page's last line of content clear of the fixed bar, on exactly the routes
         that have one. It replaces the old blanket `body { padding-bottom: 80px }`. */}
     <div className="bds-nav-spacer" aria-hidden="true" />
-    <nav className="bds-nav" aria-label="เมนูหลัก" aria-busy={loading}>
+    <nav className="bds-nav" aria-label={t('label')} aria-busy={loading}>
       {NAV_ITEMS.map(item => {
         const Icon = ICONS[item.id]
         const isActive = item.id === active
@@ -123,16 +125,16 @@ export default function SiteNav() {
           href={item.href}
           className={`bds-nav-item${isActive ? ' is-active' : ''}${isPending ? ' is-pending' : ''}`}
           aria-current={isActive ? 'page' : undefined}
-          aria-label={itemBadge ? `${item.label} · ${itemBadge.label}` : undefined}
+          aria-label={itemBadge ? `${t(`items.${item.id}`)} · ${t('unread', { count: unread ?? 0 })}` : undefined}
         >
           <span className="bds-nav-icon">
             <Icon size={21} strokeWidth={isActive ? 2.4 : 1.9} aria-hidden="true" />
             {itemBadge && <span className="bds-nav-badge" aria-hidden="true">{itemBadge.text}</span>}
           </span>
-          <span className="bds-nav-label">{item.label}</span>
+          <span className="bds-nav-label">{t(`items.${item.id}`)}</span>
         </Link>
       })}
     </nav>
-    <span className="sr-only" role="status" aria-live="polite">{loading ? 'กำลังโหลดหน้า…' : ''}</span>
+    <span className="sr-only" role="status" aria-live="polite">{loading ? t('loading') : ''}</span>
   </>
 }

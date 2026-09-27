@@ -1,0 +1,45 @@
+{
+  "meta": {
+    "title": "BallDoenSai.com — แพลตฟอร์มกีฬาเด็กไทย",
+    "description": "ตารางอันดับนักกีฬาเยาวชนไทย"
+  },
+  "language": {
+    "switchShort": "EN",
+    "switchLabel": "Switch to English"
+  },
+  "header": {
+    "home": "BallDoenSai.com หน้าแรก",
+    "backTo": "กลับไป{label}"
+  },
+  "nav": {
+    "label": "เมนูหลัก",
+    "loading": "กำลังโหลดหน้า…",
+    "unread": "ยังไม่อ่าน {count} รายการ",
+    "items": {
+      "home": "หน้าแรก",
+      "discover": "ค้นหา",
+      "tournaments": "รายการแข่ง",
+      "notifications": "แจ้งเตือน",
+      "profile": "โปรไฟล์"
+    }
+  },
+  "tournaments": {
+    "titleTop": "รายการ",
+    "titleBottom": "แข่งขัน",
+    "intro": "รายการบอลเดินสายทั้งหมดที่เปิดรับสมัคร",
+    "details": "ดูรายละเอียด",
+    "empty": "ยังไม่มีรายการแข่งขัน"
+  },
+  "tournamentCover": {
+    "status": {
+      "open": "เปิดรับสมัคร",
+      "closed": "ปิดรับสมัคร"
+    },
+    "sport": {
+      "football": "ฟุตบอล",
+      "futsal": "ฟุตซอล"
+    },
+    "photoAlt": "สนาม {venue}",
+    "photoAltUnknown": "สนามแข่ง"
+  }
+}
