@@ -6,6 +6,7 @@ import { samplePlayerRanks, showDemoData } from '@/lib/sample-data'
 import { getPublicIdentityRankingData, getPublicRankingProvinces, getPublicRankings } from '@/lib/public-data'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
+import { podiumNameLines } from '@/lib/podium-name'
 
 export default async function RankingPage({
   searchParams,
@@ -141,7 +142,7 @@ export default async function RankingPage({
                       <PosIcon pos={p.position} size={isFirst ? 64 : 52} />
                     </div>
                     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '6px 6px 8px', background: 'linear-gradient(180deg,transparent 0%,rgba(0,0,0,0.7) 30%,rgba(0,0,0,0.88) 100%)', zIndex: 2 }}>
-                      <div style={{ fontFamily: 'var(--font-barlow)', fontSize: isFirst ? 14 : 13, fontWeight: 800, color: 'white', textAlign: 'center', textTransform: 'uppercase', lineHeight: 1.1, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.player_name}</div>
+                      <div style={{ fontFamily: 'var(--font-barlow)', fontSize: isFirst ? 14 : 13, fontWeight: 800, color: 'white', textAlign: 'center', textTransform: 'uppercase', lineHeight: 1.2, marginBottom: 2, overflowWrap: 'anywhere' }}>{podiumNameLines(p.player_name).map((line, index) => <span key={index} style={{ display: 'block' }}>{line}</span>)}</div>
                       <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginBottom: 5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.team}</div>
                       <div style={{ display: 'flex', justifyContent: 'space-around', borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: 4 }}>
                         {[['PAC', p.pac], ['SHO', p.sho], ['PAS', p.pas], ['DRI', p.dri], ['DEF', p.def]].map(([key, val]) => (
