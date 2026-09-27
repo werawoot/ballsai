@@ -316,6 +316,29 @@ describe('the styles that make it fit', () => {
     expect(rule('.bds-nav-spacer')).toContain('height:calc(var(--nav-height) + env(safe-area-inset-bottom))')
   })
 
+  it('gives Thai labels a line tall enough for a stacked tone mark', () => {
+    // At line-height 1.15 the label box was ~1.5px shorter than "แจ้งเตือน" and
+    // overflow:hidden clipped it. A px line keeps the height the same at 11px and 12px.
+    const label = rule('.bds-nav-label')
+    const line = Number(label.match(/line-height:(\d+)px/)?.[1])
+    const size = Number(rule('.bds-nav-item').match(/font:\d+ (\d+)px/)?.[1])
+    expect(line).toBeGreaterThanOrEqual(size * 1.4)
+    expect(css.slice(css.indexOf('@media (max-width:359px) { .bds-nav')).split('\n')[0]).not.toMatch(/line-height/)
+  })
+
+  it('makes --nav-height exactly the bar: border, padding and one tab, no overflow', () => {
+    const px = (source: string, pattern: RegExp) => Number(source.match(pattern)?.[1])
+    const nav = rule('.bds-nav')
+    const item = rule('.bds-nav-item')
+    const tab = px(item, /padding:(\d+)px/) * 2
+      + px(rule('.bds-nav-icon'), /height:(\d+)px/)
+      + px(item, /gap:(\d+)px/)
+      + px(rule('.bds-nav-label'), /line-height:(\d+)px/)
+    const bar = px(nav, /border-top:(\d+)px/) + px(nav, /padding:(\d+)px/) + tab + px(nav, /calc\((\d+)px \+ env\(safe-area-inset-bottom\)\)/)
+    expect(Math.max(tab, px(item, /min-height:(\d+)px/))).toBe(tab)
+    expect(px(css, /--nav-height:(\d+)px/)).toBe(bar)
+  })
+
   it('sits above the iPhone home indicator', () => {
     expect(rule('.bds-nav')).toContain('env(safe-area-inset-bottom)')
     expect(rule('.bds-nav-spacer')).toContain('env(safe-area-inset-bottom)')
