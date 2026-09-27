@@ -65,7 +65,7 @@ export default async function TournamentsPage() {
                     <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 20, fontWeight: 700, color: '#CC0001' }}>฿{t.fee}</div>
                   </div>
                 </div>
-                <Link className="bds-primary" href={isSampleId(t.id) ? '/login' : `/tournaments/${t.id}`} style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: '#CC0001', color: 'white', borderRadius: 10, padding: '11px', fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 0.5, textDecoration: 'none' }}>
+                <Link className="bds-primary" href={isSampleId(t.id) ? '/login' : `/tournaments/${t.id}`} style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, boxSizing: 'border-box', minHeight: 44, background: '#CC0001', color: 'white', borderRadius: 10, padding: '11px', fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 0.5, textDecoration: 'none' }}>
                   ดูรายละเอียด <ChevronRight size={16} />
                 </Link>
               </div>

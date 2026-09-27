@@ -408,3 +408,16 @@ body {
 .career-logo::before, .career-hall-link::before, .career-card-link::before,
 .card-page-logo::before, .card-page-profile-link::before,
 .hall-logo::before, .hall-ranking-link::before { content:""; height:max(100%,44px); left:50%; position:absolute; top:50%; transform:translate(-50%,-50%); width:max(100%,44px); }
+
+/* Hall of Fame filter chips (33-35px) and the empty-state link (38px) keep their look; an
+   invisible pseudo-element makes each at least 44px to hit. The chip rows scroll sideways,
+   and overflow-x:auto clips vertically too, so the extra height grows upward into padding
+   the row gains and gives straight back with a negative margin: nothing on screen moves.
+   Upward only: below a chip is the row's 4px padding, where its scrollbar takes the touch,
+   and its bottom border must stay put. The offsets count from the chip's padding box, one
+   1px border inside, so the area runs from 44px above the chip's bottom edge to that edge.
+   Rows sit 15px apart, and a 33px chip reaches 11px up, so it cannot touch the row above. */
+.hall-filter-row { margin-top:-11px; padding-top:11px; }
+.hall-filter-row a, .hall-empty a { position:relative; }
+.hall-filter-row a::before { bottom:-1px; content:""; left:50%; position:absolute; top:min(-1px,calc(100% - 43px)); transform:translateX(-50%); width:max(100%,44px); }
+.hall-empty a::before { content:""; height:max(100%,44px); left:50%; position:absolute; top:50%; transform:translate(-50%,-50%); width:max(100%,44px); }

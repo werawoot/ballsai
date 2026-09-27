@@ -188,8 +188,8 @@ describe('the loading feedback a tap starts', () => {
 describe('the loading feedback any in-app link starts', () => {
   const here = 'http://localhost:3108/tournaments?view=open'
   const plain = { button: 0, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false, defaultPrevented: false }
-  const link = (href: string | null, extra: { target?: string | null; download?: boolean } = {}) =>
-    ({ href, target: extra.target ?? null, download: extra.download ?? false })
+  const link = (href: string | null, extra: { target?: string | null; download?: boolean; noProgress?: boolean } = {}) =>
+    ({ href, target: extra.target ?? null, download: extra.download ?? false, noProgress: extra.noProgress ?? false })
 
   it('starts for a plain click on a link to another page of the app', () => {
     expect(linkNavigationTarget(plain, link('/athletes'), here)).toBe('/athletes')
@@ -245,6 +245,11 @@ describe('the loading feedback any in-app link starts', () => {
     expect(linkNavigationTarget(plain, link('/tournaments'), here)).toBeNull()
     // Query-only change: the pathname never moves, so nothing would ever finish the bar.
     expect(linkNavigationTarget(plain, link('/tournaments?view=closed'), here)).toBeNull()
+  })
+
+  it('does not start for a link that opts out with data-no-progress', () => {
+    expect(linkNavigationTarget(plain, link('/athletes', { noProgress: true }), here)).toBeNull()
+    expect(read('components/SiteNav.tsx')).toContain("noProgress: anchor.hasAttribute('data-no-progress')")
   })
 
   it('does not start for an anchor with no href', () => {

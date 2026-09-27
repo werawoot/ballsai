@@ -71,6 +71,7 @@ export default function SiteNav() {
         href: anchor.getAttribute('href'),
         target: anchor.getAttribute('target'),
         download: anchor.hasAttribute('download'),
+        noProgress: anchor.hasAttribute('data-no-progress'),
       }, window.location.href)
       if (destination === null) return
       const next = startNavigation(pathname, destination)

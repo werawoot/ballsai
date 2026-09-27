@@ -168,6 +168,12 @@ export type LinkAttributes = {
   href: string | null
   target: string | null
   download: boolean
+  /**
+   * `data-no-progress` on the `<a>`: the way out for a link whose own handler may keep the
+   * user on this page (a confirm, a client-side action). Without it the bar would run
+   * until the watchdog, 12 seconds, announcing a navigation that never started.
+   */
+  noProgress: boolean
 }
 
 /**
@@ -188,7 +194,7 @@ export function linkNavigationTarget(
   current: string,
 ): string | null {
   if (!isPlainPrimaryClick(click)) return null
-  if (link.href === null || link.download) return null
+  if (link.href === null || link.download || link.noProgress) return null
   if (link.target && link.target.toLowerCase() !== '_self') return null
   let from: URL
   let to: URL
