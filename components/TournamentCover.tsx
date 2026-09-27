@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import { MapPin } from 'lucide-react'
 import { tournamentCover, type TournamentCoverSource } from '@/lib/tournament-cover'
 
@@ -8,14 +9,15 @@ import { tournamentCover, type TournamentCoverSource } from '@/lib/tournament-co
 
 export default function TournamentCover({ tournament }: { tournament: TournamentCoverSource }) {
   const cover = tournamentCover(tournament)
+  const t = useTranslations('tournamentCover')
   return <div className={`bds-tcover is-${cover.kind}`} data-cover={cover.kind}>
     {cover.kind === 'photo'
       // Same delivery as the venue gallery: the photo URL is already the served size.
-      ? <Image className="bds-tcover-photo" src={cover.src} alt={cover.venue ? `สนาม ${cover.venue}` : 'สนามแข่ง'} fill sizes="(max-width: 720px) 100vw, 720px" unoptimized />
+      ? <Image className="bds-tcover-photo" src={cover.src} alt={cover.venue ? t('photoAlt', { venue: cover.venue }) : t('photoAltUnknown')} fill sizes="(max-width: 720px) 100vw, 720px" unoptimized />
       : <span className="bds-tcover-art" aria-hidden="true"><i /><i /><i /></span>}
     <div className="bds-tcover-top">
-      {cover.status && <span className={`bds-tcover-status${cover.status.open ? ' is-open' : ''}`}>{cover.status.label}</span>}
-      {cover.sport && <span className="bds-tcover-sport">{cover.sport}</span>}
+      {cover.status && <span className={`bds-tcover-status${cover.status === 'open' ? ' is-open' : ''}`}>{t(`status.${cover.status}`)}</span>}
+      {cover.sport && <span className="bds-tcover-sport">{t(`sport.${cover.sport}`)}</span>}
     </div>
     {cover.venue && <p className="bds-tcover-venue"><MapPin size={14} aria-hidden="true" /><span>{cover.venue}</span></p>}
   </div>

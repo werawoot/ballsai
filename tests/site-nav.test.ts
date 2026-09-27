@@ -385,7 +385,8 @@ describe('the route skeleton', () => {
 
   it('announces itself to screen readers rather than showing silent grey boxes', () => {
     expect(loading).toContain('role="status"')
-    expect(loading).toContain('กำลังโหลดหน้า…')
+    expect(loading).toContain("{t('loading')}")
+    expect(JSON.parse(read('messages/th.json')).nav.loading).toBe('กำลังโหลดหน้า…')
   })
 
   it('hides its decorative shapes from assistive technology', () => {

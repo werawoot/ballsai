@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
 import { ArrowLeft, Trophy } from 'lucide-react'
+import LanguageSwitch from '@/components/LanguageSwitch'
 
 // The one top bar for content pages. Before it there were nine hand-written headers
 // across 35 pages -- four spellings of the logo, back buttons 15-17px tall labelled only
@@ -18,7 +20,7 @@ export type PageHeaderBack = {
    * or a notification has no history in this app, and "back" would leave the site.
    */
   href: string
-  /** Names where it goes. The visible label is the destination, not the word "กลับ". */
+  /** Names where it goes. The visible label is the destination, not a bare "back". */
   label: string
 }
 
@@ -28,18 +30,23 @@ export default function PageHeader({ back, eyebrow, actions }: {
   eyebrow?: string
   actions?: ReactNode
 }) {
+  // Not async on purpose: two client pages (dashboard/create, tournaments/[id]) render it.
+  const t = useTranslations('header')
   return <header className={`bds-page-header${actions ? ' has-actions' : ''}`}>
     {back
-      ? <Link href={back.href} className="bds-page-header-back" aria-label={`กลับไป${back.label}`}>
+      ? <Link href={back.href} className="bds-page-header-back" aria-label={t('backTo', { label: back.label })}>
           <ArrowLeft size={20} aria-hidden="true" />
           <span>{back.label}</span>
         </Link>
-      : <Link href="/" className="bds-page-header-brand" aria-label="BallDoenSai.com หน้าแรก">
+      : <Link href="/" className="bds-page-header-brand" aria-label={t('home')}>
           <Trophy size={20} aria-hidden="true" />
           <span>BallDoenSai<em>.com</em></span>
         </Link>}
-    {actions
-      ? <div className="bds-page-header-actions">{actions}</div>
-      : eyebrow ? <span className="bds-page-header-eyebrow">{eyebrow}</span> : null}
+    <div className="bds-page-header-end">
+      {actions
+        ? <div className="bds-page-header-actions">{actions}</div>
+        : eyebrow ? <span className="bds-page-header-eyebrow">{eyebrow}</span> : null}
+      <LanguageSwitch />
+    </div>
   </header>
 }

@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from 'next'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { Sarabun, Oswald, Barlow_Condensed } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
@@ -23,9 +25,9 @@ const barlowCondensed = Barlow_Condensed({
   variable: '--font-barlow',
 })
 
-export const metadata: Metadata = {
-  title: 'BallDoenSai.com — แพลตฟอร์มกีฬาเด็กไทย',
-  description: 'ตารางอันดับนักกีฬาเยาวชนไทย',
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('meta')
+  return { title: t('title'), description: t('description') }
 }
 
 // `viewport-fit=cover` is what makes `env(safe-area-inset-bottom)` report the iPhone home
@@ -36,12 +38,17 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // The language the person chose (i18n/request.ts). The provider hands the same locale
+  // and messages to client components, so a client string can never disagree with the page.
+  const locale = await getLocale()
   return (
-    <html lang="th">
+    <html lang={locale}>
       <body className={`${sarabun.variable} ${oswald.variable} ${barlowCondensed.variable}`}>
-        {children}
-        <SiteNav />
+        <NextIntlClientProvider>
+          {children}
+          <SiteNav />
+        </NextIntlClientProvider>
         <Analytics />
         <SpeedInsights />
       </body>

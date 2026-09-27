@@ -1,0 +1,197 @@
+{
+  "meta": {
+    "title": "BallDoenSai.com — Thailand's youth sports platform",
+    "description": "Rankings for Thai youth athletes"
+  },
+  "language": {
+    "switchShort": "ไทย",
+    "switchLabel": "เปลี่ยนเป็นภาษาไทย"
+  },
+  "header": {
+    "home": "BallDoenSai.com home",
+    "backTo": "Back to {label}"
+  },
+  "nav": {
+    "label": "Main menu",
+    "loading": "Loading page…",
+    "unread": "{count} unread",
+    "items": {
+      "home": "Home",
+      "discover": "Discover",
+      "tournaments": "Events",
+      "notifications": "Alerts",
+      "profile": "Profile"
+    }
+  },
+  "tournaments": {
+    "titleTop": "All",
+    "titleBottom": "Tournaments",
+    "intro": "Every BallDoenSai circuit tournament open for entries",
+    "details": "View details",
+    "empty": "No tournaments yet"
+  },
+  "tournamentCover": {
+    "status": {
+      "open": "Registration open",
+      "closed": "Registration closed"
+    },
+    "sport": {
+      "football": "Football",
+      "futsal": "Futsal"
+    },
+    "photoAlt": "{venue} venue",
+    "photoAltUnknown": "Tournament venue"
+  },
+  "onboarding": {
+    "skip": "Skip for now",
+    "progress": "Step {step} of {total}",
+    "back": "Back",
+    "next": "Next",
+    "starting": "Getting started...",
+    "finish": "Start my journey",
+    "saveSettingsFailed": "Could not save your settings: {message}",
+    "saveAthleteFailed": "Could not save your athlete profile: {message}",
+    "persona": {
+      "titleTop": "Who are you",
+      "titleBottom": "joining as?",
+      "intro": "Choose one and we will take you to the best place to start"
+    },
+    "sport": {
+      "titleTop": "Which sport",
+      "titleBottom": "do you play?",
+      "intro": "Start with the sport you love; you can add more results later"
+    },
+    "goal": {
+      "titleTop": "What would you",
+      "titleBottom": "like to do first?",
+      "intro": "We will take you straight there"
+    },
+    "personas": {
+      "athlete": {
+        "title": "Athlete",
+        "description": "Build my identity and keep every result"
+      },
+      "guardian": {
+        "title": "Parent / Guardian",
+        "description": "Follow and support your child's journey"
+      },
+      "coach_organizer": {
+        "title": "Coach / Organizer",
+        "description": "Find, develop and run competitions"
+      },
+      "venue_owner": {
+        "title": "Venue owner",
+        "description": "List your venue and take booking requests"
+      },
+      "sponsor_brand": {
+        "title": "Sponsor / Brand",
+        "description": "Create support opportunities for athletes, responsibly"
+      }
+    },
+    "sports": {
+      "football": "Football",
+      "futsal": "Futsal",
+      "other": "Other sports"
+    },
+    "goals": {
+      "player_card": {
+        "title": "Make a Player Card",
+        "description": "Create my player card"
+      },
+      "find_competitions": {
+        "title": "Find a tournament",
+        "description": "See which competitions are waiting for you"
+      },
+      "follow_athlete": {
+        "title": "Follow an athlete",
+        "description": "See their journey and results"
+      },
+      "discover_talent": {
+        "title": "Discover athletes",
+        "description": "Spot rising talent"
+      },
+      "manage_venue": {
+        "title": "Manage a venue",
+        "description": "Set up your venue and open time slots"
+      },
+      "support_athletes": {
+        "title": "Support athletes",
+        "description": "Offer opportunities that young athletes choose to take up"
+      }
+    }
+  },
+  "card": {
+    "chooseImage": "Please choose a JPG, PNG or WEBP image",
+    "imageTooLarge": "The photo must be 8MB or smaller",
+    "photoReady": "Photo added to your card — press “Save Player Card” to keep it on your profile",
+    "nameRequired": "Add the name for your card before saving",
+    "saving": "Saving your Player Card…",
+    "noBucket": "Photo storage is not set up yet — apply SQL Athlete Profile V2 first",
+    "uploadFailed": "Could not upload the photo: {message}",
+    "profileNotReady": "Athlete Profile is not fully set up yet — apply SQL Athlete Profile V2 first",
+    "saveFailed": "Could not save: {message}",
+    "saved": "Player Card saved! Your card and photo are now on your profile",
+    "rendering": "Creating the image…",
+    "downloaded": "Card downloaded — ready to post!",
+    "renderFailed": "Could not create the image. Try another photo or download again",
+    "needPublicProfile": "Turn on “Public profile” on your profile page before sharing your athlete link",
+    "copyFailed": "Could not copy the link. Try the share button on your phone instead",
+    "preparingShare": "Preparing your card for sharing…",
+    "shareText": "This is my Player Card from BallDoenSai.com ⚽",
+    "shareOpened": "Share menu opened — choose Instagram, Facebook or TikTok",
+    "shareDownloaded": "Image downloaded — open the app you want and pick this image to post",
+    "shareFailed": "Could not share yet. Try downloading it and posting from the app",
+    "preparingInstagram": "Preparing a 9:16 card for Instagram…",
+    "instagramOpened": "Choose Instagram in the share menu, then paste the copied link into your Story or Bio",
+    "instagramDownloaded": "Card downloaded and link copied — open Instagram and add this image to your Story",
+    "instagramFailed": "Could not open Instagram. Try downloading the image and posting from the app",
+    "preparingTiktok": "Preparing a 9:16 card for TikTok…",
+    "tiktokDownloaded": "Card downloaded — pick this file on TikTok Upload and paste your profile link in the caption",
+    "tiktokFailed": "Could not create the file. Try Download PNG and upload it from TikTok",
+    "facebookNeedsPublic": "Facebook needs your public profile link — turn it on in your profile and save first",
+    "facebookOpened": "Facebook Share is open — it will show a preview of your card automatically",
+    "linkCopied": "Athlete Profile link copied",
+    "titleTop": "Make your",
+    "titleBottom": "player card",
+    "intro": "Add a photo, pick a design, then save it as an image for Story, TikTok or Facebook",
+    "starterNote": "Starting values turn into your real Rating once you have results in the system",
+    "fieldsLabel": "Player Card details",
+    "fieldsTitle": "On your Player Card",
+    "name": "Player name",
+    "namePlaceholder": "The name you want on the card",
+    "team": "Team / club",
+    "teamPlaceholder": "Your team's name",
+    "province": "Province",
+    "provincePlaceholder": "e.g. Bangkok",
+    "position": "Position",
+    "savingShort": "Saving…",
+    "save": "SAVE PLAYER CARD",
+    "publicHintBefore": "After saving, turn on your ",
+    "publicHintLink": "public profile",
+    "publicHintAfter": " to get a link for Facebook and let others see your card",
+    "design": "Card design",
+    "format": "Image size",
+    "changePhoto": "Change card photo",
+    "choosePhoto": "Choose my photo",
+    "photoHelp": "This photo is kept on your profile when you press “SAVE PLAYER CARD”",
+    "download": "Download PNG",
+    "share": "Share card",
+    "channels": "Share it the right way",
+    "shareNote": "Instagram and TikTok need you to pick the app or file yourself, as their rules require · Facebook shares the link with a preview straight away",
+    "editProfile": "Edit profile"
+  },
+  "profileShare": {
+    "needPublic": "Turn on “Public profile” and save first to get a share link",
+    "shareText": "This is my football journey on BallDoenSai.com ⚽",
+    "shareOpened": "Share menu opened",
+    "copied": "Link copied",
+    "shareFailed": "Could not share yet. Try copying the link instead",
+    "copyFailed": "Could not copy. Try sharing from your phone",
+    "title": "Your player profile is ready to share",
+    "publicNote": "When you share it to a Story or Facebook, a preview of your card appears automatically",
+    "privateNote": "Your profile is still private, to keep your information safe",
+    "share": "Share profile",
+    "cannotShare": "Not shareable yet",
+    "copy": "Copy link"
+  }
+}

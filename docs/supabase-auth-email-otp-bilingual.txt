@@ -1,0 +1,17 @@
+BallDoenSai.com
+
+รหัสสำหรับเข้าสู่ระบบของคุณ
+Your sign-in code
+
+กรอกรหัสนี้ในหน้า BallDoenSai เพื่อเข้าสู่ระบบอย่างปลอดภัย:
+Enter this code on BallDoenSai to sign in securely:
+
+{{ .Token }}
+
+หากคุณไม่ได้ขอรหัสนี้ ให้เพิกเฉยต่ออีเมลฉบับนี้ และอย่าแชร์รหัสกับผู้อื่น
+If you did not ask for this code, ignore this email and never share the code with anyone.
+
+เพื่อความปลอดภัย รหัสนี้ใช้ได้ตามระยะเวลาที่ตั้งไว้ในระบบเท่านั้น
+For your security, this code works only for a limited time.
+
+BallDoenSai.com · ทุกแมตช์คือเส้นทางของคุณ · Every match is your story

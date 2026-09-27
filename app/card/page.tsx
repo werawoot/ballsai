@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Trophy } from 'lucide-react'
+import { getTranslations } from 'next-intl/server'
 import PlayerCardBuilder from './PlayerCardBuilder'
 import { ACTIVE_SPORT } from '@/lib/season'
 
@@ -11,6 +12,7 @@ type AthleteProfile = { display_name?: string | null; position?: string | null; 
 type PlayerRank = { id: string; player_name: string; position: string; ovr: number; pac: number; sho: number; pas: number; dri: number; def: number }
 
 export default async function PlayerCardPage() {
+  const t = await getTranslations('card')
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,7 +37,7 @@ export default async function PlayerCardPage() {
     <main className="card-page">
       <header className="card-page-header">
         <Link href="/" className="card-page-logo"><Trophy size={18} /> BallDoenSai.com</Link>
-        <div style={{ display: 'flex', gap: 8 }}><Link href="/career" className="card-page-profile-link">Athlete Passport</Link><Link href="/profile" className="card-page-profile-link">แก้ไขโปรไฟล์</Link></div>
+        <div style={{ display: 'flex', gap: 8 }}><Link href="/career" className="card-page-profile-link">Athlete Passport</Link><Link href="/profile" className="card-page-profile-link">{t('editProfile')}</Link></div>
       </header>
       <PlayerCardBuilder
         userId={user.id}

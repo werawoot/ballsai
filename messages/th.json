@@ -1,0 +1,197 @@
+{
+  "meta": {
+    "title": "BallDoenSai.com — แพลตฟอร์มกีฬาเด็กไทย",
+    "description": "ตารางอันดับนักกีฬาเยาวชนไทย"
+  },
+  "language": {
+    "switchShort": "EN",
+    "switchLabel": "Switch to English"
+  },
+  "header": {
+    "home": "BallDoenSai.com หน้าแรก",
+    "backTo": "กลับไป{label}"
+  },
+  "nav": {
+    "label": "เมนูหลัก",
+    "loading": "กำลังโหลดหน้า…",
+    "unread": "ยังไม่อ่าน {count} รายการ",
+    "items": {
+      "home": "หน้าแรก",
+      "discover": "ค้นหา",
+      "tournaments": "รายการแข่ง",
+      "notifications": "แจ้งเตือน",
+      "profile": "โปรไฟล์"
+    }
+  },
+  "tournaments": {
+    "titleTop": "รายการ",
+    "titleBottom": "แข่งขัน",
+    "intro": "รายการบอลเดินสายทั้งหมดที่เปิดรับสมัคร",
+    "details": "ดูรายละเอียด",
+    "empty": "ยังไม่มีรายการแข่งขัน"
+  },
+  "tournamentCover": {
+    "status": {
+      "open": "เปิดรับสมัคร",
+      "closed": "ปิดรับสมัคร"
+    },
+    "sport": {
+      "football": "ฟุตบอล",
+      "futsal": "ฟุตซอล"
+    },
+    "photoAlt": "สนาม {venue}",
+    "photoAltUnknown": "สนามแข่ง"
+  },
+  "onboarding": {
+    "skip": "ข้ามไปดูก่อน",
+    "progress": "ขั้นตอน {step} จาก {total}",
+    "back": "ย้อนกลับ",
+    "next": "ต่อไป",
+    "starting": "กำลังเริ่มต้น...",
+    "finish": "เริ่มเส้นทางของฉัน",
+    "saveSettingsFailed": "บันทึกการตั้งค่าไม่สำเร็จ: {message}",
+    "saveAthleteFailed": "บันทึกโปรไฟล์นักกีฬาไม่สำเร็จ: {message}",
+    "persona": {
+      "titleTop": "คุณเข้ามา",
+      "titleBottom": "ในฐานะอะไร?",
+      "intro": "เลือกให้เราพาคุณไปยังจุดเริ่มต้นที่เหมาะที่สุด"
+    },
+    "sport": {
+      "titleTop": "คุณสนใจ",
+      "titleBottom": "กีฬาอะไร?",
+      "intro": "เริ่มต้นด้วยกีฬาที่คุณรัก และเพิ่มผลงานได้ในภายหลัง"
+    },
+    "goal": {
+      "titleTop": "วันนี้อยาก",
+      "titleBottom": "เริ่มอะไร?",
+      "intro": "เราจะพาคุณไปถึงจุดเริ่มต้นนั้นทันที"
+    },
+    "personas": {
+      "athlete": {
+        "title": "นักกีฬา",
+        "description": "สร้างตัวตนและเก็บทุกผลงานของฉัน"
+      },
+      "guardian": {
+        "title": "ผู้ปกครอง",
+        "description": "ติดตามและสนับสนุนเส้นทางของน้อง"
+      },
+      "coach_organizer": {
+        "title": "โค้ช / ผู้จัด",
+        "description": "ค้นหา พัฒนา และจัดการแข่งขัน"
+      },
+      "venue_owner": {
+        "title": "เจ้าของสนาม",
+        "description": "เปิดสนามและรับคำขอจอง"
+      },
+      "sponsor_brand": {
+        "title": "Sponsor / Brand",
+        "description": "สร้างโอกาสสนับสนุนนักกีฬาอย่างรับผิดชอบ"
+      }
+    },
+    "sports": {
+      "football": "ฟุตบอล",
+      "futsal": "ฟุตซอล",
+      "other": "กีฬาอื่น"
+    },
+    "goals": {
+      "player_card": {
+        "title": "สร้าง Player Card",
+        "description": "ทำการ์ดนักเตะของฉัน"
+      },
+      "find_competitions": {
+        "title": "หารายการแข่ง",
+        "description": "ค้นหาสนามที่รอคุณอยู่"
+      },
+      "follow_athlete": {
+        "title": "ติดตามนักกีฬา",
+        "description": "ดูเส้นทางและผลงาน"
+      },
+      "discover_talent": {
+        "title": "ค้นหานักกีฬา",
+        "description": "เจอดาวรุ่งที่น่าจับตา"
+      },
+      "manage_venue": {
+        "title": "จัดการสนาม",
+        "description": "สร้างสนามและเปิดเวลาว่าง"
+      },
+      "support_athletes": {
+        "title": "สนับสนุนนักกีฬา",
+        "description": "สร้างโอกาสที่เด็กเลือกแสดงความสนใจเอง"
+      }
+    }
+  },
+  "card": {
+    "chooseImage": "กรุณาเลือกรูปภาพ JPG, PNG หรือ WEBP",
+    "imageTooLarge": "รูปต้องมีขนาดไม่เกิน 8MB",
+    "photoReady": "ใช้รูปนี้กับการ์ดแล้ว — กด “บันทึก Player Card” เพื่อเก็บไว้ในโปรไฟล์",
+    "nameRequired": "ใส่ชื่อบนการ์ดก่อนบันทึกครับ",
+    "saving": "กำลังบันทึก Player Card ของคุณ…",
+    "noBucket": "ยังไม่พบพื้นที่เก็บรูป — กรุณา Apply SQL Athlete Profile V2 ก่อน",
+    "uploadFailed": "อัปโหลดรูปไม่สำเร็จ: {message}",
+    "profileNotReady": "ยังตั้งค่า Athlete Profile ไม่ครบ — กรุณา Apply SQL Athlete Profile V2 ก่อน",
+    "saveFailed": "บันทึกไม่สำเร็จ: {message}",
+    "saved": "บันทึก Player Card แล้ว! ตอนนี้การ์ดและรูปจะอยู่ในโปรไฟล์ของคุณ",
+    "rendering": "กำลังสร้างไฟล์ภาพ…",
+    "downloaded": "ดาวน์โหลดการ์ดแล้ว พร้อมโพสต์ได้เลย!",
+    "renderFailed": "สร้างภาพไม่สำเร็จ ลองเลือกรูปอื่นหรือดาวน์โหลดอีกครั้ง",
+    "needPublicProfile": "เปิด “โปรไฟล์สาธารณะ” ในหน้าโปรไฟล์ก่อน จึงจะแชร์ลิงก์นักกีฬาได้",
+    "copyFailed": "คัดลอกลิงก์ไม่สำเร็จ ลองใช้ปุ่มแชร์บนมือถือแทน",
+    "preparingShare": "กำลังเตรียมการ์ดสำหรับแชร์…",
+    "shareText": "นี่คือ Player Card ของฉันจาก BallDoenSai.com ⚽",
+    "shareOpened": "เปิดเมนูแชร์แล้ว เลือก Instagram, Facebook หรือ TikTok ได้เลย",
+    "shareDownloaded": "ดาวน์โหลดภาพแล้ว — เปิดแอปที่ต้องการ แล้วเลือกภาพนี้เพื่อโพสต์",
+    "shareFailed": "ยังแชร์ไม่สำเร็จ ลองกดดาวน์โหลด แล้วโพสต์จากแอปได้เลย",
+    "preparingInstagram": "กำลังเตรียมการ์ด 9:16 สำหรับ Instagram…",
+    "instagramOpened": "เลือก Instagram จากเมนูแชร์ แล้ววางลิงก์ที่คัดลอกไว้ใน Story หรือ Bio ได้เลย",
+    "instagramDownloaded": "ดาวน์โหลดการ์ดและคัดลอกลิงก์แล้ว — เปิด Instagram แล้วเลือกภาพนี้ลง Story",
+    "instagramFailed": "ยังเปิด Instagram ไม่สำเร็จ ลองดาวน์โหลดภาพแล้วโพสต์จากแอป",
+    "preparingTiktok": "กำลังเตรียมการ์ด 9:16 สำหรับ TikTok…",
+    "tiktokDownloaded": "ดาวน์โหลดการ์ดแล้ว — เลือกไฟล์นี้ในหน้า TikTok Upload และวางลิงก์โปรไฟล์ในคำบรรยาย",
+    "tiktokFailed": "สร้างไฟล์ไม่สำเร็จ ลองกดดาวน์โหลด PNG แล้วอัปโหลดจาก TikTok ได้เลย",
+    "facebookNeedsPublic": "Facebook ต้องใช้ลิงก์โปรไฟล์สาธารณะ — เปิดในหน้าโปรไฟล์แล้วบันทึกก่อน",
+    "facebookOpened": "เปิดหน้าต่าง Facebook Share แล้ว — ระบบจะแสดงภาพ Preview การ์ดของคุณอัตโนมัติ",
+    "linkCopied": "คัดลอกลิงก์ Athlete Profile แล้ว",
+    "titleTop": "สร้างการ์ด",
+    "titleBottom": "นักเตะของคุณ",
+    "intro": "ใส่รูป เลือกดีไซน์ แล้วเซฟเป็นภาพสำหรับ Story, TikTok หรือ Facebook ได้ทันที",
+    "starterNote": "ค่าสถานะเริ่มต้นจะเปลี่ยนเป็น Rating จริงหลังมีผลงานในระบบ",
+    "fieldsLabel": "ข้อมูล Player Card",
+    "fieldsTitle": "ข้อมูลบน Player Card",
+    "name": "ชื่อนักเตะ",
+    "namePlaceholder": "ชื่อที่อยากใช้บนการ์ด",
+    "team": "ทีม / สโมสร",
+    "teamPlaceholder": "ชื่อทีมของคุณ",
+    "province": "จังหวัด",
+    "provincePlaceholder": "เช่น กรุงเทพมหานคร",
+    "position": "ตำแหน่ง",
+    "savingShort": "กำลังบันทึก…",
+    "save": "บันทึก PLAYER CARD",
+    "publicHintBefore": "หลังบันทึกแล้ว เปิด ",
+    "publicHintLink": "โปรไฟล์สาธารณะ",
+    "publicHintAfter": " เพื่อรับลิงก์สำหรับ Facebook และให้คนอื่นดูการ์ดของคุณ",
+    "design": "ดีไซน์การ์ด",
+    "format": "ขนาดไฟล์",
+    "changePhoto": "เปลี่ยนรูปในการ์ด",
+    "choosePhoto": "เลือกรูปของฉัน",
+    "photoHelp": "รูปนี้จะถูกเก็บในโปรไฟล์เมื่อกด “บันทึก PLAYER CARD”",
+    "download": "ดาวน์โหลด PNG",
+    "share": "แชร์การ์ด",
+    "channels": "แชร์ให้ถูกช่องทาง",
+    "shareNote": "Instagram และ TikTok ต้องให้คุณเลือกแอป/ไฟล์เองตามกติกาของแพลตฟอร์ม · Facebook แชร์ลิงก์พร้อมภาพ Preview ได้ทันที",
+    "editProfile": "แก้ไขโปรไฟล์"
+  },
+  "profileShare": {
+    "needPublic": "เปิด “โปรไฟล์สาธารณะ” และบันทึกก่อน เพื่อรับลิงก์แชร์",
+    "shareText": "นี่คือเส้นทางนักบอลของฉันบน BallDoenSai.com ⚽",
+    "shareOpened": "เปิดเมนูแชร์แล้ว",
+    "copied": "คัดลอกลิงก์แล้ว",
+    "shareFailed": "ยังแชร์ไม่สำเร็จ ลองคัดลอกลิงก์แทน",
+    "copyFailed": "คัดลอกไม่สำเร็จ ลองกดแชร์จากมือถือ",
+    "title": "โปรไฟล์นักบอลของคุณ พร้อมแชร์แล้ว",
+    "publicNote": "เมื่อแชร์ลง Story หรือ Facebook จะมีภาพ Preview การ์ดของคุณอัตโนมัติ",
+    "privateNote": "โปรไฟล์ยังเป็นส่วนตัว เพื่อความปลอดภัยของข้อมูลคุณ",
+    "share": "แชร์โปรไฟล์",
+    "cannotShare": "ยังแชร์ไม่ได้",
+    "copy": "คัดลอกลิงก์"
+  }
+}

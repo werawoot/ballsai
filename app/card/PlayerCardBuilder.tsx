@@ -3,6 +3,7 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useLocale, useTranslations } from 'next-intl'
 import { CheckCircle2, Copy, Download, Facebook, ImagePlus, Instagram, Loader2, Music2, Save, Share2, Sparkles, Trophy } from 'lucide-react'
 import { track } from '@vercel/analytics'
 import { createClient } from '@/lib/supabase'
@@ -42,6 +43,8 @@ function themeColors(theme: Theme) {
 
 export default function PlayerCardBuilder({ player, publicProfilePath, userId }: { player: Player; publicProfilePath: string | null; userId: string }) {
   const router = useRouter()
+  const t = useTranslations('card')
+  const locale = useLocale()
   const [theme, setTheme] = useState<Theme>('gold')
   const [format, setFormat] = useState<Format>('story')
   const [localImage, setLocalImage] = useState<string | null>(null)
@@ -63,18 +66,18 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
   const choosePhoto = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
-    if (!file.type.startsWith('image/')) { setStatus('กรุณาเลือกรูปภาพ JPG, PNG หรือ WEBP'); return }
-    if (file.size > 8 * 1024 * 1024) { setStatus('รูปต้องมีขนาดไม่เกิน 8MB'); return }
+    if (!file.type.startsWith('image/')) { setStatus(t('chooseImage')); return }
+    if (file.size > 8 * 1024 * 1024) { setStatus(t('imageTooLarge')); return }
     if (localImage) URL.revokeObjectURL(localImage)
     setSelectedPhoto(file)
     setLocalImage(URL.createObjectURL(file))
-    setStatus('ใช้รูปนี้กับการ์ดแล้ว — กด “บันทึก Player Card” เพื่อเก็บไว้ในโปรไฟล์')
+    setStatus(t('photoReady'))
   }
 
   const saveCardIdentity = async () => {
-    if (!name.trim()) { setStatus('ใส่ชื่อบนการ์ดก่อนบันทึกครับ'); return }
+    if (!name.trim()) { setStatus(t('nameRequired')); return }
     setSavingProfile(true)
-    setStatus('กำลังบันทึก Player Card ของคุณ…')
+    setStatus(t('saving'))
     const supabase = createClient()
     let profileImageUrl = savedImage
 
@@ -86,7 +89,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
       })
       if (uploadError) {
         setSavingProfile(false)
-        setStatus(uploadError.message.includes('Bucket') ? 'ยังไม่พบพื้นที่เก็บรูป — กรุณา Apply SQL Athlete Profile V2 ก่อน' : `อัปโหลดรูปไม่สำเร็จ: ${uploadError.message}`)
+        setStatus(uploadError.message.includes('Bucket') ? t('noBucket') : t('uploadFailed', { message: uploadError.message }))
         return
       }
       profileImageUrl = supabase.storage.from('athlete-avatars').getPublicUrl(path).data.publicUrl
@@ -107,12 +110,12 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
     setSavingProfile(false)
     if (profileError || athleteError) {
       const error = profileError || athleteError
-      setStatus(error?.message.includes('athlete_profiles') ? 'ยังตั้งค่า Athlete Profile ไม่ครบ — กรุณา Apply SQL Athlete Profile V2 ก่อน' : `บันทึกไม่สำเร็จ: ${error?.message}`)
+      setStatus(error?.message.includes('athlete_profiles') ? t('profileNotReady') : t('saveFailed', { message: error?.message ?? '' }))
       return
     }
     setSavedImage(profileImageUrl)
     setSelectedPhoto(null)
-    setStatus('บันทึก Player Card แล้ว! ตอนนี้การ์ดและรูปจะอยู่ในโปรไฟล์ของคุณ')
+    setStatus(t('saved'))
     track('player_card_identity_saved', { has_photo: Boolean(profileImageUrl), position })
     router.refresh()
   }
@@ -173,12 +176,12 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
 
   const download = async () => {
     try {
-      setStatus('กำลังสร้างไฟล์ภาพ…')
+      setStatus(t('rendering'))
       const blob = await makeCard(); const url = URL.createObjectURL(blob); const a = document.createElement('a')
       a.href = url; a.download = cardFilename; a.click(); URL.revokeObjectURL(url)
       track('player_card_downloaded', { format, theme, has_photo: Boolean(imageUrl), rating: player.isRanked ? 'ranked' : 'starter' })
-      setStatus('ดาวน์โหลดการ์ดแล้ว พร้อมโพสต์ได้เลย!')
-    } catch { setStatus('สร้างภาพไม่สำเร็จ ลองเลือกรูปอื่นหรือดาวน์โหลดอีกครั้ง') }
+      setStatus(t('downloaded'))
+    } catch { setStatus(t('renderFailed')) }
   }
 
   const downloadBlob = (blob: Blob) => {
@@ -192,103 +195,103 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
 
   const copyProfileLink = async () => {
     if (!publicProfilePath) {
-      setStatus('เปิด “โปรไฟล์สาธารณะ” ในหน้าโปรไฟล์ก่อน จึงจะแชร์ลิงก์นักกีฬาได้')
+      setStatus(t('needPublicProfile'))
       return false
     }
     try {
       await navigator.clipboard.writeText(`${window.location.origin}${publicProfilePath}`)
       return true
     } catch {
-      setStatus('คัดลอกลิงก์ไม่สำเร็จ ลองใช้ปุ่มแชร์บนมือถือแทน')
+      setStatus(t('copyFailed'))
       return false
     }
   }
 
   const share = async () => {
     try {
-      setStatus('กำลังเตรียมการ์ดสำหรับแชร์…')
+      setStatus(t('preparingShare'))
       const blob = await makeCard(); const file = new File([blob], 'balldoensai-player-card.png', { type: 'image/png' })
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: 'My BallDoenSai Player Card', text: 'นี่คือ Player Card ของฉันจาก BallDoenSai.com ⚽', url: publicProfilePath ? `${window.location.origin}${publicProfilePath}` : undefined, files: [file] })
+        await navigator.share({ title: 'My BallDoenSai Player Card', text: t('shareText'), url: publicProfilePath ? `${window.location.origin}${publicProfilePath}` : undefined, files: [file] })
         track('player_card_shared', { format, theme, has_photo: Boolean(imageUrl), rating: player.isRanked ? 'ranked' : 'starter' })
-        setStatus('เปิดเมนูแชร์แล้ว เลือก Instagram, Facebook หรือ TikTok ได้เลย')
+        setStatus(t('shareOpened'))
       } else {
         const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'balldoensai-player-card.png'; a.click(); URL.revokeObjectURL(url)
         track('player_card_downloaded', { format, theme, has_photo: Boolean(imageUrl), rating: player.isRanked ? 'ranked' : 'starter' })
-        setStatus('ดาวน์โหลดภาพแล้ว — เปิดแอปที่ต้องการ แล้วเลือกภาพนี้เพื่อโพสต์')
+        setStatus(t('shareDownloaded'))
       }
-    } catch (error) { if ((error as Error).name !== 'AbortError') setStatus('ยังแชร์ไม่สำเร็จ ลองกดดาวน์โหลด แล้วโพสต์จากแอปได้เลย') }
+    } catch (error) { if ((error as Error).name !== 'AbortError') setStatus(t('shareFailed')) }
   }
 
   const shareToInstagram = async () => {
     setFormat('story')
     try {
-      setStatus('กำลังเตรียมการ์ด 9:16 สำหรับ Instagram…')
+      setStatus(t('preparingInstagram'))
       const blob = await makeCard('story')
       const file = new File([blob], cardFilename, { type: 'image/png' })
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ title: 'My BallDoenSai Player Card', text: 'My BallDoenSai Player Card ⚽', files: [file] })
         await copyProfileLink()
         track('player_card_shared', { destination: 'instagram', format: 'story', theme })
-        setStatus('เลือก Instagram จากเมนูแชร์ แล้ววางลิงก์ที่คัดลอกไว้ใน Story หรือ Bio ได้เลย')
+        setStatus(t('instagramOpened'))
       } else {
         downloadBlob(blob)
         await copyProfileLink()
-        setStatus('ดาวน์โหลดการ์ดและคัดลอกลิงก์แล้ว — เปิด Instagram แล้วเลือกภาพนี้ลง Story')
+        setStatus(t('instagramDownloaded'))
       }
     } catch (error) {
-      if ((error as Error).name !== 'AbortError') setStatus('ยังเปิด Instagram ไม่สำเร็จ ลองดาวน์โหลดภาพแล้วโพสต์จากแอป')
+      if ((error as Error).name !== 'AbortError') setStatus(t('instagramFailed'))
     }
   }
 
   const shareToTikTok = async () => {
-    window.open('https://www.tiktok.com/upload?lang=th-TH', '_blank', 'noopener,noreferrer')
+    window.open(`https://www.tiktok.com/upload?lang=${locale === 'en' ? 'en' : 'th-TH'}`, '_blank', 'noopener,noreferrer')
     try {
-      setStatus('กำลังเตรียมการ์ด 9:16 สำหรับ TikTok…')
+      setStatus(t('preparingTiktok'))
       const blob = await makeCard('story')
       downloadBlob(blob)
       await copyProfileLink()
       track('player_card_shared', { destination: 'tiktok', format: 'story', theme })
-      setStatus('ดาวน์โหลดการ์ดแล้ว — เลือกไฟล์นี้ในหน้า TikTok Upload และวางลิงก์โปรไฟล์ในคำบรรยาย')
+      setStatus(t('tiktokDownloaded'))
     } catch {
-      setStatus('สร้างไฟล์ไม่สำเร็จ ลองกดดาวน์โหลด PNG แล้วอัปโหลดจาก TikTok ได้เลย')
+      setStatus(t('tiktokFailed'))
     }
   }
 
   const shareToFacebook = () => {
     if (!publicProfilePath) {
-      setStatus('Facebook ต้องใช้ลิงก์โปรไฟล์สาธารณะ — เปิดในหน้าโปรไฟล์แล้วบันทึกก่อน')
+      setStatus(t('facebookNeedsPublic'))
       return
     }
     const shareUrl = `${window.location.origin}${publicProfilePath}`
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank', 'noopener,noreferrer')
     track('player_card_shared', { destination: 'facebook', format, theme })
-    setStatus('เปิดหน้าต่าง Facebook Share แล้ว — ระบบจะแสดงภาพ Preview การ์ดของคุณอัตโนมัติ')
+    setStatus(t('facebookOpened'))
   }
 
   return <section className="card-builder">
     <div className="card-builder-copy">
       <p className="card-eyebrow"><Sparkles size={15} /> YOUR GAME · YOUR STORY</p>
-      <h1>สร้างการ์ด<br /><em>นักเตะของคุณ</em></h1>
-      <p>ใส่รูป เลือกดีไซน์ แล้วเซฟเป็นภาพสำหรับ Story, TikTok หรือ Facebook ได้ทันที</p>
-      {!player.isRanked && <div className="card-starter-note"><Trophy size={16} /><span><b>STARTER CARD</b> · ค่าสถานะเริ่มต้นจะเปลี่ยนเป็น Rating จริงหลังมีผลงานในระบบ</span></div>}
-      <div className="card-identity-fields" aria-label="ข้อมูล Player Card">
-        <span>ข้อมูลบน Player Card</span>
+      <h1>{t('titleTop')}<br /><em>{t('titleBottom')}</em></h1>
+      <p>{t('intro')}</p>
+      {!player.isRanked && <div className="card-starter-note"><Trophy size={16} /><span><b>STARTER CARD</b> · {t('starterNote')}</span></div>}
+      <div className="card-identity-fields" aria-label={t('fieldsLabel')}>
+        <span>{t('fieldsTitle')}</span>
         <div className="card-identity-grid">
-          <label>ชื่อนักเตะ<input value={name} onChange={event => setName(event.target.value.slice(0, 60))} placeholder="ชื่อที่อยากใช้บนการ์ด" /></label>
-          <label>ทีม / สโมสร<input value={team} onChange={event => setTeam(event.target.value.slice(0, 80))} placeholder="ชื่อทีมของคุณ" /></label>
-          <label>จังหวัด<input value={province} onChange={event => setProvince(event.target.value.slice(0, 60))} placeholder="เช่น กรุงเทพมหานคร" /></label>
-          <div><small>ตำแหน่ง</small><div className="card-position-options">{['FW', 'MF', 'DF', 'GK'].map(item => <button type="button" key={item} onClick={() => setPosition(item)} className={position === item ? 'is-selected' : ''}>{item}</button>)}</div></div>
+          <label>{t('name')}<input value={name} onChange={event => setName(event.target.value.slice(0, 60))} placeholder={t('namePlaceholder')} /></label>
+          <label>{t('team')}<input value={team} onChange={event => setTeam(event.target.value.slice(0, 80))} placeholder={t('teamPlaceholder')} /></label>
+          <label>{t('province')}<input value={province} onChange={event => setProvince(event.target.value.slice(0, 60))} placeholder={t('provincePlaceholder')} /></label>
+          <div><small>{t('position')}</small><div className="card-position-options">{['FW', 'MF', 'DF', 'GK'].map(item => <button type="button" key={item} onClick={() => setPosition(item)} className={position === item ? 'is-selected' : ''}>{item}</button>)}</div></div>
         </div>
-        <button type="button" className="card-save-identity" disabled={savingProfile} onClick={saveCardIdentity}>{savingProfile ? <Loader2 size={17} className="card-spinning" /> : <Save size={17} />}{savingProfile ? 'กำลังบันทึก…' : 'บันทึก PLAYER CARD'}</button>
-        {!publicProfilePath && <p className="card-public-hint">หลังบันทึกแล้ว เปิด <Link href="/profile">โปรไฟล์สาธารณะ</Link> เพื่อรับลิงก์สำหรับ Facebook และให้คนอื่นดูการ์ดของคุณ</p>}
+        <button type="button" className="card-save-identity" disabled={savingProfile} onClick={saveCardIdentity}>{savingProfile ? <Loader2 size={17} className="card-spinning" /> : <Save size={17} />}{savingProfile ? t('savingShort') : t('save')}</button>
+        {!publicProfilePath && <p className="card-public-hint">{t('publicHintBefore')}<Link href="/profile">{t('publicHintLink')}</Link>{t('publicHintAfter')}</p>}
       </div>
       <div className="card-builder-controls">
-        <span>ดีไซน์การ์ด</span><div className="card-theme-options">{(['gold', 'red', 'ice'] as Theme[]).map(item => <button key={item} onClick={() => setTheme(item)} className={`card-theme-option is-${item} ${theme === item ? 'is-selected' : ''}`} aria-label={themeLabel[item]}><i /> {themeLabel[item]}</button>)}</div>
-        <span>ขนาดไฟล์</span><div className="card-format-options"><button onClick={() => setFormat('story')} className={format === 'story' ? 'is-selected' : ''}>9:16 <small>Story / TikTok</small></button><button onClick={() => setFormat('feed')} className={format === 'feed' ? 'is-selected' : ''}>4:5 <small>Instagram Feed</small></button></div>
+        <span>{t('design')}</span><div className="card-theme-options">{(['gold', 'red', 'ice'] as Theme[]).map(item => <button key={item} onClick={() => setTheme(item)} className={`card-theme-option is-${item} ${theme === item ? 'is-selected' : ''}`} aria-label={themeLabel[item]}><i /> {themeLabel[item]}</button>)}</div>
+        <span>{t('format')}</span><div className="card-format-options"><button onClick={() => setFormat('story')} className={format === 'story' ? 'is-selected' : ''}>9:16 <small>Story / TikTok</small></button><button onClick={() => setFormat('feed')} className={format === 'feed' ? 'is-selected' : ''}>4:5 <small>Instagram Feed</small></button></div>
         <input ref={inputRef} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={choosePhoto} />
-        <button className="card-photo-button" onClick={() => inputRef.current?.click()}><ImagePlus size={18} /> {imageUrl ? 'เปลี่ยนรูปในการ์ด' : 'เลือกรูปของฉัน'}</button>
-        <p className="card-photo-help">รูปนี้จะถูกเก็บในโปรไฟล์เมื่อกด “บันทึก PLAYER CARD”</p>
+        <button className="card-photo-button" onClick={() => inputRef.current?.click()}><ImagePlus size={18} /> {imageUrl ? t('changePhoto') : t('choosePhoto')}</button>
+        <p className="card-photo-help">{t('photoHelp')}</p>
       </div>
     </div>
     <div className="card-builder-preview">
@@ -299,17 +302,17 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
         <div className="player-card-detail"><h2>{cardPlayer.name}</h2>{player.isVerified && <CheckCircle2 size={17} />}<p>{cardPlayer.team} · {cardPlayer.province}</p><div>{Object.entries(cardPlayer.stats).filter(([key]) => key !== 'ovr').map(([key, value]) => <span key={key}><b>{value}</b><small>{key.toUpperCase()}</small></span>)}</div></div>
         <footer>BALLDOENSAI.COM · YOUR GAME, YOUR STORY</footer>
       </div></div>
-      <div className="card-share-actions"><button onClick={download}><Download size={19} /> ดาวน์โหลด PNG</button><button className="card-share-primary" onClick={share}><Share2 size={19} /> แชร์การ์ด</button></div>
+      <div className="card-share-actions"><button onClick={download}><Download size={19} /> {t('download')}</button><button className="card-share-primary" onClick={share}><Share2 size={19} /> {t('share')}</button></div>
       <div className="card-social-deck" aria-label="Share your player card">
-        <div><span>POST YOUR CARD</span><b>แชร์ให้ถูกช่องทาง</b></div>
+        <div><span>POST YOUR CARD</span><b>{t('channels')}</b></div>
         <div className="card-social-actions">
           <button type="button" onClick={shareToInstagram} className="card-social-instagram"><Instagram size={18} /> IG Story</button>
           <button type="button" onClick={shareToTikTok} className="card-social-tiktok"><Music2 size={18} /> TikTok</button>
           <button type="button" onClick={shareToFacebook} className="card-social-facebook"><Facebook size={18} /> Facebook</button>
-          {publicProfilePath && <button type="button" onClick={async () => { if (await copyProfileLink()) setStatus('คัดลอกลิงก์ Athlete Profile แล้ว') }} className="card-social-copy"><Copy size={17} /> Copy link</button>}
+          {publicProfilePath && <button type="button" onClick={async () => { if (await copyProfileLink()) setStatus(t('linkCopied')) }} className="card-social-copy"><Copy size={17} /> Copy link</button>}
         </div>
       </div>
-      <p className="card-share-note"><Instagram size={15} /> Instagram และ TikTok ต้องให้คุณเลือกแอป/ไฟล์เองตามกติกาของแพลตฟอร์ม · Facebook แชร์ลิงก์พร้อมภาพ Preview ได้ทันที</p>
+      <p className="card-share-note"><Instagram size={15} /> {t('shareNote')}</p>
       {status && <p className="card-status" role="status">{status}</p>}
     </div>
   </section>

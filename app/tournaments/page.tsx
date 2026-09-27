@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { Trophy, Calendar, ChevronRight } from 'lucide-react'
 import { sampleTournaments, isSampleId, showDemoData } from '@/lib/sample-data'
 import { getPublicTournaments } from '@/lib/public-data'
@@ -7,6 +8,8 @@ import TournamentCover from '@/components/TournamentCover'
 
 export default async function TournamentsPage() {
   const tournaments = await getPublicTournaments()
+  // `t` is taken by the tournament in the list below.
+  const text = await getTranslations('tournaments')
   const displayTournaments = tournaments && tournaments.length > 0
     ? tournaments
     : showDemoData
@@ -28,10 +31,10 @@ export default async function TournamentsPage() {
             <span style={{ fontFamily: 'var(--font-barlow)', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'white', textTransform: 'uppercase' }}>OPEN · SEASON 2026</span>
           </div>
           <h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(32px,9vw,52px)', fontWeight: 700, lineHeight: 0.9, textTransform: 'uppercase', color: 'white' }}>
-            รายการ<br />
-            <span style={{ WebkitTextStroke: '2px rgba(255,255,255,0.4)', color: 'transparent' }}>แข่งขัน</span>
+            {text('titleTop')}<br />
+            <span style={{ WebkitTextStroke: '2px rgba(255,255,255,0.4)', color: 'transparent' }}>{text('titleBottom')}</span>
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10 }}>รายการบอลเดินสายทั้งหมดที่เปิดรับสมัคร</p>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10 }}>{text('intro')}</p>
         </div>
       </div>
 
@@ -48,7 +51,7 @@ export default async function TournamentsPage() {
               {/* Card top bar */}
               <div style={{ height: 6, background: 'linear-gradient(90deg,#CC0001,#ff4444)' }} />
               {/* Venue, sport and registration status; the status used to be a hard-coded
-                  "เปิดรับสมัคร" on every card, closed ones included. */}
+                  "open" on every card, closed ones included. */}
               <TournamentCover tournament={t} />
               <div style={{ padding: '14px 16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
@@ -66,14 +69,14 @@ export default async function TournamentsPage() {
                   </div>
                 </div>
                 <Link className="bds-primary" href={isSampleId(t.id) ? '/login' : `/tournaments/${t.id}`} style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, boxSizing: 'border-box', minHeight: 44, background: '#CC0001', color: 'white', borderRadius: 10, padding: '11px', fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 0.5, textDecoration: 'none' }}>
-                  ดูรายละเอียด <ChevronRight size={16} />
+                  {text('details')} <ChevronRight size={16} />
                 </Link>
               </div>
             </div>
           )) : (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: '#aaa' }}>
               <Trophy size={48} color="#ddd" strokeWidth={1} style={{ marginBottom: 12 }} />
-              <p style={{ fontSize: 15, fontWeight: 600 }}>ยังไม่มีรายการแข่งขัน</p>
+              <p style={{ fontSize: 15, fontWeight: 600 }}>{text('empty')}</p>
             </div>
           )}
         </div>
