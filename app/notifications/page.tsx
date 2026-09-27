@@ -1,9 +1,9 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Bell } from 'lucide-react'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { unreadBadge } from '@/lib/notification-unread'
 import NotificationList, { type NotificationItem } from './NotificationList'
+import PageHeader from '@/components/PageHeader'
 
 export default async function NotificationsPage() {
   const supabase = await createServerSupabaseClient()
@@ -20,9 +20,7 @@ export default async function NotificationsPage() {
   const badge = unreadBadge(notifications.filter(item => !item.read_at).length)
 
   return <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5' }}>
-    <header className="bds-header" style={{ background: '#CC0001', color: '#fff', padding: '18px 20px' }}>
-      <Link href="/" style={{ color: '#fff', textDecoration: 'none', fontWeight: 900 }}>BallDoenSai.com</Link>
-    </header>
+    <PageHeader />
     <section style={{ maxWidth: 720, margin: '0 auto', padding: '28px 18px 60px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
         <Bell size={26} color="#CC0001" />

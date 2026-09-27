@@ -10,6 +10,7 @@ import {
 } from '@/lib/coach-team-overview'
 import Link from 'next/link'
 import { ClipboardPenLine } from 'lucide-react'
+import PageHeader from '@/components/PageHeader'
 
 export default async function TeamMembersPage() {
   const cookieStore = await cookies()
@@ -65,7 +66,7 @@ export default async function TeamMembersPage() {
       .order('created_at', { ascending: true })
     : { data: [], error: null }
   const attestationState = latestAttestations(coachAttestationRows as AttestationRow[] | null)
-  return <main style={{ minHeight: '100vh', background: '#f7f7f7' }}><div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px 80px' }}><h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 32, marginBottom: 8 }}>TEAM ROSTER</h1><p style={{ color: '#777', marginBottom: 14 }}>เชื่อมสมาชิกทีมกับบัญชีจริง เพื่อให้ผลแข่งและเส้นทางนักกีฬาถูกต้อง</p>{teams?.length ? <Link href="/match-plan" style={{ marginBottom: 20, background: '#101827', color: 'white', borderRadius: 10, padding: '11px 13px', display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}><ClipboardPenLine size={16} color="#f5c518" /> วางแผนก่อนแข่ง</Link> : null}{attestationError
+  return <main style={{ minHeight: '100vh', background: '#f7f7f7' }}><PageHeader back={{ href: '/profile', label: 'โปรไฟล์' }} /><div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px 80px' }}><h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 32, marginBottom: 8 }}>TEAM ROSTER</h1><p style={{ color: '#777', marginBottom: 14 }}>เชื่อมสมาชิกทีมกับบัญชีจริง เพื่อให้ผลแข่งและเส้นทางนักกีฬาถูกต้อง</p>{teams?.length ? <Link href="/match-plan" style={{ marginBottom: 20, background: '#101827', color: 'white', borderRadius: 10, padding: '11px 13px', display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}><ClipboardPenLine size={16} color="#f5c518" /> วางแผนก่อนแข่ง</Link> : null}{attestationError
       ? <p role="alert" style={{ margin: '0 0 16px', padding: '9px 11px', borderRadius: 9, background: '#fff1f1', color: '#b91c1c', fontSize: 12, fontWeight: 700 }}>โหลดคำรับรองจากโค้ชไม่สำเร็จ กรุณาโหลดหน้าใหม่</p>
       : <AthleteAttestationInbox attestations={attestations} />}
     <CoachTeamOverview teams={overview} rosterError={Boolean(rosterError)} attestations={attestationState} attestationError={Boolean(coachAttestationError)} /><TeamMembersClient teams={teams ?? []} invites={(invites ?? []) as never[]} /></div></main>

@@ -12,6 +12,7 @@ import {
   VENUE_BOOKING_SNAPSHOT_SELECT,
   type VenueBookingHistoryRow,
 } from '@/lib/venue-booking-history'
+import PageHeader from '@/components/PageHeader'
 
 export default async function MyVenueBookingsPage() {
   const supabase = await createServerSupabaseClient()
@@ -25,5 +26,5 @@ export default async function MyVenueBookingsPage() {
     bookingRows = legacyResult.data as unknown as VenueBookingHistoryRow[] | null
   }
   const bookings = (bookingRows ?? []).map(toVenueBookingHistoryItem)
-  return <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 60 }}><header style={{ background: '#101827', color: 'white', padding: '13px 18px', display: 'flex', justifyContent: 'space-between' }}><Link href="/" style={{ color: 'white', textDecoration: 'none', fontWeight: 900 }}>BALLDOENSAI.COM</Link><span style={{ display: 'flex', gap: 14, alignItems: 'center' }}><NotificationBellLink unreadCount={unreadCount} /><Link href="/venues" style={{ color: '#f5c518', textDecoration: 'none', fontSize: 12, fontWeight: 800 }}>หาสนาม</Link></span></header><section style={{ maxWidth: 720, margin: '0 auto', padding: '28px 16px' }}><div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}><CalendarDays size={25} color="#cc0001" /><div><p style={{ margin: 0, color: '#cc0001', font: '800 10px var(--font-oswald)', letterSpacing: 1.4 }}>MY REQUESTS</p><h1 style={{ margin: 0, fontSize: 30 }}>คำขอจองสนาม</h1></div></div>{bookings.length === 0 ? <div style={{ background: '#fff', border: '1px solid #e3e6ea', borderRadius: 14, padding: 26, textAlign: 'center' }}><p style={{ color: '#687586' }}>ยังไม่มีคำขอจอง</p><Link href="/venues" style={{ color: '#cc0001', fontWeight: 900, textDecoration: 'none' }}>เลือกสนาม →</Link></div> : <BookingHistoryList bookings={bookings} />}</section></main>
+  return <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 60 }}><PageHeader actions={<><NotificationBellLink unreadCount={unreadCount} /><Link href="/venues" className="bds-page-header-link"><span>หาสนาม</span></Link></>} /><section style={{ maxWidth: 720, margin: '0 auto', padding: '28px 16px' }}><div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}><CalendarDays size={25} color="#cc0001" /><div><p style={{ margin: 0, color: '#cc0001', font: '800 10px var(--font-oswald)', letterSpacing: 1.4 }}>MY REQUESTS</p><h1 style={{ margin: 0, fontSize: 30 }}>คำขอจองสนาม</h1></div></div>{bookings.length === 0 ? <div style={{ background: '#fff', border: '1px solid #e3e6ea', borderRadius: 14, padding: 26, textAlign: 'center' }}><p style={{ color: '#687586' }}>ยังไม่มีคำขอจอง</p><Link href="/venues" style={{ color: '#cc0001', fontWeight: 900, textDecoration: 'none' }}>เลือกสนาม →</Link></div> : <BookingHistoryList bookings={bookings} />}</section></main>
 }
