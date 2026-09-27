@@ -120,13 +120,17 @@ body {
 .bds-page .bds-primary { background:var(--bds-red) !important; border-radius:0 !important; box-shadow:5px 5px 0 #111827; color:#fff !important; }
 .bds-page .bds-primary:hover { transform:translate(-2px,-2px); box-shadow:7px 7px 0 #111827; }
 /* --nav-height is shared by the bar and its spacer so the two cannot drift apart. */
-.bds-nav, .bds-nav-spacer, .bds-route-progress, .bds-discover-tabs, .bds-route-skeleton { --nav-ink:#111827; --nav-red:#CC0001; --nav-gold:#f4b942; --nav-height:66px; }
+.bds-nav, .bds-nav-spacer, .bds-route-progress, .bds-discover-tabs, .bds-route-skeleton { --nav-ink:#111827; --nav-red:#CC0001; --nav-gold:#f4b942; --nav-height:70px; }
 /* The one bottom bar (components/SiteNav.tsx). Five equal columns, so it fits any phone
    by construction: there is no content width to overflow, and no hidden destination. */
 .bds-nav { background:rgba(17,24,39,.97); -webkit-backdrop-filter:blur(14px) saturate(140%); backdrop-filter:blur(14px) saturate(140%); border-top:1px solid rgba(255,255,255,.08); bottom:0; box-shadow:0 -12px 30px rgba(17,24,39,.18); box-sizing:border-box; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); height:calc(var(--nav-height) + env(safe-area-inset-bottom)); left:0; padding:6px max(6px,calc((100vw - 560px) / 2)) calc(6px + env(safe-area-inset-bottom)); position:fixed; right:0; z-index:100; }
 .bds-nav-item { -webkit-tap-highlight-color:transparent; align-items:center; border-radius:12px; color:rgba(255,255,255,.64); display:flex; flex-direction:column; font:600 12px/1.15 var(--font-sarabun),sans-serif; gap:3px; justify-content:center; min-height:52px; min-width:0; padding:3px 2px; position:relative; text-decoration:none; transition:color .18s ease; }
 .bds-nav-icon { border-radius:15px; display:grid; height:30px; place-items:center; position:relative; transition:background-color .22s ease,transform .18s ease; width:52px; }
-.bds-nav-label { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* A fixed 18px line, not a multiple of the font size: Thai stacks a tone mark on an upper
+   vowel ("แจ้งเตือน", "โปรไฟล์"), and at 1.15 the box was ~1.5px shorter than the glyphs
+   while overflow:hidden clipped them. Being in px, the 11px size on narrow phones keeps the
+   same height, so --nav-height stays exact: 1 border + 6 + (3 + 30 icon + 3 gap + 18 + 3) + 6. */
+.bds-nav-label { line-height:18px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .bds-nav-item:hover { color:#fff; }
 /* Active is shape and weight as well as colour, so it survives colour blindness. */
 .bds-nav-item.is-active { color:#fff; font-weight:800; }
