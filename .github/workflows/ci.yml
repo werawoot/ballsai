@@ -41,5 +41,17 @@ jobs:
       - name: Run lint
         run: npm run lint
 
+      - name: Run unit tests (Vitest)
+        run: npm test
+
+      - name: Run script tests (node:test)
+        # scripts/*.test.mjs pin the Team Roster route and RPC privilege rules; nothing ran
+        # them, which is how merge 2111890 dropped the approve/decline/remove actions
+        # without a check failing. Branches without such files skip the step, so this
+        # workflow can be the same file on every branch.
+        run: |
+          set -- scripts/*.test.mjs
+          if [ -e "$1" ]; then node --test "$@"; else echo "No scripts/*.test.mjs on this branch"; fi
+
       - name: Build production bundle
         run: npm run build
