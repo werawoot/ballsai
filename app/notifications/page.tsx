@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { unreadBadge } from '@/lib/notification-unread'
 import NotificationList, { type NotificationItem } from './NotificationList'
 import PageHeader from '@/components/PageHeader'
+import { getTranslations } from 'next-intl/server'
 
 export default async function NotificationsPage() {
   const supabase = await createServerSupabaseClient()
@@ -18,6 +19,7 @@ export default async function NotificationsPage() {
 
   const notifications = (data ?? []) as NotificationItem[]
   const badge = unreadBadge(notifications.filter(item => !item.read_at).length)
+  const t = await getTranslations('notifications')
 
   return <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5' }}>
     <PageHeader />
@@ -26,8 +28,8 @@ export default async function NotificationsPage() {
         <Bell size={26} color="#CC0001" />
         <div>
           <p style={{ margin: 0, color: '#CC0001', fontSize: 11, fontWeight: 800, letterSpacing: 1.5 }}>YOUR UPDATES</p>
-          <h1 style={{ margin: 0, fontSize: 32 }}>การแจ้งเตือน</h1>
-          {badge && <p style={{ margin: '4px 0 0', color: '#b91c1c', fontSize: 12, fontWeight: 800 }}>{badge.label}</p>}
+          <h1 style={{ margin: 0, fontSize: 32 }}>{t('title')}</h1>
+          {badge && <p style={{ margin: '4px 0 0', color: '#b91c1c', fontSize: 12, fontWeight: 800 }}>{t('unread', { count: badge.count })}</p>}
         </div>
       </div>
       <NotificationList notifications={notifications} />

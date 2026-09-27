@@ -193,5 +193,44 @@
     "share": "Share profile",
     "cannotShare": "Not shareable yet",
     "copy": "Copy link"
+  },
+  "fallback": {
+    "notFoundTop": "Can't find",
+    "notFoundBottom": "that pitch",
+    "notFoundBody": "This link may have moved or no longer exists. Try searching for an athlete or go back home.",
+    "findAthletes": "Find athletes",
+    "home": "Back to home",
+    "errorTop": "Play stopped",
+    "errorBottom": "but we can carry on",
+    "errorBody": "Something went wrong opening this page. Try again, or start over from home.",
+    "retry": "Try again",
+    "loading": "Loading"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unread": "{count} unread",
+    "empty": "No notifications yet",
+    "updateFailed": "Could not update your notifications",
+    "markedRead": "Marked as read",
+    "updating": "Updating...",
+    "markAllRead": "Mark all as read ({count})",
+    "read": "Read",
+    "unreadTag": "Unread",
+    "markRead": "Mark read",
+    "markReadLabel": "Mark as read: {title}",
+    "bell": "Alerts",
+    "bellLabel": "Notifications",
+    "bellLabelUnread": "Notifications · {count} unread"
+  },
+  "filters": {
+    "searchAthletes": "Search athletes...",
+    "searchAthleteName": "Search by athlete name...",
+    "position": "Position",
+    "province": "Province",
+    "age": "Age group",
+    "all": "All",
+    "allProvinces": "All provinces",
+    "allPositions": "All positions",
+    "allAges": "All ages"
   }
 }

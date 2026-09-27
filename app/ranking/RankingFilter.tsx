@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Search } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 const POSITIONS = ['FW', 'MF', 'DF', 'GK']
 
@@ -12,6 +13,7 @@ export default function RankingFilter({ provinces, currentProvince, currentPosit
   currentSearch: string
 }) {
   const router = useRouter()
+  const t = useTranslations('filters')
   const searchParams = useSearchParams()
 
   const updateFilter = (key: string, value: string) => {
@@ -33,7 +35,7 @@ export default function RankingFilter({ provinces, currentProvince, currentPosit
         <input
           type="text"
           defaultValue={currentSearch}
-          placeholder="ค้นหานักกีฬา..."
+          placeholder={t('searchAthletes')}
           onChange={e => updateFilter('search', e.target.value)}
           style={{ width: '100%', border: '1.5px solid #e5e5e5', borderRadius: 10, padding: '10px 14px 10px 36px', fontSize: 14, outline: 'none', fontFamily: 'var(--font-sarabun)', color: '#111', background: '#fafafa' }}
         />
@@ -41,10 +43,10 @@ export default function RankingFilter({ provinces, currentProvince, currentPosit
 
       {/* POSITION FILTER */}
       <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>ตำแหน่ง</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>{t('position')}</div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => updateFilter('position', '')} style={{ padding: '6px 14px', borderRadius: 20, border: '1.5px solid', borderColor: !currentPosition ? '#CC0001' : '#e5e5e5', background: !currentPosition ? '#CC0001' : 'white', color: !currentPosition ? 'white' : '#555', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-barlow)', letterSpacing: 0.5 }}>
-            ทั้งหมด
+            {t('all')}
           </button>
           {POSITIONS.map(pos => (
             <button key={pos} onClick={() => updateFilter('position', pos === currentPosition ? '' : pos)} style={{ padding: '6px 14px', borderRadius: 20, border: '1.5px solid', borderColor: currentPosition === pos ? '#CC0001' : '#e5e5e5', background: currentPosition === pos ? '#CC0001' : 'white', color: currentPosition === pos ? 'white' : '#555', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-barlow)', letterSpacing: 0.5 }}>
@@ -56,10 +58,10 @@ export default function RankingFilter({ provinces, currentProvince, currentPosit
 
       {/* PROVINCE FILTER */}
       <div style={{ marginBottom: 4 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>จังหวัด</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>{t('province')}</div>
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
           <button onClick={() => updateFilter('province', '')} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: '1.5px solid', borderColor: !currentProvince ? '#CC0001' : '#e5e5e5', background: !currentProvince ? '#CC0001' : 'white', color: !currentProvince ? 'white' : '#555', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-            ทั้งหมด
+            {t('all')}
           </button>
           {provinces.map(prov => (
             <button key={prov} onClick={() => updateFilter('province', prov === currentProvince ? '' : prov)} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: '1.5px solid', borderColor: currentProvince === prov ? '#CC0001' : '#e5e5e5', background: currentProvince === prov ? '#CC0001' : 'white', color: currentProvince === prov ? 'white' : '#555', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
