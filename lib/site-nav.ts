@@ -161,3 +161,44 @@ export function isPlainPrimaryClick(event: {
 }): boolean {
   return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && !event.defaultPrevented
 }
+
+/** The parts of an `<a>` that decide whether following it leaves this page in this tab. */
+export type LinkAttributes = {
+  /** The raw `href` attribute, resolved against `current` here. */
+  href: string | null
+  target: string | null
+  download: boolean
+}
+
+/**
+ * The route a click on an in-app link is about to load, or `null` when the loading bar
+ * must stay still. The bottom bar and every other link on the page share this rule, so a
+ * tap anywhere answers the same way.
+ *
+ * It stays still whenever this tab will not render a new route: a modified or middle
+ * click, `target="_blank"` (or any named target), `download`, another origin (including
+ * `mailto:` and `tel:`), and any link to the path already showing -- a hash jump, the same
+ * page, or the same page with a new query. The last is a deliberate gap: the phase is
+ * derived from the pathname alone, so a query-only change would never be seen to land and
+ * would sit in `loading` until the watchdog.
+ */
+export function linkNavigationTarget(
+  click: Parameters<typeof isPlainPrimaryClick>[0],
+  link: LinkAttributes,
+  current: string,
+): string | null {
+  if (!isPlainPrimaryClick(click)) return null
+  if (link.href === null || link.download) return null
+  if (link.target && link.target.toLowerCase() !== '_self') return null
+  let from: URL
+  let to: URL
+  try {
+    from = new URL(current)
+    to = new URL(link.href, from)
+  } catch {
+    return null
+  }
+  if (to.origin !== from.origin) return null
+  if (to.pathname === from.pathname) return null
+  return to.pathname
+}

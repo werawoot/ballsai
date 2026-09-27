@@ -1,8 +1,9 @@
 import Link from 'next/link'
-import { Trophy, MapPin, Calendar, ChevronRight } from 'lucide-react'
+import { Trophy, Calendar, ChevronRight } from 'lucide-react'
 import { sampleTournaments, isSampleId, showDemoData } from '@/lib/sample-data'
 import { getPublicTournaments } from '@/lib/public-data'
 import PageHeader from '@/components/PageHeader'
+import TournamentCover from '@/components/TournamentCover'
 
 export default async function TournamentsPage() {
   const tournaments = await getPublicTournaments()
@@ -46,19 +47,15 @@ export default async function TournamentsPage() {
             <div className="bds-list-card" key={t.id} style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
               {/* Card top bar */}
               <div style={{ height: 6, background: 'linear-gradient(90deg,#CC0001,#ff4444)' }} />
+              {/* Venue, sport and registration status; the status used to be a hard-coded
+                  "เปิดรับสมัคร" on every card, closed ones included. */}
+              <TournamentCover tournament={t} />
               <div style={{ padding: '14px 16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 9, fontWeight: 800, color: '#16a34a', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 6 }}>
-                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#16a34a' }} />
-                      เปิดรับสมัคร
-                    </div>
                     <h2 style={{ fontSize: 16, fontWeight: 800, color: '#111', marginBottom: 10, lineHeight: 1.3 }}>{t.name}</h2>
                     <p style={{ fontSize: 13, color: '#888', marginBottom: 10 }}>{t.description}</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#555' }}>
-                        <MapPin size={13} color="#CC0001" /> {t.location}
-                      </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#555' }}>
                         <Calendar size={13} color="#CC0001" /> {t.start_date}
                       </div>

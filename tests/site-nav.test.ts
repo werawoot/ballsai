@@ -11,6 +11,7 @@ import {
   isCurrentDestination,
   isPlainPrimaryClick,
   isWithin,
+  linkNavigationTarget,
   navigationPhase,
   showsSiteNav,
   startNavigation,
@@ -181,6 +182,82 @@ describe('the loading feedback a tap starts', () => {
     expect(isPlainPrimaryClick({ ...plain, altKey: true })).toBe(false)
     expect(isPlainPrimaryClick({ ...plain, button: 1 })).toBe(false)
     expect(isPlainPrimaryClick({ ...plain, defaultPrevented: true })).toBe(false)
+  })
+})
+
+describe('the loading feedback any in-app link starts', () => {
+  const here = 'http://localhost:3108/tournaments?view=open'
+  const plain = { button: 0, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false, defaultPrevented: false }
+  const link = (href: string | null, extra: { target?: string | null; download?: boolean } = {}) =>
+    ({ href, target: extra.target ?? null, download: extra.download ?? false })
+
+  it('starts for a plain click on a link to another page of the app', () => {
+    expect(linkNavigationTarget(plain, link('/athletes'), here)).toBe('/athletes')
+    expect(linkNavigationTarget(plain, link('/tournaments/abc'), here)).toBe('/tournaments/abc')
+    expect(linkNavigationTarget(plain, link('http://localhost:3108/ranking?view=trending'), here)).toBe('/ranking')
+    expect(linkNavigationTarget(plain, link('abc'), here)).toBe('/abc')
+    expect(linkNavigationTarget(plain, link('/players/1', { target: '_self' }), here)).toBe('/players/1')
+  })
+
+  it.each([
+    ['meta (cmd)', { metaKey: true }],
+    ['ctrl', { ctrlKey: true }],
+    ['shift', { shiftKey: true }],
+    ['alt', { altKey: true }],
+  ] as const)('does not start with %s held', (_name, modifier) => {
+    expect(linkNavigationTarget({ ...plain, ...modifier }, link('/athletes'), here)).toBeNull()
+  })
+
+  it('does not start on a middle or right click', () => {
+    expect(linkNavigationTarget({ ...plain, button: 1 }, link('/athletes'), here)).toBeNull()
+    expect(linkNavigationTarget({ ...plain, button: 2 }, link('/athletes'), here)).toBeNull()
+  })
+
+  it('does not start for a click something else already cancelled', () => {
+    expect(linkNavigationTarget({ ...plain, defaultPrevented: true }, link('/athletes'), here)).toBeNull()
+  })
+
+  it('does not start for a link that opens in another tab or frame', () => {
+    expect(linkNavigationTarget(plain, link('/athletes', { target: '_blank' }), here)).toBeNull()
+    expect(linkNavigationTarget(plain, link('/athletes', { target: '_BLANK' }), here)).toBeNull()
+    expect(linkNavigationTarget(plain, link('/athletes', { target: 'preview' }), here)).toBeNull()
+  })
+
+  it('does not start for a download', () => {
+    expect(linkNavigationTarget(plain, link('/card/export.png', { download: true }), here)).toBeNull()
+  })
+
+  it('does not start for a link that leaves the app', () => {
+    expect(linkNavigationTarget(plain, link('https://www.facebook.com/'), here)).toBeNull()
+    expect(linkNavigationTarget(plain, link('//evil.example/athletes'), here)).toBeNull()
+    expect(linkNavigationTarget(plain, link('https://localhost:3108/athletes'), here)).toBeNull()
+    expect(linkNavigationTarget(plain, link('mailto:hello@example.com'), here)).toBeNull()
+    expect(linkNavigationTarget(plain, link('tel:0812345678'), here)).toBeNull()
+  })
+
+  it('does not start for a jump within the page', () => {
+    expect(linkNavigationTarget(plain, link('#rules'), here)).toBeNull()
+    expect(linkNavigationTarget(plain, link('/tournaments?view=open#rules'), here)).toBeNull()
+  })
+
+  it('does not start for a link to the page already showing', () => {
+    expect(linkNavigationTarget(plain, link('/tournaments?view=open'), here)).toBeNull()
+    expect(linkNavigationTarget(plain, link('/tournaments'), here)).toBeNull()
+    // Query-only change: the pathname never moves, so nothing would ever finish the bar.
+    expect(linkNavigationTarget(plain, link('/tournaments?view=closed'), here)).toBeNull()
+  })
+
+  it('does not start for an anchor with no href', () => {
+    expect(linkNavigationTarget(plain, link(null), here)).toBeNull()
+  })
+
+  it('is wired to every link on the page, ahead of next/link cancelling the click', () => {
+    const nav = read('components/SiteNav.tsx')
+    expect(nav).toContain("document.addEventListener('click', onClick, true)")
+    expect(nav).toContain("document.removeEventListener('click', onClick, true)")
+    expect(nav).toContain('linkNavigationTarget(event,')
+    // One way in: the tabs no longer carry a second, separate click handler.
+    expect(nav).not.toContain('onClick={')
   })
 })
 
