@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import VenuePitchCover from '@/components/VenuePitchCover'
 import { activeVenuePhoto, venueImageView, venuePhotoAlt } from '@/lib/venue-images'
 import {
@@ -25,6 +26,8 @@ export default function VenueGallery({
   venueId?: string
   photos?: ListedPhoto[] | null
 }) {
+  const t = useTranslations('venues')
+  const altWords = (name: string, number: number | null) => number === null ? t('photoAlt', { name }) : t('photoAltNumbered', { name, number })
   const listed = photos ?? []
   const [urls, setUrls] = useState<ResolvedUrls>({})
   const [failedIds, setFailedIds] = useState<string[]>([])
@@ -56,7 +59,7 @@ export default function VenueGallery({
 
   if (view.kind === 'placeholder') {
     return pending
-      ? <div role="status" aria-label={`กำลังโหลดภาพสนาม ${venueName}`}>
+      ? <div role="status" aria-label={t('loadingPhotos', { name: venueName })}>
           <VenuePitchCover height="clamp(190px,42vw,320px)" label="" />
         </div>
       : <VenuePitchCover height="clamp(190px,42vw,320px)" reason={view.reason} />
@@ -69,7 +72,7 @@ export default function VenueGallery({
     <div style={{ position: 'relative', height: 'clamp(190px,42vw,320px)', background: '#0b2620', overflow: 'hidden' }}>
       <Image
         src={active.photo.url}
-        alt={venuePhotoAlt(venueName, active.index, active.photo.alt)}
+        alt={venuePhotoAlt(venueName, active.index, active.photo.alt, altWords)}
         fill
         sizes="(max-width: 880px) 100vw, 880px"
         style={{ objectFit: 'cover' }}
@@ -85,7 +88,7 @@ export default function VenueGallery({
         key={item.id}
         type="button"
         onClick={() => setActiveId(item.id)}
-        aria-label={`ดู${venuePhotoAlt(venueName, index, item.alt)}`}
+        aria-label={t('viewPhoto', { alt: venuePhotoAlt(venueName, index, item.alt, altWords) })}
         aria-current={item.id === active.photo.id}
         style={{ position: 'relative', flex: '0 0 auto', width: 92, height: 62, borderRadius: 8, overflow: 'hidden', border: item.id === active.photo.id ? '2px solid #f5c518' : '1px solid rgba(255,255,255,.18)', background: '#0b2620', padding: 0, cursor: 'pointer' }}
       >

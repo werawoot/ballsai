@@ -2,7 +2,8 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Search, SlidersHorizontal } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { provinceName } from '@/lib/thai-provinces'
 
 export default function AthleteFilters({
   provinces,
@@ -19,6 +20,7 @@ export default function AthleteFilters({
 }) {
   const router = useRouter()
   const t = useTranslations('filters')
+  const locale = useLocale()
   const searchParams = useSearchParams()
 
   const update = (key: string, value: string) => {
@@ -50,7 +52,7 @@ export default function AthleteFilters({
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '28px repeat(3,minmax(0,1fr))', gap: 7, alignItems: 'center' }}>
           <SlidersHorizontal size={18} color="#777" />
-          <select aria-label={t('province')} value={currentProvince} onChange={event => update('province', event.target.value)} style={selectStyle}><option value="">{t('allProvinces')}</option>{provinces.map(province => <option key={province} value={province}>{province}</option>)}</select>
+          <select aria-label={t('province')} value={currentProvince} onChange={event => update('province', event.target.value)} style={selectStyle}><option value="">{t('allProvinces')}</option>{provinces.map(province => <option key={province} value={province}>{provinceName(province, locale)}</option>)}</select>
           <select aria-label={t('position')} value={currentPosition} onChange={event => update('position', event.target.value)} style={selectStyle}><option value="">{t('allPositions')}</option>{['FW', 'MF', 'DF', 'GK'].map(position => <option key={position} value={position}>{position}</option>)}</select>
           <select aria-label={t('age')} value={currentAge} onChange={event => update('age', event.target.value)} style={selectStyle}><option value="">{t('allAges')}</option><option value="u12">U12</option><option value="u15">U15</option><option value="u18">U18</option><option value="adult">20+</option></select>
         </div>

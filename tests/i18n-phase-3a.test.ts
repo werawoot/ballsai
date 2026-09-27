@@ -65,9 +65,12 @@ describe('screens any visitor can meet, in English', () => {
     expect(thaiIn(render('th', component, props), DATA).length).toBeGreaterThan(0)
   })
 
-  it('keeps notification titles and province names exactly as stored', () => {
+  it('keeps notification titles exactly as stored, and filters on the stored province', () => {
     expect(render('en', NotificationList as ComponentType<never>, { notifications })).toContain('มีผลการแข่งขันใหม่ในระบบ')
-    expect(render('en', RankingFilter as ComponentType<never>, SCREENS[6][2])).toContain('กรุงเทพมหานคร')
+    // The chip reads "Bangkok" for an English reader (lib/thai-provinces.ts); the Thai
+    // reader still sees the stored name.
+    expect(render('en', RankingFilter as ComponentType<never>, SCREENS[6][2])).toContain('Bangkok')
+    expect(render('th', RankingFilter as ComponentType<never>, SCREENS[6][2])).toContain('กรุงเทพมหานคร')
   })
 
   it('writes notification dates in the reader\'s language', () => {

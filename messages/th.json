@@ -232,5 +232,37 @@
     "allProvinces": "ทุกจังหวัด",
     "allPositions": "ทุกตำแหน่ง",
     "allAges": "ทุกช่วงอายุ"
+  },
+  "venues": {
+    "listYourVenue": "ลงสนามของคุณ",
+    "titleTop": "หาสนาม",
+    "titleBottom": "แล้วลงเล่น",
+    "intro": "เลือกสนามและส่งคำขอช่วงเวลาว่าง เจ้าของสนามจะตอบกลับในระบบ",
+    "emptyTitle": "ยังไม่มีสนามที่เปิดรับคำขอ",
+    "emptyBody": "คุณเป็นเจ้าของสนามใช่ไหม? เพิ่มสนามแรกของคุณได้เลย",
+    "addVenue": "เพิ่มสนาม",
+    "cardLabel": "ดูรายละเอียดสนาม {name} จังหวัด{province}",
+    "openShort": "ว่าง {count} ช่วง",
+    "noSlots": "ยังไม่มีเวลาว่าง",
+    "courts": "{count} พื้นที่เล่น",
+    "slots": "{count} ช่วงเวลา",
+    "noPrice": "ยังไม่ระบุราคา",
+    "allVenues": "สนามทั้งหมด",
+    "defaultDescription": "สนามพร้อมให้ส่งคำขอจองผ่าน BallDoenSai",
+    "openSlots": "ว่าง {count} ช่วงเวลา",
+    "details": "ข้อมูลสนาม",
+    "courtsTitle": "พื้นที่เล่น",
+    "capacity": "รองรับ {count} คน",
+    "courtsComing": "กำลังเพิ่มพื้นที่เล่น",
+    "sport": {
+      "football": "ฟุตบอล",
+      "futsal": "ฟุตซอล"
+    },
+    "photoAlt": "ภาพสนาม {name}",
+    "photoAltNumbered": "ภาพสนาม {name} รูปที่ {number}",
+    "viewPhoto": "ดู{alt}",
+    "loadingPhotos": "กำลังโหลดภาพสนาม {name}",
+    "photosBroken": "โหลดภาพสนามไม่ได้",
+    "noPhotos": "ยังไม่มีภาพสนาม"
   }
 }

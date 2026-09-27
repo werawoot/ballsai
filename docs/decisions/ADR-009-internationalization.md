@@ -40,7 +40,7 @@ Use `next-intl` (v4, App Router, no locale routing).
 `tests/i18n-thai-baseline.json` lists every file under `app/`, `components/` and `lib/`
 that still writes Thai text in a string, template or JSX text literal. Files are parsed with
 the TypeScript compiler, so comments never count and a comment cannot hide code; the baht
-sign is excluded. `tests/i18n.test.ts`
+sign is excluded. `lib/thai-provinces.ts` is exempt by name: its Thai province names are data (the keys of their English names), not UI text. `tests/i18n.test.ts`
 fails when a file not on the list contains Thai, and when a listed file no longer does.
 The list may only shrink. New code puts every user-facing string in `messages/*.json`.
 
@@ -77,7 +77,8 @@ placeholders, no empty strings, and formats every message with next-intl's own r
 | 2a | `/welcome` (with the switch in its header), `/card` builder, profile share panel | Done |
 | 2b | `/login`, `/profile` page and form, `/career`, tournament detail and team registration | Waiting: these files differ on `codex/player-card-beta` or are being edited by another agent, so translating them here would conflict. Do after the branches meet. |
 | 3a | 404 and error pages, notifications (list, page, bell; `unreadBadge` now returns a count, not Thai words), the `/ranking` and `/athletes` filters, `LoadingModal` | Done |
-| 3 | API errors as codes worded by the UI; venues (their labels come from `lib/venue-card-stats.ts`); remaining pages; `DiscoverTabs`, profile menu; Thai province names shown to English readers (a fixed list of 77 with official English names) | Planned |
+| 3b | Venue list, card, detail page, gallery and placeholder (`venueCardStats` returns sport codes; `venuePhotoAlt` takes its wording from the caller); province names in English for English readers (`lib/thai-provinces.ts`, 77 provinces, Bangkok aliases) on venue cards and the `/ranking` and `/athletes` filters | Done |
+| 3 | API errors as codes worded by the UI; `BookingRequestClient` and pages changed on beta; `DiscoverTabs`, profile menu; province names on pages changed on beta (ranking and athlete cards, player profile) | Planned |
 | 4 | Notifications: triggers write Thai sentences into `notifications`, which cannot be translated after the fact. Needs a new migration (type + parameters, worded at render) and a stored language on `profiles` for email. Touches the verified-result chain, so the design is agreed first. | Planned, needs agreement |
 | - | `/privacy`, `/terms`, guardian consent wording: professional, legally reviewed translation only; Thai remains the governing text | Waiting on owner |
 | - | Supabase Auth email OTP template in English (dashboard setting, not code) | Waiting on owner |

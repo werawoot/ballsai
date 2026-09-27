@@ -1,4 +1,5 @@
 import { Camera, ImageOff } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 // A drawn football pitch, not a photograph. Pure inline SVG and CSS: no external URL,
 // no stock image, nothing fetched. Used wherever a venue has no usable photo, so the
@@ -8,8 +9,9 @@ export default function VenuePitchCover({ height, reason = 'no-photos', label }:
   reason?: 'no-photos' | 'all-broken'
   label?: string
 }) {
+  const t = useTranslations('venues')
   const Icon = reason === 'all-broken' ? ImageOff : Camera
-  const text = label ?? (reason === 'all-broken' ? 'โหลดภาพสนามไม่ได้' : 'ยังไม่มีภาพสนาม')
+  const text = label ?? (reason === 'all-broken' ? t('photosBroken') : t('noPhotos'))
 
   return <div
     role="img"

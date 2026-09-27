@@ -179,8 +179,10 @@ const hasThaiText = (source: string, path = 'file.tsx') => {
   visit(ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, path.endsWith('.ts') ? ts.ScriptKind.TS : ts.ScriptKind.TSX))
   return found
 }
+// Data, not UI text: Thai province names are the keys of their English names.
+const DATA_FILES = new Set(['lib/thai-provinces.ts'])
 const thaiFiles = () =>
-  ['app', 'components', 'lib'].flatMap(walk).filter(path => hasThaiText(read(path), path)).sort()
+  ['app', 'components', 'lib'].flatMap(walk).filter(path => !DATA_FILES.has(path) && hasThaiText(read(path), path)).sort()
 
 describe('no new hard-coded Thai', () => {
   it('sees Thai in code, but not in comments, even after a comment that mentions a glob', () => {
@@ -224,6 +226,14 @@ describe('no new hard-coded Thai', () => {
     'app/ranking/RankingFilter.tsx',
     'app/athletes/AthleteFilters.tsx',
     'components/LoadingModal.tsx',
+    'components/VenueCard.tsx',
+    'components/VenuePitchCover.tsx',
+    'app/venues/page.tsx',
+    'app/venues/[id]/page.tsx',
+    'app/venues/[id]/VenueGallery.tsx',
+    'lib/venue-card-stats.ts',
+    'lib/venue-images.ts',
+    'lib/venue-sport.ts',
   ])('keeps %s translated', path => {
     expect(baseline).not.toContain(path)
     expect(hasThaiText(read(path), path)).toBe(false)
