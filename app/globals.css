@@ -436,3 +436,13 @@ body {
 .onboard-brand { flex:none; white-space:nowrap; }
 .onboard-header-end { align-items:center; display:flex; gap:10px; margin-left:auto; }
 .onboard-skip { white-space:nowrap; }
+
+/* /card header on a narrow phone: logo plus two pill links need ~370px, so the links
+   used to break inside their pills ("Athlete / Passport") and touch the logo. Below
+   420px they move to their own row, right-aligned, each on one line. The 10px row gap
+   keeps the logo's 44px hit area clear of the links below it. */
+@media (max-width:419px) {
+  .card-page-header { flex-wrap:wrap; gap:10px 8px; padding-bottom:10px; padding-top:10px; }
+  .card-page-header > div { margin-left:auto; }
+  .card-page-profile-link { white-space:nowrap; }
+}
