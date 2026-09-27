@@ -1,13 +1,13 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { ArrowLeft, Award, CalendarDays, CheckCircle2, ExternalLink, MapPin, PlayCircle, Ruler, Shield, Star, Trophy, Users, Weight, Zap } from 'lucide-react'
-import Link from 'next/link'
+import { Award, CalendarDays, CheckCircle2, ExternalLink, MapPin, PlayCircle, Ruler, Shield, Star, Users, Weight, Zap } from 'lucide-react'
 import { isSampleId, samplePlayerRanks, showDemoData } from '@/lib/sample-data'
 import { IDENTITY_BADGES, calculateLevel, identityTitle } from '@/lib/digital-identity'
 import { ACTIVE_SPORT } from '@/lib/season'
 import ReportHighlightButton from './ReportHighlightButton'
 import DisputeDataButton from './DisputeDataButton'
+import PageHeader from '@/components/PageHeader'
 
 type PlayerRecord = {
   id: string
@@ -185,10 +185,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
 
   return (
     <main className="bds-page" style={{ background: '#f6f6f4', minHeight: '100vh', overflowX: 'hidden' }}>
-      <header className="bds-header" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
-        <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}><Trophy size={22} /> BallDoenSai.com</Link>
-        <Link href="/athletes" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}><ArrowLeft size={16} /> นักกีฬา</Link>
-      </header>
+      <PageHeader back={{ href: '/athletes', label: 'นักกีฬา' }} />
 
       <section className="bds-hero" style={{ background: '#CC0001', color: 'white', padding: '24px 16px 44px' }}>
         <div style={{ maxWidth: 760, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(130px,180px) minmax(0,1fr)', gap: 20, alignItems: 'center' }}>

@@ -1,11 +1,11 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, MapPin, Phone } from 'lucide-react'
+import { MapPin, Phone } from 'lucide-react'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import BookingRequestClient, { type AvailableSlot } from '../BookingRequestClient'
 import VenueGallery from './VenueGallery'
 import { venueCardStats } from '@/lib/venue-card-stats'
 import { publicGalleryPhotos, type PublicPhotoRow } from '@/lib/venue-photo-public'
+import PageHeader from '@/components/PageHeader'
 
 type SlotRow = AvailableSlot & { status: string }
 type Venue = { id: string; name: string; province: string; address: string; contact_phone: string; description: string; amenities: string[]; venue_courts: { id: string; name: string; sport: string; surface: string; capacity: number | null; venue_slots: SlotRow[] | null }[] | null }
@@ -30,7 +30,7 @@ export default async function VenueDetailPage({ params }: { params: { id: string
   const slots = (venue.venue_courts ?? []).flatMap(court => (court.venue_slots ?? []).filter(slot => slot.status === 'open' && new Date(slot.starts_at) > new Date()).map(slot => ({ ...slot, venue_courts: { name: court.name, sport: court.sport } }))).sort((a, b) => a.starts_at.localeCompare(b.starts_at))
 
   return <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 60 }}>
-    <header style={{ background: '#101827', color: 'white', padding: '13px 18px' }}><Link href="/venues" style={{ color: '#f5c518', textDecoration: 'none', fontSize: 12, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 5 }}><ArrowLeft size={15} /> กลับไปดูสนามทั้งหมด</Link></header>
+    <PageHeader back={{ href: '/venues', label: 'สนามทั้งหมด' }} />
     <section style={{ background: '#101827', color: '#fff', borderBottom: '1px solid #1f2a3d' }}>
       {/* The gallery sits above the fold but never over the booking panel, which keeps
           its own column on desktop and follows the venue facts on mobile. */}

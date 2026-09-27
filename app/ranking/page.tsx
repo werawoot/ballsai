@@ -5,6 +5,7 @@ import DiscoverTabs from '@/components/DiscoverTabs'
 import { samplePlayerRanks, showDemoData } from '@/lib/sample-data'
 import { getPublicIdentityRankingData, getPublicRankingProvinces, getPublicRankings } from '@/lib/public-data'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
+import PageHeader from '@/components/PageHeader'
 
 export default async function RankingPage({
   searchParams,
@@ -70,11 +71,7 @@ export default async function RankingPage({
     <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* TOPBAR */}
-      <header className="bds-header" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
-        <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <Trophy size={22} strokeWidth={2.5} /> BallDoenSai.com
-        </Link>
-      </header>
+      <PageHeader />
 
       {/* HERO */}
       <div className="bds-hero" style={{ background: '#CC0001', padding: '20px 16px 32px', position: 'relative', overflow: 'hidden' }}>

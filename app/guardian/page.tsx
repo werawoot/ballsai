@@ -1,9 +1,8 @@
-import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { Trophy } from 'lucide-react'
 import { createServerClient } from '@supabase/ssr'
 import GuardianLinksClient, { type GuardianLink } from './GuardianLinksClient'
+import PageHeader from '@/components/PageHeader'
 
 type Profile = { onboarding_persona: string | null }
 type LinkRow = {
@@ -51,7 +50,7 @@ export default async function GuardianPage() {
   const incoming = ((incomingRows ?? []) as unknown as LinkRow[]).map(mapLink)
 
   return <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 48 }}>
-    <header className="bds-header" style={{ height: 54, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#CC0001', color: 'white' }}><Link href="/" style={{ color: 'white', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-oswald)', fontSize: 23, fontWeight: 800 }}><Trophy size={21} /> BallDoenSai.com</Link><Link href="/profile" style={{ color: 'white', fontSize: 12, fontWeight: 800, textDecoration: 'none' }}>โปรไฟล์</Link></header>
+    <PageHeader back={{ href: '/profile', label: 'โปรไฟล์' }} />
     <section style={{ background: '#101827', color: 'white', padding: '30px 18px 34px' }}><div style={{ maxWidth: 720, margin: '0 auto' }}><p style={{ color: '#f5c518', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, margin: 0 }}>FAMILY SUPPORT</p><h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(32px,8vw,48px)', lineHeight: .95, margin: '9px 0' }}>ผู้ปกครอง<br /><span style={{ color: '#f5c518' }}>ดูแลเส้นทาง</span></h1><p style={{ maxWidth: 480, color: 'rgba(255,255,255,.7)', fontSize: 13, lineHeight: 1.55, margin: 0 }}>เชื่อมบัญชีด้วยความยินยอมของผู้ปกครองและการตอบรับของนักกีฬา เพื่อดูความก้าวหน้าอย่างปลอดภัย</p></div></section>
     <section style={{ maxWidth: 720, margin: '0 auto', padding: '20px 16px' }}>
       {!isGuardian && incoming.length === 0 && <div style={{ background: '#fff8e6', border: '1px solid #f4d98b', borderRadius: 12, padding: 14, color: '#624a00', fontSize: 13, lineHeight: 1.55, marginBottom: 16 }}>หน้านี้สำหรับผู้ปกครอง หรือสำหรับนักกีฬาที่มีคำขอเชื่อมบัญชีรออยู่ หากเลือกบทบาทไม่ตรง ให้เริ่ม onboarding ใหม่ด้วยบัญชีผู้ปกครอง</div>}

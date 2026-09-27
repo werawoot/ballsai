@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import BookingCoordination, { type CoordinationRow, type AvailableSlot } from './BookingCoordination'
 import { formatVenueBookingDateTime } from '@/lib/venue-booking-time'
+import PageHeader from '@/components/PageHeader'
 
 export default async function BookingDetails({ params }: { params: { bookingId: string } }) {
   if (!/^[0-9a-f-]{36}$/i.test(params.bookingId)) notFound()
@@ -15,10 +16,12 @@ export default async function BookingDetails({ params }: { params: { bookingId: 
     db.from('venue_booking_coordination').select('id,actor_id,kind,body,status,target_snapshot,created_at').eq('booking_id',booking.id).order('created_at'),
     db.rpc('venue_booking_options_beta',{ p_id: booking.id }),
   ])
-  return <main style={{ maxWidth: 850, margin: 'auto', padding: '32px 16px' }}>
-    <Link href="/venues/bookings">← คำขอของฉัน</Link> · <Link href="/venue">จัดการสนาม</Link>
+  return <>
+  <PageHeader back={{ href: '/venues/bookings', label: 'คำขอของฉัน' }} actions={<Link href="/venue" className="bds-page-header-link"><span>จัดการสนาม</span></Link>} />
+  <main style={{ maxWidth: 850, margin: 'auto', padding: '32px 16px' }}>
     <h1>{booking.venue_name_snapshot} · {booking.court_name_snapshot}</h1>
     <p>{formatVenueBookingDateTime(booking.slot_starts_at_snapshot)} · ฿{booking.price_baht_snapshot}</p>
     {error || optionsError ? <p role="alert">ยังเปิดการประสานงานไม่ได้ กรุณาติดต่อทีมงาน</p> : <BookingCoordination bookingId={booking.id} status={booking.status} userId={user.id} rows={(rows ?? []) as CoordinationRow[]} slots={(slots ?? []) as AvailableSlot[]} />}
   </main>
+  </>
 }

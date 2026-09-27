@@ -12,7 +12,7 @@ import {
   NAV_PENDING_WATCHDOG_MS,
   abandonNavigation,
   activeNavItem,
-  isPlainPrimaryClick,
+  linkNavigationTarget,
   navigationPhase,
   showsSiteNav,
   startNavigation,
@@ -59,6 +59,28 @@ export default function SiteNav() {
     return () => window.clearTimeout(id)
   }, [phase, pending])
 
+  // Every in-app link starts the same feedback as a tab, not only the five in the bar.
+  // Listened for in the capture phase: next/link calls preventDefault() on each click it
+  // routes itself, so by the bubble phase every in-app link would look already handled.
+  useEffect(() => {
+    if (!visible) return
+    const onClick = (event: MouseEvent) => {
+      const anchor = event.target instanceof Element ? event.target.closest('a') : null
+      if (!(anchor instanceof HTMLAnchorElement)) return
+      const destination = linkNavigationTarget(event, {
+        href: anchor.getAttribute('href'),
+        target: anchor.getAttribute('target'),
+        download: anchor.hasAttribute('download'),
+        noProgress: anchor.hasAttribute('data-no-progress'),
+      }, window.location.href)
+      if (destination === null) return
+      const next = startNavigation(pathname, destination)
+      if (next !== null) setPending(next)
+    }
+    document.addEventListener('click', onClick, true)
+    return () => document.removeEventListener('click', onClick, true)
+  }, [pathname, visible])
+
   // The unread badge is read in the browser. Fetching it in the root layout would make
   // every page read cookies and so stop the statically rendered ones being static. The
   // session is read locally (no network) and RLS on `notifications` is the real guard;
@@ -102,11 +124,6 @@ export default function SiteNav() {
           className={`bds-nav-item${isActive ? ' is-active' : ''}${isPending ? ' is-pending' : ''}`}
           aria-current={isActive ? 'page' : undefined}
           aria-label={itemBadge ? `${item.label} · ${itemBadge.label}` : undefined}
-          onClick={event => {
-            if (!isPlainPrimaryClick(event)) return
-            const next = startNavigation(pathname, item.href)
-            if (next !== null) setPending(next)
-          }}
         >
           <span className="bds-nav-icon">
             <Icon size={21} strokeWidth={isActive ? 2.4 : 1.9} aria-hidden="true" />

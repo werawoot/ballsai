@@ -28,7 +28,7 @@ export default function AthleteFilters({
 
   const selectStyle = {
     minWidth: 0,
-    minHeight: 42,
+    minHeight: 44,
     border: '1px solid #ddd',
     borderRadius: 6,
     background: 'white',
