@@ -2,32 +2,42 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ArrowRight, Building2, Check, ChevronLeft, Compass, Handshake, Sparkles, Trophy, UsersRound } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import LanguageSwitch from "@/components/LanguageSwitch";
 import { ACTIVE_SPORT } from "@/lib/season";
 
 type Persona = "athlete" | "guardian" | "coach_organizer" | "venue_owner" | "sponsor_brand";
 type Goal = "player_card" | "find_competitions" | "follow_athlete" | "discover_talent" | "manage_venue" | "support_athletes";
 
-const personas: Array<{ id: Persona; icon: typeof Trophy; title: string; description: string }> = [
-  { id: "athlete", icon: Trophy, title: "นักกีฬา", description: "สร้างตัวตนและเก็บทุกผลงานของฉัน" },
-  { id: "guardian", icon: UsersRound, title: "ผู้ปกครอง", description: "ติดตามและสนับสนุนเส้นทางของน้อง" },
-  { id: "coach_organizer", icon: Compass, title: "โค้ช / ผู้จัด", description: "ค้นหา พัฒนา และจัดการแข่งขัน" },
-  { id: "venue_owner", icon: Building2, title: "เจ้าของสนาม", description: "เปิดสนามและรับคำขอจอง" },
-  { id: "sponsor_brand", icon: Handshake, title: "Sponsor / Brand", description: "สร้างโอกาสสนับสนุนนักกีฬาอย่างรับผิดชอบ" },
+// Titles and descriptions live in messages/*.json under onboarding.personas / .goals.
+const personas: Array<{ id: Persona; icon: typeof Trophy }> = [
+  { id: "athlete", icon: Trophy },
+  { id: "guardian", icon: UsersRound },
+  { id: "coach_organizer", icon: Compass },
+  { id: "venue_owner", icon: Building2 },
+  { id: "sponsor_brand", icon: Handshake },
 ];
 
-const goals: Array<{ id: Goal; title: string; description: string; path: string }> = [
-  { id: "player_card", title: "สร้าง Player Card", description: "ทำการ์ดนักเตะของฉัน", path: "/card" },
-  { id: "find_competitions", title: "หารายการแข่ง", description: "ค้นหาสนามที่รอคุณอยู่", path: "/tournaments" },
-  { id: "follow_athlete", title: "ติดตามนักกีฬา", description: "ดูเส้นทางและผลงาน", path: "/athletes" },
-  { id: "discover_talent", title: "ค้นหานักกีฬา", description: "เจอดาวรุ่งที่น่าจับตา", path: "/athletes" },
-  { id: "manage_venue", title: "จัดการสนาม", description: "สร้างสนามและเปิดเวลาว่าง", path: "/venue" },
-  { id: "support_athletes", title: "สนับสนุนนักกีฬา", description: "สร้างโอกาสที่เด็กเลือกแสดงความสนใจเอง", path: "/sponsor" },
+const goals: Array<{ id: Goal; path: string }> = [
+  { id: "player_card", path: "/card" },
+  { id: "find_competitions", path: "/tournaments" },
+  { id: "follow_athlete", path: "/athletes" },
+  { id: "discover_talent", path: "/athletes" },
+  { id: "manage_venue", path: "/venue" },
+  { id: "support_athletes", path: "/sponsor" },
 ];
+
+const sports = [
+  { id: "football", sub: "FOOTBALL" },
+  { id: "futsal", sub: "FUTSAL" },
+  { id: "other", sub: "COMING SOON" },
+] as const;
 
 export default function OnboardingFlow({ email, nextPath, userId }: { email: string; nextPath: string; userId: string }) {
   const router = useRouter();
+  const t = useTranslations("onboarding");
   const [step, setStep] = useState(0);
   const [persona, setPersona] = useState<Persona | null>(null);
   const [sport, setSport] = useState(ACTIVE_SPORT);
@@ -51,7 +61,7 @@ export default function OnboardingFlow({ email, nextPath, userId }: { email: str
       .eq("id", userId);
 
     if (profileError) {
-      setError("บันทึกการตั้งค่าไม่สำเร็จ: " + profileError.message);
+      setError(t("saveSettingsFailed", { message: profileError.message }));
       setSaving(false);
       return;
     }
@@ -69,7 +79,7 @@ export default function OnboardingFlow({ email, nextPath, userId }: { email: str
           sport,
         });
         if (athleteError) {
-          setError("บันทึกโปรไฟล์นักกีฬาไม่สำเร็จ: " + athleteError.message);
+          setError(t("saveAthleteFailed", { message: athleteError.message }));
           setSaving(false);
           return;
         }
@@ -90,23 +100,27 @@ export default function OnboardingFlow({ email, nextPath, userId }: { email: str
       <section className="onboard-shell">
         <header className="onboard-header">
           <div className="onboard-brand"><Trophy size={20} /> BallDoenSai<span>.com</span></div>
-          <button className="onboard-skip" disabled={saving} onClick={() => finish(true)} type="button">ข้ามไปดูก่อน <ArrowRight size={15} /></button>
+          {/* The first screen after sign-up: someone who cannot read Thai must be able to switch here. */}
+          <div className="onboard-header-end">
+            <LanguageSwitch />
+            <button className="onboard-skip" disabled={saving} onClick={() => finish(true)} type="button">{t("skip")} <ArrowRight size={15} /></button>
+          </div>
         </header>
 
-        <div className="onboard-progress" aria-label={`ขั้นตอน ${step + 1} จาก 3`}>
+        <div className="onboard-progress" aria-label={t("progress", { step: step + 1, total: 3 })}>
           {[0, 1, 2].map((item) => <i className={item <= step ? "is-active" : ""} key={item} />)}
         </div>
 
         <div className="onboard-content">
           <p className="onboard-kicker"><Sparkles size={14} /> WELCOME, {email.split("@")[0]?.toUpperCase() || "PLAYER"}</p>
-          {step === 0 && <><h1>คุณเข้ามา<br /><em>ในฐานะอะไร?</em></h1><p>เลือกให้เราพาคุณไปยังจุดเริ่มต้นที่เหมาะที่สุด</p><div className="onboard-options">{personas.map(({ id, icon: Icon, title, description }) => <button className={persona === id ? "is-selected" : ""} key={id} onClick={() => setPersona(id)} type="button"><Icon size={24} /><span><b>{title}</b><small>{description}</small></span>{persona === id && <Check size={17} />}</button>)}</div></>}
-          {step === 1 && <><h1>คุณสนใจ<br /><em>กีฬาอะไร?</em></h1><p>เริ่มต้นด้วยกีฬาที่คุณรัก และเพิ่มผลงานได้ในภายหลัง</p><div className="onboard-sports">{[{ id: "football", title: "ฟุตบอล", sub: "FOOTBALL" }, { id: "futsal", title: "ฟุตซอล", sub: "FUTSAL" }, { id: "other", title: "กีฬาอื่น", sub: "COMING SOON" }].map((item) => <button className={sport === item.id ? "is-selected" : ""} key={item.id} onClick={() => setSport(item.id)} type="button"><b>{item.title}</b><span>{item.sub}</span>{sport === item.id && <Check size={16} />}</button>)}</div></>}
-          {step === 2 && <><h1>วันนี้อยาก<br /><em>เริ่มอะไร?</em></h1><p>เราจะพาคุณไปถึงจุดเริ่มต้นนั้นทันที</p><div className="onboard-goals">{goals.map((item) => <button className={goal === item.id ? "is-selected" : ""} key={item.id} onClick={() => setGoal(item.id)} type="button"><span><b>{item.title}</b><small>{item.description}</small></span>{goal === item.id && <Check size={17} />}</button>)}</div></>}
+          {step === 0 && <><h1>{t("persona.titleTop")}<br /><em>{t("persona.titleBottom")}</em></h1><p>{t("persona.intro")}</p><div className="onboard-options">{personas.map(({ id, icon: Icon }) => <button className={persona === id ? "is-selected" : ""} key={id} onClick={() => setPersona(id)} type="button"><Icon size={24} /><span><b>{t(`personas.${id}.title`)}</b><small>{t(`personas.${id}.description`)}</small></span>{persona === id && <Check size={17} />}</button>)}</div></>}
+          {step === 1 && <><h1>{t("sport.titleTop")}<br /><em>{t("sport.titleBottom")}</em></h1><p>{t("sport.intro")}</p><div className="onboard-sports">{sports.map((item) => <button className={sport === item.id ? "is-selected" : ""} key={item.id} onClick={() => setSport(item.id)} type="button"><b>{t(`sports.${item.id}`)}</b><span>{item.sub}</span>{sport === item.id && <Check size={16} />}</button>)}</div></>}
+          {step === 2 && <><h1>{t("goal.titleTop")}<br /><em>{t("goal.titleBottom")}</em></h1><p>{t("goal.intro")}</p><div className="onboard-goals">{goals.map((item) => <button className={goal === item.id ? "is-selected" : ""} key={item.id} onClick={() => setGoal(item.id)} type="button"><span><b>{t(`goals.${item.id}.title`)}</b><small>{t(`goals.${item.id}.description`)}</small></span>{goal === item.id && <Check size={17} />}</button>)}</div></>}
 
           {error && <p className="onboard-error">{error}</p>}
           <footer className="onboard-actions">
-            {step > 0 ? <button className="onboard-back" onClick={() => setStep((value) => value - 1)} type="button"><ChevronLeft size={17} /> ย้อนกลับ</button> : <span />}
-            {step < 2 ? <button className="onboard-next" disabled={(step === 0 && !persona) || saving} onClick={() => setStep((value) => value + 1)} type="button">ต่อไป <ArrowRight size={17} /></button> : <button className="onboard-next" disabled={!goal || saving} onClick={() => finish(false)} type="button">{saving ? "กำลังเริ่มต้น..." : "เริ่มเส้นทางของฉัน"} <ArrowRight size={17} /></button>}
+            {step > 0 ? <button className="onboard-back" onClick={() => setStep((value) => value - 1)} type="button"><ChevronLeft size={17} /> {t("back")}</button> : <span />}
+            {step < 2 ? <button className="onboard-next" disabled={(step === 0 && !persona) || saving} onClick={() => setStep((value) => value + 1)} type="button">{t("next")} <ArrowRight size={17} /></button> : <button className="onboard-next" disabled={!goal || saving} onClick={() => finish(false)} type="button">{saving ? t("starting") : t("finish")} <ArrowRight size={17} /></button>}
           </footer>
         </div>
       </section>

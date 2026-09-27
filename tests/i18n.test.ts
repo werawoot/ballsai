@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { createTranslator } from 'next-intl'
+import ts from 'typescript'
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_LOCALE,
@@ -157,16 +158,38 @@ describe('the language switch', () => {
 // Every file under app/, components/ and lib/ that still writes Thai text directly is
 // listed in i18n-thai-baseline.json. The list may only shrink: a new file with Thai text
 // fails here (use messages/*.json), and a file translated off the list must be removed
-// from it, so it cannot quietly gain Thai text again. Comments may be in any language, and
-// the baht sign is a currency symbol, not Thai text.
+// from it, so it cannot quietly gain Thai text again. Only string, template and JSX text
+// literals count -- the only places UI text can live -- so comments may be in any language.
+// The file is parsed, not pattern-matched: a regex once read the "/*" inside a comment
+// mentioning "messages/*.json" as a block comment and skipped the code after it. The baht
+// sign is a currency symbol, not Thai text.
 
 const THAI = /[ก-ฺเ-๛]/
-const withoutComments = (source: string) =>
-  source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`])\/\/.*$/gm, '$1')
+const LITERALS = new Set([
+  ts.SyntaxKind.StringLiteral, ts.SyntaxKind.NoSubstitutionTemplateLiteral, ts.SyntaxKind.TemplateHead,
+  ts.SyntaxKind.TemplateMiddle, ts.SyntaxKind.TemplateTail, ts.SyntaxKind.JsxText,
+])
+const hasThaiText = (source: string, path = 'file.tsx') => {
+  let found = false
+  const visit = (node: ts.Node) => {
+    if (found) return
+    if (LITERALS.has(node.kind) && THAI.test((node as ts.LiteralLikeNode).text)) { found = true; return }
+    ts.forEachChild(node, visit)
+  }
+  visit(ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, path.endsWith('.ts') ? ts.ScriptKind.TS : ts.ScriptKind.TSX))
+  return found
+}
 const thaiFiles = () =>
-  ['app', 'components', 'lib'].flatMap(walk).filter(path => THAI.test(withoutComments(read(path)))).sort()
+  ['app', 'components', 'lib'].flatMap(walk).filter(path => hasThaiText(read(path), path)).sort()
 
 describe('no new hard-coded Thai', () => {
+  it('sees Thai in code, but not in comments, even after a comment that mentions a glob', () => {
+    expect(hasThaiText("// see messages/*.json\nconst a = 'ทดสอบ'\n")).toBe(true)
+    expect(hasThaiText('const a = <p>ทดสอบ</p>')).toBe(true)
+    expect(hasThaiText('const a = `x ${1} ทดสอบ`')).toBe(true)
+    expect(hasThaiText("// ทดสอบ\n/* ทดสอบ */\nconst url = 'https://x' // ทดสอบ\n")).toBe(false)
+  })
+
   const baseline: string[] = JSON.parse(read('tests/i18n-thai-baseline.json'))
 
   it('adds no file with Thai text written into the code', () => {
@@ -188,8 +211,12 @@ describe('no new hard-coded Thai', () => {
     'components/SiteNav.tsx',
     'components/TournamentCover.tsx',
     'lib/tournament-cover.ts',
+    'app/welcome/OnboardingFlow.tsx',
+    'app/card/PlayerCardBuilder.tsx',
+    'app/card/page.tsx',
+    'app/profile/PublicProfileShare.tsx',
   ])('keeps %s translated', path => {
     expect(baseline).not.toContain(path)
-    expect(THAI.test(withoutComments(read(path)))).toBe(false)
+    expect(hasThaiText(read(path), path)).toBe(false)
   })
 })

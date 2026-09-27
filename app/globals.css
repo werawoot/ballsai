@@ -142,9 +142,9 @@ body {
 .bds-page-header-end { align-items:center; display:flex; flex:0 1 auto; gap:6px; justify-content:flex-end; min-width:0; }
 /* The language switch (components/LanguageSwitch.tsx): one 44px target naming the other
    language. flex:none so a long page action gives way before it does. */
-.bds-lang-switch { -webkit-tap-highlight-color:transparent; align-items:center; background:transparent; border:1px solid rgba(244,185,66,.55); border-radius:999px; box-sizing:border-box; color:var(--ph-gold); cursor:pointer; display:inline-flex; flex:none; font:800 12px/1 var(--font-sarabun),sans-serif; justify-content:center; letter-spacing:.04em; min-height:44px; min-width:44px; padding:0 10px; }
+.bds-lang-switch { -webkit-tap-highlight-color:transparent; align-items:center; background:transparent; border:1px solid rgba(244,185,66,.55); border-radius:999px; box-sizing:border-box; color:var(--ph-gold,#f4b942); cursor:pointer; display:inline-flex; flex:none; font:800 12px/1 var(--font-sarabun),sans-serif; justify-content:center; letter-spacing:.04em; min-height:44px; min-width:44px; padding:0 10px; }
 .bds-lang-switch:hover { background:rgba(244,185,66,.12); }
-.bds-lang-switch:focus-visible { outline:2px solid var(--ph-gold); outline-offset:2px; }
+.bds-lang-switch:focus-visible { outline:2px solid var(--ph-gold,#f4b942); outline-offset:2px; }
 .bds-lang-switch[aria-busy="true"] { cursor:progress; opacity:.6; }
 @media print { .bds-page-header { display:none; } }
 /* --nav-height is shared by the bar and its spacer so the two cannot drift apart. */
@@ -428,3 +428,11 @@ body {
 .hall-filter-row a, .hall-empty a { position:relative; }
 .hall-filter-row a::before { bottom:-1px; content:""; left:50%; position:absolute; top:min(-1px,calc(100% - 43px)); transform:translateX(-50%); width:max(100%,44px); }
 .hall-empty a::before { content:""; height:max(100%,44px); left:50%; position:absolute; top:50%; transform:translate(-50%,-50%); width:max(100%,44px); }
+
+/* /welcome header: the language switch sits before "skip" so it is found first. The
+   wordmark never breaks ("BallDoenSai / .com" split at 320px); when brand, switch and
+   skip do not fit one row, the two controls move to a second row, right-aligned. */
+.onboard-header { column-gap:10px; flex-wrap:wrap; row-gap:12px; }
+.onboard-brand { flex:none; white-space:nowrap; }
+.onboard-header-end { align-items:center; display:flex; gap:10px; margin-left:auto; }
+.onboard-skip { white-space:nowrap; }

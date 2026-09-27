@@ -38,7 +38,9 @@ Use `next-intl` (v4, App Router, no locale routing).
 ### Guard against new hard-coded Thai
 
 `tests/i18n-thai-baseline.json` lists every file under `app/`, `components/` and `lib/`
-that still writes Thai text (comments excluded, the baht sign excluded). `tests/i18n.test.ts`
+that still writes Thai text in a string, template or JSX text literal. Files are parsed with
+the TypeScript compiler, so comments never count and a comment cannot hide code; the baht
+sign is excluded. `tests/i18n.test.ts`
 fails when a file not on the list contains Thai, and when a listed file no longer does.
 The list may only shrink. New code puts every user-facing string in `messages/*.json`.
 
@@ -72,7 +74,8 @@ placeholders, no empty strings, and formats every message with next-intl's own r
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1 | Mechanism, switch, bottom nav, `PageHeader`, route skeleton, `/tournaments` and its card cover, metadata | Done (this ADR) |
-| 2 | Core journey: `/login`, `/welcome`, `/profile`, `/card`, `/career`, tournament detail and team registration, remaining public pages | Planned |
+| 2a | `/welcome` (with the switch in its header), `/card` builder, profile share panel | Done |
+| 2b | `/login`, `/profile` page and form, `/career`, tournament detail and team registration | Waiting: these files differ on `codex/player-card-beta` or are being edited by another agent, so translating them here would conflict. Do after the branches meet. |
 | 3 | API errors as codes worded by the UI; remaining pages; `DiscoverTabs`, profile menu | Planned |
 | 4 | Notifications: triggers write Thai sentences into `notifications`, which cannot be translated after the fact. Needs a new migration (type + parameters, worded at render) and a stored language on `profiles` for email. Touches the verified-result chain, so the design is agreed first. | Planned, needs agreement |
 | - | `/privacy`, `/terms`, guardian consent wording: professional, legally reviewed translation only; Thai remains the governing text | Waiting on owner |
@@ -80,7 +83,8 @@ placeholders, no empty strings, and formats every message with next-intl's own r
 
 The switch is not yet on pages with their own header: the home page (protected by
 AGENTS.md rule 7; needs owner approval), the four identity pages (impact, career, card,
-hall-of-fame), and the task flows `/login` and `/welcome`.
+hall-of-fame), and `/login`. `/welcome` has it; on phones its header now takes two rows
+(brand, then switch and skip) in both languages.
 
 ## Terms for the owner to confirm
 
@@ -90,3 +94,5 @@ hall-of-fame), and the task flows `/login` and `/welcome`.
 | รายการแข่ง (bottom nav) | Events | "Tournaments" does not fit a 320px tab |
 | แจ้งเตือน (bottom nav) | Alerts | "Notifications" does not fit a 320px tab |
 | ค้นหา (bottom nav) | Discover | The tab holds athletes, ranking and Hall of Fame |
+| ข้ามไปดูก่อน (/welcome) | Skip for now | Shorter than a literal "look around first" |
+| ผู้ปกครอง (/welcome) | Parent / Guardian | |
