@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 
 export default function GlobalError({
   error,
@@ -10,6 +11,7 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const t = useTranslations('fallback')
   useEffect(() => {
     console.error('Unhandled application error', error)
   }, [error])
@@ -17,11 +19,11 @@ export default function GlobalError({
   return (
     <main className="site-fallback">
       <p className="site-fallback-kicker">BALLDOENSAI.COM · SYSTEM NOTICE</p>
-      <h1>เกมนี้สะดุด<br /><em>แต่เรายังไปต่อได้</em></h1>
-      <p>เกิดปัญหาชั่วคราวระหว่างเปิดหน้านี้ ลองอีกครั้ง หรือกลับไปเริ่มต้นใหม่ได้เลย</p>
+      <h1>{t('errorTop')}<br /><em>{t('errorBottom')}</em></h1>
+      <p>{t('errorBody')}</p>
       <div className="site-fallback-actions">
-        <button type="button" onClick={reset}>ลองอีกครั้ง</button>
-        <Link href="/">กลับหน้าแรก</Link>
+        <button type="button" onClick={reset}>{t('retry')}</button>
+        <Link href="/">{t('home')}</Link>
       </div>
     </main>
   )

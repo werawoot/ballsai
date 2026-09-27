@@ -9,8 +9,8 @@ describe('unreadBadge', () => {
   })
 
   it('shows the exact count while it stays short', () => {
-    expect(unreadBadge(1)).toEqual({ text: '1', label: 'ยังไม่อ่าน 1 รายการ' })
-    expect(unreadBadge(99)).toEqual({ text: '99', label: 'ยังไม่อ่าน 99 รายการ' })
+    expect(unreadBadge(1)).toEqual({ text: '1', count: 1 })
+    expect(unreadBadge(99)).toEqual({ text: '99', count: 99 })
   })
 
   it('caps the text so the badge cannot stretch the nav', () => {

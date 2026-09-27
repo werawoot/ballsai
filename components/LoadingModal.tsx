@@ -1,6 +1,7 @@
 'use client'
 
 import { Loader2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface LoadingModalProps {
   isOpen: boolean
@@ -8,7 +9,8 @@ interface LoadingModalProps {
   subMessage?: string
 }
 
-export default function LoadingModal({ isOpen, message = 'กำลังโหลด', subMessage }: LoadingModalProps) {
+export default function LoadingModal({ isOpen, message, subMessage }: LoadingModalProps) {
+  const t = useTranslations('fallback')
   if (!isOpen) return null
 
   return (
@@ -91,7 +93,7 @@ export default function LoadingModal({ isOpen, message = 'กำลังโห�
               textTransform: 'uppercase',
             }}
           >
-            {message}
+            {message ?? t('loading')}
           </div>
           {subMessage && (
             <div

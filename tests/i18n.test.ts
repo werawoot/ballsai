@@ -215,6 +215,15 @@ describe('no new hard-coded Thai', () => {
     'app/card/PlayerCardBuilder.tsx',
     'app/card/page.tsx',
     'app/profile/PublicProfileShare.tsx',
+    'app/not-found.tsx',
+    'app/error.tsx',
+    'app/notifications/NotificationList.tsx',
+    'app/notifications/page.tsx',
+    'components/NotificationBellLink.tsx',
+    'lib/notification-unread.ts',
+    'app/ranking/RankingFilter.tsx',
+    'app/athletes/AthleteFilters.tsx',
+    'components/LoadingModal.tsx',
   ])('keeps %s translated', path => {
     expect(baseline).not.toContain(path)
     expect(hasThaiText(read(path), path)).toBe(false)
