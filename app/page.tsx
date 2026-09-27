@@ -1,18 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
-import {
-  ArrowUpRight,
-  CalendarDays,
-  ChevronRight,
-  ClipboardList,
-  House,
-  MapPin,
-  Megaphone,
-  Search,
-  Trophy,
-  User,
-} from 'lucide-react'
+import { ArrowUpRight, CalendarDays, ChevronRight, MapPin, Megaphone, Search, Trophy } from 'lucide-react'
 import { isSampleId, samplePlayerRanks, sampleTournaments, showDemoData } from '@/lib/sample-data'
 import HomeHeroCarousel from './HomeHeroCarousel'
 import HomeHighlightsRail from './HomeHighlightsRail'
@@ -175,15 +164,6 @@ export default async function Home() {
         <Link href="/card" className="home-primary-cta">สร้าง Player Card ของคุณ <ArrowUpRight size={18} /></Link>
       </section>
 
-      <nav className="home-nav">
-        {[
-          { icon: <House size={20} />, label: 'หน้าแรก', href: '/', active: true },
-          { icon: <Search size={20} />, label: 'นักกีฬา', href: '/athletes', active: false },
-          { icon: <Trophy size={20} />, label: 'Ranking', href: '/ranking', active: false },
-          { icon: <ClipboardList size={20} />, label: 'รายการแข่ง', href: '/tournaments', active: false },
-          { icon: <User size={20} />, label: 'โปรไฟล์', href: '/profile', active: false },
-        ].map(item => <Link key={item.href} href={item.href} className={`home-nav-item ${item.active ? 'is-active' : ''}`}>{item.icon}<span>{item.label}</span></Link>)}
-      </nav>
     </main>
   )
 }

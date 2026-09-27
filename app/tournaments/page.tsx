@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { Trophy, MapPin, Calendar, ChevronRight } from 'lucide-react'
 import { sampleTournaments, isSampleId, showDemoData } from '@/lib/sample-data'
-import SiteNav from '@/components/SiteNav'
 import { getPublicTournaments } from '@/lib/public-data'
 
 export default async function TournamentsPage() {
@@ -13,7 +12,7 @@ export default async function TournamentsPage() {
       : []
 
   return (
-    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 80, overflowX: 'hidden' }}>
+    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* TOPBAR */}
       <header className="bds-header" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
@@ -89,7 +88,6 @@ export default async function TournamentsPage() {
       <div style={{ height: 24 }} />
 
       {/* BOTTOM NAV */}
-      <SiteNav active="tournaments" />
 
     </main>
   )

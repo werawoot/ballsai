@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { CheckCircle2, MapPin, Shield, Star, Trophy, User, Users, Zap } from 'lucide-react'
 import AthleteFilters from './AthleteFilters'
-import SiteNav from '@/components/SiteNav'
+import DiscoverTabs from '@/components/DiscoverTabs'
 import { samplePlayerRanks, showDemoData } from '@/lib/sample-data'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 
@@ -86,7 +86,7 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
   const provinces = [...new Set(realProfiles.map(profile => profile.province).filter((value): value is string => Boolean(value)))].sort()
 
   return (
-    <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 80 }}>
+    <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5' }}>
       <header className="bds-header" style={{ height: 54, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#CC0001', color: 'white', position: 'sticky', top: 0, zIndex: 50 }}>
         <Link href="/" style={{ color: 'white', textDecoration: 'none', display: 'flex', gap: 8, alignItems: 'center', fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2 }}><Trophy size={22} />BallDoenSai.com</Link>
         <span style={{ fontSize: 11, fontWeight: 800 }}>ATHLETE DATABASE</span>
@@ -95,6 +95,8 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
       <section className="bds-hero" style={{ background: '#111', color: 'white', padding: '25px 16px 22px' }}>
         <div style={{ maxWidth: 920, margin: '0 auto' }}><span style={{ fontSize: 10, fontWeight: 800, color: '#ff7373' }}>FOOTBALL · THAILAND</span><h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(30px,8vw,48px)', lineHeight: 1, marginTop: 5 }}>ค้นหานักกีฬาเยาวชน</h1><p style={{ fontSize: 12, color: '#aaa', marginTop: 8 }}>โปรไฟล์ ผลงาน และข้อมูลที่ระบุระดับการยืนยันอย่างชัดเจน</p></div>
       </section>
+
+      <DiscoverTabs current="/athletes" />
 
       <AthleteFilters provinces={provinces} currentSearch={search} currentProvince={province} currentPosition={position} currentAge={ageGroup} />
 
@@ -124,7 +126,6 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
         </div>}
       </section>
 
-      <SiteNav active="athletes" />
     </main>
   )
 }
