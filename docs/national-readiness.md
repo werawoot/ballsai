@@ -137,7 +137,7 @@ nationwide use") เอกสารนี้คือรายการที่
 | --- | --- | --- | --- | --- |
 | T07 | แบ่งหน้า `/venues` (ไม่ดึงช่วงเวลาทั้งหมดของทุกสนาม) | 🤖 | เทสต์ยืนยันว่าแต่ละหน้าดึงจำนวนจำกัด และหน้าถัดไปใช้ได้ | 🔄 โค้ดและเทสต์ merge แล้ว; index อยู่ใน `sql/51-public-list-pagination-indexes-v1.sql` (sandbox 100×: หน้า 50 เร็วขึ้นจาก 23.5 ms เป็น 0.57 ms, ใช้ Index Only Scan) — ปิดเป็น ✅ เมื่อ apply บน Staging แล้ว postcheck ผ่าน |
 | T08 | แบ่งหน้า `/tournaments` | 🤖 | เหมือน T07 | 🔄 โค้ดและเทสต์ merge แล้ว; index อยู่ใน `sql/51-public-list-pagination-indexes-v1.sql` (sandbox 100×: หน้า 50 เร็วขึ้นจาก 26.4 ms เป็น 1.38 ms, ใช้ Index Only Scan) — ปิดเป็น ✅ เมื่อ apply บน Staging แล้ว postcheck ผ่าน |
-| T09 | แก้เพดาน 250/500 ใน `lib/public-data.ts` ให้ผลถูกต้องเมื่อข้อมูลเกิน | 🤖 | เทสต์ที่มีข้อมูลเกินเพดานยังได้ผลถูก | ⬜ |
+| T09 | แก้เพดาน 250/500 ใน `lib/public-data.ts` ให้ผลถูกต้องเมื่อข้อมูลเกิน | 🤖 | เทสต์ที่มีข้อมูลเกินเพดานยังได้ผลถูก | 🔄 `lib/public-identity-ranking.ts` + `sql/52-public-athlete-rankings-view-v1.sql`: ฐานข้อมูลเรียงและตัด 50 อันดับแรกเอง (sandbox 100,000 คน ถูกต้องตรงกับ query ตรง, 78/160 ms); `getPublicHallOfFame` (เพดาน 250) ไม่มีใครเรียกใช้ ลบแล้ว — ปิดเป็น ✅ เมื่อ apply SQL52 บน Staging และ postcheck ผ่าน |
 | T10 | ตัวกรองจังหวัดใน ranking ไม่อ่านทั้งตาราง | 🤖 | query คืนเฉพาะรายชื่อจังหวัด | ⬜ |
 | T11 | ไล่หา query ที่ไม่ใส่ `limit` ซึ่งจะโดนเพดาน max rows ของ Supabase | 🤖 | มีรายการครบ แก้แล้วหรือระบุเหตุผล | ✅ รายการอยู่ในหัวข้อ "ผลตรวจ T11" ท้ายเอกสาร; งานแก้ที่เหลือแยกเป็น T45–T49 |
 | T12 | ตรวจค่า max rows ของ API ใน Supabase ทั้ง Staging และ Production | 👤 | บันทึกค่าไว้ | ⬜ |
