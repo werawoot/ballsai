@@ -2,17 +2,21 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { Trophy, Calendar, ChevronRight } from 'lucide-react'
 import { sampleTournaments, isSampleId, showDemoData } from '@/lib/sample-data'
-import { getPublicTournaments } from '@/lib/public-data'
+import { getPublicTournamentsPage } from '@/lib/public-data'
+import { parsePage } from '@/lib/pagination'
 import PageHeader from '@/components/PageHeader'
+import Pagination from '@/components/Pagination'
 import TournamentCover from '@/components/TournamentCover'
 
-export default async function TournamentsPage() {
-  const tournaments = await getPublicTournaments()
+export default async function TournamentsPage({ searchParams }: { searchParams: { page?: string | string[] } }) {
+  const page = parsePage(searchParams?.page)
+  const { tournaments, hasNext } = await getPublicTournamentsPage(page)
   // `t` is taken by the tournament in the list below.
   const text = await getTranslations('tournaments')
-  const displayTournaments = tournaments && tournaments.length > 0
+  // Demo rows stand in only for an empty first page, never for a page past the end.
+  const displayTournaments = tournaments.length > 0
     ? tournaments
-    : showDemoData
+    : showDemoData && page === 1
       ? sampleTournaments
       : []
 
@@ -80,6 +84,7 @@ export default async function TournamentsPage() {
             </div>
           )}
         </div>
+        <Pagination basePath="/tournaments" page={page} hasNext={hasNext} />
       </div>
 
       <div style={{ height: 24 }} />
