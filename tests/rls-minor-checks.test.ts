@@ -20,13 +20,23 @@ describe('RLS checks for minors\' data', () => {
     }
   })
 
-  it('checks that a child\'s birth date and consent record are not readable signed out, even on a public profile', () => {
-    const exposure = all().filter(check => check.audience === 'anonymous' && /birth_date|guardian_consent_at/.test(check.path))
-    expect(exposure.map(check => check.path)).toEqual(expect.arrayContaining([
+  // T50 / sql/58: the two columns are refused outright, signed out and signed in alike.
+  it.each(['anonymous', 'unrelated'])('checks that a child\'s birth date and consent record are refused to %s, even on a public profile', audience => {
+    const exposure = all().filter(check => check.audience === audience && /birth_date|guardian_consent_at/.test(check.path))
+    expect(exposure.map(check => check.path)).toEqual([
       '/athlete_profiles?select=user_id,birth_date&is_public=eq.true&birth_date=not.is.null&limit=1',
       '/athlete_profiles?select=user_id,guardian_consent_at&is_public=eq.true&guardian_consent_at=not.is.null&limit=1',
-    ]))
-    for (const check of exposure) expect(check.expected).toBe('hidden')
+    ])
+    for (const check of exposure) expect(check.expected).toBe('blocked')
+  })
+
+  it('makes sure a public profile exists, so the birth date checks cannot pass on an empty database', () => {
+    expect(all().find(check => check.path === '/athlete_profiles?select=user_id,display_name&is_public=eq.true&limit=1')).toMatchObject({ audience: 'anonymous', expected: 'visible' })
+  })
+
+  it('lets only the athlete read their own birth date, through my_athlete_private', () => {
+    const calls = all({ PRIVATE_PROFILE_USER_ID: 'p' }).filter(check => check.path === '/rpc/my_athlete_private')
+    expect(calls.map(check => [check.audience, check.expected])).toEqual([['anonymous', 'blocked'], ['owner', 'visible']])
   })
 
   it('checks each person against someone else\'s records when test ids are given', () => {
@@ -54,7 +64,8 @@ describe('RLS checks for minors\' data', () => {
   it('only ever reads: no check writes anything', () => {
     for (const check of all({ PRIVATE_PROFILE_USER_ID: 'p', GUARDIAN_LINK_ID: 'g', FOREIGN_TEAM_ID: 't', FOREIGN_PAYMENT_ID: 'pay', UNPUBLISHED_FIXTURE_TOURNAMENT_ID: 'f', FOREIGN_ORGANIZATION_ID: 'o' })) {
       expect(check.method ?? 'GET').toMatch(/^(GET|POST)$/)
-      if (check.method === 'POST') expect(check.path).toMatch(/^\/rpc\/public_/)
+      // Only functions that read: the public readers and the athlete's own private fields.
+      if (check.method === 'POST') expect(check.path).toMatch(/^\/rpc\/(public_|my_athlete_private$)/)
     }
     const labels = all({ PRIVATE_PROFILE_USER_ID: 'p', GUARDIAN_LINK_ID: 'g' }).map(check => check.label)
     expect(new Set(labels).size).toBe(labels.length)

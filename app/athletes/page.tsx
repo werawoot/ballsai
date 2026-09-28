@@ -13,15 +13,6 @@ import { fetchPublicAthletesPage, type PublicAthlete as AthleteProfile, type Pub
 import { PROVINCE_NAMES_EN } from '@/lib/thai-provinces'
 type DirectoryAthlete = AthleteProfile & { sampleRank?: (typeof samplePlayerRanks)[number] }
 
-function getAge(birthDate?: string | null) {
-  if (!birthDate) return null
-  const birth = new Date(`${birthDate}T00:00:00`)
-  const now = new Date()
-  let age = now.getFullYear() - birth.getFullYear()
-  if (now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) age -= 1
-  return age
-}
-
 function matchesAge(age: number | null, group: string) {
   if (!group) return true
   if (age === null) return false
@@ -65,7 +56,7 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
   const profiles: DirectoryAthlete[] = realProfiles.length > 0 ? realProfiles : showDemoData ? samplePlayerRanks.map(player => ({
     user_id: player.id,
     display_name: player.player_name,
-    birth_date: null,
+    age: null,
     position: player.position,
     province: player.province,
     current_team: player.team,
@@ -74,7 +65,7 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
     sampleRank: player,
   })) : []
   // Real rows are already filtered by age in the database; this only narrows demo data.
-  const visibleProfiles = realProfiles.length > 0 ? profiles : profiles.filter(profile => matchesAge(getAge(profile.birth_date), ageGroup))
+  const visibleProfiles = realProfiles.length > 0 ? profiles : profiles.filter(profile => matchesAge(profile.age ?? null, ageGroup))
   // All 77 provinces, not only those on this page: a province whose athletes sit on a
   // later page must still be selectable.
   const provinces = Object.keys(PROVINCE_NAMES_EN).sort((a, b) => a.localeCompare(b, 'th'))
@@ -98,7 +89,7 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
             const sampleRank = profile.sampleRank
             const rank = rankByAthlete.get(profile.user_id) || sampleRank
             const routeId = rank?.id || profile.user_id
-            const athleteAge = getAge(profile.birth_date)
+            const athleteAge = profile.age ?? null
             const verified = profile.verification_level !== 'self'
             return <Link className="bds-card" key={profile.user_id} href={`/players/${routeId}`} style={{ background: 'white', border: '1px solid #dededb', borderRadius: 7, overflow: 'hidden', textDecoration: 'none', color: '#111', minWidth: 0 }}>
               <div style={{ height: 144, position: 'relative', background: profile.profile_image_url ? `url(${profile.profile_image_url}) center top/cover` : '#ececea', display: 'grid', placeItems: 'center', color: '#CC0001' }}>

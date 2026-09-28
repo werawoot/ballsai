@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { ACTIVE_SPORT } from '@/lib/season'
+import { saveAthleteProfile } from '@/lib/athlete-private'
 
 type ProfileForm = {
   full_name?: string | null
@@ -305,7 +306,10 @@ export default function EditProfileForm({
         team: team.trim(),
         position,
       }),
-      supabase.from('athlete_profiles').upsert({
+      // A plain insert or update: SQL58 lets an athlete write their birth date but not read
+      // it back through an upsert. The guardian consent time is set only by the guardian
+      // link functions (sql/21), so the form does not send it.
+      saveAthleteProfile(supabase, {
         user_id: userId,
         display_name: displayName.trim(),
         birth_date: birthDate,
@@ -317,9 +321,8 @@ export default function EditProfileForm({
         current_team: team.trim() || null,
         bio: bio.trim() || null,
         profile_image_url: nextProfileImageUrl || null,
-        guardian_consent_at: hasGuardianConsent ? athleteProfile?.guardian_consent_at || new Date().toISOString() : null,
         is_public: isPublic && canPublish,
-      }, { onConflict: 'user_id' }),
+      }, Boolean(athleteProfile)),
     ])
     setLoading(false)
 

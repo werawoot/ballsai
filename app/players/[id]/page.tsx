@@ -8,6 +8,7 @@ import { ACTIVE_SPORT } from '@/lib/season'
 import ReportHighlightButton from './ReportHighlightButton'
 import DisputeDataButton from './DisputeDataButton'
 import PageHeader from '@/components/PageHeader'
+import { PUBLIC_PROFILE_COLUMNS, fetchAthleteAge } from '@/lib/athlete-private'
 
 type PlayerRecord = {
   id: string
@@ -28,7 +29,6 @@ type PlayerRecord = {
 type AthleteProfile = {
   user_id: string
   display_name: string
-  birth_date?: string | null
   position?: string | null
   province?: string | null
   height_cm?: number | null
@@ -45,15 +45,6 @@ type AthleteAchievement = { id: number; title: string; event_name?: string | nul
 type SkillAssessment = { speed?: number | null; stamina?: number | null; strength?: number | null; technique?: number | null; vision?: number | null; source_level: string }
 type IdentityProgress = { xp_total: number; current_level: number }
 type AthleteBadge = { badge_key: string; awarded_at: string }
-
-function ageFromBirthDate(value?: string | null) {
-  if (!value) return null
-  const birth = new Date(`${value}T00:00:00`)
-  const today = new Date()
-  let age = today.getFullYear() - birth.getFullYear()
-  if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age -= 1
-  return age
-}
 
 function PositionIcon({ pos, size = 80 }: { pos: string; size?: number }) {
   if (pos === 'GK' || pos === 'DF') return <Shield size={size} color="rgba(255,255,255,0.9)" strokeWidth={1.5} />
@@ -98,16 +89,19 @@ export default async function PlayerPage({ params }: { params: { id: string } })
   let skillAssessment: SkillAssessment | null = null
   let identityProgress: IdentityProgress | null = null
   let athleteBadges: AthleteBadge[] = []
+  let age: number | null = null
 
   if (athleteId) {
-    const [profileResult, videoResult, highlightResult, achievementResult, skillResult, progressResult, badgeResult] = await Promise.all([
-      supabase.from('athlete_profiles').select('*').eq('user_id', athleteId).maybeSingle(),
+    const [profileResult, videoResult, highlightResult, achievementResult, skillResult, progressResult, badgeResult, athleteAge] = await Promise.all([
+      supabase.from('athlete_profiles').select(PUBLIC_PROFILE_COLUMNS).eq('user_id', athleteId).maybeSingle(),
       supabase.from('athlete_videos').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6),
       supabase.from('athlete_highlights').select('id, title, media_type').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6),
       supabase.from('athlete_achievements').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(8),
       supabase.from('athlete_skill_assessments').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', athleteId).maybeSingle(),
       supabase.from('athlete_badges').select('badge_key, awarded_at').eq('athlete_id', athleteId).order('awarded_at', { ascending: false }),
+      // An age, never the birth date: public_athlete_age (sql/58) works it out in the database.
+      fetchAthleteAge(supabase, athleteId),
     ])
     athleteProfile = profileResult.data as AthleteProfile | null
     videos = (videoResult.data ?? []) as AthleteVideo[]
@@ -116,6 +110,7 @@ export default async function PlayerPage({ params }: { params: { id: string } })
     skillAssessment = skillResult.data as SkillAssessment | null
     identityProgress = progressResult.data as IdentityProgress | null
     athleteBadges = (badgeResult.data ?? []) as AthleteBadge[]
+    age = athleteAge
   }
 
   if (!rankedPlayer && !athleteProfile) redirect('/athletes')
@@ -140,7 +135,6 @@ export default async function PlayerPage({ params }: { params: { id: string } })
   const team = athleteProfile?.current_team || typedPlayer.team
   const province = athleteProfile?.province || typedPlayer.province
   const position = athleteProfile?.position || typedPlayer.position
-  const age = ageFromBirthDate(athleteProfile?.birth_date)
   const verificationLevel = athleteProfile?.verification_level || 'self'
   const isVerified = verificationLevel !== 'self'
   const cardBg = typedPlayer.pts >= 2000

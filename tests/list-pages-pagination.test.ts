@@ -10,7 +10,7 @@ import en from '@/messages/en.json'
 const table = vi.hoisted(() => ({ rows: [] as Record<string, unknown>[] }))
 function fakeClient() {
   const builder = {
-    select: () => builder, eq: () => builder, gt: () => builder, lte: () => builder, ilike: () => builder, in: () => builder, order: () => builder,
+    select: () => builder, eq: () => builder, gt: () => builder, lte: () => builder, lt: () => builder, gte: () => builder, ilike: () => builder, in: () => builder, order: () => builder,
     range: async (from: number, to: number) => ({ data: table.rows.slice(from, to + 1), error: null }),
     limit: async () => ({ data: [], error: null }),
   }
@@ -82,7 +82,7 @@ describe('/tournaments, one page at a time', () => {
   })
 })
 
-const athlete = (index: number) => ({ user_id: `u${index}`, display_name: `Athlete ${index}`, birth_date: null, position: 'MF', province: 'เชียงใหม่', current_team: null, profile_image_url: null, verification_level: 'self' })
+const athlete = (index: number) => ({ user_id: `u${index}`, display_name: `Athlete ${index}`, age: null, position: 'MF', province: 'เชียงใหม่', current_team: null, profile_image_url: null, verification_level: 'self' })
 
 describe('/athletes, one page at a time', () => {
   it('shows athlete 101, which limit(100) used to hide, on the last page', async () => {

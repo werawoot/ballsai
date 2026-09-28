@@ -10,6 +10,7 @@ import { ACTIVE_SPORT } from '@/lib/season'
 import { PROFILE_MENU } from '@/lib/site-nav'
 import DeleteMyDataSection from './DeleteMyDataSection'
 import PageHeader from '@/components/PageHeader'
+import { PUBLIC_PROFILE_COLUMNS, fetchMyAthletePrivate } from '@/lib/athlete-private'
 
 // The destinations that left the bottom bar live here, one tap from the Profile tab.
 const PROFILE_MENU_ICONS: Record<(typeof PROFILE_MENU)[number]['href'], LucideIcon> = {
@@ -115,7 +116,7 @@ export default async function ProfilePage() {
 
   const [{ data: profile }, { data: athleteProfile }, { data: athleteVideos }, { data: achievements }, { data: playerRank }, { data: memberships }, { data: identityProgress }, { data: highlights }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
-    supabase.from('athlete_profiles').select('*').eq('user_id', user.id).maybeSingle(),
+    supabase.from('athlete_profiles').select(PUBLIC_PROFILE_COLUMNS).eq('user_id', user.id).maybeSingle(),
     supabase.from('athlete_videos').select('*').eq('athlete_id', user.id).order('created_at', { ascending: false }),
     supabase.from('athlete_achievements').select('*').eq('athlete_id', user.id).order('created_at', { ascending: false }),
     supabase.from('player_ranks').select('*').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).maybeSingle(),
@@ -125,7 +126,13 @@ export default async function ProfilePage() {
   ])
 
   const typedProfile = (profile ?? null) as ProfileRecord | null
-  const typedAthleteProfile = (athleteProfile ?? null) as AthleteProfileRecord | null
+  // The birth date and consent time come only through my_athlete_private (sql/58), which
+  // answers for the signed-in athlete alone.
+  const athletePrivate = athleteProfile ? await fetchMyAthletePrivate(supabase, user.id).catch(error => {
+    console.error(JSON.stringify({ level: 'error', event: 'athlete_private_read_failed', code: error?.code ?? null }))
+    return { birth_date: null, guardian_consent_at: null }
+  }) : null
+  const typedAthleteProfile = (athleteProfile ? { ...athleteProfile, ...athletePrivate } : null) as AthleteProfileRecord | null
   const typedVideos = (athleteVideos ?? []) as AthleteVideoRecord[]
   const typedAchievements = (achievements ?? []) as AthleteAchievementRecord[]
   const typedPlayerRank = (playerRank ?? null) as PlayerRankRecord | null
