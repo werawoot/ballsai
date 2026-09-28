@@ -291,7 +291,7 @@ describe('one bar, rendered in one place', () => {
   it('draws the relocated destinations on the profile page', () => {
     const profile = read('app/profile/page.tsx')
     expect(profile).toContain('PROFILE_MENU.map(')
-    expect(profile).toContain('PROFILE_MENU_ICONS[item.href]')
+    expect(profile).toContain('MENU_KEYS[item.href]')
   })
 
   it.each(DISCOVER_TABS.map(tab => [tab.href]))('offers the discover switch on %s, lit correctly', href => {

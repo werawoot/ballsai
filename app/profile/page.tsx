@@ -1,337 +1,278 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { Building2, ChevronRight, Crown, Handshake, Route, Sparkles, MapPin, Zap, Shield, Star, UsersRound, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
-import EditProfileForm from './EditProfileForm'
+import { getTranslations } from 'next-intl/server'
+import {
+  BadgeCheck, Building2, Camera, Check, ChevronRight, Crown, Eye, EyeOff, Handshake, LayoutDashboard, Lock, LogOut,
+  MapPin, PencilLine, Route, Shield, ShieldCheck, Star, UsersRound, Zap, type LucideIcon,
+} from 'lucide-react'
 import PublicProfileShare from './PublicProfileShare'
-import { calculateLevel, identityTitle, levelProgress } from '@/lib/digital-identity'
-import { ACTIVE_SPORT } from '@/lib/season'
-import { PROFILE_MENU } from '@/lib/site-nav'
 import DeleteMyDataSection from './DeleteMyDataSection'
 import PageHeader from '@/components/PageHeader'
-import { PUBLIC_PROFILE_COLUMNS, fetchMyAthletePrivate } from '@/lib/athlete-private'
+import { calculateLevel, identityTierKey, levelProgress } from '@/lib/digital-identity'
+import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
+import { PROFILE_MENU } from '@/lib/site-nav'
+import { PUBLIC_PROFILE_COLUMNS, fetchMyAthletePrivate, thaiDate } from '@/lib/athlete-private'
+import { profileReadiness, type ReadinessItem } from '@/lib/profile-readiness'
+import type messagesTh from '@/messages/th.json'
+import './profile.css'
 
-// The destinations that left the bottom bar live here, one tap from the Profile tab.
-const PROFILE_MENU_ICONS: Record<(typeof PROFILE_MENU)[number]['href'], LucideIcon> = {
-  '/venues': Building2,
-  '/sponsorships': Handshake,
-  '/team-members': UsersRound,
-  '/career': Route,
-}
+// /profile is the athlete's own space: who they are, what is left before their profile
+// can go public, their card, their teams, and the way to everything else. Editing lives
+// on /profile/edit, so this page reads at a glance.
 
-type ProfileRecord = {
-  full_name?: string | null
-  province?: string | null
-  team?: string | null
-  position?: string | null
-  phone?: string | null
-}
-
-type AthleteProfileRecord = {
-  user_id: string
+type Profile = { full_name?: string | null; role?: string | null; onboarding_persona?: string | null }
+type AthleteProfile = {
   display_name: string
-  birth_date?: string | null
-  sport: string
   position?: string | null
   province?: string | null
-  height_cm?: number | null
-  weight_kg?: number | null
   current_team?: string | null
-  bio?: string | null
   profile_image_url?: string | null
-  guardian_consent_at?: string | null
   is_public: boolean
   verification_level: 'self' | 'coach_verified' | 'performance_verified'
 }
-
-type AthleteVideoRecord = {
-  id: number
-  title: string
-  video_url: string
-  video_type: 'highlight' | 'match' | 'training'
-}
-
-type AthleteAchievementRecord = {
-  id: number
-  title: string
-  event_name?: string | null
-  achievement_year?: number | null
-  proof_url?: string | null
-  verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
-}
-type AthleteHighlightRecord = { id: number; title: string; media_path: string; media_type: 'image' | 'video' }
-
-type PlayerRankRecord = {
-  id: string
-  player_name: string
-  position: string
-  ovr: number
-  pts: number
-  pac: number
-  sho: number
-  pas: number
-  dri: number
-  def: number
-}
-
-type MembershipRecord = {
+type PlayerRank = { id: string; player_name: string; position: string; ovr: number; pts: number }
+type Membership = {
   status: 'pending' | 'accepted' | 'declined' | 'removed'
-  teams: {
-    id: string
-    name: string
-    status: 'draft' | 'pending' | 'confirmed' | 'rejected'
-    tournaments: { name: string | null; location: string | null }[] | null
-  } | null
+  teams: { id: string; name: string; status: string; tournaments: { name: string | null; location: string | null }[] | { name: string | null; location: string | null } | null } | null
 }
-type IdentityProgress = { xp_total: number; current_level: number }
+type ShortcutKey = keyof (typeof messagesTh)['profileHome']['shortcuts']['items']
+type TeamStatus = keyof (typeof messagesTh)['profileHome']['teams']['status']
+type Shortcut = { key: ShortcutKey; href: string; icon: LucideIcon }
 
-function PositionIcon({ pos }: { pos: string }) {
-  if (pos === 'GK' || pos === 'DF') return <Shield size={56} color="rgba(255,255,255,0.9)" strokeWidth={1.5} />
-  if (pos === 'MF') return <Zap size={56} color="rgba(255,255,255,0.9)" strokeWidth={1.5} />
-  return <Star size={56} color="rgba(255,255,255,0.9)" strokeWidth={1.5} />
+const MENU_KEYS: Record<(typeof PROFILE_MENU)[number]['href'], { key: ShortcutKey; icon: LucideIcon }> = {
+  '/venues': { key: 'venues', icon: Building2 },
+  '/sponsorships': { key: 'sponsorships', icon: Handshake },
+  '/team-members': { key: 'teamMembers', icon: UsersRound },
+  '/career': { key: 'career', icon: Route },
+}
+
+function PositionMark({ position, size }: { position: string; size: number }) {
+  if (position === 'GK' || position === 'DF') return <Shield size={size} strokeWidth={1.5} />
+  if (position === 'MF') return <Zap size={size} strokeWidth={1.5} />
+  return <Star size={size} strokeWidth={1.5} />
+}
+
+const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map(part => [...part][0] ?? '').join('').toUpperCase() || '?'
+const count = async (query: PromiseLike<{ count: number | null; error: unknown }>) => {
+  const { count: value, error } = await query
+  return error ? 0 : value ?? 0
 }
 
 export default async function ProfilePage() {
   const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-        },
-      },
-    }
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    cookies: {
+      getAll: () => cookieStore.getAll(),
+      setAll: cookiesToSet => cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)),
+    },
+  })
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: athleteProfile }, { data: athleteVideos }, { data: achievements }, { data: playerRank }, { data: memberships }, { data: identityProgress }, { data: highlights }] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', user.id).single(),
+  const t = await getTranslations('profileHome')
+  const [{ data: profileRow }, { data: athleteRow }, { data: rankRow }, { data: membershipRows }, { data: progressRow }, highlightCount, videoCount, pendingGuardian] = await Promise.all([
+    supabase.from('profiles').select('full_name, role, onboarding_persona').eq('id', user.id).maybeSingle(),
     supabase.from('athlete_profiles').select(PUBLIC_PROFILE_COLUMNS).eq('user_id', user.id).maybeSingle(),
-    supabase.from('athlete_videos').select('*').eq('athlete_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('athlete_achievements').select('*').eq('athlete_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('player_ranks').select('*').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).maybeSingle(),
+    supabase.from('player_ranks').select('id, player_name, position, ovr, pts').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).maybeSingle(),
     supabase.from('team_members').select('status, teams(id, name, status, tournaments(name, location))').eq('athlete_id', user.id).order('created_at', { ascending: false }).limit(5),
     supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', user.id).maybeSingle(),
-    supabase.from('athlete_highlights').select('id, title, media_path, media_type, moderation_status').eq('athlete_id', user.id).order('created_at', { ascending: false }),
+    count(supabase.from('athlete_highlights').select('id', { count: 'exact', head: true }).eq('athlete_id', user.id)),
+    count(supabase.from('athlete_videos').select('id', { count: 'exact', head: true }).eq('athlete_id', user.id)),
+    count(supabase.from('guardian_links').select('id', { count: 'exact', head: true }).eq('athlete_id', user.id).eq('status', 'pending')),
   ])
-
-  const typedProfile = (profile ?? null) as ProfileRecord | null
-  // The birth date and consent time come only through my_athlete_private (sql/58), which
-  // answers for the signed-in athlete alone.
-  const athletePrivate = athleteProfile ? await fetchMyAthletePrivate(supabase, user.id).catch(error => {
+  const profile = profileRow as Profile | null
+  const athlete = athleteRow as AthleteProfile | null
+  const rank = rankRow as PlayerRank | null
+  const memberships = (membershipRows ?? []) as unknown as Membership[]
+  // The birth date and consent time come only through my_athlete_private (sql/58).
+  const athletePrivate = athlete ? await fetchMyAthletePrivate(supabase, user.id).catch(error => {
     console.error(JSON.stringify({ level: 'error', event: 'athlete_private_read_failed', code: error?.code ?? null }))
     return { birth_date: null, guardian_consent_at: null }
   }) : null
-  const typedAthleteProfile = (athleteProfile ? { ...athleteProfile, ...athletePrivate } : null) as AthleteProfileRecord | null
-  const typedVideos = (athleteVideos ?? []) as AthleteVideoRecord[]
-  const typedAchievements = (achievements ?? []) as AthleteAchievementRecord[]
-  const typedPlayerRank = (playerRank ?? null) as PlayerRankRecord | null
-  const typedMemberships = (memberships ?? []) as unknown as MembershipRecord[]
-  const typedIdentityProgress = identityProgress as IdentityProgress | null
-  const typedHighlights = (highlights ?? []) as AthleteHighlightRecord[]
-  const fallbackXp = (typedPlayerRank?.pts ?? 0) >= 1500 ? 900 : typedPlayerRank ? 100 : 0
-  const xp = typedIdentityProgress?.xp_total ?? fallbackXp
-  const level = typedIdentityProgress?.current_level ?? calculateLevel(xp)
+
+  const progress = progressRow as { xp_total: number; current_level: number } | null
+  const xp = progress?.xp_total ?? 0
+  const level = progress?.current_level ?? calculateLevel(xp)
   const levelInfo = levelProgress(xp, level)
-  const cardBg = 'linear-gradient(160deg,#3d2a00 0%,#c8860a 18%,#f5c518 30%,#c8860a 42%,#7a4f00 55%,#c8860a 70%,#f5c518 82%,#3d2a00 100%)'
+  const readiness = athlete ? profileReadiness({
+    displayName: athlete.display_name,
+    birthDate: athletePrivate?.birth_date,
+    photo: athlete.profile_image_url,
+    position: athlete.position,
+    team: athlete.current_team,
+    guardianConsentAt: athletePrivate?.guardian_consent_at,
+    mediaCount: highlightCount + videoCount,
+    isPublic: athlete.is_public,
+    pendingGuardianRequests: pendingGuardian,
+  }, thaiDate(new Date())) : null
+
+  const name = athlete?.display_name?.trim() || profile?.full_name?.trim() || t('noName')
+  const publicPath = `/players/${rank?.id || user.id}`
+  const persona = profile?.onboarding_persona
+  const roleShortcuts: Shortcut[] = [
+    ...(profile?.role === 'admin' ? [{ key: 'admin' as const, href: '/admin', icon: ShieldCheck }] : []),
+    ...(profile?.role === 'organizer' || profile?.role === 'admin' || persona === 'coach_organizer' ? [{ key: 'dashboard' as const, href: '/dashboard', icon: LayoutDashboard }] : []),
+    ...(persona === 'venue_owner' ? [{ key: 'venue' as const, href: '/venue', icon: Building2 }] : []),
+    ...(persona === 'guardian' ? [{ key: 'guardian' as const, href: '/guardian', icon: UsersRound }] : []),
+  ]
+  const shortcuts: Shortcut[] = [...roleShortcuts, ...PROFILE_MENU.map(item => ({ ...MENU_KEYS[item.href], href: item.href }))]
+
+  // Done and next say so; any other open step is just a link; a locked one explains itself in place of its hint.
+  const stepTag = (item: ReadinessItem) => item.done ? t('readiness.statusDone') : item.key === readiness?.next?.key ? t('readiness.next') : item.blocked ? '' : <span className="pf-sr">{t('readiness.statusTodo')}</span>
 
   return (
-    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden' }}>
-      <PageHeader />
-
-      <div className="bds-hero" style={{ background: '#CC0001', padding: '20px 16px 36px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg,transparent,transparent 20px,rgba(255,255,255,0.03) 20px,rgba(255,255,255,0.03) 21px)' }} />
-        <div style={{ position: 'relative' }}>
-          <h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(28px,8vw,48px)', fontWeight: 700, color: 'white', lineHeight: 0.9, textTransform: 'uppercase' }}>
-            MY<br />
-            <span style={{ WebkitTextStroke: '2px rgba(255,255,255,0.4)', color: 'transparent' }}>PROFILE</span>
-          </h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10 }}>{user.email}</p>
-          <form action="/auth/signout" method="POST" style={{ marginTop: 12 }}>
-            <button type="submit" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 20, padding: '6px 16px', fontSize: 12, fontWeight: 700, color: 'white', cursor: 'pointer', fontFamily: 'var(--font-oswald)', letterSpacing: 1 }}>
-              ออกจากระบบ
-            </button>
-          </form>
-        </div>
-      </div>
-
-      <svg className="bds-wave" viewBox="0 0 375 28" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 28, marginTop: -1 }}>
-        <path d="M0,0 C100,28 275,0 375,20 L375,0 Z" fill="#CC0001" />
-      </svg>
-
-      <div className="bds-content" style={{ padding: '16px' }}>
-        <div style={{ background: 'linear-gradient(125deg,#101827,#29456f 68%,#0b5234)', color: 'white', padding: 18, marginBottom: 20, position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', width: 170, height: 170, borderRadius: '50%', border: '1px solid rgba(244,185,66,.32)', right: -50, top: -80 }} />
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 15 }}><div style={{ borderRight: '1px solid rgba(255,255,255,.22)', paddingRight: 15, display: 'grid', textAlign: 'center' }}><span style={{ fontFamily: 'var(--font-barlow)', fontSize: 9, letterSpacing: 1.2, color: '#f4c861', fontWeight: 800 }}>LEVEL</span><b style={{ fontFamily: 'var(--font-oswald)', fontSize: 43, lineHeight: .85 }}>{level.toString().padStart(2, '0')}</b></div><div style={{ flex: 1, minWidth: 0 }}><span style={{ fontFamily: 'var(--font-barlow)', fontSize: 9, letterSpacing: 1.2, color: '#f4c861', fontWeight: 800 }}>{identityTitle(level).toUpperCase()}</span><b style={{ display: 'block', fontSize: 16, marginTop: 4 }}>เส้นทางนักบอลของฉัน</b><div style={{ height: 5, background: 'rgba(255,255,255,.15)', marginTop: 11 }}><i style={{ display: 'block', height: '100%', width: `${levelInfo.percentage}%`, background: 'linear-gradient(90deg,#d71920,#f4c861)' }} /></div><small style={{ color: 'rgba(255,255,255,.65)', fontSize: 10, marginTop: 5, display: 'block' }}>{xp.toLocaleString()} XP · อีก {levelInfo.remaining.toLocaleString()} XP สู่ Level {level + 1}</small></div></div>
-          <div style={{ position: 'relative', display: 'flex', gap: 9, marginTop: 15 }}><Link href="/career" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#d71920', color: 'white', fontSize: 11, fontWeight: 800, textDecoration: 'none', padding: '9px 10px' }}><Sparkles size={14} /> ATHLETE PASSPORT</Link><Link href="/ranking?view=trending" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid rgba(255,255,255,.35)', color: 'white', fontSize: 11, fontWeight: 800, textDecoration: 'none', padding: '8px 10px' }}><Crown size={14} /> กำลังมาแรง</Link></div>
-        </div>
-        <PublicProfileShare profilePath={`/players/${typedPlayerRank?.id || user.id}`} isPublic={typedAthleteProfile?.is_public ?? false} />
-        {typedPlayerRank ? (
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-              <div style={{ width: 4, height: 20, background: '#CC0001', borderRadius: 2 }} />
-              การ์ดของฉัน
+    <main className="pf">
+      <PageHeader eyebrow={t('eyebrow')} />
+      <div className="pf-shell">
+        <aside className="pf-aside">
+          <section className="pf-hero" aria-labelledby="pf-name">
+            <div className="pf-id">
+              <div className="pf-avatar" style={athlete?.profile_image_url ? { backgroundImage: `url(${athlete.profile_image_url})` } : undefined} aria-hidden="true">
+                {!athlete?.profile_image_url && initials(name)}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <h1 id="pf-name" className="pf-name">{name}</h1>
+                {athlete && <div className="pf-sub">{[athlete.current_team, athlete.province].filter(Boolean).join(' · ') || ' '}</div>}
+              </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <div style={{ width: 210, aspectRatio: '2/3', borderRadius: 16, position: 'relative', overflow: 'hidden', background: cardBg, boxShadow: '0 0 0 2px rgba(245,197,24,0.5), 0 16px 40px rgba(0,0,0,0.25)' }}>
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg,rgba(255,255,255,0.4) 0%,rgba(255,255,255,0) 40%,rgba(255,255,255,0.12) 70%,rgba(255,255,255,0) 100%)' }} />
-                <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }}>
-                  <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 34, fontWeight: 800, color: 'rgba(0,0,0,0.8)', lineHeight: 1 }}>{typedPlayerRank.ovr}</div>
-                  <div style={{ fontFamily: 'var(--font-barlow)', fontSize: 15, fontWeight: 700, color: 'rgba(0,0,0,0.7)' }}>{typedPlayerRank.position}</div>
-                </div>
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '60%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-                  <PositionIcon pos={typedPlayerRank.position} />
-                </div>
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px 12px 14px', background: 'linear-gradient(180deg,transparent 0%,rgba(0,0,0,0.72) 30%,rgba(0,0,0,0.92) 100%)', zIndex: 2 }}>
-                  <div style={{ fontFamily: 'var(--font-barlow)', fontSize: 16, fontWeight: 800, color: 'white', textAlign: 'center', textTransform: 'uppercase', lineHeight: 1.1 }}>{typedPlayerRank.player_name}</div>
-                  <div style={{ fontFamily: 'var(--font-barlow)', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.75)', textAlign: 'center', marginTop: 2 }}>{typedProfile?.team || typedProfile?.province || 'BALLDOENSAI.COM PLAYER'}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 4, marginTop: 12 }}>
-                    {[
-                      { key: 'PAC', val: typedPlayerRank.pac },
-                      { key: 'SHO', val: typedPlayerRank.sho },
-                      { key: 'PAS', val: typedPlayerRank.pas },
-                      { key: 'DRI', val: typedPlayerRank.dri },
-                      { key: 'DEF', val: typedPlayerRank.def },
-                    ].map((stat) => (
-                      <div key={stat.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                        <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1 }}>{stat.val}</span>
-                        <span style={{ fontFamily: 'var(--font-barlow)', fontSize: 8, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>{stat.key}</span>
-                      </div>
-                    ))}
-                  </div>
+            {athlete && <div className="pf-chips">
+              {athlete.position && <span className="pf-chip is-gold">{athlete.position}</span>}
+              {readiness?.age != null && <span className="pf-chip">{t('age', { age: readiness.age })}</span>}
+              <span className={`pf-chip${athlete.verification_level !== 'self' ? ' is-green' : ''}`}>
+                {athlete.verification_level !== 'self' && <BadgeCheck size={13} aria-hidden="true" />}{t(`verification.${athlete.verification_level}`)}
+              </span>
+              <span className="pf-chip">{athlete.is_public ? <Eye size={13} aria-hidden="true" /> : <EyeOff size={13} aria-hidden="true" />}{t(athlete.is_public ? 'visibility.public' : 'visibility.private')}</span>
+            </div>}
+            {athlete && <div className="pf-level">
+              <div className="pf-level-num"><small>LEVEL</small><b>{String(level).padStart(2, '0')}</b></div>
+              <div className="pf-level-body">
+                <strong>{t(`tiers.${identityTierKey(level)}`)}</strong>
+                <div className="pf-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(levelInfo.percentage)} aria-label={t('level', { level })}><i style={{ width: `${levelInfo.percentage}%` }} /></div>
+                <small>{t('xpToNext', { xp: xp.toLocaleString(), remaining: levelInfo.remaining.toLocaleString(), next: level + 1 })}</small>
+              </div>
+            </div>}
+            <div className="pf-actions">
+              {athlete
+                ? <Link href="/profile/edit" className="pf-btn pf-btn-primary"><PencilLine size={17} aria-hidden="true" />{t('actions.edit')}</Link>
+                : <Link href="/profile/edit" className="pf-btn pf-btn-primary"><PencilLine size={17} aria-hidden="true" />{t('noAthlete.cta')}</Link>}
+              {athlete?.is_public
+                ? <Link href={publicPath} className="pf-btn pf-btn-ghost"><Eye size={17} aria-hidden="true" />{t('actions.viewPublic')}</Link>
+                : athlete && <Link href="/career" className="pf-btn pf-btn-ghost"><Route size={17} aria-hidden="true" />{t('actions.passport')}</Link>}
+            </div>
+          </section>
+        </aside>
+
+        <div className="pf-main">
+          {!athlete && <section className="pf-card">
+            <div className="pf-card-head"><div><h2 className="pf-card-title">{t('noAthlete.title')}</h2><p className="pf-card-desc">{t('noAthlete.body')}</p></div></div>
+            <Link href="/profile/edit" className="pf-btn pf-btn-primary"><Camera size={17} aria-hidden="true" />{t('noAthlete.cta')}</Link>
+          </section>}
+
+          {readiness && (readiness.next || !athlete?.is_public ? <section className="pf-card" aria-labelledby="pf-readiness">
+            <div className="pf-card-head">
+              <h2 id="pf-readiness" className="pf-card-title">{t('readiness.title')}</h2>
+              <span className="pf-card-meta">{t('readiness.progress', { done: readiness.done, total: readiness.total })}</span>
+            </div>
+            <div className="pf-segments" aria-hidden="true">{readiness.items.map(item => <i key={item.key} className={item.done ? 'is-done' : undefined} />)}</div>
+            <ol className="pf-steps">
+              {readiness.items.map(item => {
+                const state = item.done ? ' is-done' : item.blocked ? ' is-blocked' : item.key === readiness.next?.key ? ' is-next' : ''
+                const body = <>
+                  <span className="pf-step-icon" aria-hidden="true">{item.done ? <Check size={16} strokeWidth={3} /> : item.blocked ? <Lock size={13} /> : null}</span>
+                  <span>
+                    <span className="pf-step-title">{t(`readiness.items.${item.key}.title`)}</span>
+                    {!item.done && <span className="pf-step-hint">{item.blocked ? t('readiness.blocked') : t(`readiness.items.${item.key}.hint`)}</span>}
+                    {!item.done && item.pending ? <span className="pf-step-pending">{t('readiness.pending', { count: item.pending })}</span> : null}
+                  </span>
+                  <span className="pf-step-tag">{stepTag(item)}{!item.done && !item.blocked && <ChevronRight size={15} aria-hidden="true" style={{ verticalAlign: '-3px' }} />}</span>
+                </>
+                return <li key={item.key} className={`pf-step${state}`}>{item.done || item.blocked ? <div>{body}</div> : <Link href={item.href}>{body}</Link>}</li>
+              })}
+            </ol>
+          </section> : <section className="pf-card" aria-labelledby="pf-readiness">
+            <div className="pf-card-head"><h2 id="pf-readiness" className="pf-card-title">{t('readiness.titleDone')}</h2></div>
+            <p className="pf-ready"><BadgeCheck size={20} aria-hidden="true" />{t('readiness.doneNote')}</p>
+          </section>)}
+
+          {athlete?.is_public && <PublicProfileShare profilePath={publicPath} isPublic />}
+
+          {athlete && <section className="pf-card" aria-labelledby="pf-card">
+            <div className="pf-card-head"><h2 id="pf-card" className="pf-card-title">{t('card.title')}</h2></div>
+            <div className="pf-player">
+              {rank ? <div className="pf-fut">
+                <div className="pf-fut-top"><b>{rank.ovr}</b><span>{rank.position}</span></div>
+                <div className="pf-fut-mark"><PositionMark position={rank.position} size={46} /></div>
+                <div className="pf-fut-name">{rank.player_name}</div>
+              </div> : <div className="pf-fut is-starter">
+                <div className="pf-fut-top"><b>—</b><span>{athlete.position || 'FW'}</span></div>
+                <div className="pf-fut-mark"><PositionMark position={athlete.position || 'FW'} size={46} /></div>
+                <div className="pf-fut-name">{name}</div>
+              </div>}
+              <div style={{ minWidth: 0 }}>
+                {rank
+                  ? <><div className="pf-power">{rank.pts.toLocaleString()}<small>{t('card.power')}</small></div><p className="pf-note">{t('card.source')}</p></>
+                  : <><div className="pf-power" style={{ fontSize: 22 }}>{t('card.starterTitle')}</div><p className="pf-note">{t('card.starterBody')}</p></>}
+                <div className="pf-row">
+                  <Link href="/card" className="pf-btn pf-btn-line pf-btn-sm">{t('card.build')}</Link>
+                  {!rank && <Link href="/tournaments" className="pf-btn pf-btn-line pf-btn-sm"><Crown size={15} aria-hidden="true" />{t('card.findTournament')}</Link>}
                 </div>
               </div>
             </div>
-            <div style={{ textAlign: 'center', marginTop: 10, fontFamily: 'var(--font-oswald)', fontSize: 16, fontWeight: 700, color: '#CC0001' }}>
-              {typedPlayerRank.pts.toLocaleString()} Power Rating
-            </div>
-            <div style={{ textAlign: 'center', marginTop: 12 }}>
-              <Link href="/card" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#111827', color: 'white', textDecoration: 'none', padding: '10px 14px', fontFamily: 'var(--font-oswald)', fontSize: 13, fontWeight: 700, letterSpacing: .4 }}>
-                สร้างและแชร์ PLAYER CARD
-              </Link>
-              <Link href="/career" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'white', color: '#111827', border: '1px solid #111827', textDecoration: 'none', padding: '9px 13px', marginLeft: 8, fontFamily: 'var(--font-oswald)', fontSize: 13, fontWeight: 700, letterSpacing: .4 }}>
-                ATHLETE PASSPORT
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: '24px', textAlign: 'center', marginBottom: 20 }}>
-            <Star size={40} color="#ddd" strokeWidth={1} style={{ marginBottom: 10 }} />
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#aaa' }}>ยังไม่มีการ์ดนักกีฬา</p>
-            <p style={{ fontSize: 12, color: '#ccc', marginTop: 4 }}>เข้าร่วมแข่งขันเพื่อรับ Rating</p>
-            <Link href="/card" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#CC0001', color: 'white', textDecoration: 'none', padding: '10px 14px', marginTop: 14, fontFamily: 'var(--font-oswald)', fontSize: 13, fontWeight: 700, letterSpacing: .4 }}>
-              สร้าง STARTER CARD ของฉัน
-            </Link>
-            <div><Link href="/career" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: '#555', textDecoration: 'underline', paddingTop: 13, fontSize: 12, fontWeight: 700 }}>ดู Athlete Passport ของฉัน</Link></div>
-          </div>
-        )}
+          </section>}
 
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <div style={{ width: 4, height: 20, background: '#CC0001', borderRadius: 2 }} />
-            ข้อมูลส่วนตัว
-          </div>
-          <EditProfileForm
-            profile={typedProfile}
-            athleteProfile={typedAthleteProfile}
-            videos={typedVideos}
-            achievements={typedAchievements}
-            highlights={typedHighlights}
-            userId={user.id}
-          />
-        </div>
-
-        <section style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <div style={{ width: 4, height: 20, background: '#CC0001', borderRadius: 2 }} />
-            เส้นทางสู่การแข่งขัน
-          </div>
-          <div style={{ background: '#101827', color: 'white', borderRadius: 14, padding: 16, overflow: 'hidden', position: 'relative' }}>
-            <div style={{ position: 'absolute', width: 150, height: 150, right: -45, bottom: -85, borderRadius: '50%', border: '1px solid rgba(255,255,255,.16)' }} />
-            <p style={{ position: 'relative', margin: 0, fontSize: 13, lineHeight: 1.55, color: 'rgba(255,255,255,.75)' }}>ดูรายการที่อยากลงแข่ง แล้วให้โค้ชหรือผู้จัดสร้างทีมและเชิญบัญชีของคุณ เมื่อรับคำเชิญแล้ว คุณจะมีสิทธิ์ลงผลแข่งในทีมนั้น</p>
-            <div style={{ position: 'relative', display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 13 }}>
-              <Link href="/tournaments" style={{ background: '#CC0001', color: 'white', textDecoration: 'none', padding: '9px 11px', fontSize: 12, fontWeight: 800 }}>ค้นหารายการแข่ง</Link>
-              <Link href="/team-members" style={{ border: '1px solid rgba(255,255,255,.35)', color: 'white', textDecoration: 'none', padding: '8px 10px', fontSize: 12, fontWeight: 800 }}>ดูคำเชิญของฉัน</Link>
-              <Link href="/career" style={{ border: '1px solid rgba(255,255,255,.35)', color: 'white', textDecoration: 'none', padding: '8px 10px', fontSize: 12, fontWeight: 800 }}>ดู Career</Link>
+          {memberships.length > 0 && <section className="pf-card" aria-labelledby="pf-teams">
+            <div className="pf-card-head">
+              <h2 id="pf-teams" className="pf-card-title">{t('teams.title')}</h2>
+              <Link href="/team-members" className="pf-card-meta" style={{ textDecoration: 'none' }}>{t('teams.viewAll')}</Link>
             </div>
-          </div>
-        </section>
-
-        <section aria-labelledby="profile-menu-title" style={{ marginBottom: 20 }}>
-          <div id="profile-menu-title" style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <div style={{ width: 4, height: 20, background: '#CC0001', borderRadius: 2 }} />
-            เมนูของฉัน
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
-            {PROFILE_MENU.map(item => {
-              const Icon = PROFILE_MENU_ICONS[item.href]
-              return <Link key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 64, padding: '12px 14px', background: 'white', border: '1.5px solid #e5e5e5', borderRadius: 12, color: '#111827', textDecoration: 'none', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                <span style={{ display: 'grid', placeItems: 'center', flex: 'none', width: 38, height: 38, borderRadius: 10, background: '#101827', color: '#f4b942' }}><Icon size={19} aria-hidden="true" /></span>
-                <span style={{ display: 'grid', gap: 2, minWidth: 0, flex: 1 }}>
-                  <b style={{ fontSize: 14 }}>{item.label}</b>
-                  <span style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.35 }}>{item.hint}</span>
-                </span>
-                <ChevronRight size={17} color="#9ca3af" aria-hidden="true" />
-              </Link>
-            })}
-          </div>
-        </section>
-
-        {typedMemberships.length > 0 && (
-          <div>
-            <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-              <div style={{ width: 4, height: 20, background: '#CC0001', borderRadius: 2 }} />
-              ทีมที่ฉันได้รับเชิญ
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {typedMemberships.map((membership, index) => {
+            <ul className="pf-list">
+              {memberships.map((membership, index) => {
                 const team = membership.teams
-                const tournament = team?.tournaments?.[0]
-                const memberAccepted = membership.status === 'accepted'
-                const teamConfirmed = team?.status === 'confirmed'
-                const label = !memberAccepted ? membership.status === 'pending' ? 'รอตอบรับคำเชิญ' : 'ปฏิเสธ/ถูกนำออก' : teamConfirmed ? '✓ ยืนยันลงแข่งแล้ว' : team?.status === 'pending' ? '⏳ รอผู้จัดตรวจทีม' : 'กำลังจัดทีม'
-                const color = !memberAccepted ? '#854d0e' : teamConfirmed ? '#16a34a' : '#854d0e'
-                const background = !memberAccepted ? '#fef9c3' : teamConfirmed ? '#dcfce7' : '#fef9c3'
-                return <div key={`${team?.id ?? 'membership'}-${index}`} style={{ background: 'white', borderRadius: 12, border: '1.5px solid #e5e5e5', padding: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15, fontWeight: 800, color: '#111', marginBottom: 4 }}><UsersRound size={15} color="#CC0001" /> {team?.name ?? 'ทีมของฉัน'}</div>
-                      <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{tournament?.name ?? 'รายการแข่งขัน'}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#aaa' }}>
-                        <MapPin size={11} /> {tournament?.location ?? '—'}
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 800,
-                        padding: '4px 10px',
-                        borderRadius: 20,
-                        background,
-                        color,
-                      }}
-                    >
-                      {label}
-                    </div>
+                const tournament = Array.isArray(team?.tournaments) ? team?.tournaments[0] : team?.tournaments
+                const accepted = membership.status === 'accepted'
+                const [status, tone]: [TeamStatus, string] = !accepted
+                  ? membership.status === 'pending' ? ['invited', 'is-wait'] : ['declined', 'is-muted']
+                  : team?.status === 'confirmed' ? ['confirmed', 'is-ok'] : team?.status === 'pending' ? ['teamPending', 'is-wait'] : ['forming', 'is-muted']
+                return <li key={`${team?.id ?? 'team'}-${index}`}>
+                  <div className="pf-list-main">
+                    <b>{team?.name ?? t('teams.unnamed')}</b>
+                    <span>{tournament?.name ?? t('teams.tournament')}{tournament?.location ? <> · <MapPin size={11} aria-hidden="true" style={{ verticalAlign: '-1px' }} /> {tournament.location}</> : null}</span>
                   </div>
-                </div>
+                  <span className={`pf-badge ${tone}`}>{t(`teams.status.${status}`)}</span>
+                </li>
+              })}
+            </ul>
+          </section>}
+
+          <section aria-labelledby="pf-shortcuts">
+            <h2 id="pf-shortcuts" className="pf-card-title" style={{ marginBottom: 14 }}>{t('shortcuts.title')}</h2>
+            <div className="pf-links">
+              {shortcuts.map(item => {
+                const Icon = item.icon
+                return <Link key={item.href} href={item.href} className="pf-link">
+                  <span className="pf-link-icon"><Icon size={19} aria-hidden="true" /></span>
+                  <span style={{ minWidth: 0 }}><b>{t(`shortcuts.items.${item.key}.label`)}</b><small>{t(`shortcuts.items.${item.key}.hint`)}</small></span>
+                  <ChevronRight size={17} color="#9aa1ab" aria-hidden="true" />
+                </Link>
               })}
             </div>
-          </div>
-        )}
-        <DeleteMyDataSection />
-      </div>
+          </section>
 
+          <section className="pf-card" aria-labelledby="pf-account">
+            <div className="pf-card-head"><h2 id="pf-account" className="pf-card-title">{t('account.title')}</h2></div>
+            <div className="pf-account">
+              <div style={{ minWidth: 0 }}><small>{t('account.signedInAs')}</small><b>{user.email}</b></div>
+              <form action="/auth/signout" method="POST">
+                <button type="submit" className="pf-btn pf-btn-line pf-btn-sm"><LogOut size={15} aria-hidden="true" />{t('account.signOut')}</button>
+              </form>
+            </div>
+          </section>
+
+          <DeleteMyDataSection />
+        </div>
+      </div>
     </main>
   )
 }

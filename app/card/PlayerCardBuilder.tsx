@@ -284,7 +284,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
           <div><small>{t('position')}</small><div className="card-position-options">{['FW', 'MF', 'DF', 'GK'].map(item => <button type="button" key={item} onClick={() => setPosition(item)} className={position === item ? 'is-selected' : ''}>{item}</button>)}</div></div>
         </div>
         <button type="button" className="card-save-identity" disabled={savingProfile} onClick={saveCardIdentity}>{savingProfile ? <Loader2 size={17} className="card-spinning" /> : <Save size={17} />}{savingProfile ? t('savingShort') : t('save')}</button>
-        {!publicProfilePath && <p className="card-public-hint">{t('publicHintBefore')}<Link href="/profile">{t('publicHintLink')}</Link>{t('publicHintAfter')}</p>}
+        {!publicProfilePath && <p className="card-public-hint">{t('publicHintBefore')}<Link href="/profile/edit#privacy">{t('publicHintLink')}</Link>{t('publicHintAfter')}</p>}
       </div>
       <div className="card-builder-controls">
         <span>{t('design')}</span><div className="card-theme-options">{(['gold', 'red', 'ice'] as Theme[]).map(item => <button key={item} onClick={() => setTheme(item)} className={`card-theme-option is-${item} ${theme === item ? 'is-selected' : ''}`} aria-label={themeLabel[item]}><i /> {themeLabel[item]}</button>)}</div>
