@@ -63,8 +63,10 @@ answer all five:
 5. **Evidence, not expectation.** Show the numbers or test results that prove 1–4.
 
 A change that fails any of the five is reported as "not ready for nationwide use", with
-the reason. It is never reported as done. The gaps already known are listed in
-[`docs/national-readiness.md`](docs/national-readiness.md).
+the reason. It is never reported as done. The gaps already known, and the agreed task
+list (T01–T44) that closes them, are in
+[`docs/national-readiness.md`](docs/national-readiness.md). Pick work from that list in
+phase order and update its status with evidence.
 
 ## AI engineering preflight
 
