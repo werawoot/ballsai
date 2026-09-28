@@ -58,7 +58,10 @@ select step, migration, present, marker from (values
        to_regclass('public.tournament_fixtures') is not null
          and to_regprocedure('public.save_tournament_fixtures_safely(uuid,jsonb)') is not null,
        'table tournament_fixtures + save_tournament_fixtures_safely'),
-  (14, '50 anon EXECUTE off definer functions',
+  (14, '56 fixture results',
+       exists (select 1 from pg_trigger where tgname = 'match_results_link_fixture' and not tgisinternal),
+       'trigger match_results_link_fixture'),
+  (15, '50 anon EXECUTE off definer functions',
        not exists (select 1 from pg_default_acl d join pg_namespace n on n.oid = d.defaclnamespace
                    where pg_get_userbyid(d.defaclrole) = 'postgres' and n.nspname = 'public'
                      and d.defaclobjtype = 'f' and d.defaclacl::text like '%anon=X%'),

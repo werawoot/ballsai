@@ -24,6 +24,7 @@ describe('the September apply round', () => {
     expect(stepOf('btree_gist')).toBeLessThan(stepOf('46-venue-beta'))
     expect(stepOf('41-venue-booking')).toBeLessThan(stepOf('54-venue-cancel'))
     expect(stepOf('46-venue-beta')).toBeLessThan(stepOf('54-venue-cancel'))
+    expect(stepOf('55-tournament-fixtures')).toBeLessThan(stepOf('56-fixture-results'))
     expect(stepOf('50-anon-definer')).toBe(Math.max(...steps.map(match => Number(match[1]))))
   })
 
@@ -34,6 +35,6 @@ describe('the September apply round', () => {
   it('checks status without writing anything', () => {
     expect(status).toMatch(/\bselect\b/i)
     expect(status).not.toMatch(/\b(insert|update|delete|alter|drop|create|grant|revoke|truncate)\b/i)
-    expect(status.match(/^\s*\((\d+),/gm)).toHaveLength(14)
+    expect(status.match(/^\s*\((\d+),/gm)).toHaveLength(15)
   })
 })

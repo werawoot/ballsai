@@ -472,7 +472,10 @@
     "fixturesTeamsChanged": "รายชื่อทีมเพิ่งเปลี่ยน กรุณาจัดสายอีกครั้ง",
     "fixturesMigrationMissing": "ระบบตารางแข่งยังไม่เปิดใช้ (รอติดตั้งฐานข้อมูล SQL55)",
     "fixturesFailed": "จัดสายไม่สำเร็จ กรุณาลองใหม่",
-    "fixturesRateLimited": "จัดสายบ่อยเกินไป กรุณารอสักครู่"
+    "fixturesRateLimited": "จัดสายบ่อยเกินไป กรุณารอสักครู่",
+    "fixtureResultsMigrationMissing": "ระบบผลแข่งกับตารางแข่งยังไม่เปิดใช้ (รอติดตั้ง SQL56)",
+    "fixtureAlreadyAdvanced": "ผลนัดนี้ส่งทีมเข้ารอบถัดไปแล้ว และรอบถัดไปแข่งไปแล้ว กรุณายกเลิกผลนัดถัดไปก่อน",
+    "fixtureWinnerInvalid": "เลือกผู้ชนะได้เฉพาะนัดน็อกเอาต์ที่เสมอ และต้องเป็นหนึ่งในสองทีมของนัดนั้น"
   },
   "impact": {
     "back": "กลับหน้าแรก",
@@ -586,6 +589,18 @@
     "winnerOf": "ผู้ชนะ รอบ {round} คู่ {match}",
     "groupPlace": "อันดับ {position} กลุ่ม {group}",
     "versus": "พบ",
-    "notFound": "ไม่พบรายการแข่งนี้ หรือคุณไม่ได้เป็นผู้จัด"
+    "notFound": "ไม่พบรายการแข่งนี้ หรือคุณไม่ได้เป็นผู้จัด",
+    "chooseWinner": "เสมอ — เลือกทีมที่ชนะจุดโทษ",
+    "winnerButton": "{team} ชนะ",
+    "wonOnPenalties": "ชนะจุดโทษ",
+    "tableGroup": "ตารางคะแนน กลุ่ม {group}",
+    "tableLeague": "ตารางคะแนน",
+    "colTeam": "ทีม",
+    "colPlayed": "แข่ง",
+    "colWon": "ชนะ",
+    "colDrawn": "เสมอ",
+    "colLost": "แพ้",
+    "colGoalDifference": "ได้เสีย",
+    "colPoints": "คะแนน"
   }
 }
