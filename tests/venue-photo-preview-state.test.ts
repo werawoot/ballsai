@@ -55,27 +55,24 @@ describe('nextPreviewState', () => {
     expect(state).toEqual({ status: 'error', message: 'เฉพาะเจ้าของสนามหรือผู้ดูแลระบบเท่านั้นที่ดูรูปนี้ได้' })
   })
 
-  it('falls back to a readable Thai message when the server sends none', () => {
-    const state = nextPreviewState({ ok: false }, 0)
-
-    expect(state.status).toBe('error')
-    expect(state.status === 'error' && state.message.length).toBeGreaterThan(0)
+  it('leaves the wording to the page when the server sends none', () => {
+    // The page shows venueOwner.photos.previewFailed in the reader's language.
+    expect(nextPreviewState({ ok: false }, 0)).toEqual({ status: 'error' })
   })
 })
 
 describe('previewAltText', () => {
-  it('names the venue and the position of the photo', () => {
-    const alt = previewAltText('สนามบอลลุงหมี', 0)
+  const words = { cover: (name: string) => `Cover photo of ${name}`, numbered: (name: string, number: number) => `${name} venue, photo ${number}` }
 
-    expect(alt).toContain('สนามบอลลุงหมี')
-    expect(alt).toContain('1')
+  it('names the venue and the position of the photo, counting from 1', () => {
+    expect(previewAltText('สนามบอลลุงหมี', 0, false, words)).toBe('สนามบอลลุงหมี venue, photo 1')
   })
 
   it('gives each photo a distinct alt', () => {
-    expect(previewAltText('สนาม A', 0)).not.toBe(previewAltText('สนาม A', 1))
+    expect(previewAltText('สนาม A', 0, false, words)).not.toBe(previewAltText('สนาม A', 1, false, words))
   })
 
   it('says a cover photo is the cover', () => {
-    expect(previewAltText('สนาม A', 0, true)).toContain('ปก')
+    expect(previewAltText('สนาม A', 0, true, words)).toBe('Cover photo of สนาม A')
   })
 })

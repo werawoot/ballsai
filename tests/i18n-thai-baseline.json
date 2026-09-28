@@ -111,9 +111,6 @@
   "app/terms/page.tsx",
   "app/tournaments/[id]/page.tsx",
   "app/venue/VenueOperations.tsx",
-  "app/venue/VenueOwnerClient.tsx",
-  "app/venue/VenuePhotoManager.tsx",
-  "app/venue/page.tsx",
   "app/venues/BookingRequestClient.tsx",
   "app/venues/bookings/BookingHistoryList.tsx",
   "app/venues/bookings/[bookingId]/BookingCoordination.tsx",
@@ -133,9 +130,5 @@
   "lib/venue-booking-cancel.ts",
   "lib/venue-booking-history.ts",
   "lib/venue-booking-notification.ts",
-  "lib/venue-photo-errors.ts",
-  "lib/venue-photo-manager.ts",
-  "lib/venue-photo-preview.ts",
-  "lib/venue-photo-upload.ts",
-  "lib/venue-slot-status.ts"
+  "lib/venue-photo-errors.ts"
 ]

@@ -17,11 +17,12 @@ export type OwnerPhotoView = OwnerPhotoRow & {
 }
 
 // SQL43 defaults every new row to 'pending' and only an admin can change it. The owner
-// has to be able to see that their photo is not public yet.
-const BADGES: Record<VenuePhotoModerationStatus, { label: string; hint: string; color: string; background: string }> = {
-  pending: { label: 'รอตรวจสอบ', hint: 'ยังไม่แสดงต่อผู้เล่นจนกว่าทีมงานจะตรวจ', color: '#9a3412', background: '#fff7ed' },
-  visible: { label: 'เผยแพร่แล้ว', hint: 'ผู้เล่นเห็นรูปนี้ในหน้าสนาม', color: '#166534', background: '#ecfdf5' },
-  hidden: { label: 'ถูกซ่อน', hint: 'ทีมงานซ่อนรูปนี้ไว้ กรุณาติดต่อฝ่ายดูแล', color: '#b91c1c', background: '#fff1f1' },
+// has to be able to see that their photo is not public yet. The badge's words live in
+// messages/*.json under venueOwner.photos.status.<status>; this holds only its colours.
+const BADGES: Record<VenuePhotoModerationStatus, { color: string; background: string }> = {
+  pending: { color: '#9a3412', background: '#fff7ed' },
+  visible: { color: '#166534', background: '#ecfdf5' },
+  hidden: { color: '#b91c1c', background: '#fff1f1' },
 }
 
 export function moderationBadge(status: VenuePhotoModerationStatus) {

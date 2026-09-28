@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   ownerManageableSlots,
-  venueSlotStatusLabel,
   type OwnerCourt,
 } from '@/lib/venue-slot-status'
 
@@ -20,12 +19,6 @@ const slot = (id: string, status: 'open' | 'reserved' | 'blocked', startsAt: str
 })
 
 describe('venue slot status', () => {
-  it('names every slot status in Thai', () => {
-    expect(venueSlotStatusLabel('open')).toBe('เปิดรับจอง')
-    expect(venueSlotStatusLabel('reserved')).toBe('มีคำขอจอง')
-    expect(venueSlotStatusLabel('blocked')).toBe('ปิดแล้ว')
-  })
-
   it('keeps a reserved slot visible to its owner instead of hiding it', () => {
     const rows = ownerManageableSlots([
       court([
@@ -35,7 +28,8 @@ describe('venue slot status', () => {
     ])
 
     expect(rows.map(row => row.id)).toEqual(['s1', 's2'])
-    expect(rows[1].statusLabel).toBe('มีคำขอจอง')
+    // The page words the status (venueOwner.openSlots.status.reserved).
+    expect(rows[1].status).toBe('reserved')
   })
 
   it('only lets the owner close a slot that has no active booking', () => {

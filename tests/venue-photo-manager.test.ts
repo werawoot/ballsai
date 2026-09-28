@@ -10,14 +10,11 @@ const row = (id: string, order: number, cover = false, status: OwnerPhotoRow['mo
   ({ id, object_path: `v/${id}.webp`, caption: '', sort_order: order, is_cover: cover, moderation_status: status, created_at: '2026-10-01T00:00:00.000Z' })
 
 describe('moderationBadge', () => {
-  it('names each moderation state in Thai', () => {
-    expect(moderationBadge('pending').label).toBe('รอตรวจสอบ')
-    expect(moderationBadge('visible').label).toBe('เผยแพร่แล้ว')
-    expect(moderationBadge('hidden').label).toBe('ถูกซ่อน')
-  })
-
-  it('tells the owner a pending photo is not public yet', () => {
-    expect(moderationBadge('pending').hint).toContain('ยังไม่แสดง')
+  // Its words are messages (venueOwner.photos.status.*), checked in i18n-venue-owner.test.ts.
+  it('holds colours only, never words', () => {
+    for (const status of ['pending', 'visible', 'hidden'] as const) {
+      expect(Object.keys(moderationBadge(status)).sort()).toEqual(['background', 'color'])
+    }
   })
 
   it('gives each state a distinct colour so they are not confusable', () => {

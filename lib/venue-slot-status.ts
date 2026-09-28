@@ -17,22 +17,12 @@ export type OwnerCourt = {
 export type OwnerSlotRow = OwnerSlot & {
   courtName: string
   venueName: string
-  statusLabel: string
   canClose: boolean
 }
 
-const labels: Record<VenueSlotStatus, string> = {
-  open: 'เปิดรับจอง',
-  reserved: 'มีคำขอจอง',
-  blocked: 'ปิดแล้ว',
-}
-
-export function venueSlotStatusLabel(status: VenueSlotStatus) {
-  return labels[status]
-}
-
 // SQL40 distinguishes a booking-reserved slot from one the owner closed. The owner
-// needs to see both live states; only an unbooked slot can still be closed.
+// needs to see both live states; only an unbooked slot can still be closed. The status
+// is worded by the page (venueOwner.openSlots.status.<status>).
 export function ownerManageableSlots(courts: OwnerCourt[]): OwnerSlotRow[] {
   return courts
     .flatMap(court => (court.venue_slots ?? [])
@@ -41,7 +31,6 @@ export function ownerManageableSlots(courts: OwnerCourt[]): OwnerSlotRow[] {
         ...slot,
         courtName: court.name,
         venueName: court.venueName,
-        statusLabel: venueSlotStatusLabel(slot.status),
         canClose: slot.status === 'open',
       })))
     .sort((a, b) => new Date(a.starts_at).valueOf() - new Date(b.starts_at).valueOf())
