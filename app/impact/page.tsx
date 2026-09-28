@@ -1,17 +1,21 @@
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { ArrowLeft, ArrowUpRight, BadgeCheck, Eye, Flag, MapPinned, PlayCircle, Sparkles, Target, Trophy, UsersRound } from 'lucide-react'
 
+// Worded by impact.path.<key>.title / .copy in messages/*.json.
 const impactSteps = [
-  { number: '01', title: 'ให้คนเห็น', copy: 'รวบรวมตัวตน ตำแหน่ง และผลงานของน้องไว้ในโปรไฟล์เดียวที่แชร์ได้', icon: <Eye size={25} /> },
-  { number: '02', title: 'ให้โอกาส', copy: 'เชื่อมเด็กกับรายการแข่ง สโมสร โค้ช และชุมชนฟุตบอลที่กำลังมองหาคนมีแวว', icon: <MapPinned size={25} /> },
-  { number: '03', title: 'ให้เติบโต', copy: 'เปลี่ยนการแข่งขันและผลงานจริงให้กลายเป็นเส้นทางการพัฒนาที่เห็นได้ชัด', icon: <Target size={25} /> },
-]
+  { number: '01', key: 'see', icon: <Eye size={25} /> },
+  { number: '02', key: 'connect', icon: <MapPinned size={25} /> },
+  { number: '03', key: 'grow', icon: <Target size={25} /> },
+] as const
 
+// Not async on purpose, like PageHeader: useTranslations works in a server component.
 export default function ImpactPage() {
+  const t = useTranslations('impact')
   return (
     <main className="impact-page">
       <header className="impact-header">
-        <Link href="/" className="impact-back"><ArrowLeft size={17} /> กลับหน้าแรก</Link>
+        <Link href="/" className="impact-back"><ArrowLeft size={17} /> {t('back')}</Link>
         <Link href="/" className="impact-logo"><span><Trophy size={15} /></span>BallDoenSai.com</Link>
         <Link href="/athletes" className="impact-directory">Athlete Database <ArrowUpRight size={15} /></Link>
       </header>
@@ -21,8 +25,8 @@ export default function ImpactPage() {
         <div className="impact-star impact-star-one" /><div className="impact-star impact-star-two" /><div className="impact-star impact-star-three" />
         <div className="impact-hero-copy">
           <span className="impact-label"><Sparkles size={13} /> WHY BALLDOENSAI.COM EXISTS</span>
-          <h1>เด็กที่มีฝัน<br />ไม่ควรต้อง<br /><em>รอโอกาส</em></h1>
-          <p>เราอยากให้ผลงาน ความพยายาม และความสามารถของนักกีฬาเยาวชนไทย ถูกเห็นโดยคนที่ช่วยพาเขาไปต่อได้</p>
+          <h1>{t('hero.line1')}<br />{t('hero.line2')}<br /><em>{t('hero.line3')}</em></h1>
+          <p>{t('hero.body')}</p>
         </div>
         <div className="impact-hero-number" aria-hidden="true">01</div>
         <div className="impact-hero-note"><span>THE MISSION</span><b>MAKE TALENT<br />VISIBLE</b></div>
@@ -30,15 +34,15 @@ export default function ImpactPage() {
 
       <section className="impact-statement">
         <div className="impact-statement-mark">“</div>
-        <p>ไม่ได้สร้างแค่ Ranking<br />แต่สร้าง <strong>จุดเริ่มต้น</strong> ให้ทุกคน<br />ได้เห็นศักยภาพของน้อง ๆ</p>
+        <p>{t('statement.line1')}<br />{t('statement.before')}<strong>{t('statement.strong')}</strong>{t('statement.after')}<br />{t('statement.line3')}</p>
         <div className="impact-statement-line" />
       </section>
 
       <section className="impact-path">
         <div className="impact-path-heading">
           <span className="impact-label">THE IMPACT PATH</span>
-          <h2>จากสนามเล็ก<br />สู่โอกาสที่ใหญ่ขึ้น</h2>
-          <p>แพลตฟอร์มเดียวที่ออกแบบให้เส้นทางของเด็กนักกีฬาเดินต่อได้จริง</p>
+          <h2>{t('path.title1')}<br />{t('path.title2')}</h2>
+          <p>{t('path.body')}</p>
         </div>
         <div className="impact-path-map">
           <div className="impact-path-line" />
@@ -46,24 +50,24 @@ export default function ImpactPage() {
             <div className="impact-step-node"><span>{step.number}</span></div>
             <div className="impact-step-card">
               <div className="impact-step-icon">{step.icon}</div>
-              <span>{step.number} / 03</span><h3>{step.title}</h3><p>{step.copy}</p>
+              <span>{step.number} / 03</span><h3>{t(`path.${step.key}.title`)}</h3><p>{t(`path.${step.key}.copy`)}</p>
             </div>
           </article>)}
         </div>
       </section>
 
       <section className="impact-outcomes">
-        <div className="impact-outcomes-header"><span className="impact-label">WHAT WE WANT TO UNLOCK</span><h2>โอกาสที่ทุกคน<br />ควรเข้าถึงได้</h2></div>
+        <div className="impact-outcomes-header"><span className="impact-label">WHAT WE WANT TO UNLOCK</span><h2>{t('outcomes.title1')}<br />{t('outcomes.title2')}</h2></div>
         <div className="impact-outcome-grid">
-          <div className="impact-outcome impact-outcome-red"><BadgeCheck size={30} /><b>โปรไฟล์ที่<br />มีความหมาย</b><p>ไม่ใช่แค่ชื่อ แต่เป็น portfolio ของน้องที่อัปเดตได้ตลอด</p></div>
-          <div className="impact-outcome impact-outcome-navy"><PlayCircle size={30} /><b>ผลงานที่<br />เล่าเรื่องได้</b><p>Highlight และความสำเร็จช่วยให้คนเห็นสิ่งที่ตัวเลขบอกไม่ได้</p></div>
-          <div className="impact-outcome impact-outcome-green"><UsersRound size={30} /><b>ชุมชนที่<br />ส่งต่อโอกาส</b><p>ผู้ปกครอง โค้ช สโมสร และผู้จัดการแข่งขัน มองเห็นเส้นทางเดียวกัน</p></div>
+          <div className="impact-outcome impact-outcome-red"><BadgeCheck size={30} /><b>{t('outcomes.profile.line1')}<br />{t('outcomes.profile.line2')}</b><p>{t('outcomes.profile.body')}</p></div>
+          <div className="impact-outcome impact-outcome-navy"><PlayCircle size={30} /><b>{t('outcomes.story.line1')}<br />{t('outcomes.story.line2')}</b><p>{t('outcomes.story.body')}</p></div>
+          <div className="impact-outcome impact-outcome-green"><UsersRound size={30} /><b>{t('outcomes.community.line1')}<br />{t('outcomes.community.line2')}</b><p>{t('outcomes.community.body')}</p></div>
         </div>
       </section>
 
       <section className="impact-action">
-        <div><span className="impact-label">START WITH ONE PROFILE</span><h2>เรื่องราวของน้อง<br /><em>ควรได้เริ่มวันนี้</em></h2></div>
-        <div className="impact-action-buttons"><Link href="/profile" className="impact-primary">สร้างโปรไฟล์นักกีฬา <ArrowUpRight size={18} /></Link><Link href="/athletes" className="impact-secondary">ดูนักกีฬาในระบบ</Link></div>
+        <div><span className="impact-label">START WITH ONE PROFILE</span><h2>{t('action.title1')}<br /><em>{t('action.title2')}</em></h2></div>
+        <div className="impact-action-buttons"><Link href="/profile" className="impact-primary">{t('action.create')} <ArrowUpRight size={18} /></Link><Link href="/athletes" className="impact-secondary">{t('action.browse')}</Link></div>
         <Flag className="impact-flag" size={112} strokeWidth={.8} aria-hidden="true" />
       </section>
     </main>

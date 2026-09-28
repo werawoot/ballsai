@@ -252,6 +252,7 @@ describe('no new hard-coded Thai', () => {
     'app/api/venues/[venueId]/photos/route.ts',
     'app/api/venues/[venueId]/photos/[photoId]/route.ts',
     'app/api/venues/[venueId]/photos/[photoId]/preview/route.ts',
+    'app/impact/page.tsx',
   ])('keeps %s translated', path => {
     expect(baseline).not.toContain(path)
     expect(hasThaiText(read(path), path)).toBe(false)
