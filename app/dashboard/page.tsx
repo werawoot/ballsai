@@ -8,8 +8,11 @@ import ConfirmTeamButton from './ConfirmTeamButton'
 import ConfirmPaymentButton from './ConfirmPaymentButton'
 import ToggleTournamentStatusButton from './ToggleTournamentStatusButton'
 import PageHeader from '@/components/PageHeader'
+import Pagination from '@/components/Pagination'
+import { parsePage } from '@/lib/pagination'
+import { fetchOrganizerDashboard } from '@/lib/organizer-dashboard'
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams = {} }: { searchParams?: { page?: string; pending?: string } }) {
   const cookieStore = cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,27 +39,12 @@ export default async function DashboardPage() {
 
   if (profile?.role !== 'organizer' && profile?.role !== 'admin') redirect('/')
 
-  const { data: myTournaments } = await supabase
-    .from('tournaments')
-    .select('*')
-    .eq('organizer_id', user.id)
-    .order('created_at', { ascending: false })
-
-  const tournamentIds = myTournaments?.map(t => t.id) ?? []
-
-  const { data: allTeams } = await supabase
-    .from('teams')
-    .select('*, tournaments(name, organizer_id)')
-    .in('tournament_id', tournamentIds.length > 0 ? tournamentIds : ['none'])
-    .order('created_at', { ascending: false })
-
-  const { data: allPayments } = await supabase
-    .from('payments')
-    .select('*')
-    .in('tournament_id', tournamentIds.length > 0 ? tournamentIds : ['none'])
-
-  const pendingTeams = allTeams?.filter(t => t.status === 'pending') ?? []
-  const confirmedTeams = allTeams?.filter(t => t.status === 'confirmed') ?? []
+  // Tournaments and the approval queue are paged separately (?page= and ?pending=), so the
+  // page stays the same size however many tournaments an organizer runs over the years.
+  const tournamentsPage = parsePage(searchParams.page)
+  const pendingPage = parsePage(searchParams.pending)
+  const { stats, tournaments: myTournaments, tournamentsHasNext, teamCounts, pendingTeams, pendingHasNext, paymentsByTeam } =
+    await fetchOrganizerDashboard(supabase, { organizerId: user.id, tournamentsPage, pendingPage })
 
   return (
     <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -86,9 +74,9 @@ export default async function DashboardPage() {
         {/* STATS */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
           {[
-            { icon: <Trophy size={20} color="#CC0001" />, label: 'รายการ', value: myTournaments?.length ?? 0 },
-            { icon: <Clock size={20} color="#f59e0b" />, label: 'รอยืนยัน', value: pendingTeams.length },
-            { icon: <CheckCircle size={20} color="#16a34a" />, label: 'ยืนยันแล้ว', value: confirmedTeams.length },
+            { icon: <Trophy size={20} color="#CC0001" />, label: 'รายการ', value: stats.tournaments },
+            { icon: <Clock size={20} color="#f59e0b" />, label: 'รอยืนยัน', value: stats.pending },
+            { icon: <CheckCircle size={20} color="#16a34a" />, label: 'ยืนยันแล้ว', value: stats.confirmed },
           ].map((s, i) => (
             <div key={i} style={{ background: 'white', borderRadius: 12, border: '1.5px solid #e5e5e5', padding: '14px 10px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>{s.icon}</div>
@@ -119,11 +107,10 @@ export default async function DashboardPage() {
             </Link>
           </div>
 
-          {myTournaments && myTournaments.length > 0 ? (
+          {stats.tournaments > 0 || tournamentsPage > 1 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {myTournaments.map(t => {
-                const tTeams = allTeams?.filter(team => team.tournament_id === t.id) ?? []
-                const tPending = tTeams.filter(team => team.status === 'pending').length
+                const { total: tTeamCount, pending: tPending } = teamCounts[t.id] ?? { total: 0, pending: 0 }
                 return (
                   <div key={t.id} style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                     <div style={{ height: 5, background: 'linear-gradient(90deg,#CC0001,#ff4444)' }} />
@@ -153,7 +140,7 @@ export default async function DashboardPage() {
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#f8f8f8', borderRadius: 8, padding: '8px 10px', fontSize: 12, fontWeight: 700, color: '#555' }}>
-                        <Users size={14} color="#aaa" /> {tTeams.length} ทีม
+                        <Users size={14} color="#aaa" /> {tTeamCount} ทีม
                       </div>
                       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                         <Link href={`/dashboard/tournaments/${t.id}/edit`} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: '#CC0001', color: 'white', borderRadius: 10, padding: '9px 10px', fontSize: 12, fontWeight: 800, textDecoration: 'none', fontFamily: 'var(--font-oswald)' }}>
@@ -165,6 +152,7 @@ export default async function DashboardPage() {
                   </div>
                 )
               })}
+              <Pagination basePath="/dashboard" page={tournamentsPage} hasNext={tournamentsHasNext} params={{ pending: pendingPage > 1 ? String(pendingPage) : '' }} />
             </div>
           ) : (
             <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: '32px', textAlign: 'center' }}>
@@ -178,15 +166,16 @@ export default async function DashboardPage() {
         </div>
 
         {/* PENDING TEAMS */}
-        {pendingTeams.length > 0 && (
+        {/* Shown by the total, not this page's rows: a page emptied by approvals keeps its way back. */}
+        {(stats.pending > 0 || pendingPage > 1) && (
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <div style={{ width: 4, height: 20, background: '#f59e0b', borderRadius: 2 }} />
-              รอการยืนยัน ({pendingTeams.length})
+              รอการยืนยัน ({stats.pending})
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {pendingTeams.map(team => {
-                const payment = allPayments?.find(p => p.team_id === team.id)
+                const payment = paymentsByTeam[team.id]
                 return (
                   <div key={team.id} style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                     <div style={{ height: 4, background: '#f59e0b' }} />
@@ -251,6 +240,7 @@ export default async function DashboardPage() {
                 )
               })}
             </div>
+            <Pagination basePath="/dashboard" page={pendingPage} hasNext={pendingHasNext} pageParam="pending" params={{ page: tournamentsPage > 1 ? String(tournamentsPage) : '' }} />
           </div>
         )}
 
