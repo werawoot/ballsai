@@ -97,6 +97,44 @@ describe('SQL44 venue-photo storage policy fix', () => {
     expect(insertPolicy).not.toContain('storage.foldername(v.name)')
   })
 
+  // SQL43's read and delete policies have the same scoping bug: inside the venue_profiles
+  // subquery an unqualified `name` is v.name, so an owner could neither read (the signed
+  // preview) nor delete their own photo objects. Reproduced on a sandbox Postgres
+  // 28 Sep 2026: owner saw 0 of their objects and deleted 0.
+  it.each(['venue_photos_owner_or_admin_read', 'venue_photos_owner_or_admin_delete'])('repairs %s the same way', policy => {
+    expect(policyFix).toContain(`drop policy if exists ${policy} on storage.objects`)
+    const body = policyFix.match(new RegExp(`create policy ${policy}[\\s\\S]*?;\\n`))?.[0] ?? ''
+    expect(body).toContain('to authenticated')
+    expect(body).toContain('public.is_admin()')
+    expect(body).toContain('storage.foldername(storage.objects.name)')
+    expect(body).not.toMatch(/storage\.foldername\(name\)/)
+  })
+
+  // pg_policies stores the deparsed expression, where Postgres writes the column as
+  // `objects.name`: `storage.foldername(objects.name)`, never `storage.objects.name`.
+  // The first SQL44 draft verified against `storage.objects.name`, so it rolled itself
+  // back on every apply. Checks must compare against the text Postgres actually stores.
+  it('verifies itself against the text Postgres stores, for all three policies', () => {
+    const verification = policyFix.slice(policyFix.lastIndexOf('do $$'))
+    for (const policy of ['venue_photos_owner_insert', 'venue_photos_owner_or_admin_read', 'venue_photos_owner_or_admin_delete']) {
+      expect(verification).toContain(policy)
+    }
+    expect(verification).toContain("'%foldername(objects.name)%'")
+    expect(verification).toContain("'%foldername(v.name)%'")
+    expect(verification).not.toContain("'%storage.foldername(storage.objects.name)%'")
+  })
+
+  it.each(['44-venue-photo-storage-policy-fix-precheck.sql', '44-venue-photo-storage-policy-fix-postcheck.sql'])(
+    '%s reads the stored policy text the same way, for all three policies',
+    name => {
+      const check = read(name)
+      expect(check).toContain("'%foldername(objects.name)%'")
+      expect(check).not.toContain("'%storage.foldername(storage.objects.name)%'")
+      expect(check).toContain('venue_photos_owner_or_admin_read')
+      expect(check).toContain('venue_photos_owner_or_admin_delete')
+    },
+  )
+
   it('ships read-only precheck and postcheck scripts', () => {
     for (const name of [
       '44-venue-photo-storage-policy-fix-precheck.sql',
