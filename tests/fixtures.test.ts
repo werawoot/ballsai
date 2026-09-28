@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  bracketOrder, groupStageFixtures, knockoutFixtures, leagueFixtures, standings,
+  bracketOrder, groupStageFixtures, knockoutFixtures, leagueFixtures, standings, toFixtureRows,
   type Fixture, type Slot,
 } from '@/lib/fixtures'
 
@@ -120,5 +120,22 @@ describe('standings', () => {
   it('ignores results for teams outside the table and keeps a stable order on full ties', () => {
     const table = standings(['X', 'Y'], [{ home: 'X', away: 'Z', homeScore: 5, awayScore: 0 }])
     expect(table.map(row => [row.teamId, row.played, row.points])).toEqual([['X', 0, 0], ['Y', 0, 0]])
+  })
+})
+
+describe('rows for save_tournament_fixtures_safely (SQL55)', () => {
+  it('writes a team as an id and anything else as a source, one side each', () => {
+    const { fixtures } = groupStageFixtures(teams(8), { groupCount: 2, advancePerGroup: 2 })
+    const rows = toFixtureRows(fixtures)
+    expect(rows).toHaveLength(fixtures.length)
+    expect(rows[0]).toEqual({ key: 'GA-R1-M1', stage: 'group', round: 1, group_label: 'A', home_team_id: expect.any(String), away_team_id: expect.any(String), home_source: null, away_source: null })
+    const final = rows.find(row => row.key === 'KO-R2-M1')!
+    expect(final).toMatchObject({ stage: 'knockout', group_label: null, home_team_id: null, away_team_id: null, home_source: 'winner:KO-R1-M1', away_source: 'winner:KO-R1-M2' })
+    expect(rows.find(row => row.key === 'KO-R1-M1')).toMatchObject({ home_source: 'group:A:1', away_source: 'group:B:2' })
+    for (const row of rows) {
+      expect((row.home_team_id === null) !== (row.home_source === null)).toBe(true)
+      expect((row.away_team_id === null) !== (row.away_source === null)).toBe(true)
+      expect(row.key).toMatch(/^[A-Z0-9-]{1,40}$/)
+    }
   })
 })

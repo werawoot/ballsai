@@ -1,8 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { Trophy, Users, CheckCircle, Clock, Plus, MapPin, Calendar, Image as ImageIcon, ClipboardCheck, Pencil, ClipboardPenLine } from 'lucide-react'
+import { Trophy, Users, CheckCircle, Clock, Plus, MapPin, Calendar, Image as ImageIcon, ClipboardCheck, Pencil, ClipboardPenLine, GitBranch } from 'lucide-react'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import Image from 'next/image'
 import ConfirmTeamButton from './ConfirmTeamButton'
 import ConfirmPaymentButton from './ConfirmPaymentButton'
@@ -45,6 +46,7 @@ export default async function DashboardPage({ searchParams = {} }: { searchParam
   const pendingPage = parsePage(searchParams.pending)
   const { stats, tournaments: myTournaments, tournamentsHasNext, teamCounts, pendingTeams, pendingHasNext, paymentsByTeam } =
     await fetchOrganizerDashboard(supabase, { organizerId: user.id, tournamentsPage, pendingPage })
+  const fixturesText = await getTranslations('fixtures')
 
   return (
     <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -145,6 +147,9 @@ export default async function DashboardPage({ searchParams = {} }: { searchParam
                       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                         <Link href={`/dashboard/tournaments/${t.id}/edit`} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: '#CC0001', color: 'white', borderRadius: 10, padding: '9px 10px', fontSize: 12, fontWeight: 800, textDecoration: 'none', fontFamily: 'var(--font-oswald)' }}>
                           <Pencil size={14} /> แก้ไข
+                        </Link>
+                        <Link href={`/dashboard/tournaments/${t.id}/fixtures`} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: '#111827', color: 'white', borderRadius: 10, padding: '9px 10px', minHeight: 44, boxSizing: 'border-box', fontSize: 12, fontWeight: 800, textDecoration: 'none', fontFamily: 'var(--font-oswald)' }}>
+                          <GitBranch size={14} /> {fixturesText('open')}
                         </Link>
                         <ToggleTournamentStatusButton tournamentId={t.id} status={t.status} />
                       </div>

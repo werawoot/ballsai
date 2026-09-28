@@ -13,7 +13,8 @@
     "back": {
       "profile": "โปรไฟล์",
       "myRequests": "คำขอของฉัน",
-      "myOrganization": "องค์กรของฉัน"
+      "myOrganization": "องค์กรของฉัน",
+      "dashboard": "แดชบอร์ด"
     },
     "manageVenues": "จัดการสนาม"
   },
@@ -461,7 +462,17 @@
     "previewFailed": "เปิดรูปไม่สำเร็จ",
     "previewNotFound": "ไม่พบรูปนี้",
     "previewForbidden": "เฉพาะเจ้าของสนามหรือผู้ดูแลระบบเท่านั้นที่ดูรูปนี้ได้",
-    "previewUnavailable": "ไม่สามารถเปิดรูปนี้ได้ในขณะนี้"
+    "previewUnavailable": "ไม่สามารถเปิดรูปนี้ได้ในขณะนี้",
+    "fixturesRequestInvalid": "รูปแบบการจัดสายไม่ถูกต้อง",
+    "fixturesNeedTwoTeams": "ต้องมีทีมที่ยืนยันแล้วอย่างน้อย 2 ทีมก่อนจัดสาย",
+    "fixturesTooManyTeams": "ทีมที่ยืนยันแล้วมากเกินกว่ารูปแบบนี้รองรับ",
+    "fixturesGroupsTooSmall": "จำนวนกลุ่มมากเกินไปสำหรับจำนวนทีม ลองลดจำนวนกลุ่ม",
+    "fixturesNotAllowed": "เฉพาะผู้จัดรายการนี้หรือแอดมินเท่านั้นที่จัดสายได้",
+    "fixturesHaveResults": "มีผลการแข่งขันในตารางนี้แล้ว จึงจัดสายใหม่ไม่ได้",
+    "fixturesTeamsChanged": "รายชื่อทีมเพิ่งเปลี่ยน กรุณาจัดสายอีกครั้ง",
+    "fixturesMigrationMissing": "ระบบตารางแข่งยังไม่เปิดใช้ (รอติดตั้งฐานข้อมูล SQL55)",
+    "fixturesFailed": "จัดสายไม่สำเร็จ กรุณาลองใหม่",
+    "fixturesRateLimited": "จัดสายบ่อยเกินไป กรุณารอสักครู่"
   },
   "impact": {
     "back": "กลับหน้าแรก",
@@ -545,5 +556,36 @@
     "searchPlaceholder": "ชื่อทีม",
     "searchButton": "ค้นหา",
     "empty": "ยังไม่มีทีมในกลุ่มนี้"
+  },
+  "fixtures": {
+    "open": "ตารางแข่ง",
+    "eyebrow": "ตารางแข่ง",
+    "title": "จัดสายและตารางแข่ง",
+    "teamsReady": "ทีมที่ยืนยันแล้ว {count} ทีม",
+    "format": "รูปแบบ",
+    "knockout": "น็อกเอาต์ (แพ้คัดออก)",
+    "league": "พบกันหมด (ลีก)",
+    "groups": "แบ่งกลุ่ม แล้วเข้ารอบน็อกเอาต์",
+    "groupCount": "จำนวนกลุ่ม",
+    "advancePerGroup": "เข้ารอบต่อกลุ่ม",
+    "order": "การจัดมือวาง",
+    "orderRandom": "สุ่มจับสลาก",
+    "orderRegistration": "ตามลำดับการสมัคร",
+    "create": "จัดสาย",
+    "recreate": "จัดสายใหม่ (แทนที่ของเดิม)",
+    "saving": "กำลังจัดสาย…",
+    "saved": "จัดสายแล้ว {count} นัด",
+    "none": "ยังไม่ได้จัดสาย",
+    "locked": "มีผลการแข่งขันแล้ว จัดสายใหม่ไม่ได้",
+    "migrationMissing": "ระบบตารางแข่งยังไม่เปิดใช้ (รอติดตั้ง SQL55)",
+    "loadFailed": "โหลดตารางแข่งไม่สำเร็จ",
+    "stageKnockout": "รอบน็อกเอาต์",
+    "stageLeague": "ลีก",
+    "stageGroup": "กลุ่ม {group}",
+    "round": "รอบ {round}",
+    "winnerOf": "ผู้ชนะ รอบ {round} คู่ {match}",
+    "groupPlace": "อันดับ {position} กลุ่ม {group}",
+    "versus": "พบ",
+    "notFound": "ไม่พบรายการแข่งนี้ หรือคุณไม่ได้เป็นผู้จัด"
   }
 }

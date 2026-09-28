@@ -150,3 +150,30 @@ export function standings(teamIds: string[], results: Result[]): StandingRow[] {
   return [...rows.values()].sort((a, b) =>
     b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || order.get(a.teamId)! - order.get(b.teamId)!)
 }
+
+export type FixtureRow = {
+  key: string
+  stage: Fixture['stage']
+  round: number
+  group_label: string | null
+  home_team_id: string | null
+  away_team_id: string | null
+  home_source: string | null
+  away_source: string | null
+}
+
+// The shape save_tournament_fixtures_safely (sql/55) stores: each side is either a team id
+// or a source, "winner:<fixture key>" or "group:<letter>:<position>", never both.
+export function toFixtureRows(fixtures: Fixture[]): FixtureRow[] {
+  const side = (slot: Slot) => slot.kind === 'team'
+    ? { id: slot.teamId, source: null }
+    : { id: null, source: slot.kind === 'winner' ? `winner:${slot.fixtureKey}` : `group:${slot.group}:${slot.position}` }
+  return fixtures.map(fixture => {
+    const home = side(fixture.home)
+    const away = side(fixture.away)
+    return {
+      key: fixture.key, stage: fixture.stage, round: fixture.round, group_label: fixture.group ?? null,
+      home_team_id: home.id, away_team_id: away.id, home_source: home.source, away_source: away.source,
+    }
+  })
+}

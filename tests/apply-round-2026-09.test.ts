@@ -34,6 +34,6 @@ describe('the September apply round', () => {
   it('checks status without writing anything', () => {
     expect(status).toMatch(/\bselect\b/i)
     expect(status).not.toMatch(/\b(insert|update|delete|alter|drop|create|grant|revoke|truncate)\b/i)
-    expect(status.match(/^\s*\((\d+),/gm)).toHaveLength(13)
+    expect(status.match(/^\s*\((\d+),/gm)).toHaveLength(14)
   })
 })
