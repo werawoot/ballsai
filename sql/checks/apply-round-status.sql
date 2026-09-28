@@ -54,22 +54,25 @@ select step, migration, present, marker from (values
   (12, '53 athletes directory index',
        to_regclass('public.athlete_profiles_directory_page_idx') is not null,
        'index athlete_profiles_directory_page_idx'),
-  (13, '55 tournament fixtures',
+  (13, '59 ranking provinces view',
+       to_regclass('public.public_ranking_provinces') is not null,
+       'view public_ranking_provinces'),
+  (14, '55 tournament fixtures',
        to_regclass('public.tournament_fixtures') is not null
          and to_regprocedure('public.save_tournament_fixtures_safely(uuid,jsonb)') is not null,
        'table tournament_fixtures + save_tournament_fixtures_safely'),
-  (14, '56 fixture results',
+  (15, '56 fixture results',
        exists (select 1 from pg_trigger where tgname = 'match_results_link_fixture' and not tgisinternal),
        'trigger match_results_link_fixture'),
-  (15, '50 anon EXECUTE off definer functions',
+  (16, '50 anon EXECUTE off definer functions',
        not exists (select 1 from pg_default_acl d join pg_namespace n on n.oid = d.defaclnamespace
                    where pg_get_userbyid(d.defaclrole) = 'postgres' and n.nspname = 'public'
                      and d.defaclobjtype = 'f' and d.defaclacl::text like '%anon=X%'),
        'postgres default privileges in public give anon no EXECUTE'),
-  (16, '57 public fixtures (after 50)',
+  (17, '57 public fixtures (after 50)',
        to_regprocedure('public.public_tournament_fixtures(uuid)') is not null,
        'function public_tournament_fixtures'),
-  (17, '58 athlete private columns (after 50)',
+  (18, '58 athlete private columns (after 50)',
        not has_column_privilege('anon', 'public.athlete_profiles', 'birth_date', 'SELECT'),
        'anon cannot read athlete_profiles.birth_date')
 ) as status(step, migration, present, marker)
