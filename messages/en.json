@@ -614,5 +614,260 @@
     "notPublished": "The organizer has not published this tournament's fixtures yet",
     "publicUnavailable": "Fixtures are not available yet",
     "backToTournament": "Tournament"
+  },
+  "profileHome": {
+    "eyebrow": "My profile",
+    "noName": "BallDoenSai athlete",
+    "age": "{age} yrs",
+    "verification": {
+      "self": "Self-reported",
+      "coach_verified": "Coach verified",
+      "performance_verified": "Verified by results"
+    },
+    "visibility": {
+      "public": "Public",
+      "private": "Private"
+    },
+    "level": "Level {level}",
+    "xpToNext": "{xp} XP · {remaining} XP to Level {next}",
+    "tiers": {
+      "starter": "Starting out",
+      "growing": "Growing player",
+      "rising": "Rising star",
+      "regular": "First-team regular",
+      "legend": "Proving ground legend"
+    },
+    "actions": {
+      "edit": "Edit profile",
+      "viewPublic": "View public page",
+      "passport": "Career Passport"
+    },
+    "readiness": {
+      "title": "Before your profile goes public",
+      "titleDone": "Your profile is ready",
+      "progress": "{done} of {total} steps",
+      "next": "Next step",
+      "doneNote": "All steps done. Share your profile with coaches and scouts.",
+      "statusDone": "Done",
+      "statusTodo": "To do",
+      "blocked": "Finish the steps above first",
+      "pending": "Guardian requests waiting for you: {count}",
+      "items": {
+        "basics": {
+          "title": "Name and birth date",
+          "hint": "Used for your age and age group. Your public page shows your age, never the date."
+        },
+        "photo": {
+          "title": "Athlete photo",
+          "hint": "A clear photo helps coaches remember you."
+        },
+        "playing": {
+          "title": "Position and team",
+          "hint": "Where you play, and who for."
+        },
+        "guardian": {
+          "title": "Guardian consent",
+          "hint": "Under 20? A linked guardian must consent before your profile goes public."
+        },
+        "highlight": {
+          "title": "First highlight",
+          "hint": "A photo or clip of your best moment."
+        },
+        "public": {
+          "title": "Make your profile public",
+          "hint": "Anyone can then see your page and share it."
+        }
+      }
+    },
+    "card": {
+      "title": "Player card",
+      "power": "Power Rating",
+      "source": "Calculated from match results recorded and confirmed by organizers",
+      "starterTitle": "STARTER CARD",
+      "starterBody": "No Power Rating yet. Ratings come only from match results recorded and confirmed by organizers. Play your first tournament to start.",
+      "build": "Build and share card",
+      "findTournament": "Find a tournament"
+    },
+    "teams": {
+      "title": "My teams",
+      "unnamed": "My team",
+      "tournament": "Tournament",
+      "viewAll": "See all invitations",
+      "status": {
+        "invited": "Waiting for you",
+        "declined": "Declined or removed",
+        "confirmed": "Confirmed to play",
+        "teamPending": "Organizer reviewing team",
+        "forming": "Team forming"
+      }
+    },
+    "shortcuts": {
+      "title": "Shortcuts",
+      "items": {
+        "dashboard": {
+          "label": "Organizer and coach dashboard",
+          "hint": "Your tournaments, teams and results"
+        },
+        "venue": {
+          "label": "Manage my venue",
+          "hint": "Slots, bookings and photos"
+        },
+        "guardian": {
+          "label": "Guardian",
+          "hint": "Account links and consent"
+        },
+        "admin": {
+          "label": "Admin",
+          "hint": "Review and manage data"
+        },
+        "venues": {
+          "label": "Book a venue",
+          "hint": "Find venues and your team's booking requests"
+        },
+        "sponsorships": {
+          "label": "Sponsorships",
+          "hint": "Open grants and brand opportunities"
+        },
+        "teamMembers": {
+          "label": "Team members",
+          "hint": "Team invitations and my rosters"
+        },
+        "career": {
+          "label": "Career Passport",
+          "hint": "Your verified path and results"
+        }
+      }
+    },
+    "noAthlete": {
+      "title": "No athlete profile yet",
+      "body": "Create a profile to get your player card, keep your achievements and let coaches find you.",
+      "cta": "Create athlete profile"
+    },
+    "account": {
+      "title": "Account",
+      "signedInAs": "Signed in as",
+      "signOut": "Sign out"
+    }
+  },
+  "profileEdit": {
+    "title": "Edit profile",
+    "back": "Back to profile",
+    "nav": {
+      "details": "Details",
+      "privacy": "Visibility",
+      "highlights": "Highlights",
+      "achievements": "Achievements"
+    },
+    "details": {
+      "title": "Athlete details",
+      "description": "Shown on your card and profile page",
+      "photo": "Athlete photo",
+      "choosePhoto": "Choose photo",
+      "changePhoto": "Change photo",
+      "removePhoto": "Remove photo",
+      "photoHint": "JPG, PNG or WEBP, up to 5 MB",
+      "displayName": "Display name",
+      "displayNamePlaceholder": "First and last name",
+      "birthDate": "Birth date",
+      "birthDateHint": "Your public page shows your age, never the date",
+      "ageNow": "Age {age}",
+      "height": "Height (cm)",
+      "weight": "Weight (kg)",
+      "province": "Province",
+      "provincePlaceholder": "e.g. Chiang Mai",
+      "team": "Current team or club",
+      "teamPlaceholder": "e.g. Chiang Mai FC U15",
+      "position": "Position",
+      "positions": {
+        "FW": "Forward",
+        "MF": "Midfielder",
+        "DF": "Defender",
+        "GK": "Goalkeeper"
+      },
+      "bio": "About me",
+      "bioPlaceholder": "Your goals, strengths and experience"
+    },
+    "privacy": {
+      "title": "Visibility",
+      "description": "Choose who sees your profile. Your phone number never appears on the public page.",
+      "toggle": "Public profile",
+      "on": "On — anyone can see and share it",
+      "off": "Off — only you can see it",
+      "needBirthDate": "Add your birth date to make your profile public",
+      "minorWaiting": "Under 20? You can go public once a guardian sends a link request and you accept it on the Guardian page.",
+      "minorOk": "Guardian consent recorded",
+      "goGuardian": "Go to Guardian page",
+      "verified": {
+        "coach_verified": "Details verified by a coach",
+        "performance_verified": "Details verified by match results"
+      }
+    },
+    "save": {
+      "dirty": "Unsaved changes",
+      "clean": "Everything is saved",
+      "button": "Save",
+      "saving": "Saving…",
+      "saved": "Saved"
+    },
+    "highlights": {
+      "title": "Highlights",
+      "description": "Photos or clips of your best moments. Added items save straight away.",
+      "momentName": "Moment name",
+      "momentPlaceholder": "e.g. First goal of the season",
+      "chooseFile": "Choose file",
+      "fileHint": "JPG, PNG, WEBP, MP4 or WEBM, up to 25 MB · private until your profile is public",
+      "upload": "Upload",
+      "uploading": "Uploading…",
+      "linkTitle": "Or add a YouTube / TikTok link",
+      "clipName": "Clip name",
+      "add": "Add link",
+      "types": {
+        "highlight": "Highlight",
+        "match": "Match",
+        "training": "Training"
+      },
+      "video": "Video",
+      "image": "Photo",
+      "link": "Link",
+      "hidden": "Hidden by a moderator",
+      "empty": "No highlights yet. Start with the moment you are proudest of.",
+      "remove": "Remove {title}"
+    },
+    "achievements": {
+      "title": "Achievements",
+      "description": "Awards and results. Added items save straight away and can be verified with proof.",
+      "titlePlaceholder": "Achievement or award",
+      "eventPlaceholder": "Tournament name (optional)",
+      "add": "Add achievement",
+      "noEvent": "No tournament given",
+      "verified": "Verified",
+      "unverified": "Not verified",
+      "empty": "No achievements yet",
+      "remove": "Remove {title}"
+    },
+    "messages": {
+      "saved": "Saved",
+      "highlightAdded": "Highlight added",
+      "clipAdded": "Clip added",
+      "achievementAdded": "Achievement added",
+      "nameAndBirth": "Add your name and birth date before saving",
+      "minorNeedsConsent": "A minor's profile needs guardian consent before it can be public",
+      "needsGuardianLink": "A minor's profile needs an accepted guardian link before it can be public",
+      "needsBirthDate": "Add your birth date before making your profile public",
+      "photoType": "Only JPG, PNG or WEBP photos",
+      "photoSize": "The photo must be 5 MB or smaller",
+      "photoUploadFailed": "The photo did not upload. Please try again.",
+      "storageNotReady": "File storage is not set up yet. Please tell an admin.",
+      "notReady": "Profiles are not set up yet. Please tell an admin.",
+      "saveFailed": "Could not save. Please try again.",
+      "videoUrl": "Add a clip name and a YouTube or TikTok link starting with https://",
+      "clipFailed": "Could not add the clip. Save your athlete details first, then try again.",
+      "achievementTitle": "Add a name for the achievement first",
+      "achievementFailed": "Could not add the achievement. Save your athlete details first, then try again.",
+      "highlightNeedFile": "Add a moment name and choose a file first",
+      "highlightType": "JPG, PNG, WEBP, MP4 or WEBM up to 25 MB",
+      "highlightFailed": "Could not upload the highlight. Save your athlete details first, then try again.",
+      "deleteFailed": "Could not remove it. Please try again."
+    }
   }
 }

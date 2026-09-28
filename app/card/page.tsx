@@ -37,7 +37,7 @@ export default async function PlayerCardPage() {
     <main className="card-page">
       <header className="card-page-header">
         <Link href="/" className="card-page-logo"><Trophy size={18} /> BallDoenSai.com</Link>
-        <div style={{ display: 'flex', gap: 8 }}><Link href="/career" className="card-page-profile-link">Athlete Passport</Link><Link href="/profile" className="card-page-profile-link">{t('editProfile')}</Link></div>
+        <div style={{ display: 'flex', gap: 8 }}><Link href="/career" className="card-page-profile-link">Athlete Passport</Link><Link href="/profile/edit" className="card-page-profile-link">{t('editProfile')}</Link></div>
       </header>
       <PlayerCardBuilder
         userId={user.id}

@@ -85,8 +85,6 @@
   "app/players/[id]/page.tsx",
   "app/privacy/page.tsx",
   "app/profile/DeleteMyDataSection.tsx",
-  "app/profile/EditProfileForm.tsx",
-  "app/profile/page.tsx",
   "app/ranking/page.tsx",
   "app/scout/ScoutClient.tsx",
   "app/scout/page.tsx",

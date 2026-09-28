@@ -75,6 +75,15 @@ export function unlockedBadgeKeys(stats: IdentityStats): IdentityBadgeKey[] {
   }).map(badge => badge.key)
 }
 
+// The same tiers as identityTitle, as message keys (profileHome.tiers.*) for translated UI.
+export function identityTierKey(level: number) {
+  if (level >= 12) return 'legend' as const
+  if (level >= 8) return 'regular' as const
+  if (level >= 5) return 'rising' as const
+  if (level >= 2) return 'growing' as const
+  return 'starter' as const
+}
+
 export function identityTitle(level: number) {
   if (level >= 12) return 'สนามพิสูจน์ตำนาน'
   if (level >= 8) return 'ตัวจริงของทีม'
