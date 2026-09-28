@@ -1,45 +1,16 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import MatchResultForm from './MatchResultForm'
 import MatchResultHistory from './MatchResultHistory'
+import TournamentPicker from './TournamentPicker'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
+import { parsePage } from '@/lib/pagination'
+import { RESULT_HISTORY_LIMIT, fetchResultTournamentData, fetchResultTournamentsPage } from '@/lib/match-results-dashboard'
 
-type TournamentOption = {
-  id: string
-  name: string
-  organizer_id: string
-}
-
-type TeamOption = {
-  id: string
-  name: string
-  tournament_id: string
-  status: string
-}
-
-type PlayerOption = {
-  id: string
-  player_id: string | null
-  player_name: string
-  position: string
-  pts: number
-  teamId: string
-}
-
-type MatchResultRow = {
-  id: string
-  tournament_id: string
-  team_a_id: string
-  team_b_id: string
-  team_a_score: number
-  team_b_score: number
-  status: string
-  created_at: string
-}
-
-export default async function MatchResultsPage() {
+export default async function MatchResultsPage({ searchParams = {} }: { searchParams?: { tournament?: string; page?: string; q?: string } }) {
   const cookieStore = cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -66,58 +37,21 @@ export default async function MatchResultsPage() {
 
   if (profile?.role !== 'organizer' && profile?.role !== 'admin') redirect('/')
 
-  let tournamentsQuery = supabase
-    .from('tournaments')
-    .select('id, name, organizer_id')
-    .order('created_at', { ascending: false })
-
-  if (profile?.role !== 'admin') {
-    tournamentsQuery = tournamentsQuery.eq('organizer_id', user.id)
-  }
-
-  const { data: tournaments } = await tournamentsQuery
-  const tournamentIds = tournaments?.map(tournament => tournament.id) ?? []
-
-  // Every team of the organizer's tournaments is loaded, not only confirmed ones,
-  // so a recorded result can still show its team names if a team changes status
-  // afterwards. Only confirmed teams are selectable in the form.
-  const { data: teams } = await supabase
-    .from('teams')
-    .select('id, name, tournament_id, status')
-    .in('tournament_id', tournamentIds.length > 0 ? tournamentIds : ['none'])
-    .order('name')
-
-  const allTeams = (teams ?? []) as TeamOption[]
-  const confirmedTeams = allTeams.filter(team => team.status === 'confirmed')
-
-  const { data: acceptedMembers } = await supabase
-    .from('team_members')
-    .select('team_id, athlete_id')
-    .in('team_id', confirmedTeams.length > 0 ? confirmedTeams.map(team => team.id) : ['none'])
-    .eq('status', 'accepted')
-
-  const acceptedAthleteIds = [...new Set((acceptedMembers ?? []).map(member => member.athlete_id))]
-  const { data: players } = await supabase
-    .from('player_ranks')
-    .select('id, player_id, player_name, position, pts')
-    .eq('sport', ACTIVE_SPORT)
-    .eq('season', ACTIVE_SEASON)
-    .in('player_id', acceptedAthleteIds.length > 0 ? acceptedAthleteIds : ['none'])
-    .order('player_name')
-
-  const { data: matchResults } = await supabase
-    .from('match_results')
-    .select('id, tournament_id, team_a_id, team_b_id, team_a_score, team_b_score, status, created_at')
-    .in('tournament_id', tournamentIds.length > 0 ? tournamentIds : ['none'])
-    .order('created_at', { ascending: false })
-    .limit(20)
-
-  const teamNames = Object.fromEntries(allTeams.map(team => [team.id, team.name]))
-  const teamIdByAthlete = new Map((acceptedMembers ?? []).map(member => [member.athlete_id, member.team_id]))
-  const rosterPlayers = ((players ?? []) as Omit<PlayerOption, 'teamId'>[])
-    .map(player => ({ ...player, teamId: player.player_id ? teamIdByAthlete.get(player.player_id) ?? '' : '' }))
-    .filter(player => player.teamId)
-  const tournamentNames = Object.fromEntries((tournaments ?? []).map(tournament => [tournament.id, tournament.name]))
+  // One tournament at a time: the picker pages (and searches) the tournaments this user
+  // may record for, and only the chosen one's teams, rosters and history are loaded. An
+  // admin chooses from every tournament in the country.
+  const isAdmin = profile?.role === 'admin'
+  const page = parsePage(searchParams.page)
+  const search = (searchParams.q ?? '').trim().slice(0, 80)
+  const t = await getTranslations('matchResults')
+  const picker = await fetchResultTournamentsPage(supabase, { userId: user.id, isAdmin, page, search })
+  // Without a choice, the newest tournament is selected, as the form always did.
+  const selectedId = searchParams.tournament || picker.tournaments[0]?.id || ''
+  const data = selectedId
+    ? await fetchResultTournamentData(supabase, { tournamentId: selectedId, userId: user.id, isAdmin, sport: ACTIVE_SPORT, season: ACTIVE_SEASON })
+    : null
+  const teamNames = Object.fromEntries((data?.teams ?? []).map(team => [team.id, team.name]))
+  const tournamentNames = data ? { [data.tournament.id]: data.tournament.name } : {}
 
   return (
     <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 40, overflowX: 'hidden' }}>
@@ -138,19 +72,35 @@ export default async function MatchResultsPage() {
         <path d="M0,0 C100,28 275,0 375,20 L375,0 Z" fill="#CC0001" />
       </svg>
 
-      <MatchResultForm
-        tournaments={(tournaments ?? []) as TournamentOption[]}
-        teams={confirmedTeams}
-        players={rosterPlayers}
-      />
-
-      <div style={{ padding: '0 16px' }}>
-        <MatchResultHistory
-          matchResults={(matchResults ?? []) as MatchResultRow[]}
-          teamNames={teamNames}
-          tournamentNames={tournamentNames}
-        />
+      <div style={{ padding: '16px 16px 0' }}>
+        <TournamentPicker tournaments={picker.tournaments} selectedId={selectedId} page={page} hasNext={picker.hasNext} search={search} />
       </div>
+
+      {selectedId && !data && (
+        <p role="alert" style={{ margin: '14px 16px 0', background: '#fff0f0', borderLeft: '3px solid #d71920', color: '#9b1d27', fontSize: 13, padding: '10px 12px' }}>{t('notFound')}</p>
+      )}
+
+      {data && <>
+        <p style={{ margin: '14px 16px 0', fontSize: 12, color: '#666' }}>{t('selected')} <b style={{ color: '#111' }}>{data.tournament.name}</b></p>
+        {/* Keyed by tournament, so choosing another one starts the form afresh. */}
+        <MatchResultForm
+          key={data.tournament.id}
+          tournaments={[data.tournament]}
+          teams={data.confirmedTeams}
+          players={data.rosterPlayers}
+        />
+
+        <div style={{ padding: '0 16px' }}>
+          <MatchResultHistory
+            matchResults={data.matchResults}
+            teamNames={teamNames}
+            tournamentNames={tournamentNames}
+          />
+          {data.matchResults.length >= RESULT_HISTORY_LIMIT && (
+            <p style={{ fontSize: 11, color: '#888', marginTop: 8 }}>{t('history', { count: RESULT_HISTORY_LIMIT })}</p>
+          )}
+        </div>
+      </>}
     </main>
   )
 }

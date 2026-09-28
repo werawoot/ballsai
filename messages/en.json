@@ -526,5 +526,15 @@
     "previous": "Previous",
     "next": "Next",
     "current": "Page {page}"
+  },
+  "matchResults": {
+    "pickerTitle": "Choose a tournament",
+    "searchLabel": "Search tournaments",
+    "searchPlaceholder": "Tournament name",
+    "searchButton": "Search",
+    "empty": "No tournaments found",
+    "selected": "Recording results for",
+    "notFound": "This tournament was not found, or you do not organise it",
+    "history": "Showing this tournament's {count} latest results"
   }
 }
