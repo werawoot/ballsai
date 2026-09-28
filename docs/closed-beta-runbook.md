@@ -516,6 +516,16 @@ After SQL31, also supply `PLAYER_OWN_DISPUTE_ID`, `PLAYER_FOREIGN_DISPUTE_ID`,
 prove that the data subject can read their own trust history but cannot read another
 athlete's dispute or verification event.
 
+Minors' and private data (T21, `scripts/rls-minor-checks.mjs`, read-only in every mode):
+the script sweeps 18 private tables signed out, and checks that no birth date or guardian
+consent record of a public profile is readable signed out. With `UNRELATED_JWT`,
+`GUARDIAN_JWT` (optional `ATHLETE_JWT`, else `PLAYER_JWT`) and the test ids
+`PRIVATE_PROFILE_USER_ID`, `GUARDIAN_LINK_ID`, `FOREIGN_TEAM_ID`, `FOREIGN_PAYMENT_ID`,
+`UNPUBLISHED_FIXTURE_TOURNAMENT_ID`, `FOREIGN_ORGANIZATION_ID`, it also checks each person
+against someone else's records. A table the database does not have yet is reported as
+SKIP, never as PASS. Known finding before the first run: the birth-date check is expected
+to FAIL until T50 is fixed (see `docs/national-readiness.md`).
+
 Safe mode checks read access and skips all writes. Run write checks only against an
 isolated beta tournament, with explicit confirmation:
 
