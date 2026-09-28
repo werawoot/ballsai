@@ -475,7 +475,8 @@
     "fixturesRateLimited": "Too many draws in a short time; please wait a moment",
     "fixtureResultsMigrationMissing": "Results in fixtures are not switched on yet (SQL56 pending)",
     "fixtureAlreadyAdvanced": "This result sent a team into a later match that already has a result; void that later match first",
-    "fixtureWinnerInvalid": "A winner can only be chosen for a drawn knockout match, from its two teams"
+    "fixtureWinnerInvalid": "A winner can only be chosen for a drawn knockout match, from its two teams",
+    "fixturesPublishMigrationMissing": "Publishing fixtures is not switched on yet (SQL57 pending)"
   },
   "impact": {
     "back": "Home",
@@ -601,6 +602,17 @@
     "colDrawn": "D",
     "colLost": "L",
     "colGoalDifference": "GD",
-    "colPoints": "Pts"
+    "colPoints": "Pts",
+    "publishTitle": "Publish fixtures",
+    "publishHelp": "Once published, anyone can see the team names, fixtures, results and tables on the tournament page",
+    "publishOn": "Publish fixtures",
+    "publishOff": "Stop publishing",
+    "publishedNow": "Published",
+    "privateNow": "Not published",
+    "viewPublic": "View public page",
+    "publicTitle": "Fixtures and results",
+    "notPublished": "The organizer has not published this tournament's fixtures yet",
+    "publicUnavailable": "Fixtures are not available yet",
+    "backToTournament": "Tournament"
   }
 }

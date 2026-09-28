@@ -475,7 +475,8 @@
     "fixturesRateLimited": "จัดสายบ่อยเกินไป กรุณารอสักครู่",
     "fixtureResultsMigrationMissing": "ระบบผลแข่งกับตารางแข่งยังไม่เปิดใช้ (รอติดตั้ง SQL56)",
     "fixtureAlreadyAdvanced": "ผลนัดนี้ส่งทีมเข้ารอบถัดไปแล้ว และรอบถัดไปแข่งไปแล้ว กรุณายกเลิกผลนัดถัดไปก่อน",
-    "fixtureWinnerInvalid": "เลือกผู้ชนะได้เฉพาะนัดน็อกเอาต์ที่เสมอ และต้องเป็นหนึ่งในสองทีมของนัดนั้น"
+    "fixtureWinnerInvalid": "เลือกผู้ชนะได้เฉพาะนัดน็อกเอาต์ที่เสมอ และต้องเป็นหนึ่งในสองทีมของนัดนั้น",
+    "fixturesPublishMigrationMissing": "การเผยแพร่ตารางยังไม่เปิดใช้ (รอติดตั้ง SQL57)"
   },
   "impact": {
     "back": "กลับหน้าแรก",
@@ -600,7 +601,18 @@
     "colWon": "ชนะ",
     "colDrawn": "เสมอ",
     "colLost": "แพ้",
-    "colGoalDifference": "ได้เสีย",
-    "colPoints": "คะแนน"
+    "colGoalDifference": "+/-",
+    "colPoints": "แต้ม",
+    "publishTitle": "เผยแพร่ตารางแข่ง",
+    "publishHelp": "เมื่อเผยแพร่ ทุกคนจะเห็นชื่อทีม ตารางแข่ง ผล และตารางคะแนนที่หน้ารายการแข่ง",
+    "publishOn": "เผยแพร่ตาราง",
+    "publishOff": "หยุดเผยแพร่",
+    "publishedNow": "เผยแพร่อยู่",
+    "privateNow": "ยังไม่เผยแพร่",
+    "viewPublic": "ดูหน้าสาธารณะ",
+    "publicTitle": "ตารางแข่งและผล",
+    "notPublished": "ผู้จัดยังไม่ได้เผยแพร่ตารางแข่งของรายการนี้",
+    "publicUnavailable": "ตารางแข่งยังไม่เปิดให้ดู",
+    "backToTournament": "รายการแข่ง"
   }
 }

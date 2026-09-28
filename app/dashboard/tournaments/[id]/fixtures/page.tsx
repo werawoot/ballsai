@@ -2,9 +2,11 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { drawTables, fetchTournamentFixtures, type StoredFixture } from '@/lib/fixture-draw'
+import FixtureBoard from '@/components/FixtureBoard'
+import { fetchTournamentFixtures } from '@/lib/fixture-draw'
 import FixtureDrawForm from './FixtureDrawForm'
 import PenaltyWinnerButtons from './PenaltyWinnerButtons'
+import PublishFixturesToggle from './PublishFixturesToggle'
 
 // An organizer's draw for one tournament: make or remake it, and see every fixture by
 // stage, group and round. Only the tournament's organizer or an admin gets here; the
@@ -36,37 +38,15 @@ export default async function TournamentFixturesPage({ params }: { params: { id:
 
   if (!allowed) return page(<p role="alert" style={{ background: '#fff0f0', borderLeft: '3px solid #d71920', color: '#9b1d27', fontSize: 13, padding: '10px 12px', margin: 0 }}>{t('notFound')}</p>)
 
-  const [{ count: confirmedCount }, stored] = await Promise.all([
+  const [{ count: confirmedCount }, stored, publishing] = await Promise.all([
     supabase.from('teams').select('id', { count: 'exact', head: true }).eq('tournament_id', params.id).eq('status', 'confirmed'),
     fetchTournamentFixtures(supabase, params.id),
+    // sql/57 adds the column; before it, publishing is simply not offered.
+    supabase.from('tournaments').select('fixtures_published_at').eq('id', params.id).maybeSingle(),
   ])
+  const canPublish = !publishing.error && stored.fixtures.length > 0
+  const publishedAt = (publishing.data as { fixtures_published_at?: string | null } | null)?.fixtures_published_at ?? null
   const locked = stored.fixtures.some(fixture => fixture.match_result_id)
-
-  const side = (teamId: string | null, source: string | null) => {
-    if (teamId) return stored.teamNames[teamId] ?? '—'
-    const [kind, ...rest] = (source ?? '').split(':')
-    if (kind === 'winner') {
-      // Keys read KO-R2-M1; organizers see "round 2, match 1", not the key.
-      const [, round = '?', match = '?'] = rest[0]?.match(/R(\d+)-M(\d+)$/) ?? []
-      return t('winnerOf', { round, match })
-    }
-    if (kind === 'group') return t('groupPlace', { group: rest[0], position: rest[1] })
-    return '—'
-  }
-  // A linked result, turned to this fixture's home and away (results store team A and B).
-  const score = (fixture: StoredFixture) => {
-    const result = fixture.match_result_id ? stored.results[fixture.match_result_id] : undefined
-    if (!result || result.status !== 'confirmed') return null
-    const homeIsA = result.team_a_id === fixture.home_team_id
-    return { home: homeIsA ? result.team_a_score : result.team_b_score, away: homeIsA ? result.team_b_score : result.team_a_score }
-  }
-  const tables = drawTables(stored)
-  const sections = new Map<string, StoredFixture[]>()
-  for (const fixture of stored.fixtures) {
-    const title = fixture.stage === 'group' ? t('stageGroup', { group: fixture.group_label ?? '' }) : fixture.stage === 'league' ? t('stageLeague') : t('stageKnockout')
-    const key = `${title} · ${t('round', { round: fixture.round })}`
-    sections.set(key, [...(sections.get(key) ?? []), fixture])
-  }
 
   return page(<>
     <p style={{ margin: 0, fontSize: 13, color: '#555', fontWeight: 700 }}>{t('teamsReady', { count: confirmedCount ?? 0 })}</p>
@@ -74,57 +54,13 @@ export default async function TournamentFixturesPage({ params }: { params: { id:
       ? <p role="status" style={{ background: '#fef9c3', color: '#854d0e', borderRadius: 10, padding: '12px 14px', fontSize: 13, margin: 0 }}>{t('migrationMissing')}</p>
       : <FixtureDrawForm tournamentId={params.id} hasDraw={stored.fixtures.length > 0} locked={locked} />}
     {stored.failed && <p role="alert" style={{ color: '#9b1d27', fontSize: 13, margin: 0 }}>{t('loadFailed')}</p>}
+    {canPublish && <PublishFixturesToggle tournamentId={params.id} published={Boolean(publishedAt)} />}
     {!stored.migrationMissing && !stored.failed && stored.fixtures.length === 0 && <p style={{ color: '#888', fontSize: 13, margin: 0 }}>{t('none')}</p>}
-    {tables.map(table => {
-      const title = table.group ? t('tableGroup', { group: table.group }) : t('tableLeague')
-      const cell = { padding: '6px 4px', textAlign: 'right' } as const
-      return (
-        <section key={table.key} aria-label={title} style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: '12px 14px', overflowX: 'auto' }}>
-          <h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 15, color: '#111827', margin: '0 0 6px' }}>{title}</h2>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-            <thead><tr style={{ color: '#888' }}>
-              <th scope="col" style={{ ...cell, textAlign: 'left' }}>{t('colTeam')}</th>
-              <th scope="col" style={cell}>{t('colPlayed')}</th><th scope="col" style={cell}>{t('colWon')}</th>
-              <th scope="col" style={cell}>{t('colDrawn')}</th><th scope="col" style={cell}>{t('colLost')}</th>
-              <th scope="col" style={cell}>{t('colGoalDifference')}</th><th scope="col" style={cell}>{t('colPoints')}</th>
-            </tr></thead>
-            <tbody>{table.rows.map((row, index) => (
-              <tr key={row.teamId} style={{ borderTop: '1px solid #f0f0f0' }}>
-                <th scope="row" style={{ ...cell, textAlign: 'left', fontWeight: 700, overflowWrap: 'anywhere' }}>{`${index + 1}. ${stored.teamNames[row.teamId] ?? '—'}`}</th>
-                <td style={cell}>{row.played}</td><td style={cell}>{row.won}</td><td style={cell}>{row.drawn}</td>
-                <td style={cell}>{row.lost}</td><td style={cell}>{row.goalDifference}</td><td style={{ ...cell, fontWeight: 800 }}>{row.points}</td>
-              </tr>
-            ))}</tbody>
-          </table>
-        </section>
-      )
-    })}
-    {[...sections].map(([title, fixtures]) => (
-      <section key={title} aria-label={title} style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: '12px 14px' }}>
-        <h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 15, color: '#CC0001', margin: '0 0 8px' }}>{title}</h2>
-        <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 }}>
-          {fixtures.map(fixture => {
-            const played = score(fixture)
-            const penalties = fixture.stage === 'knockout' && played && played.home === played.away
-            const mark = (teamId: string | null) => penalties && teamId && fixture.winner_team_id === teamId ? ` (${t('wonOnPenalties')})` : ''
-            return (
-              <li key={fixture.fixture_key} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto minmax(0,1fr)', gap: 8, alignItems: 'center', fontSize: 13, padding: '8px 0', borderTop: '1px solid #f0f0f0' }}>
-                <span style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{`${side(fixture.home_team_id, fixture.home_source)}${mark(fixture.home_team_id)}`}</span>
-                {played
-                  ? <span style={{ fontFamily: 'var(--font-oswald)', fontWeight: 800, fontSize: 15 }}>{`${played.home} – ${played.away}`}</span>
-                  : <span style={{ color: '#aaa', fontSize: 11 }}>{t('versus')}</span>}
-                <span style={{ fontWeight: 700, textAlign: 'right', overflowWrap: 'anywhere' }}>{`${side(fixture.away_team_id, fixture.away_source)}${mark(fixture.away_team_id)}`}</span>
-                {penalties && !fixture.winner_team_id && fixture.home_team_id && fixture.away_team_id && (
-                  <PenaltyWinnerButtons tournamentId={params.id} fixtureKey={fixture.fixture_key} teams={[
-                    { id: fixture.home_team_id, name: stored.teamNames[fixture.home_team_id] ?? '—' },
-                    { id: fixture.away_team_id, name: stored.teamNames[fixture.away_team_id] ?? '—' },
-                  ]} />
-                )}
-              </li>
-            )
-          })}
-        </ol>
-      </section>
-    ))}
+    <FixtureBoard draw={stored} renderExtra={fixture => fixture.home_team_id && fixture.away_team_id && (
+      <PenaltyWinnerButtons tournamentId={params.id} fixtureKey={fixture.fixture_key} teams={[
+        { id: fixture.home_team_id, name: stored.teamNames[fixture.home_team_id] ?? '—' },
+        { id: fixture.away_team_id, name: stored.teamNames[fixture.away_team_id] ?? '—' },
+      ]} />
+    )} />
   </>)
 }
