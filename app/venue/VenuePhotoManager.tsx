@@ -19,6 +19,7 @@ import {
   validateVenuePhotoFile,
 } from '@/lib/venue-photo-upload'
 import { createClient } from '@/lib/supabase'
+import { useApiErrorText, type ApiErrorBody } from '@/lib/use-api-error-text'
 import { pendingButton, shouldStartAction } from '@/lib/pending-action'
 import {
   nextPreviewState,
@@ -58,6 +59,7 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
   photos: OwnerPhotoRow[]
 }) {
   const t = useTranslations('venueOwner.photos')
+  const errorText = useApiErrorText()
   const [pending, setPending] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [previews, setPreviews] = useState<Record<string, PreviewState>>({})
@@ -81,12 +83,12 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
   const loadPreview = useCallback(async (photoId: string) => {
     setPreviews(current => ({ ...current, [photoId]: { status: 'loading' } }))
     const response = await fetch(`/api/venues/${venueId}/photos/${photoId}/preview`).catch(() => null)
-    const data = response ? await response.json().catch(() => null) as { url?: string; expiresIn?: number; error?: string } | null : null
+    const data = response ? await response.json().catch(() => null) as ({ url?: string; expiresIn?: number } & ApiErrorBody) | null : null
     const state = response?.ok && data?.url && data.expiresIn
       ? nextPreviewState({ ok: true, url: data.url, expiresIn: data.expiresIn }, Date.now())
-      : nextPreviewState({ ok: false, error: data?.error }, Date.now())
+      : nextPreviewState({ ok: false, error: errorText(data, t('previewFailed')) }, Date.now())
     setPreviews(current => ({ ...current, [photoId]: state }))
-  }, [venueId])
+  }, [venueId, errorText, t])
 
   useEffect(() => {
     const now = Date.now()
@@ -110,10 +112,10 @@ export default function VenuePhotoManager({ venueId, venueName, photos }: {
       headers: body ? { 'Content-Type': 'application/json' } : undefined,
       body: body ? JSON.stringify(body) : undefined,
     }).catch(() => null)
-    const data = response ? await response.json().catch(() => null) as { error?: string } | null : null
+    const data = response ? await response.json().catch(() => null) as ApiErrorBody : null
     setPending(null)
     if (!response || !response.ok) {
-      setFeedback({ tone: 'error', text: data?.error ?? t('errors.generic') })
+      setFeedback({ tone: 'error', text: errorText(data, t('errors.generic')) })
       return false
     }
     return true
