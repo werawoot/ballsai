@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { unstable_cache } from 'next/cache'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from './season'
+import { fetchPublicTournamentsPage } from './public-tournaments'
 
 const publicSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,21 +33,18 @@ function publicDataErrorDetails(error: unknown) {
   return String(error)
 }
 
-export const getPublicTournaments = unstable_cache(
-  async () => {
+// One page of the public tournament list. unstable_cache keys on the arguments, so each
+// page is cached on its own.
+export const getPublicTournamentsPage = unstable_cache(
+  async (page: number) => {
     try {
-      const { data, error } = await publicSupabase
-        .from('tournaments')
-        .select('*')
-        .order('start_date', { ascending: true })
-      if (error) throw error
-      return data
+      return await fetchPublicTournamentsPage(publicSupabase, { page })
     } catch (error) {
-      console.error(JSON.stringify({ level: 'error', event: 'public_tournaments_fetch_failed', error: publicDataErrorDetails(error) }))
-      return []
+      console.error(JSON.stringify({ level: 'error', event: 'public_tournaments_fetch_failed', page, error: publicDataErrorDetails(error) }))
+      return { tournaments: [], hasNext: false }
     }
   },
-  ['public-tournaments'],
+  ['public-tournaments-page'],
   { revalidate: 60, tags: ['public-tournaments'] },
 )
 

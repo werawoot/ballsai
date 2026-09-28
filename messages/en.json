@@ -520,5 +520,11 @@
       "create": "Create an athlete profile",
       "browse": "Browse athletes"
     }
+  },
+  "pagination": {
+    "label": "Pages",
+    "previous": "Previous",
+    "next": "Next",
+    "current": "Page {page}"
   }
 }

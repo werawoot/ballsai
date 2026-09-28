@@ -446,3 +446,10 @@ body {
   .card-page-header > div { margin-left:auto; }
   .card-page-profile-link { white-space:nowrap; }
 }
+
+/* Previous / next for lists read one page at a time (components/Pagination.tsx). */
+.bds-pagination { align-items:center; display:grid; gap:6px; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); margin:20px 0 4px; }
+.bds-pagination > :last-child { justify-self:end; }
+.bds-pagination-link { align-items:center; background:#fff; border:1px solid #d9dde2; border-radius:10px; box-sizing:border-box; color:#172033; display:inline-flex; font:800 13px/1.2 var(--font-sarabun),sans-serif; gap:2px; min-height:44px; min-width:44px; padding:0 10px; text-decoration:none; white-space:nowrap; }
+.bds-pagination-link:hover { border-color:#CC0001; color:#CC0001; }
+.bds-pagination-current { color:#667085; font:700 12px/1 var(--font-sarabun),sans-serif; white-space:nowrap; }
