@@ -7,19 +7,10 @@ import DiscoverTabs from '@/components/DiscoverTabs'
 import { samplePlayerRanks, showDemoData } from '@/lib/sample-data'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
-
-type AthleteProfile = {
-  user_id: string
-  display_name: string
-  birth_date?: string | null
-  position?: string | null
-  province?: string | null
-  current_team?: string | null
-  profile_image_url?: string | null
-  verification_level: 'self' | 'coach_verified' | 'performance_verified'
-}
-
-type PlayerRank = { id: string; player_id?: string | null; pts: number; ovr: number; position: string }
+import Pagination from '@/components/Pagination'
+import { parsePage } from '@/lib/pagination'
+import { fetchPublicAthletesPage, type PublicAthlete as AthleteProfile, type PublicAthleteRank as PlayerRank } from '@/lib/public-athletes'
+import { PROVINCE_NAMES_EN } from '@/lib/thai-provinces'
 type DirectoryAthlete = AthleteProfile & { sampleRank?: (typeof samplePlayerRanks)[number] }
 
 function getAge(birthDate?: string | null) {
@@ -47,7 +38,7 @@ function PositionMark({ position }: { position: string }) {
   return <Star size={25} />
 }
 
-export default async function AthletesPage({ searchParams }: { searchParams: { search?: string; province?: string; position?: string; age?: string } }) {
+export default async function AthletesPage({ searchParams }: { searchParams: { search?: string; province?: string; position?: string; age?: string; page?: string } }) {
   const cookieStore = cookies()
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {
@@ -60,17 +51,16 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
   const province = searchParams.province || ''
   const position = searchParams.position || ''
   const ageGroup = searchParams.age || ''
-  let profileQuery = supabase.from('athlete_profiles').select('*').eq('is_public', true).eq('sport', ACTIVE_SPORT).order('updated_at', { ascending: false })
-  if (search) profileQuery = profileQuery.ilike('display_name', `%${search}%`)
-  if (province) profileQuery = profileQuery.eq('province', province)
-  if (position) profileQuery = profileQuery.eq('position', position)
-  const { data: profileRows } = await profileQuery.limit(100)
-  const realProfiles = (profileRows ?? []) as AthleteProfile[]
-  const athleteIds = realProfiles.map(profile => profile.user_id)
-  const { data: rankRows } = athleteIds.length
-    ? await supabase.from('player_ranks').select('id, player_id, pts, ovr, position').in('player_id', athleteIds).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON)
-    : { data: [] }
-  const rankByAthlete = new Map(((rankRows ?? []) as PlayerRank[]).map(rank => [rank.player_id, rank]))
+  const page = parsePage(searchParams.page)
+  // Every filter, the age group included, runs in the database before it pages, so each
+  // page is full and every matching athlete is on exactly one of them.
+  const { athletes: realProfiles, ranks: rankRows, hasNext } = await fetchPublicAthletesPage(supabase, {
+    page, sport: ACTIVE_SPORT, season: ACTIVE_SEASON, search, province, position, ageGroup,
+  }).catch(error => {
+    console.error(JSON.stringify({ level: 'error', event: 'public_athletes_fetch_failed', message: error?.message ?? String(error) }))
+    return { athletes: [] as AthleteProfile[], ranks: [] as PlayerRank[], hasNext: false }
+  })
+  const rankByAthlete = new Map(rankRows.map(rank => [rank.player_id, rank]))
 
   const profiles: DirectoryAthlete[] = realProfiles.length > 0 ? realProfiles : showDemoData ? samplePlayerRanks.map(player => ({
     user_id: player.id,
@@ -83,8 +73,11 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
     verification_level: 'self' as const,
     sampleRank: player,
   })) : []
-  const visibleProfiles = profiles.filter(profile => matchesAge(getAge(profile.birth_date), ageGroup))
-  const provinces = [...new Set(realProfiles.map(profile => profile.province).filter((value): value is string => Boolean(value)))].sort()
+  // Real rows are already filtered by age in the database; this only narrows demo data.
+  const visibleProfiles = realProfiles.length > 0 ? profiles : profiles.filter(profile => matchesAge(getAge(profile.birth_date), ageGroup))
+  // All 77 provinces, not only those on this page: a province whose athletes sit on a
+  // later page must still be selectable.
+  const provinces = Object.keys(PROVINCE_NAMES_EN).sort((a, b) => a.localeCompare(b, 'th'))
 
   return (
     <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5' }}>
@@ -122,6 +115,7 @@ export default async function AthletesPage({ searchParams }: { searchParams: { s
             </Link>
           })}
         </div>}
+        <Pagination basePath="/athletes" page={page} hasNext={hasNext} params={{ search, province, position, age: ageGroup }} />
       </section>
 
     </main>
