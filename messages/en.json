@@ -9,7 +9,13 @@
   },
   "header": {
     "home": "BallDoenSai.com home",
-    "backTo": "Back to {label}"
+    "backTo": "Back to {label}",
+    "back": {
+      "profile": "Profile",
+      "myRequests": "My requests",
+      "myOrganization": "My organization"
+    },
+    "manageVenues": "Manage venues"
   },
   "nav": {
     "label": "Main menu",
@@ -264,5 +270,157 @@
     "loadingPhotos": "Loading photos of {name}",
     "photosBroken": "Could not load venue photos",
     "noPhotos": "No venue photos yet"
+  },
+  "venueOwner": {
+    "page": {
+      "allVenues": "All venues",
+      "titleTop": "Run your venue",
+      "titleBottom": "ready for kick-off",
+      "intro": "Create your venue, open free slots and answer booking requests from BallDoenSai users, all in one place."
+    },
+    "stats": {
+      "myVenues": "My venues",
+      "pending": "Requests waiting",
+      "confirmed": "Confirmed"
+    },
+    "bookingStatus": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "cancelled": "Cancelled"
+    },
+    "feedback": {
+      "failed": "That didn't work. Please try again.",
+      "venueCreated": "Venue profile created. Now add courts and open slots.",
+      "courtAdded": "Court added",
+      "slotOpened": "Slot opened",
+      "bookingConfirmed": "Booking confirmed",
+      "bookingDeclined": "Request declined",
+      "slotClosed": "Slot closed",
+      "confirmCloseSlot": "Close this slot? People will no longer see it for new bookings."
+    },
+    "create": {
+      "title": "Create a venue profile",
+      "name": "Venue name",
+      "namePlaceholder": "e.g. BALLSAI Arena",
+      "province": "Province",
+      "provincePlaceholder": "e.g. Bangkok",
+      "contact": "Phone / LINE",
+      "contactPlaceholder": "e.g. 081-234-5678",
+      "address": "Address",
+      "addressPlaceholder": "Where to find it",
+      "amenities": "Amenities (separate with commas)",
+      "amenitiesPlaceholder": "Parking, toilets, floodlights",
+      "description": "Description",
+      "descriptionPlaceholder": "What makes the venue good, and what players should know",
+      "saving": "Saving...",
+      "submit": "Publish venue profile"
+    },
+    "myVenues": {
+      "title": "Published venues",
+      "add": "Add a venue",
+      "noCourts": "No courts yet"
+    },
+    "court": {
+      "title": "Add a court",
+      "venue": "Venue",
+      "name": "Court name",
+      "namePlaceholder": "e.g. Pitch 5A",
+      "sport": "Sport",
+      "surface": "Surface",
+      "surfacePlaceholder": "e.g. artificial turf",
+      "capacity": "Players (optional)",
+      "submit": "Add court"
+    },
+    "slot": {
+      "title": "Open a free slot",
+      "needCourt": "Add a court first, then you can open slots for booking.",
+      "court": "Court",
+      "start": "Starts",
+      "end": "Ends",
+      "price": "Price (baht)",
+      "pricePlaceholder": "e.g. 800",
+      "submit": "Open for booking requests"
+    },
+    "openSlots": {
+      "title": "Open slots",
+      "empty": "No open slots yet. Add one with the form above.",
+      "status": {
+        "open": "Open for booking",
+        "reserved": "Requested",
+        "blocked": "Closed"
+      },
+      "close": "Close slot",
+      "closeLabel": "Close slot at {venue} {court}",
+      "cannotClose": "Can't close while it has a booking request. Accept or decline the request first."
+    },
+    "inbox": {
+      "title": "Booking requests",
+      "empty": "No booking requests yet. They will appear here.",
+      "venueFallback": "Venue",
+      "courtFallback": "Court",
+      "confirm": "Confirm",
+      "decline": "Decline"
+    },
+    "photos": {
+      "count": "Venue photos {count}/{limit}",
+      "empty": "No venue photos yet. Add the first one.",
+      "cover": "Cover",
+      "moveUp": "Move photo up, {name}",
+      "moveDown": "Move photo down, {name}",
+      "removeLabel": "Delete this photo",
+      "confirmRemove": "Delete this photo? This can't be undone.",
+      "uploaded": "Uploaded. Our team checks it before players can see it.",
+      "coverSet": "Set as cover",
+      "reordered": "Photos reordered",
+      "removed": "Photo deleted",
+      "alt": "{name} venue, photo {number}",
+      "altCover": "Cover photo of {name}",
+      "loading": "Loading {alt}",
+      "loadFailed": "Couldn't load the photo",
+      "loadFailedLabel": "Couldn't load the photo: {message}",
+      "previewFailed": "Couldn't open the photo. Please try again.",
+      "errors": {
+        "limit": "Up to {limit} photos per venue. Delete one to add another.",
+        "type": "Only JPEG, PNG or WebP files",
+        "size": "The file is over {mb} MB. Please make it smaller first.",
+        "unsupported": "This browser can't convert the photo",
+        "encode": "Couldn't convert the photo",
+        "storage": "Couldn't upload the file. Please try again.",
+        "generic": "Upload failed"
+      },
+      "status": {
+        "pending": {
+          "label": "Under review",
+          "hint": "Players won't see it until our team has checked it"
+        },
+        "visible": {
+          "label": "Published",
+          "hint": "Players see this photo on the venue page"
+        },
+        "hidden": {
+          "label": "Hidden",
+          "hint": "Our team hid this photo. Please contact support."
+        }
+      },
+      "pending": {
+        "upload": {
+          "idle": "Add photo",
+          "busy": "Uploading..."
+        },
+        "remove": {
+          "idle": "Delete",
+          "busy": "Deleting..."
+        },
+        "cover": {
+          "idle": "Make cover",
+          "busy": "Setting cover..."
+        },
+        "move": {
+          "idle": "Move photo",
+          "busy": "Moving..."
+        }
+      }
+    }
   }
 }

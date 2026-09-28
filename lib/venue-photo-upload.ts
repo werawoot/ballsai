@@ -7,17 +7,20 @@ export const VENUE_PHOTO_LIMIT = 8
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-export type VenuePhotoFileCheck = { ok: true } | { ok: false; error: string }
+export const VENUE_PHOTO_MAX_MB = VENUE_PHOTO_MAX_BYTES / (1024 * 1024)
+
+// Why a file was refused, as a key: the page words it (venueOwner.photos.errors.<reason>).
+export type VenuePhotoFileCheck = { ok: true } | { ok: false; reason: 'limit' | 'type' | 'size' }
 
 export function validateVenuePhotoFile(file: { type: string; size: number }, currentCount: number): VenuePhotoFileCheck {
   if (currentCount >= VENUE_PHOTO_LIMIT) {
-    return { ok: false, error: `อัปโหลดได้สูงสุด ${VENUE_PHOTO_LIMIT} รูปต่อสนาม ลบรูปเดิมก่อนจึงจะเพิ่มได้` }
+    return { ok: false, reason: 'limit' }
   }
   if (!(VENUE_PHOTO_MIME as readonly string[]).includes(file.type)) {
-    return { ok: false, error: 'รองรับเฉพาะไฟล์ JPEG, PNG หรือ WebP' }
+    return { ok: false, reason: 'type' }
   }
   if (file.size > VENUE_PHOTO_MAX_BYTES) {
-    return { ok: false, error: 'ไฟล์ใหญ่เกิน 5 MB กรุณาย่อขนาดก่อนอัปโหลด' }
+    return { ok: false, reason: 'size' }
   }
   return { ok: true }
 }
@@ -26,7 +29,7 @@ export function validateVenuePhotoFile(file: { type: string; size: number }, cur
 // path is built here rather than assembled by hand at the call site. Everything is
 // re-encoded to WebP before upload, which also drops the camera EXIF block.
 export function buildVenuePhotoPath(venueId: string, photoId: string = crypto.randomUUID()) {
-  if (!UUID_RE.test(venueId)) throw new Error('venueId ต้องเป็น UUID')
-  if (!UUID_RE.test(photoId)) throw new Error('photoId ต้องเป็น UUID')
+  if (!UUID_RE.test(venueId)) throw new Error('venueId must be a UUID')
+  if (!UUID_RE.test(photoId)) throw new Error('photoId must be a UUID')
   return `${venueId.toLowerCase()}/${photoId.toLowerCase()}.webp`
 }

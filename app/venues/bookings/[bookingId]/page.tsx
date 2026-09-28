@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import BookingCoordination, { type CoordinationRow, type AvailableSlot } from './BookingCoordination'
 import { formatVenueBookingDateTime } from '@/lib/venue-booking-time'
@@ -10,6 +11,7 @@ export default async function BookingDetails({ params }: { params: { bookingId: 
   const db = await createServerSupabaseClient()
   const { data: { user } } = await db.auth.getUser()
   if (!user) redirect(`/login?next=/venues/bookings/${params.bookingId}`)
+  const t = await getTranslations('header')
   const { data: booking } = await db.from('venue_booking_requests').select('id,status,venue_name_snapshot,court_name_snapshot,slot_starts_at_snapshot,price_baht_snapshot').eq('id',params.bookingId).maybeSingle()
   if (!booking) notFound()
   const [{ data: rows, error }, { data: slots, error: optionsError }] = await Promise.all([
@@ -17,7 +19,7 @@ export default async function BookingDetails({ params }: { params: { bookingId: 
     db.rpc('venue_booking_options_beta',{ p_id: booking.id }),
   ])
   return <>
-  <PageHeader back={{ href: '/venues/bookings', label: 'คำขอของฉัน' }} actions={<Link href="/venue" className="bds-page-header-link"><span>จัดการสนาม</span></Link>} />
+  <PageHeader back={{ href: '/venues/bookings', label: t('back.myRequests') }} actions={<Link href="/venue" className="bds-page-header-link"><span>{t('manageVenues')}</span></Link>} />
   <main style={{ maxWidth: 850, margin: 'auto', padding: '32px 16px' }}>
     <h1>{booking.venue_name_snapshot} · {booking.court_name_snapshot}</h1>
     <p>{formatVenueBookingDateTime(booking.slot_starts_at_snapshot)} · ฿{booking.price_baht_snapshot}</p>

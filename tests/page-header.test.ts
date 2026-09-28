@@ -70,6 +70,22 @@ describe('back navigation', () => {
     expect(backs.filter(({ label }) => label.trim() === 'กลับ')).toEqual([])
   })
 
+  // Thai written straight into a back label reads as Thai under an English header. These
+  // pages still do it, each for a reason; the list may only shrink.
+  const THAI_LABEL_WAITING = new Set([
+    'app/players/[id]/page.tsx', // changed on codex/player-card-beta: translate after the branches meet
+    'app/team-members/page.tsx', // same
+    'app/tournaments/[id]/page.tsx', // same
+    'app/privacy/page.tsx', // legal pages: professional, legally reviewed translation only
+    'app/terms/page.tsx',
+  ])
+
+  it('words every back label through messages, except the pages still waiting', () => {
+    const thai = backs.filter(({ label }) => /[ก-ฺเ-๛]/.test(label)).map(({ path }) => path)
+    expect(thai.filter(path => !THAI_LABEL_WAITING.has(path))).toEqual([])
+    expect([...THAI_LABEL_WAITING].filter(path => !thai.includes(path)), 'translated: take it off the list').toEqual([])
+  })
+
   it('never depends on browser history, which a shared link does not have', () => {
     for (const path of CONTENT) expect(read(path), path).not.toMatch(/router\.back\(\)|history\.back\(\)/)
   })
