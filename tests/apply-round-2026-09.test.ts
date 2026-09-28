@@ -25,7 +25,12 @@ describe('the September apply round', () => {
     expect(stepOf('41-venue-booking')).toBeLessThan(stepOf('54-venue-cancel'))
     expect(stepOf('46-venue-beta')).toBeLessThan(stepOf('54-venue-cancel'))
     expect(stepOf('55-tournament-fixtures')).toBeLessThan(stepOf('56-fixture-results'))
-    expect(stepOf('50-anon-definer')).toBe(Math.max(...steps.map(match => Number(match[1]))))
+    // SQL50 takes signed-out EXECUTE away from every definer function that exists when it
+    // runs, so it comes after all of them -- except SQL57, which opens its public reader on
+    // purpose and therefore has to come after SQL50.
+    const afterRevoke = ['57-public-fixtures']
+    expect(stepOf('50-anon-definer')).toBe(Math.max(...steps.filter(match => !afterRevoke.some(name => match[2].includes(name))).map(match => Number(match[1]))))
+    for (const name of afterRevoke) expect(stepOf(name)).toBeGreaterThan(stepOf('50-anon-definer'))
   })
 
   it('never lists a file that must not be applied', () => {
@@ -35,6 +40,6 @@ describe('the September apply round', () => {
   it('checks status without writing anything', () => {
     expect(status).toMatch(/\bselect\b/i)
     expect(status).not.toMatch(/\b(insert|update|delete|alter|drop|create|grant|revoke|truncate)\b/i)
-    expect(status.match(/^\s*\((\d+),/gm)).toHaveLength(15)
+    expect(status.match(/^\s*\((\d+),/gm)).toHaveLength(16)
   })
 })

@@ -65,6 +65,9 @@ select step, migration, present, marker from (values
        not exists (select 1 from pg_default_acl d join pg_namespace n on n.oid = d.defaclnamespace
                    where pg_get_userbyid(d.defaclrole) = 'postgres' and n.nspname = 'public'
                      and d.defaclobjtype = 'f' and d.defaclacl::text like '%anon=X%'),
-       'postgres default privileges in public give anon no EXECUTE')
+       'postgres default privileges in public give anon no EXECUTE'),
+  (16, '57 public fixtures (after 50)',
+       to_regprocedure('public.public_tournament_fixtures(uuid)') is not null,
+       'function public_tournament_fixtures')
 ) as status(step, migration, present, marker)
 order by step;

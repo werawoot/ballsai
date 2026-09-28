@@ -195,3 +195,53 @@ export async function saveFixtureWinner(client: SupabaseClient, tournamentId: st
   if (message.includes('FIXTURE_ALREADY_ADVANCED')) return { ok: false, code: 'fixtureAlreadyAdvanced', status: 409 }
   return { ok: false, code: 'fixturesFailed', status: 500 }
 }
+
+// Publishing a draw shows its team names and scores to everyone (sql/57); only the
+// organizer or an admin may switch it, and switching it off hides it again.
+export async function saveFixturesPublished(client: SupabaseClient, tournamentId: string, published: boolean): Promise<WinnerResult> {
+  const { error } = await client.rpc('set_fixtures_published_safely', { p_tournament_id: tournamentId, p_published: published })
+  if (!error) return { ok: true }
+  const message = error.message ?? ''
+  if (error.code === 'PGRST202' || error.code === '42883' || message.includes('set_fixtures_published_safely')) return { ok: false, code: 'fixturesPublishMigrationMissing', status: 503 }
+  if (message.includes('NOT_ALLOWED')) return { ok: false, code: 'fixturesNotAllowed', status: 403 }
+  return { ok: false, code: 'fixturesFailed', status: 500 }
+}
+
+type PublicFixtureRow = {
+  fixture_key: string; stage: StoredFixture['stage']; round: number; group_label: string | null
+  home_team_id: string | null; away_team_id: string | null; home_name: string | null; away_name: string | null
+  home_source: string | null; away_source: string | null; home_score: number | null; away_score: number | null
+  winner_team_id: string | null; home_order: number | null; away_order: number | null
+}
+
+// A published draw for anyone, through public_tournament_fixtures (sql/57): an empty
+// answer means the draw is private or there is none. The rows are rebuilt into the same
+// shape the organizer's page uses, so both rank tables identically.
+export async function fetchPublicDraw(client: SupabaseClient, tournamentId: string): Promise<{ draw: StoredDraw | null; migrationMissing: boolean; failed: boolean }> {
+  const { data, error } = await client.rpc('public_tournament_fixtures', { p_tournament_id: tournamentId })
+  if (error) {
+    const missing = error.code === 'PGRST202' || error.code === '42883' || (error.message ?? '').includes('public_tournament_fixtures')
+    return { draw: null, migrationMissing: missing, failed: !missing }
+  }
+  const rows = (data ?? []) as PublicFixtureRow[]
+  if (rows.length === 0) return { draw: null, migrationMissing: false, failed: false }
+  const teamNames: Record<string, string> = {}
+  const order = new Map<string, number>()
+  const results: Record<string, FixtureResult> = {}
+  const fixtures: StoredFixture[] = rows.map(row => {
+    for (const [id, name, position] of [[row.home_team_id, row.home_name, row.home_order], [row.away_team_id, row.away_name, row.away_order]] as const) {
+      if (!id) continue
+      teamNames[id] = name ?? '—'
+      if (position !== null) order.set(id, position)
+    }
+    const played = row.home_score !== null && row.away_score !== null && row.home_team_id && row.away_team_id
+    if (played) results[row.fixture_key] = { id: row.fixture_key, team_a_id: row.home_team_id!, team_b_id: row.away_team_id!, team_a_score: row.home_score!, team_b_score: row.away_score!, status: 'confirmed' }
+    return {
+      fixture_key: row.fixture_key, stage: row.stage, round: row.round, group_label: row.group_label,
+      home_team_id: row.home_team_id, away_team_id: row.away_team_id, home_source: row.home_source, away_source: row.away_source,
+      match_result_id: played ? row.fixture_key : null, winner_team_id: row.winner_team_id,
+    }
+  })
+  const teamOrder = [...order].sort((a, b) => a[1] - b[1]).map(([id]) => id)
+  return { draw: { fixtures, results, teamNames, teamOrder, migrationMissing: false, failed: false }, migrationMissing: false, failed: false }
+}

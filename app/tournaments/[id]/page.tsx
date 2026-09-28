@@ -7,6 +7,7 @@ import { Trophy, CheckCircle, Upload, Copy, Banknote } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import PageHeader from '@/components/PageHeader'
+import { useTranslations } from 'next-intl'
 
 type Tournament = {
   id: string
@@ -27,6 +28,7 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
   const [message, setMessage] = useState('')
   const [tournament, setTournament] = useState<Tournament | null>(null)
   const router = useRouter()
+  const fixturesText = useTranslations('fixtures')
 
   useEffect(() => {
     const load = async () => {
@@ -159,6 +161,11 @@ export default function RegisterPage({ params }: { params: { id: string } }) {
       </svg>
 
       <div style={{ padding: '16px' }}>
+
+        {/* Shows the organizer's draw once it is published (sql/57); the page says so if not. */}
+        <Link href={`/tournaments/${params.id}/fixtures`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, marginBottom: 12, background: '#111827', color: 'white', borderRadius: 12, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>
+          {fixturesText('publicTitle')}
+        </Link>
 
         {step === 'form' && (
           <aside style={{ marginBottom: 12, background: '#eef6ff', border: '1px solid #bfdbfe', borderRadius: 12, padding: '12px 14px', color: '#1e3a5f', fontSize: 13, lineHeight: 1.55 }}>

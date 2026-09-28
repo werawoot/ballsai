@@ -75,6 +75,9 @@ describe('/dashboard/tournaments/[id]/fixtures', () => {
     expect(html).toMatch(/Lions<\/span>.*vs.*Tigers/)
     expect(html).toContain('Winner of round 1 match 1')
     expect(html).toContain('Group A #2')
+    // A draw exists: the organizer may publish it, and nothing is public until they do.
+    expect(html).toContain('Publish fixtures')
+    expect(html).toContain('Not published')
   })
 
   it('refuses another organizer', async () => {
