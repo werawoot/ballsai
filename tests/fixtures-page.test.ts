@@ -17,6 +17,7 @@ function fakeClient() {
     const builder = {
       select: (_columns: string, options?: { head?: boolean }) => { head = Boolean(options?.head); return builder },
       eq: (column: string, value: unknown) => { rows = rows.filter(row => row[column] === value); return builder },
+      in: (column: string, values: unknown[]) => { rows = rows.filter(row => values.includes(row[column])); return builder },
       order: () => builder,
       limit: () => builder,
       range: (start: number, end: number) => { window = [start, end]; return builder },
@@ -88,6 +89,38 @@ describe('/dashboard/tournaments/[id]/fixtures', () => {
     const html = await render()
     expect(html).toContain('Fixtures are not switched on yet (SQL55 pending)')
     expect(html).not.toContain('Make the draw')
+  })
+
+  it('shows scores the right way round, a group table, and asks for the winner of a drawn knockout', async () => {
+    db.user = 'org-1'; db.missing = false
+    db.tables = {
+      ...tables([
+        // The result was entered as Tigers (b) 3 - 1 Lions (a); the fixture has Lions at home.
+        { fixture_key: 'GA-R1-M1', stage: 'group', round: 1, group_label: 'A', home_team_id: 'a', away_team_id: 'b', match_result_id: 'r1' },
+        { fixture_key: 'KO-R1-M1', stage: 'knockout', round: 1, home_team_id: 'a', away_team_id: 'b', match_result_id: 'r2', winner_team_id: null },
+      ]),
+      match_results: [
+        { id: 'r1', team_a_id: 'b', team_b_id: 'a', team_a_score: 3, team_b_score: 1, status: 'confirmed' },
+        { id: 'r2', team_a_id: 'a', team_b_id: 'b', team_a_score: 2, team_b_score: 2, status: 'confirmed' },
+      ],
+    }
+    const html = await render()
+    expect(html).toMatch(/Lions<\/span><span[^>]*>1 – 3<\/span><span[^>]*>Tigers/)
+    expect(html).toContain('Group A table')
+    expect(html).toMatch(/1\. Tigers<\/th>(<td[^>]*>[^<]*<\/td>){5}<td[^>]*>3<\/td>/)
+    expect(html).toContain('Drawn — choose who won on penalties')
+    expect(html).toContain('Lions won')
+  })
+
+  it('marks a knockout decided on penalties instead of asking again', async () => {
+    db.user = 'org-1'; db.missing = false
+    db.tables = {
+      ...tables([{ fixture_key: 'KO-R1-M1', stage: 'knockout', round: 1, home_team_id: 'a', away_team_id: 'b', match_result_id: 'r2', winner_team_id: 'b' }]),
+      match_results: [{ id: 'r2', team_a_id: 'a', team_b_id: 'b', team_a_score: 1, team_b_score: 1, status: 'confirmed' }],
+    }
+    const html = await render()
+    expect(html).toContain('Tigers (won on penalties)')
+    expect(html).not.toContain('choose who won on penalties')
   })
 
   it('locks the draw once a fixture has a result', async () => {

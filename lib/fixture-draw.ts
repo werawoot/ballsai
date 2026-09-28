@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { groupStageFixtures, knockoutFixtures, leagueFixtures, toFixtureRows, type FixtureRow } from './fixtures'
+import { groupStageFixtures, knockoutFixtures, leagueFixtures, standings, toFixtureRows, type FixtureRow, type Result, type StandingRow } from './fixtures'
 import type th from '@/messages/th.json'
 
 // Turns an organizer's choice (format, groups, seeding) into a stored draw. The server
@@ -94,30 +94,104 @@ export type StoredFixture = {
   home_source: string | null
   away_source: string | null
   match_result_id: string | null
+  // sql/56: the knockout winner, also after a draw decided on penalties.
+  winner_team_id?: string | null
 }
 
+export type FixtureResult = { id: string; team_a_id: string; team_b_id: string; team_a_score: number; team_b_score: number; status: string }
+
+export type StoredDraw = {
+  fixtures: StoredFixture[]
+  results: Record<string, FixtureResult>
+  teamNames: Record<string, string>
+  // Registration order (created_at, id): the last tiebreak, the same one sql/56 uses.
+  teamOrder: string[]
+  migrationMissing: boolean
+  failed: boolean
+}
+
+// Linked result ids go to PostgREST in the URL: batches small enough for any request.
+export const ID_BATCH = 100
+const FIXTURE_COLUMNS = 'fixture_key, stage, round, group_label, home_team_id, away_team_id, home_source, away_source, match_result_id'
+
 // Every fixture of one tournament, read in pages so a 2,016-fixture league is never cut
-// at the API's row limit, with the names of the tournament's teams.
-export async function fetchTournamentFixtures(client: SupabaseClient, tournamentId: string) {
+// at the API's row limit, with its linked results and the tournament's teams.
+export async function fetchTournamentFixtures(client: SupabaseClient, tournamentId: string): Promise<StoredDraw> {
+  const empty = (missing: boolean): StoredDraw => ({ fixtures: [], results: {}, teamNames: {}, teamOrder: [], migrationMissing: missing, failed: !missing })
   const fixtures: StoredFixture[] = []
+  // Before sql/56 the winner column does not exist yet; read without it rather than fail.
+  let columns = `${FIXTURE_COLUMNS}, winner_team_id`
   for (let from = 0; ; from += FIXTURE_PAGE) {
     const { data, error } = await client
       .from('tournament_fixtures')
-      .select('fixture_key, stage, round, group_label, home_team_id, away_team_id, home_source, away_source, match_result_id')
+      .select(columns)
       .eq('tournament_id', tournamentId)
       .order('stage', { ascending: true })
       .order('round', { ascending: true })
       .order('fixture_key', { ascending: true })
       .range(from, from + FIXTURE_PAGE - 1)
-    if (error) {
-      const missing = error.code === '42P01' || error.code === 'PGRST205'
-      return { fixtures: [] as StoredFixture[], teamNames: {} as Record<string, string>, migrationMissing: missing, failed: !missing }
-    }
-    const page = (data ?? []) as StoredFixture[]
+    if (error?.code === '42703' && columns !== FIXTURE_COLUMNS) { columns = FIXTURE_COLUMNS; from -= FIXTURE_PAGE; continue }
+    if (error) return empty(error.code === '42P01' || error.code === 'PGRST205')
+    const page = (data ?? []) as unknown as StoredFixture[]
     fixtures.push(...page)
     if (page.length < FIXTURE_PAGE) break
   }
-  const { data: teams } = await client.from('teams').select('id, name').eq('tournament_id', tournamentId).limit(1000)
-  const teamNames = Object.fromEntries(((teams ?? []) as { id: string; name: string }[]).map(row => [row.id, row.name]))
-  return { fixtures, teamNames, migrationMissing: false, failed: false }
+
+  const linked = fixtures.flatMap(fixture => fixture.match_result_id ? [fixture.match_result_id] : [])
+  const batches = Array.from({ length: Math.ceil(linked.length / ID_BATCH) }, (_, index) => linked.slice(index * ID_BATCH, (index + 1) * ID_BATCH))
+  const [teamsResult, ...resultPages] = await Promise.all([
+    // A drawn tournament has at most 256 teams (MAX_TEAMS); 1,000 covers every entrant.
+    client.from('teams').select('id, name').eq('tournament_id', tournamentId)
+      .order('created_at', { ascending: true }).order('id', { ascending: true }).limit(1000),
+    ...batches.map(batch => client.from('match_results')
+      .select('id, team_a_id, team_b_id, team_a_score, team_b_score, status').in('id', batch)),
+  ])
+  if (teamsResult.error || resultPages.some(page => page.error)) return empty(false)
+  const teams = (teamsResult.data ?? []) as { id: string; name: string }[]
+  const results = Object.fromEntries(resultPages.flatMap(page => (page.data ?? []) as FixtureResult[]).map(result => [result.id, result]))
+  return {
+    fixtures, results,
+    teamNames: Object.fromEntries(teams.map(row => [row.id, row.name])),
+    teamOrder: teams.map(row => row.id),
+    migrationMissing: false, failed: false,
+  }
+}
+
+export type DrawTable = { key: string; group: string | null; rows: StandingRow[] }
+
+// The league table of every group and of a league, from the confirmed results linked to
+// its fixtures. Teams start in registration order, so a full tie ranks exactly as
+// sql/56 ranks it when it fills the knockout.
+export function drawTables(draw: StoredDraw): DrawTable[] {
+  const rank = new Map(draw.teamOrder.map((id, index) => [id, index]))
+  const tables = new Map<string, { group: string | null; teams: Set<string>; results: Result[] }>()
+  for (const fixture of draw.fixtures) {
+    if (fixture.stage === 'knockout') continue
+    const key = fixture.stage === 'group' ? `group:${fixture.group_label}` : 'league'
+    const table = tables.get(key) ?? { group: fixture.stage === 'group' ? fixture.group_label : null, teams: new Set<string>(), results: [] }
+    for (const id of [fixture.home_team_id, fixture.away_team_id]) if (id) table.teams.add(id)
+    const result = fixture.match_result_id ? draw.results[fixture.match_result_id] : undefined
+    if (result && result.status === 'confirmed') table.results.push({ home: result.team_a_id, away: result.team_b_id, homeScore: result.team_a_score, awayScore: result.team_b_score })
+    tables.set(key, table)
+  }
+  return [...tables].sort(([a], [b]) => a.localeCompare(b)).map(([key, table]) => ({
+    key,
+    group: table.group,
+    rows: standings([...table.teams].sort((a, b) => (rank.get(a) ?? Infinity) - (rank.get(b) ?? Infinity) || a.localeCompare(b)), table.results),
+  }))
+}
+
+type WinnerResult = { ok: true } | { ok: false; code: ErrorCode; status: number }
+
+// A drawn knockout match waits for the organizer to name the winner (penalties);
+// set_fixture_winner_safely (sql/56) checks who may and that the match really was drawn.
+export async function saveFixtureWinner(client: SupabaseClient, tournamentId: string, fixtureKey: string, winnerTeamId: string): Promise<WinnerResult> {
+  const { error } = await client.rpc('set_fixture_winner_safely', { p_tournament_id: tournamentId, p_fixture_key: fixtureKey, p_winner_team_id: winnerTeamId })
+  if (!error) return { ok: true }
+  const message = error.message ?? ''
+  if (error.code === 'PGRST202' || error.code === '42883' || message.includes('set_fixture_winner_safely')) return { ok: false, code: 'fixtureResultsMigrationMissing', status: 503 }
+  if (message.includes('NOT_ALLOWED')) return { ok: false, code: 'fixturesNotAllowed', status: 403 }
+  if (message.includes('NOT_A_DRAWN_KNOCKOUT') || message.includes('WINNER_NOT_IN_MATCH')) return { ok: false, code: 'fixtureWinnerInvalid', status: 400 }
+  if (message.includes('FIXTURE_ALREADY_ADVANCED')) return { ok: false, code: 'fixtureAlreadyAdvanced', status: 409 }
+  return { ok: false, code: 'fixturesFailed', status: 500 }
 }

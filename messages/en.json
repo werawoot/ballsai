@@ -472,7 +472,10 @@
     "fixturesTeamsChanged": "The confirmed teams just changed; please make the draw again",
     "fixturesMigrationMissing": "Fixtures are not switched on yet (database step SQL55 pending)",
     "fixturesFailed": "The draw could not be saved; please try again",
-    "fixturesRateLimited": "Too many draws in a short time; please wait a moment"
+    "fixturesRateLimited": "Too many draws in a short time; please wait a moment",
+    "fixtureResultsMigrationMissing": "Results in fixtures are not switched on yet (SQL56 pending)",
+    "fixtureAlreadyAdvanced": "This result sent a team into a later match that already has a result; void that later match first",
+    "fixtureWinnerInvalid": "A winner can only be chosen for a drawn knockout match, from its two teams"
   },
   "impact": {
     "back": "Home",
@@ -586,6 +589,18 @@
     "winnerOf": "Winner of round {round} match {match}",
     "groupPlace": "Group {group} #{position}",
     "versus": "vs",
-    "notFound": "This tournament was not found, or you do not organise it"
+    "notFound": "This tournament was not found, or you do not organise it",
+    "chooseWinner": "Drawn — choose who won on penalties",
+    "winnerButton": "{team} won",
+    "wonOnPenalties": "won on penalties",
+    "tableGroup": "Group {group} table",
+    "tableLeague": "Table",
+    "colTeam": "Team",
+    "colPlayed": "P",
+    "colWon": "W",
+    "colDrawn": "D",
+    "colLost": "L",
+    "colGoalDifference": "GD",
+    "colPoints": "Pts"
   }
 }

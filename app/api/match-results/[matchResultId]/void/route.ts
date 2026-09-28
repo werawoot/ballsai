@@ -3,6 +3,7 @@ import { revalidateTag } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { apiError } from '@/lib/api-error'
 
 export async function POST(
   request: Request,
@@ -41,6 +42,8 @@ export async function POST(
     const message = error.message ?? ''
     if (message.includes('MATCH_NOT_FOUND')) return NextResponse.json({ error: 'ไม่พบผลการแข่งขันนี้' }, { status: 404 })
     if (message.includes('ALREADY_VOID')) return NextResponse.json({ error: 'ผลนัดนี้ถูกยกเลิกไปแล้ว' }, { status: 409 })
+    // sql/56: this result already sent a team into a later match that has its own result.
+    if (message.includes('FIXTURE_ALREADY_ADVANCED')) return apiError('fixtureAlreadyAdvanced', 409)
     if (message.includes('FORBIDDEN') || message.includes('AUTH_REQUIRED')) {
       return NextResponse.json({ error: 'ยกเลิกได้เฉพาะผลแข่งในรายการของคุณ' }, { status: 403 })
     }
