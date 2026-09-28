@@ -21,14 +21,14 @@ describe('validateVenuePhotoFile', () => {
     const result = validateVenuePhotoFile(file('image/gif', 1000), 0)
 
     expect(result.ok).toBe(false)
-    expect(result.ok === false && result.error).toContain('JPEG')
+    expect(result).toEqual({ ok: false, reason: 'type' })
   })
 
   it('rejects a file over the 5 MB bucket limit', () => {
     const result = validateVenuePhotoFile(file('image/jpeg', VENUE_PHOTO_MAX_BYTES + 1), 0)
 
     expect(result.ok).toBe(false)
-    expect(result.ok === false && result.error).toContain('5 MB')
+    expect(result).toEqual({ ok: false, reason: 'size' })
   })
 
   it('accepts a file exactly on the limit', () => {
@@ -39,7 +39,7 @@ describe('validateVenuePhotoFile', () => {
     const result = validateVenuePhotoFile(file('image/jpeg', 1000), VENUE_PHOTO_LIMIT)
 
     expect(result.ok).toBe(false)
-    expect(result.ok === false && result.error).toContain('8')
+    expect(result).toEqual({ ok: false, reason: 'limit' })
   })
 
   it('still accepts the eighth photo', () => {

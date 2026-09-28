@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { fetchUnreadNotificationCount } from '@/lib/notification-count'
 import NotificationBellLink from '@/components/NotificationBellLink'
@@ -12,6 +13,7 @@ export default async function VenueOwnerPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/venue')
   const unreadCount = await fetchUnreadNotificationCount(supabase, user.id)
+  const t = await getTranslations('venueOwner.page')
 
   const [{ data: venueRows }, { data: bookingRows }, { data: photoRows }] = await Promise.all([
     supabase.from('venue_profiles').select('id, name, province, address, contact_phone, description, amenities, venue_courts(id, name, sport, surface, capacity, venue_slots(id, starts_at, ends_at, price_baht, status))').eq('owner_id', user.id).order('created_at', { ascending: false }),
@@ -25,8 +27,8 @@ export default async function VenueOwnerPage() {
 
   return <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 60 }}>
     <div style={{ maxWidth: 880, margin: 'auto', padding: 16 }}><VenueOperations venues={(venueRows ?? []) as unknown as OwnerVenue[]} bookings={(bookingRows ?? []) as unknown as OwnerBooking[]} /></div>
-    <PageHeader actions={<><NotificationBellLink unreadCount={unreadCount} /><Link href="/venues" className="bds-page-header-link"><span>ดูสนามทั้งหมด</span></Link></>} />
-    <section style={{ background: 'linear-gradient(120deg,#172033,#0f503d)', color: 'white', padding: '34px 18px 38px' }}><div style={{ maxWidth: 880, margin: '0 auto' }}><p style={{ color: '#f5c518', margin: 0, font: '800 10px var(--font-oswald)', letterSpacing: 1.5 }}>VENUE OWNER · CLOSED BETA</p><h1 style={{ margin: '9px 0 7px', font: '800 clamp(35px,7vw,54px)/.93 var(--font-oswald)' }}>จัดการสนาม<br /><span style={{ color: '#f5c518' }}>ให้พร้อมลงเล่น</span></h1><p style={{ maxWidth: 560, margin: 0, color: 'rgba(255,255,255,.72)', fontSize: 13, lineHeight: 1.55 }}>สร้างสนาม เปิดช่วงเวลาว่าง และตอบรับคำขอจองจากผู้ใช้ BallDoenSai ในที่เดียว</p></div></section>
+    <PageHeader actions={<><NotificationBellLink unreadCount={unreadCount} /><Link href="/venues" className="bds-page-header-link"><span>{t('allVenues')}</span></Link></>} />
+    <section style={{ background: 'linear-gradient(120deg,#172033,#0f503d)', color: 'white', padding: '34px 18px 38px' }}><div style={{ maxWidth: 880, margin: '0 auto' }}><p style={{ color: '#f5c518', margin: 0, font: '800 10px var(--font-oswald)', letterSpacing: 1.5 }}>VENUE OWNER · CLOSED BETA</p><h1 style={{ margin: '9px 0 7px', font: '800 clamp(35px,7vw,54px)/.93 var(--font-oswald)' }}>{t('titleTop')}<br /><span style={{ color: '#f5c518' }}>{t('titleBottom')}</span></h1><p style={{ maxWidth: 560, margin: 0, color: 'rgba(255,255,255,.72)', fontSize: 13, lineHeight: 1.55 }}>{t('intro')}</p></div></section>
     <section style={{ maxWidth: 880, margin: '0 auto', padding: '22px 16px' }}><VenueOwnerClient venues={(venueRows ?? []) as unknown as OwnerVenue[]} bookings={(bookingRows ?? []) as unknown as OwnerBooking[]} photos={(photoRows ?? []) as unknown as OwnerVenuePhoto[]} /></section>
   </main>
 }

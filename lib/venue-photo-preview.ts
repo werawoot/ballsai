@@ -11,7 +11,8 @@ export type VenuePhotoPreview = {
 export type PreviewState =
   | { status: 'loading' }
   | { status: 'ready'; url: string; expiresAt: number }
-  | { status: 'error'; message: string }
+  // message is the server's own reason when it gave one; the page words the rest.
+  | { status: 'error'; message?: string }
 
 export type PreviewResponse =
   | { ok: true; url: string; expiresIn: number }
@@ -31,7 +32,7 @@ export function shouldFetchPreview(state: PreviewState | undefined, now: number)
 
 export function nextPreviewState(response: PreviewResponse, now: number): PreviewState {
   if (!response.ok) {
-    return { status: 'error', message: response.error ?? 'เปิดรูปไม่สำเร็จ กรุณาลองใหม่' }
+    return response.error ? { status: 'error', message: response.error } : { status: 'error' }
   }
   return {
     status: 'ready',
@@ -40,10 +41,15 @@ export function nextPreviewState(response: PreviewResponse, now: number): Previe
   }
 }
 
-export function previewAltText(venueName: string, index: number, isCover = false) {
-  return isCover
-    ? `รูปปกของสนาม ${venueName}`
-    : `ภาพสนาม ${venueName} รูปที่ ${index + 1}`
+// The wording comes from the caller, which has the translator; this keeps the rule that
+// photos are numbered from 1 and a cover says it is the cover.
+export function previewAltText(
+  venueName: string,
+  index: number,
+  isCover: boolean,
+  words: { cover: (name: string) => string; numbered: (name: string, number: number) => string },
+) {
+  return isCover ? words.cover(venueName) : words.numbered(venueName, index + 1)
 }
 
 // shouldFetchPreview only reports that a url has lapsed; nothing re-renders at that

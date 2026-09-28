@@ -9,13 +9,16 @@ const MANAGER = 'app/venue/VenuePhotoManager.tsx'
 
 // Every button in these three flows fires an async request that ends in a refresh, so a
 // second press races the first. Each file must show pending state and refuse re-entry.
+// The owner photo manager words the same idle/busy pairs through messages
+// (venueOwner.photos.pending.*); i18n-venue-owner.test.ts holds its Thai equal to
+// VENUE_PENDING_COPY.
 const FLOWS = [
-  { name: 'booking request', file: BOOKING },
-  { name: 'admin photo moderation', file: MODERATION },
-  { name: 'owner photo manager', file: MANAGER },
+  { name: 'booking request', file: BOOKING, copy: 'VENUE_PENDING_COPY' },
+  { name: 'admin photo moderation', file: MODERATION, copy: 'VENUE_PENDING_COPY' },
+  { name: 'owner photo manager', file: MANAGER, copy: 'pendingCopy(' },
 ]
 
-describe.each(FLOWS)('$name pending feedback', ({ file }) => {
+describe.each(FLOWS)('$name pending feedback', ({ file, copy }) => {
   const source = () => read(file)
 
   it('marks the running control with aria-busy', () => {
@@ -24,7 +27,7 @@ describe.each(FLOWS)('$name pending feedback', ({ file }) => {
 
   it('drives its buttons through the shared pending helper', () => {
     expect(source()).toContain('pendingButton')
-    expect(source()).toContain('VENUE_PENDING_COPY')
+    expect(source()).toContain(copy)
   })
 
   it('refuses re-entry inside the handler, not only through disabled', () => {
@@ -61,8 +64,9 @@ describe.each(FLOWS)('$name pending feedback', ({ file }) => {
 
     expect(specifiers.length).toBeGreaterThan(0)
     for (const specifier of specifiers) {
+      // next-intl is the site's translation layer (ADR-009), not a pending-state library.
       expect(specifier, `${specifier} is not an existing React/Next/local module`)
-        .toMatch(/^(react|next\/[\w-]+|lucide-react|@\/[\w/-]+)$/)
+        .toMatch(/^(react|next\/[\w-]+|next-intl|lucide-react|@\/[\w/-]+)$/)
     }
   })
 })
@@ -96,14 +100,14 @@ describe('admin moderation button', () => {
 describe('owner photo manager buttons', () => {
   it('shows pending copy for upload, delete and cover', () => {
     const source = read(MANAGER)
-    expect(source).toContain('VENUE_PENDING_COPY.upload')
-    expect(source).toContain('VENUE_PENDING_COPY.remove')
-    expect(source).toContain('VENUE_PENDING_COPY.cover')
+    expect(source).toContain("pendingCopy('upload')")
+    expect(source).toContain("pendingCopy('remove')")
+    expect(source).toContain("pendingCopy('cover')")
   })
 
   it('keeps the icon-only reorder buttons announceable while they work', () => {
     const source = read(MANAGER)
-    expect(source).toContain('VENUE_PENDING_COPY.move')
+    expect(source).toContain("pendingCopy('move')")
     // Their accessible name is the aria-label, so it must swap to the pending copy
     // rather than staying "เลื่อนรูปขึ้น" while the reorder is in flight.
     const swaps = [...source.matchAll(/aria-label=\{(\w+)\.isPending \? \1\.label :/g)]

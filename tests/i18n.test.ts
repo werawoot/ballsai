@@ -234,6 +234,13 @@ describe('no new hard-coded Thai', () => {
     'lib/venue-card-stats.ts',
     'lib/venue-images.ts',
     'lib/venue-sport.ts',
+    'app/venue/page.tsx',
+    'app/venue/VenueOwnerClient.tsx',
+    'app/venue/VenuePhotoManager.tsx',
+    'lib/venue-photo-manager.ts',
+    'lib/venue-photo-preview.ts',
+    'lib/venue-photo-upload.ts',
+    'lib/venue-slot-status.ts',
     'app/impact/page.tsx',
   ])('keeps %s translated', path => {
     expect(baseline).not.toContain(path)
