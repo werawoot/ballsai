@@ -15,7 +15,7 @@
 ## ขั้น 0 — ดูว่าฐานนี้มีอะไรแล้ว
 
 รัน [`sql/checks/apply-round-status.sql`](../sql/checks/apply-round-status.sql) (อ่านอย่างเดียว)
-ได้ 13 แถว แถวที่ `present = true` แปลว่าขั้นนั้นมีอยู่แล้ว ข้ามได้ (แต่ยังรัน precheck ของขั้นนั้นเพื่อยืนยัน)
+ได้ 14 แถว แถวที่ `present = true` แปลว่าขั้นนั้นมีอยู่แล้ว ข้ามได้ (แต่ยังรัน precheck ของขั้นนั้นเพื่อยืนยัน)
 
 ข้อมูลจาก inventory 28 ก.ย.: Staging มี SQL46 และ SQL47 แล้ว, Production ยังไม่มี —
 ปุ่มแก้สนามและจัดการนักกีฬาของโค้ชบน Production จึงตอบ 503 จนกว่าจะถึงขั้น 5–6
@@ -36,7 +36,8 @@
 | 10 | `sql/51-public-list-pagination-indexes-v1.sql` | `/venues` และ `/tournaments` เร็วเมื่อข้อมูลเยอะ | เปิด `/venues?page=2`, `/tournaments?page=2` |
 | 11 | `sql/52-public-athlete-rankings-view-v1.sql` | แท็บดาวรุ่ง/MVP ใน `/ranking` ถูกต้องทุกขนาด | `/ranking?view=emerging`, `/ranking?view=mvp`; log ต้องไม่มี `view_missing` |
 | 12 | `sql/53-athletes-directory-index-v1.sql` | `/athletes` เร็วเมื่อข้อมูลเยอะ | `/athletes?page=2` |
-| 13 | `sql/50-anon-definer-execute-revoke-v1.sql` (+ precheck/postcheck) — **ขั้นสุดท้าย** | คนที่ไม่ได้ล็อกอินเรียกฟังก์ชันพิเศษไม่ได้ | ทดสอบตามท้าย postcheck ของ SQL50 (ทั้งไม่ล็อกอินและล็อกอิน) |
+| 13 | `sql/55-tournament-fixtures-v1.sql` (+ precheck/postcheck) | ผู้จัดจัดสายและตารางแข่งอัตโนมัติ: น็อกเอาต์, ลีก, แบ่งกลุ่มแล้วเข้าน็อกเอาต์ | `/dashboard` → การ์ดรายการแข่ง → "ตารางแข่ง" → จัดสาย; บัญชีผู้จัดคนอื่นเปิดหน้าเดียวกันต้องถูกปฏิเสธ |
+| 14 | `sql/50-anon-definer-execute-revoke-v1.sql` (+ precheck/postcheck) — **ขั้นสุดท้าย** | คนที่ไม่ได้ล็อกอินเรียกฟังก์ชันพิเศษไม่ได้ | ทดสอบตามท้าย postcheck ของ SQL50 (ทั้งไม่ล็อกอินและล็อกอิน) |
 
 ทำไมเรียงแบบนี้:
 
@@ -69,3 +70,4 @@
 | 11 | | |
 | 12 | | |
 | 13 | | |
+| 14 | | |

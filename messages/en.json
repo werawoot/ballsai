@@ -13,7 +13,8 @@
     "back": {
       "profile": "Profile",
       "myRequests": "My requests",
-      "myOrganization": "My organization"
+      "myOrganization": "My organization",
+      "dashboard": "Dashboard"
     },
     "manageVenues": "Manage venues"
   },
@@ -461,7 +462,17 @@
     "previewFailed": "Couldn't open the photo.",
     "previewNotFound": "Photo not found.",
     "previewForbidden": "Only the venue owner or an admin can view this photo.",
-    "previewUnavailable": "This photo can't be opened right now."
+    "previewUnavailable": "This photo can't be opened right now.",
+    "fixturesRequestInvalid": "The draw settings are not valid",
+    "fixturesNeedTwoTeams": "At least two confirmed teams are needed for a draw",
+    "fixturesTooManyTeams": "There are more confirmed teams than this format supports",
+    "fixturesGroupsTooSmall": "Too many groups for this number of teams; try fewer groups",
+    "fixturesNotAllowed": "Only this tournament’s organizer or an admin can make the draw",
+    "fixturesHaveResults": "Results are already recorded for this draw, so it cannot be redrawn",
+    "fixturesTeamsChanged": "The confirmed teams just changed; please make the draw again",
+    "fixturesMigrationMissing": "Fixtures are not switched on yet (database step SQL55 pending)",
+    "fixturesFailed": "The draw could not be saved; please try again",
+    "fixturesRateLimited": "Too many draws in a short time; please wait a moment"
   },
   "impact": {
     "back": "Home",
@@ -545,5 +556,36 @@
     "searchPlaceholder": "Team name",
     "searchButton": "Search",
     "empty": "No teams here yet"
+  },
+  "fixtures": {
+    "open": "Fixtures",
+    "eyebrow": "FIXTURES",
+    "title": "Draw and fixtures",
+    "teamsReady": "{count} confirmed teams",
+    "format": "Format",
+    "knockout": "Knockout",
+    "league": "League (everyone plays everyone)",
+    "groups": "Groups, then knockout",
+    "groupCount": "Groups",
+    "advancePerGroup": "Qualify per group",
+    "order": "Seeding",
+    "orderRandom": "Random draw",
+    "orderRegistration": "Registration order",
+    "create": "Make the draw",
+    "recreate": "Redraw (replaces the current one)",
+    "saving": "Making the draw…",
+    "saved": "Draw made: {count} matches",
+    "none": "No draw yet",
+    "locked": "Results are recorded, so this draw cannot be redrawn",
+    "migrationMissing": "Fixtures are not switched on yet (SQL55 pending)",
+    "loadFailed": "The fixtures could not be loaded",
+    "stageKnockout": "Knockout",
+    "stageLeague": "League",
+    "stageGroup": "Group {group}",
+    "round": "Round {round}",
+    "winnerOf": "Winner of round {round} match {match}",
+    "groupPlace": "Group {group} #{position}",
+    "versus": "vs",
+    "notFound": "This tournament was not found, or you do not organise it"
   }
 }
