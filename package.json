@@ -11,7 +11,8 @@
     "test": "vitest run",
     "security:rls": "node scripts/rls-smoke-test.mjs",
     "verify:production": "node scripts/verify-production-config.mjs",
-    "smoke:public": "node scripts/smoke-public-pages.mjs"
+    "smoke:public": "node scripts/smoke-public-pages.mjs",
+    "test:concurrency": "node scripts/concurrency-checks.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
