@@ -1,4 +1,5 @@
 import { buildVenueRlsChecks } from './rls-venue-checks.mjs'
+import { buildMinorDataChecks } from './rls-minor-checks.mjs'
 
 /**
  * Closed-beta RLS smoke tests.
@@ -15,6 +16,11 @@ import { buildVenueRlsChecks } from './rls-venue-checks.mjs'
  * VENUE_OWNER_JWT, VENUE_REQUESTER_JWT, UNRELATED_JWT,
  * OWNER_NOTIFICATION_ID, REQUESTER_NOTIFICATION_ID, BOOKING_ID,
  * RESERVED_SLOT_ID, OPEN_SLOT_ID
+ *
+ * Minors' data (T21, scripts/rls-minor-checks.mjs): ATHLETE_JWT (defaults to PLAYER_JWT),
+ * GUARDIAN_JWT, and the test ids PRIVATE_PROFILE_USER_ID, GUARDIAN_LINK_ID,
+ * FOREIGN_TEAM_ID, FOREIGN_PAYMENT_ID, UNPUBLISHED_FIXTURE_TOURNAMENT_ID,
+ * FOREIGN_ORGANIZATION_ID. The signed-out sweep and the birth-date checks need no ids.
  *
  * This script defaults to safe checks. It never performs a write that is
  * expected to succeed unless ALLOW_RLS_WRITE_TESTS=true is explicitly set.
@@ -206,6 +212,36 @@ if (missingVenueRlsInputs.length > 0) {
     if (check.expected === 'visible') expectVisible(check.label, result)
     if (check.expected === 'hidden') expectHidden(check.label, result)
     if (check.expected === 'denied') expectDenied(check.label, result)
+  }
+}
+
+// T21: minors' and other private data. Read-only in every mode.
+{
+  const jwtByAudience = {
+    anonymous: '',
+    owner: process.env.ATHLETE_JWT ?? playerJwt,
+    guardian: process.env.GUARDIAN_JWT,
+    unrelated: unrelatedJwt,
+  }
+  const minorIds = Object.fromEntries([
+    'PRIVATE_PROFILE_USER_ID', 'GUARDIAN_LINK_ID', 'FOREIGN_TEAM_ID', 'FOREIGN_PAYMENT_ID',
+    'UNPUBLISHED_FIXTURE_TOURNAMENT_ID', 'FOREIGN_ORGANIZATION_ID',
+  ].map(name => [name, process.env[name]]).filter(([, value]) => value))
+  for (const check of buildMinorDataChecks(minorIds)) {
+    const jwt = jwtByAudience[check.audience]
+    if (jwt === undefined) {
+      console.log(`SKIP ${check.label}: set ${check.audience === 'guardian' ? 'GUARDIAN_JWT' : 'UNRELATED_JWT'}`)
+      continue
+    }
+    const result = await requestAs(jwt, check.path, check.method === 'POST' ? { method: 'POST', body: JSON.stringify(check.body) } : {})
+    // A table this database does not have yet is not a pass: say so.
+    if (result.status === 404 && JSON.stringify(result.body ?? '').includes('PGRST205')) {
+      console.log(`SKIP ${check.label}: table not in this database`)
+      continue
+    }
+    if (check.expected === 'visible') expectVisible(check.label, result)
+    if (check.expected === 'hidden') expectHidden(check.label, result)
+    if (check.expected === 'blocked') expectBlocked(check.label, result)
   }
 }
 
