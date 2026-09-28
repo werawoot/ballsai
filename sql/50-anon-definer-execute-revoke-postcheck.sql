@@ -2,6 +2,7 @@
 
 select n.nspname,
        p.proname || '(' || replace(pg_catalog.oidvectortypes(p.proargtypes), ', ', ',') || ')' as signature,
+       pg_get_userbyid(p.proowner) as owner,
        has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated_exec
 from pg_proc p
 join pg_namespace n on n.oid = p.pronamespace
@@ -10,9 +11,11 @@ where n.nspname in ('public', 'audit') and p.prokind = 'f' and p.prosecdef
   and not exists (select 1 from pg_depend d
                   where d.classid = 'pg_proc'::regclass and d.objid = p.oid and d.deptype = 'e')
 order by 1, 2;
--- Expected: at most five rows, all in public: is_admin(), is_organizer(),
--- is_accepted_guardian_for(uuid), confirm_guardian_verification(text),
--- revoke_guardian_consent(text,text). Any other row: STOP and reconcile.
+-- Expected: among functions owned by postgres, at most five rows, all in public:
+-- is_admin(), is_organizer(), is_accepted_guardian_for(uuid),
+-- confirm_guardian_verification(text), revoke_guardian_consent(text,text). Rows owned by
+-- another role are the ones SQL50 reported as left unchanged. Any other postgres-owned row:
+-- STOP and reconcile.
 
 select pg_get_userbyid(d.defaclrole) as for_objects_created_by, n.nspname as in_schema,
        d.defaclacl::text as default_grants

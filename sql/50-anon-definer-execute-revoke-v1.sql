@@ -37,6 +37,12 @@ create temp table sql50_before on commit drop as
 select p.oid,
        n.nspname,
        p.proname || '(' || replace(pg_catalog.oidvectortypes(p.proargtypes), ', ', ',') || ')' as signature,
+       -- A REVOKE removes only grants the running role made, so postgres can change only
+       -- the functions it owns: every function our migrations create. Supabase's defaults
+       -- also grant anon EXECUTE on functions supabase_admin creates in public; those are
+       -- reported below, not changed.
+       pg_get_userbyid(p.proowner) = 'postgres' as owned_by_postgres,
+       pg_get_userbyid(p.proowner) as owner,
        has_function_privilege('anon', p.oid, 'EXECUTE') as anon_before,
        has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated_before,
        has_function_privilege('service_role', p.oid, 'EXECUTE') as service_role_before
@@ -61,8 +67,16 @@ declare
     'revoke_guardian_consent(text,text)'
   ];
   r record;
+  v_other_owners text;
 begin
-  for r in select * from sql50_before loop
+  select string_agg(b.nspname || '.' || b.signature || ' (owner ' || b.owner || ')', ', ') into v_other_owners
+  from sql50_before b
+  where not b.owned_by_postgres and b.anon_before;
+  if v_other_owners is not null then
+    raise notice 'SQL50 left unchanged, owned by another role: %', v_other_owners;
+  end if;
+
+  for r in select * from sql50_before where owned_by_postgres loop
     if r.nspname = 'public' and r.signature = any (v_anon_allowed) then
       continue;
     end if;
@@ -98,10 +112,12 @@ declare
   v_bad text;
   v_probe boolean;
 begin
-  -- 1. No definer function outside the allowlist is callable by anon.
+  -- 1. No definer function postgres owns outside the allowlist is callable by anon.
+  --    Functions owned by another role were reported above and are not changed here.
   select string_agg(b.nspname || '.' || b.signature, ', ') into v_bad
   from sql50_before b
-  where not (b.nspname = 'public' and b.signature = any (v_anon_allowed))
+  where b.owned_by_postgres
+    and not (b.nspname = 'public' and b.signature = any (v_anon_allowed))
     and has_function_privilege('anon', b.oid, 'EXECUTE');
   if v_bad is not null then
     raise exception 'SQL50 left anon EXECUTE on: %', v_bad;

@@ -30,6 +30,16 @@ describe('SQL50 anon EXECUTE on SECURITY DEFINER functions', () => {
     expect(migration).toContain("deptype = 'e'")
   })
 
+  // A REVOKE removes only grants the running role made. Supabase's defaults give anon
+  // EXECUTE on functions supabase_admin creates in public too (inventory-6, 28 Sep 2026),
+  // and postgres cannot revoke those. SQL50 changes only functions postgres owns (all our
+  // migrations) and names any other owner instead of failing on it.
+  it('changes only functions postgres owns, and reports any other owner', () => {
+    expect(migration).toMatch(/pg_get_userbyid\(p\.proowner\)\s*=\s*'postgres'/)
+    expect(migration).toMatch(/raise notice 'SQL50 left unchanged/)
+    expect(code('50-anon-definer-execute-revoke-precheck.sql')).toContain('pg_get_userbyid(p.proowner)')
+  })
+
   it('revokes from anon and PUBLIC, and gives back whatever authenticated loses', () => {
     expect(migration).toMatch(/revoke execute on function %s from anon, public/i)
     expect(migration).toMatch(/grant execute on function %s to authenticated/i)

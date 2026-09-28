@@ -8,8 +8,12 @@ select current_user as runs_as;
 -- Every SECURITY DEFINER function SQL50 would consider, with who can call it today.
 -- allowlisted = true rows keep their anon access; every other anon_exec = true row is
 -- what SQL50 revokes.
+-- owner: SQL50 changes only functions owned by postgres (a REVOKE removes only grants the
+-- running role made). Any anon_exec = true row with another owner is reported by SQL50 as
+-- left unchanged; decide separately what to do with it.
 select n.nspname,
        p.proname || '(' || replace(pg_catalog.oidvectortypes(p.proargtypes), ', ', ',') || ')' as signature,
+       pg_get_userbyid(p.proowner) as owner,
        (n.nspname = 'public' and p.proname || '(' || replace(pg_catalog.oidvectortypes(p.proargtypes), ', ', ',') || ')' in
          ('is_admin()', 'is_organizer()', 'is_accepted_guardian_for(uuid)',
           'confirm_guardian_verification(text)', 'revoke_guardian_consent(text,text)')) as allowlisted,
