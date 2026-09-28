@@ -46,6 +46,26 @@ Fame. Users are minors, their guardians, coaches and tournament organizers.
 11. Do not call anything "100%" until a real closed-beta group has completed the whole
     flow on real data.
 
+## Target: nationwide use
+
+The owner's goal is a system all of Thailand can use. Build every change for that, not
+only so the code runs or the tests pass. Before proposing or handing back any change,
+answer all five:
+
+1. **Data at 100×.** It still works with a hundred times today's rows: lists are
+   paginated, nothing is silently capped or truncated, and hot queries have an index.
+2. **People at the same moment.** Concurrent or repeated requests leave the data correct:
+   no duplicates, no double booking, and a retried request has the same effect as one.
+3. **Minors' data at scale.** RLS, rate limits and the PDPA rules hold for hundreds of
+   thousands of young athletes, not just for a handful of testers.
+4. **No manual step that grows with users.** A task a person must do by hand for each
+   athlete, team or venue does not work nationwide; name it and plan how it goes away.
+5. **Evidence, not expectation.** Show the numbers or test results that prove 1–4.
+
+A change that fails any of the five is reported as "not ready for nationwide use", with
+the reason. It is never reported as done. The gaps already known are listed in
+[`docs/national-readiness.md`](docs/national-readiness.md).
+
 ## AI engineering preflight
 
 Before starting any non-trivial change, bug investigation, or decision that depends on
