@@ -27,6 +27,8 @@ export default function AthleteFilters({
     const params = new URLSearchParams(searchParams.toString())
     if (value) params.set(key, value)
     else params.delete(key)
+    // A new filter is a new list: start it from its first page.
+    params.delete('page')
     router.replace(`/athletes?${params.toString()}`)
   }
 

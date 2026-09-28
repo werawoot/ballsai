@@ -10,8 +10,9 @@ import en from '@/messages/en.json'
 const table = vi.hoisted(() => ({ rows: [] as Record<string, unknown>[] }))
 function fakeClient() {
   const builder = {
-    select: () => builder, eq: () => builder, gt: () => builder, order: () => builder,
+    select: () => builder, eq: () => builder, gt: () => builder, lte: () => builder, ilike: () => builder, in: () => builder, order: () => builder,
     range: async (from: number, to: number) => ({ data: table.rows.slice(from, to + 1), error: null }),
+    limit: async () => ({ data: [], error: null }),
   }
   return { from: () => builder }
 }
@@ -24,6 +25,9 @@ vi.mock('@/lib/supabase-server', () => ({ createServerSupabaseClient: async () =
 // /tournaments reads through lib/public-data: its anon client and its cache wrapper.
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => fakeClient() }))
 vi.mock('next/cache', () => ({ unstable_cache: (fn: unknown) => fn }))
+// /athletes reads with the signed-in visitor's client.
+vi.mock('@supabase/ssr', () => ({ createServerClient: () => fakeClient() }))
+vi.mock('next/headers', () => ({ cookies: () => ({ getAll: () => [], set: () => {} }) }))
 
 const messages = withFallback(en, th)
 vi.mock('next-intl/server', () => ({
@@ -33,6 +37,7 @@ vi.mock('next-intl/server', () => ({
 
 import VenuesPage from '@/app/venues/page'
 import TournamentsPage from '@/app/tournaments/page'
+import AthletesPage from '@/app/athletes/page'
 
 const venue = (index: number) => ({ id: `v${index}`, name: `Venue ${index}`, province: 'Bangkok', description: '', amenities: [], venue_courts: [] })
 const render = async (page: (props: never) => Promise<ReactElement>, searchParams: Record<string, string>) =>
@@ -74,5 +79,25 @@ describe('/tournaments, one page at a time', () => {
     const html = await render(TournamentsPage as never, { page: '3' })
     expect(html).toContain('Cup 45')
     expect(hrefs(html)).not.toContain('/tournaments?page=4')
+  })
+})
+
+const athlete = (index: number) => ({ user_id: `u${index}`, display_name: `Athlete ${index}`, birth_date: null, position: 'MF', province: 'เชียงใหม่', current_team: null, profile_image_url: null, verification_level: 'self' })
+
+describe('/athletes, one page at a time', () => {
+  it('shows athlete 101, which limit(100) used to hide, on the last page', async () => {
+    table.rows = Array.from({ length: 101 }, (_, index) => athlete(index + 1))
+    const html = await render(AthletesPage as never, { page: '5' })
+    expect(html).toContain('Athlete 101')
+    expect(html).not.toContain('Athlete 96<')
+    expect(hrefs(html)).toContain('/athletes?page=4')
+    expect(hrefs(html)).not.toContain('/athletes?page=6')
+  })
+
+  it('keeps the filters in the page links', async () => {
+    table.rows = Array.from({ length: 60 }, (_, index) => athlete(index + 1))
+    const html = await render(AthletesPage as never, { province: 'เชียงใหม่', age: 'u15', page: '2' })
+    const query = (page: number) => `/athletes?${new URLSearchParams({ province: 'เชียงใหม่', age: 'u15', page: String(page) })}`
+    expect(hrefs(html)).toEqual(expect.arrayContaining([query(1), query(3)]))
   })
 })
