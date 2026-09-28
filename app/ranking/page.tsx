@@ -32,7 +32,7 @@ export default async function RankingPage({
     .filter(player => !position || player.position === position)
     .filter(player => !search || player.player_name.includes(search)) : []
   const displayRankings = rankings && rankings.length > 0 ? rankings : fallbackRankings
-  const uniqueProvinces = [...new Set((provinces && provinces.length > 0 ? provinces.map(p => p.province) : showDemoData ? samplePlayerRanks.map(p => p.province) : []) ?? [])]
+  const uniqueProvinces = [...new Set(provinces.length > 0 ? provinces : showDemoData ? samplePlayerRanks.map(p => p.province) : [])]
 
   const trending = [...displayRankings].filter(player => player.rank_change > 0).sort((a, b) => b.rank_change - a.rank_change || b.pts - a.pts)
   const emerging = (identityData.emerging.length ? identityData.emerging : trending) as typeof displayRankings

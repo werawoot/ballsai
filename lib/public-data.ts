@@ -3,6 +3,7 @@ import { unstable_cache } from 'next/cache'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from './season'
 import { fetchPublicTournamentsPage } from './public-tournaments'
 import { fetchIdentityRanking, type IdentityRanking } from './public-identity-ranking'
+import { fetchRankingProvinces } from './ranking-provinces'
 
 const publicSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -93,23 +94,17 @@ export const getPublicRankings = unstable_cache(
   { revalidate: 60, tags: ['public-ranking'] },
 )
 
+// One name per province with ranked athletes (sql/59), never the whole ranking table.
 export const getPublicRankingProvinces = unstable_cache(
-  async (sport: string, season: string) => {
+  async (sport: string, season: string): Promise<string[]> => {
     try {
-      const { data, error } = await publicSupabase
-        .from('player_ranks')
-        .select('province')
-        .eq('sport', sport)
-        .eq('season', season)
-        .order('province')
-      if (error) throw error
-      return data
+      return await fetchRankingProvinces(publicSupabase, sport, season)
     } catch (error) {
       console.error(JSON.stringify({ level: 'error', event: 'public_ranking_provinces_fetch_failed', error: publicDataErrorDetails(error) }))
       return []
     }
   },
-  ['public-ranking-provinces'],
+  ['public-ranking-provinces-v2'],
   { revalidate: 60, tags: ['public-ranking'] },
 )
 
