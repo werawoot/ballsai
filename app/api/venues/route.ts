@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { apiError } from '@/lib/api-error'
 
 type CreateVenueBody = {
   name?: string
@@ -13,7 +14,7 @@ type CreateVenueBody = {
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 })
+  if (!user) return apiError('signInFirst', 401)
 
   const body = await request.json().catch(() => null) as CreateVenueBody | null
   const name = body?.name?.trim()
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
   const address = body?.address?.trim()
   const contactPhone = body?.contactPhone?.trim()
   if (!name || !province || !address || !contactPhone) {
-    return NextResponse.json({ error: 'กรอกชื่อสนาม จังหวัด ที่อยู่ และช่องทางติดต่อให้ครบ' }, { status: 400 })
+    return apiError('venueFieldsRequired', 400)
   }
 
   const amenities = (body?.amenities ?? []).map(item => item.trim()).filter(Boolean).slice(0, 12)
@@ -33,6 +34,6 @@ export async function POST(request: Request) {
     p_description: body?.description?.trim() ?? '',
     p_amenities: amenities,
   })
-  if (error) return NextResponse.json({ error: 'สร้างสนามไม่สำเร็จ' }, { status: 400 })
+  if (error) return apiError('venueCreateFailed', 400)
   return NextResponse.json({ ok: true, venueId: data })
 }

@@ -241,6 +241,17 @@ describe('no new hard-coded Thai', () => {
     'lib/venue-photo-preview.ts',
     'lib/venue-photo-upload.ts',
     'lib/venue-slot-status.ts',
+    'lib/api-error.ts',
+    'lib/use-api-error-text.ts',
+    'lib/venue-photo-errors.ts',
+    'app/api/venues/route.ts',
+    'app/api/venues/[venueId]/courts/route.ts',
+    'app/api/venue-slots/route.ts',
+    'app/api/venue-slots/[slotId]/route.ts',
+    'app/api/venue-bookings/[bookingId]/route.ts',
+    'app/api/venues/[venueId]/photos/route.ts',
+    'app/api/venues/[venueId]/photos/[photoId]/route.ts',
+    'app/api/venues/[venueId]/photos/[photoId]/preview/route.ts',
   ])('keeps %s translated', path => {
     expect(baseline).not.toContain(path)
     expect(hasThaiText(read(path), path)).toBe(false)

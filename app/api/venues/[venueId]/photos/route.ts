@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { apiError } from '@/lib/api-error'
 import { UUID_PATTERN, venuePhotoRpcError } from '@/lib/venue-photo-errors'
 import { VENUE_PHOTO_LIMIT } from '@/lib/venue-photo-upload'
 
 export async function POST(request: Request, { params }: { params: { venueId: string } }) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 })
+  if (!user) return apiError('signInFirst', 401)
   if (!UUID_PATTERN.test(params.venueId)) {
-    return NextResponse.json({ error: 'รหัสสนามไม่ถูกต้อง' }, { status: 400 })
+    return apiError('venueIdInvalid', 400)
   }
 
   const body = await request.json().catch(() => null) as { objectPath?: string; caption?: string } | null
@@ -16,7 +17,7 @@ export async function POST(request: Request, { params }: { params: { venueId: st
   // The path must sit inside this venue's folder. SQL43 checks this too; refusing here
   // keeps a mistyped path from ever reaching the database.
   if (!objectPath || !objectPath.startsWith(`${params.venueId.toLowerCase()}/`)) {
-    return NextResponse.json({ error: 'ที่อยู่ไฟล์ไม่ถูกต้อง' }, { status: 400 })
+    return apiError('photoPathInvalid', 400)
   }
 
   // moderation_status is deliberately absent: SQL43 defaults it to 'pending' and only
@@ -34,16 +35,16 @@ export async function POST(request: Request, { params }: { params: { venueId: st
 export async function PATCH(request: Request, { params }: { params: { venueId: string } }) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 })
+  if (!user) return apiError('signInFirst', 401)
   if (!UUID_PATTERN.test(params.venueId)) {
-    return NextResponse.json({ error: 'รหัสสนามไม่ถูกต้อง' }, { status: 400 })
+    return apiError('venueIdInvalid', 400)
   }
 
   const body = await request.json().catch(() => null) as { photoIds?: unknown } | null
   const photoIds = body?.photoIds
   if (!Array.isArray(photoIds) || photoIds.length === 0 || photoIds.length > VENUE_PHOTO_LIMIT
       || photoIds.some(id => typeof id !== 'string' || !UUID_PATTERN.test(id))) {
-    return NextResponse.json({ error: 'ลำดับรูปไม่ถูกต้อง กรุณาโหลดหน้าใหม่' }, { status: 400 })
+    return apiError('photoOrderInvalid', 400)
   }
 
   const { error } = await supabase.rpc('reorder_venue_photos_safely', { p_photo_ids: photoIds })

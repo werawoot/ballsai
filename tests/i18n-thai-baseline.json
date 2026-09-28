@@ -53,16 +53,8 @@
   "app/api/tournaments/[tournamentId]/route.ts",
   "app/api/tournaments/[tournamentId]/teams/route.ts",
   "app/api/tournaments/route.ts",
-  "app/api/venue-bookings/[bookingId]/route.ts",
   "app/api/venue-bookings/route.ts",
-  "app/api/venue-slots/[slotId]/route.ts",
-  "app/api/venue-slots/route.ts",
-  "app/api/venues/[venueId]/courts/route.ts",
-  "app/api/venues/[venueId]/photos/[photoId]/preview/route.ts",
-  "app/api/venues/[venueId]/photos/[photoId]/route.ts",
   "app/api/venues/[venueId]/photos/[photoId]/view/route.ts",
-  "app/api/venues/[venueId]/photos/route.ts",
-  "app/api/venues/route.ts",
   "app/athletes/page.tsx",
   "app/bds-wallet/page.tsx",
   "app/career/page.tsx",
@@ -129,6 +121,5 @@
   "lib/site-nav.ts",
   "lib/venue-booking-cancel.ts",
   "lib/venue-booking-history.ts",
-  "lib/venue-booking-notification.ts",
-  "lib/venue-photo-errors.ts"
+  "lib/venue-booking-notification.ts"
 ]

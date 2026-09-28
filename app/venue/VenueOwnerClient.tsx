@@ -8,6 +8,7 @@ import { resolveCourtId, resolveVenueId } from '@/lib/venue-owner-form'
 import { ownerManageableSlots } from '@/lib/venue-slot-status'
 import { provinceName } from '@/lib/thai-provinces'
 import type { Locale } from '@/i18n/config'
+import { useApiErrorText, type ApiErrorBody } from '@/lib/use-api-error-text'
 import VenuePhotoManager from './VenuePhotoManager'
 import type { OwnerPhotoRow } from '@/lib/venue-photo-manager'
 
@@ -37,6 +38,7 @@ export default function VenueOwnerClient({ venues, bookings, photos }: { venues:
   const sportName = useTranslations('venues.sport')
   const locale = useLocale() as Locale
   const format = useFormatter()
+  const errorText = useApiErrorText()
   // The time zone comes from the provider (Asia/Bangkok), so the owner and the booker read
   // the same clock whatever device they use.
   const dateTime = (value: string) => format.dateTime(new Date(value), { dateStyle: 'medium', timeStyle: 'short' })
@@ -53,10 +55,10 @@ export default function VenueOwnerClient({ venues, bookings, photos }: { venues:
   const request = async (path: string, method: string, body?: unknown) => {
     setBusy(true); setFeedback(null)
     const response = await fetch(path, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined }).catch(() => null)
-    const data = response ? await response.json().catch(() => null) as { error?: string } | null : null
+    const data = response ? await response.json().catch(() => null) as ApiErrorBody : null
     setBusy(false)
     if (!response || !response.ok) {
-      setFeedback({ tone: 'error', text: data?.error ?? t('feedback.failed') })
+      setFeedback({ tone: 'error', text: errorText(data, t('feedback.failed')) })
       return false
     }
     router.refresh(); return true
