@@ -235,8 +235,8 @@ if (missingVenueRlsInputs.length > 0) {
     }
     const result = await requestAs(jwt, check.path, check.method === 'POST' ? { method: 'POST', body: JSON.stringify(check.body) } : {})
     // A table this database does not have yet is not a pass: say so.
-    if (result.status === 404 && JSON.stringify(result.body ?? '').includes('PGRST205')) {
-      console.log(`SKIP ${check.label}: table not in this database`)
+    if (result.status === 404 && /PGRST20[25]/.test(JSON.stringify(result.body ?? ''))) {
+      console.log(`SKIP ${check.label}: table or function not in this database`)
       continue
     }
     if (check.expected === 'visible') expectVisible(check.label, result)

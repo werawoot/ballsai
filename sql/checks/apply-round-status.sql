@@ -68,6 +68,9 @@ select step, migration, present, marker from (values
        'postgres default privileges in public give anon no EXECUTE'),
   (16, '57 public fixtures (after 50)',
        to_regprocedure('public.public_tournament_fixtures(uuid)') is not null,
-       'function public_tournament_fixtures')
+       'function public_tournament_fixtures'),
+  (17, '58 athlete private columns (after 50)',
+       not has_column_privilege('anon', 'public.athlete_profiles', 'birth_date', 'SELECT'),
+       'anon cannot read athlete_profiles.birth_date')
 ) as status(step, migration, present, marker)
 order by step;
