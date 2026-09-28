@@ -3,19 +3,31 @@ import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import MatchPlanClient, { type MatchPlanTeam } from './MatchPlanClient'
 import PageHeader from '@/components/PageHeader'
+import Pagination from '@/components/Pagination'
+import { getTranslations } from 'next-intl/server'
+import MatchPlanTeamFilter from './MatchPlanTeamFilter'
+import { parsePage } from '@/lib/pagination'
+import { fetchMatchPlanTeamsPage, type MatchPlanScope } from '@/lib/match-plan-teams'
 
-export default async function MatchPlanPage() {
+export default async function MatchPlanPage({ searchParams = {} }: { searchParams?: { scope?: string; page?: string; q?: string } }) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/match-plan')
 
-  const [{ data: profile }, { data: teams }] = await Promise.all([
-    supabase.from('profiles').select('role, onboarding_persona').eq('id', user.id).single(),
-    supabase.from('teams').select('id, name, status, tournament_id, tournaments(name, start_date)').order('created_at', { ascending: false }),
-  ])
-
+  const { data: profile } = await supabase.from('profiles').select('role, onboarding_persona').eq('id', user.id).single()
   const canCoach = profile?.role === 'organizer' || profile?.role === 'admin' || profile?.onboarding_persona === 'coach_organizer'
   if (!canCoach) redirect('/')
+
+  // The teams this user may plan for, filtered by the query itself one scope at a time and
+  // paged; organizers and admins start on the teams in their own tournaments.
+  const organizes = profile?.role === 'organizer' || profile?.role === 'admin'
+  const scope: MatchPlanScope = searchParams.scope === 'mine' || searchParams.scope === 'organized' ? searchParams.scope : organizes ? 'organized' : 'mine'
+  const page = parsePage(searchParams.page)
+  const search = (searchParams.q ?? '').trim().slice(0, 80)
+  const [t, { teams, hasNext }] = await Promise.all([
+    getTranslations('matchPlan'),
+    fetchMatchPlanTeamsPage(supabase, { userId: user.id, scope, page, search }),
+  ])
 
   return (
     <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 56 }}>
@@ -32,7 +44,12 @@ export default async function MatchPlanPage() {
 
       <section style={{ maxWidth: 850, margin: '0 auto', padding: '22px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#394150', marginBottom: 14, fontSize: 12, fontWeight: 700 }}><ClipboardPenLine size={16} color="#CC0001" /> เลือกได้เฉพาะสมาชิกที่ตอบรับคำเชิญเข้าทีมแล้ว</div>
-        <MatchPlanClient teams={(teams ?? []) as MatchPlanTeam[]} />
+        <MatchPlanTeamFilter scope={scope} search={search} />
+        {search && teams.length === 0
+          ? <p style={{ background: '#fff', border: '1px solid #e0e4ea', borderRadius: 14, padding: 20, color: '#627084', margin: 0 }}>{t('empty')}</p>
+          // Keyed by the list shown, so a new scope, search or page starts on its first team.
+          : <MatchPlanClient key={`${scope}:${search}:${page}`} teams={teams as unknown as MatchPlanTeam[]} />}
+        <Pagination basePath="/match-plan" page={page} hasNext={hasNext} params={{ scope, q: search }} />
       </section>
     </main>
   )

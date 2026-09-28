@@ -536,5 +536,14 @@
     "selected": "Recording results for",
     "notFound": "This tournament was not found, or you do not organise it",
     "history": "Showing this tournament's {count} latest results"
+  },
+  "matchPlan": {
+    "scopeLabel": "Choose which teams",
+    "scopeMine": "My teams",
+    "scopeOrganized": "In my tournaments",
+    "searchLabel": "Search teams",
+    "searchPlaceholder": "Team name",
+    "searchButton": "Search",
+    "empty": "No teams here yet"
   }
 }
