@@ -234,6 +234,7 @@ describe('no new hard-coded Thai', () => {
     'lib/venue-card-stats.ts',
     'lib/venue-images.ts',
     'lib/venue-sport.ts',
+    'app/impact/page.tsx',
   ])('keeps %s translated', path => {
     expect(baseline).not.toContain(path)
     expect(hasThaiText(read(path), path)).toBe(false)

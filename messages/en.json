@@ -264,5 +264,63 @@
     "loadingPhotos": "Loading photos of {name}",
     "photosBroken": "Could not load venue photos",
     "noPhotos": "No venue photos yet"
+  },
+  "impact": {
+    "back": "Home",
+    "hero": {
+      "line1": "Big dreams",
+      "line2": "shouldn't wait",
+      "line3": "for a chance",
+      "body": "We want the results, effort and ability of young Thai athletes to be seen by the people who can help them go further."
+    },
+    "statement": {
+      "line1": "Not just a ranking,",
+      "before": "but a ",
+      "strong": "starting point",
+      "after": " for everyone",
+      "line3": "to see what young players can do"
+    },
+    "path": {
+      "title1": "From small pitches",
+      "title2": "to bigger chances",
+      "body": "One platform built so a young athlete's path can really keep going.",
+      "see": {
+        "title": "Get seen",
+        "copy": "Bring a young player's identity, position and results together in one profile you can share."
+      },
+      "connect": {
+        "title": "Get a chance",
+        "copy": "Connect young players with tournaments, clubs, coaches and a football community looking for talent."
+      },
+      "grow": {
+        "title": "Grow",
+        "copy": "Turn real matches and results into a development path everyone can see."
+      }
+    },
+    "outcomes": {
+      "title1": "Chances",
+      "title2": "for every kid",
+      "profile": {
+        "line1": "A profile",
+        "line2": "that means something",
+        "body": "Not just a name, but a portfolio that keeps growing with the player."
+      },
+      "story": {
+        "line1": "Results",
+        "line2": "that tell a story",
+        "body": "Highlights and achievements show what numbers alone can't."
+      },
+      "community": {
+        "line1": "A community",
+        "line2": "that passes it on",
+        "body": "Parents, coaches, clubs and organizers all see the same path."
+      }
+    },
+    "action": {
+      "title1": "Their story",
+      "title2": "should start today",
+      "create": "Create an athlete profile",
+      "browse": "Browse athletes"
+    }
   }
 }
