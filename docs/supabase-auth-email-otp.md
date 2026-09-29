@@ -17,7 +17,12 @@ change.
 5. If the dashboard or SMTP provider supports a text part, use the complete contents of
    `supabase-auth-email-otp.txt` as the plain-text alternative. Do not paste the text
    version into the HTML field.
-6. Preview the template in Supabase if available. Send a test only with an approved
+6. Repeat steps 3–5 for **Authentication → Email Templates → Confirm signup**. A
+   first-time address gets that template from `signInWithOtp()`, not Magic Link; if it
+   still holds the default link-only body, a new athlete receives no code, and a mail
+   scanner opening the link would use the token up
+   ([research](research/supabase-email-otp-2026-09-29.md)).
+7. Preview the template in Supabase if available. Send a test only with an approved
    internal beta account, then enter the received code on `/login` to confirm the OTP
    flow still works.
 

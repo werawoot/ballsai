@@ -869,5 +869,20 @@
       "highlightFailed": "Could not upload the highlight. Save your athlete details first, then try again.",
       "deleteFailed": "Could not remove it. Please try again."
     }
+  },
+  "loginOtp": {
+    "emailSubtitle": "We will email you a code. No password to remember.",
+    "title": "Enter the code from your email",
+    "sentTo": "Sent to",
+    "onlyLatest": "Only the code in the newest email works. Asking for a new code cancels the old one.",
+    "resend": "Send a new code",
+    "resendIn": "New code available in {seconds}s",
+    "resent": "New code sent. Use the code in the newest email.",
+    "errors": {
+      "expired": "This code no longer works: it expired, was already used, or a newer code was sent. Use the code in the newest email, or send a new one.",
+      "rateLimited": "Too many code requests. Wait a moment and try again.",
+      "failed": "Could not verify the code. Please try again.",
+      "sendFailed": "Could not send the code. Please try again."
+    }
   }
 }
