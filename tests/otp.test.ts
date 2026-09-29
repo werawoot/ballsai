@@ -30,6 +30,15 @@ describe('email one-time code', () => {
     expect(otpErrorKey({ message: 'something else' })).toBe('failed')
   })
 
+  // T19: with CAPTCHA on, Supabase refuses a request without a valid Turnstile token with
+  // 400 captcha_failed (docs/research/supabase-captcha-turnstile-2026-09-29.md). The page
+  // must say so, not show the generic send failure.
+  it('recognises a CAPTCHA refusal', () => {
+    expect(otpErrorKey({ code: 'captcha_failed', status: 400, message: 'captcha protection: request disallowed (no captcha_token found)' })).toBe('captcha')
+    expect(otpErrorKey({ status: 400, message: 'captcha protection: request disallowed (timeout-or-duplicate)' })).toBe('captcha')
+    expect(otpErrorKey({ status: 500, message: 'captcha verification process failed' })).toBe('captcha')
+  })
+
   it('counts down to the next allowed resend', () => {
     const sentAt = 1_000_000
     expect(resendWaitSeconds(sentAt, sentAt)).toBe(60)

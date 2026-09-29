@@ -311,6 +311,9 @@ NEXT_PUBLIC_SHOW_DEMO_DATA=false
 
 NEXT_PUBLIC_ACTIVE_SPORT=football
 NEXT_PUBLIC_ACTIVE_SEASON=2026
+
+# optional: CAPTCHA before an email code (docs/captcha-setup.md)
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 ```
 
 หมายเหตุ:

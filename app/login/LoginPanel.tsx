@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft, Check, ChevronRight, Facebook, KeyRound, Mail, Shield, Sparkles, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { OTP_MAX_LENGTH, canSubmitOtp, normalizeEmail, normalizeOtp, otpErrorKey, resendWaitSeconds } from "@/lib/otp";
+import { captchaSiteKey, withCaptcha } from "@/lib/captcha";
+import TurnstileWidget from "@/components/TurnstileWidget";
 
 type LoginStep = "start" | "email" | "otp" | "admin";
 
@@ -18,6 +20,16 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const t = useTranslations("loginOtp");
+  const locale = useLocale();
+  // T19: with a Turnstile site key set, each request that sends a code or checks a password
+  // carries a fresh single-use token; the widget is reset after every such request.
+  const siteKey = captchaSiteKey();
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const captchaMissing = siteKey !== null && !captchaToken;
+  const captcha = siteKey && (
+    <TurnstileWidget label={t("captchaLabel")} language={locale} onToken={setCaptchaToken} resetSignal={captchaReset} siteKey={siteKey} />
+  );
   // When the last code was requested, for the resend countdown; the clock ticks each second.
   const [sentAt, setSentAt] = useState<number | null>(null);
   const [sentFor, setSentFor] = useState("");
@@ -86,15 +98,21 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
       else setStep("otp");
       return;
     }
+    if (captchaMissing) {
+      setMessage(t("captchaNeeded"));
+      return;
+    }
     setLoading(true);
     setMessage("");
     const { error } = await createClient().auth.signInWithOtp({
       email: normalizeEmail(email),
-      options: { emailRedirectTo: callbackUrl() },
+      options: withCaptcha({ emailRedirectTo: callbackUrl() }, captchaToken),
     });
+    // The token is spent whatever the answer, even when the address is rate limited.
+    setCaptchaReset((n) => n + 1);
     if (error) {
       const key = otpErrorKey(error);
-      setMessage(key === "rateLimited" ? t("errors.rateLimited") : t("errors.sendFailed"));
+      setMessage(key === "rateLimited" ? t("errors.rateLimited") : key === "captcha" ? t("errors.captcha") : t("errors.sendFailed"));
     } else {
       setSentAt(Date.now());
       setSentFor(normalizeEmail(email));
@@ -119,11 +137,16 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
   };
 
   const adminLogin = async () => {
+    if (captchaMissing) {
+      setMessage(t("captchaNeeded"));
+      return;
+    }
     setLoading(true);
     setMessage("");
-    const { error } = await createClient().auth.signInWithPassword({ email, password });
+    const { error } = await createClient().auth.signInWithPassword({ email, password, options: withCaptcha(undefined, captchaToken) });
+    setCaptchaReset((n) => n + 1);
     if (error) {
-      setMessage("เข้าสู่ระบบผู้ดูแลไม่สำเร็จ: " + error.message);
+      setMessage(otpErrorKey(error) === "captcha" ? t("errors.captcha") : "เข้าสู่ระบบผู้ดูแลไม่สำเร็จ: " + error.message);
       setLoading(false);
       return;
     }
@@ -214,7 +237,8 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
               <p className="auth-v2-subtitle">{t("emailSubtitle")}</p>
               <label className="auth-v2-label" htmlFor="email">อีเมล</label>
               <div className="auth-v2-input"><Mail size={17} /><input autoComplete="email" id="email" onChange={(event) => setEmail(event.target.value)} placeholder="you@email.com" type="email" value={email} /></div>
-              <button className="auth-v2-primary" disabled={loading || !email} onClick={() => sendOtp()} type="button">{loading ? "กำลังส่ง..." : "ส่งรหัสให้ฉัน"}<ChevronRight size={17} /></button>
+              {captcha}
+              <button className="auth-v2-primary" disabled={loading || !email || captchaMissing} onClick={() => sendOtp()} type="button">{loading ? "กำลังส่ง..." : "ส่งรหัสให้ฉัน"}<ChevronRight size={17} /></button>
             </>
           )}
 
@@ -228,7 +252,8 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
               <div className="auth-v2-input auth-v2-otp"><KeyRound size={17} /><input autoComplete="one-time-code" id="otp" inputMode="numeric" maxLength={OTP_MAX_LENGTH} onChange={(event) => setOtp(normalizeOtp(event.target.value))} placeholder="••••••" value={otp} /></div>
               <p className="auth-v2-note" role="status">{resent ? t("resent") : t("onlyLatest")}</p>
               <button className="auth-v2-primary" disabled={loading || !canSubmitOtp(otp)} onClick={verifyOtp} type="button">{loading ? "กำลังตรวจสอบ..." : "เข้าสู่ BallDoenSai"}<ChevronRight size={17} /></button>
-              <button className="auth-v2-back" disabled={loading || resendWait > 0} onClick={() => sendOtp(true)} style={{ justifyContent: "center", margin: "14px auto 0", minHeight: 40, width: "100%" }} type="button">{resendWait > 0 ? t("resendIn", { seconds: resendWait }) : t("resend")}</button>
+              {resendWait === 0 && captcha}
+              <button className="auth-v2-back" disabled={loading || resendWait > 0 || captchaMissing} onClick={() => sendOtp(true)} style={{ justifyContent: "center", margin: "14px auto 0", minHeight: 40, width: "100%" }} type="button">{resendWait > 0 ? t("resendIn", { seconds: resendWait }) : t("resend")}</button>
             </>
           )}
 
@@ -241,7 +266,8 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
               <div className="auth-v2-input"><Mail size={17} /><input autoComplete="email" id="admin-email" onChange={(event) => setEmail(event.target.value)} type="email" value={email} /></div>
               <label className="auth-v2-label" htmlFor="admin-password">รหัสผ่าน</label>
               <div className="auth-v2-input"><Shield size={17} /><input autoComplete="current-password" id="admin-password" onChange={(event) => setPassword(event.target.value)} type="password" value={password} /></div>
-              <button className="auth-v2-primary" disabled={loading || !email || !password} onClick={adminLogin} type="button">{loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ Dashboard"}<ChevronRight size={17} /></button>
+              {captcha}
+              <button className="auth-v2-primary" disabled={loading || !email || !password || captchaMissing} onClick={adminLogin} type="button">{loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ Dashboard"}<ChevronRight size={17} /></button>
             </>
           )}
 
