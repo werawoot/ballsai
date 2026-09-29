@@ -8,6 +8,7 @@ import { CheckCircle2, Copy, Download, Facebook, ImagePlus, Instagram, Loader2, 
 import { track } from '@vercel/analytics'
 import { createClient } from '@/lib/supabase'
 import { ACTIVE_SPORT } from '@/lib/season'
+import { skillEntries, skillText } from '@/lib/skill-ratings'
 
 type Player = {
   name: string
@@ -17,7 +18,8 @@ type Player = {
   imageUrl: string | null
   isVerified: boolean
   isRanked: boolean
-  stats: { ovr: number; pac: number; sho: number; pas: number; dri: number; def: number }
+  // Skill ratings are null until a coach or admin assesses them (T32); shown as a dash.
+  stats: { ovr: number; pac: number | null; sho: number | null; pas: number | null; dri: number | null; def: number | null }
 }
 
 type Theme = 'gold' | 'red' | 'ice'
@@ -157,8 +159,8 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
     ctx.font = '800 42px Arial, sans-serif'; ctx.fillText(cardPlayer.position, cardX + 64, cardY + 172)
     ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = '900 54px Arial, sans-serif'; ctx.fillText(cardPlayer.name.toUpperCase(), width / 2, cardY + 758)
     ctx.fillStyle = 'rgba(255,255,255,.78)'; ctx.font = '600 29px Arial, sans-serif'; ctx.fillText(`${cardPlayer.team} · ${cardPlayer.province}`, width / 2, cardY + 805)
-    const stats: Array<[string, number]> = [['PAC', player.stats.pac], ['SHO', player.stats.sho], ['PAS', player.stats.pas], ['DRI', player.stats.dri], ['DEF', player.stats.def]]
-    stats.forEach(([key, value], index) => { const x = cardX + 105 + index * 153; ctx.fillStyle = '#fff'; ctx.font = '900 42px Impact, Arial'; ctx.fillText(String(value), x, cardY + 950); ctx.fillStyle = 'rgba(255,255,255,.72)'; ctx.font = '700 21px Arial'; ctx.fillText(key, x, cardY + 992) })
+    const stats = skillEntries(player.stats)
+    stats.forEach(([key, value], index) => { const x = cardX + 105 + index * 153; ctx.fillStyle = '#fff'; ctx.font = '900 42px Impact, Arial'; ctx.fillText(skillText(value), x, cardY + 950); ctx.fillStyle = 'rgba(255,255,255,.72)'; ctx.font = '700 21px Arial'; ctx.fillText(key, x, cardY + 992) })
     // A shared card must carry its own provenance. Starter stats are defaults, not
     // performance, so the exported image says so even when the page around it does not.
     if (!player.isRanked) {
@@ -299,7 +301,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
         <div className="player-card-glint" /><div className="player-card-rating"><b>{cardPlayer.stats.ovr}</b><span>{cardPlayer.position}</span></div>
         {!player.isRanked && <span className="player-card-starter">STARTER · UNRANKED</span>}
         <div className="player-card-photo" style={imageUrl ? { backgroundImage: `url("${imageUrl}")` } : undefined}><div className="player-card-photo-fallback">{cardPlayer.position}</div></div>
-        <div className="player-card-detail"><h2>{cardPlayer.name}</h2>{player.isVerified && <CheckCircle2 size={17} />}<p>{cardPlayer.team} · {cardPlayer.province}</p><div>{Object.entries(cardPlayer.stats).filter(([key]) => key !== 'ovr').map(([key, value]) => <span key={key}><b>{value}</b><small>{key.toUpperCase()}</small></span>)}</div></div>
+        <div className="player-card-detail"><h2>{cardPlayer.name}</h2>{player.isVerified && <CheckCircle2 size={17} />}<p>{cardPlayer.team} · {cardPlayer.province}</p><div>{skillEntries(cardPlayer.stats).map(([key, value]) => <span key={key}><b>{skillText(value)}</b><small>{key}</small></span>)}</div></div>
         <footer>BALLDOENSAI.COM · YOUR GAME, YOUR STORY</footer>
       </div></div>
       <div className="card-share-actions"><button onClick={download}><Download size={19} /> {t('download')}</button><button className="card-share-primary" onClick={share}><Share2 size={19} /> {t('share')}</button></div>

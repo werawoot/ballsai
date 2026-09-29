@@ -6,6 +6,8 @@ import { calculateRating, type MatchResult, type PlayerPosition } from '@/lib/ra
 import { logServerError, logServerEvent } from '@/lib/monitoring'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { parseRequestId, recordMatchResult } from '@/lib/match-result-record'
+import { FIRST_MATCH_RATING, parsePlayerKey, profilePosition, toRecordedPerformance } from '@/lib/first-match-rank'
+import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 
 type PerformanceInput = {
   playerRankId?: string
@@ -175,24 +177,63 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'ทีมที่เลือกไม่อยู่ในรายการแข่งขันนี้' }, { status: 400 })
   }
 
-  const playerRankIds = [...new Set(performances.map(item => item.playerRankId).filter(Boolean))] as string[]
-  if (playerRankIds.length !== performances.length) {
+  const playerKeys = [...new Set(performances.map(item => item.playerRankId).filter(Boolean))] as string[]
+  if (playerKeys.length !== performances.length) {
     return NextResponse.json({ error: 'นักกีฬาแต่ละคนบันทึกได้หนึ่งครั้งต่อหนึ่งผลแข่ง' }, { status: 400 })
   }
-  const { data: playerRanks } = await supabase
-    .from('player_ranks')
-    .select('id, player_id, player_name, sport, season, position, pts')
-    .in('id', playerRankIds.length > 0 ? playerRankIds : ['none'])
+  // A key is a rank row id, or new:<athlete> for a roster member whose rank row this
+  // first verified match will create (T32, sql/61).
+  const parsedKeys = playerKeys.map(parsePlayerKey)
+  if (parsedKeys.some(key => key === null)) {
+    return NextResponse.json({ error: 'ข้อมูลนักกีฬาไม่ถูกต้อง' }, { status: 400 })
+  }
+  const playerRankIds = parsedKeys.flatMap(key => (key?.kind === 'rank' ? [key.rankId] : []))
+  const newAthleteIds = parsedKeys.flatMap(key => (key?.kind === 'new' ? [key.athleteId] : []))
+
+  const { data: playerRanks } = playerRankIds.length > 0
+    ? await supabase
+      .from('player_ranks')
+      .select('id, player_id, player_name, sport, season, position, pts')
+      .in('id', playerRankIds)
+    : { data: [] }
 
   const typedPlayerRanks = (playerRanks ?? []) as PlayerRank[]
   if (typedPlayerRanks.length !== playerRankIds.length) {
     return NextResponse.json({ error: 'พบนักกีฬาบางคนที่ไม่มีในระบบ ranking' }, { status: 400 })
   }
 
+  // A rank row is public, so one is created only for a public profile: the athlete (and,
+  // for a minor, their guardian) agreed to be shown. Checked again in sql/61.
+  const { data: newProfiles } = newAthleteIds.length > 0
+    ? await supabase
+      .from('athlete_profiles')
+      .select('user_id, display_name, position')
+      .eq('sport', ACTIVE_SPORT)
+      .eq('is_public', true)
+      .in('user_id', newAthleteIds)
+    : { data: [] }
+  const typedNewProfiles = (newProfiles ?? []) as { user_id: string; display_name: string | null; position: string | null }[]
+  if (typedNewProfiles.length !== newAthleteIds.length) {
+    return NextResponse.json(
+      { error: 'นักกีฬาบางคนยังไม่เปิดโปรไฟล์สาธารณะ จึงยังบันทึกผลไม่ได้ ให้นักกีฬาเปิดโปรไฟล์ก่อน (ผู้เยาว์ต้องมีความยินยอมของผู้ปกครอง)' },
+      { status: 400 },
+    )
+  }
+  const newPlayers: PlayerRank[] = typedNewProfiles.map(profile => ({
+    id: `new:${profile.user_id}`,
+    player_id: profile.user_id,
+    player_name: profile.display_name?.trim() || 'Athlete',
+    sport: ACTIVE_SPORT,
+    season: ACTIVE_SEASON,
+    position: profilePosition(profile.position) as PlayerPosition,
+    pts: FIRST_MATCH_RATING,
+  }))
+  const allPlayers = [...typedPlayerRanks, ...newPlayers]
+
   // The UI only lists accepted roster members; repeat that check on the server
   // so a crafted request cannot record a player for a team they did not join.
-  const playerByRankId = new Map(typedPlayerRanks.map(player => [player.id, player]))
-  const athleteIds = typedPlayerRanks
+  const playerByRankId = new Map(allPlayers.map(player => [player.id, player]))
+  const athleteIds = allPlayers
     .map(player => player.player_id)
     .filter((playerId): playerId is string => Boolean(playerId))
   const { data: acceptedMembers } = await supabase
@@ -215,6 +256,11 @@ export async function POST(request: Request) {
     )
   }
 
+  // A new athlete's rating starts at the scale's starting point; nothing is written for
+  // them until the confirm, where sql/61 creates the rank and rating rows with the match.
+  const ratingByPlayerRank = new Map<string, PlayerRating>(newPlayers.map(player => [player.id, {
+    id: '', power_rating: FIRST_MATCH_RATING, matches_played: 0, wins: 0, draws: 0, losses: 0, goals: 0, assists: 0, clean_sheets: 0, mvps: 0,
+  }]))
   const ratingRows: PlayerRating[] = []
   for (const playerRank of typedPlayerRanks) {
     const sport = playerRank.sport
@@ -250,7 +296,6 @@ export async function POST(request: Request) {
     ratingRows.push(createdRating as PlayerRating)
   }
 
-  const ratingByPlayerRank = new Map<string, PlayerRating>()
   typedPlayerRanks.forEach((playerRank, index) => ratingByPlayerRank.set(playerRank.id, ratingRows[index]))
 
   const teamARatings = performances
@@ -264,7 +309,7 @@ export async function POST(request: Request) {
   const preview: PreviewItem[] = []
 
   for (const item of performances) {
-    const playerRank = typedPlayerRanks.find(rank => rank.id === item.playerRankId)
+    const playerRank = allPlayers.find(rank => rank.id === item.playerRankId)
     if (!playerRank || (item.teamId !== body.teamAId && item.teamId !== body.teamBId)) {
       return NextResponse.json({ error: 'ข้อมูล performance ไม่ถูกต้อง' }, { status: 400 })
     }
@@ -327,7 +372,7 @@ export async function POST(request: Request) {
     })
   }
 
-  const payload = preview.map(item => ({
+  const payload = preview.map(item => toRecordedPerformance({
     ...item,
     opponentRating: item.teamId === body.teamAId ? teamBAverageRating : teamAAverageRating,
   }))
@@ -342,7 +387,7 @@ export async function POST(request: Request) {
     teamAScore,
     teamBScore,
     performances: payload,
-  }, requestId)
+  }, requestId, { sport: ACTIVE_SPORT, season: ACTIVE_SEASON })
 
   if (matchResultError || !matchResultId) {
     logServerError({
@@ -352,6 +397,18 @@ export async function POST(request: Request) {
       metadata: { tournamentId: body.tournamentId, teamAId: body.teamAId, teamBId: body.teamBId, code: matchResultError?.code },
       error: matchResultError,
     })
+    if (matchResultError?.code === 'SQL61_MISSING') {
+      return NextResponse.json(
+        { error: 'ยังบันทึกผลของนักกีฬาที่ยังไม่มี Ranking ไม่ได้ จนกว่าจะ apply sql/61-first-match-rank-v1.sql (หรือให้แอดมินสร้าง Ranking ที่ /admin/create ก่อน)' },
+        { status: 503 },
+      )
+    }
+    if (matchResultError?.message.includes('ATHLETE_NOT_PUBLIC') || matchResultError?.message.includes('NOT_ON_ROSTER')) {
+      return NextResponse.json(
+        { error: 'นักกีฬาบางคนยังไม่เปิดโปรไฟล์สาธารณะ หรือไม่ได้อยู่ในทีมนี้แล้ว กรุณาโหลดหน้าใหม่แล้วคำนวณอีกครั้ง' },
+        { status: 400 },
+      )
+    }
     const isConflict = matchResultError?.message.includes('RATING_CHANGED') || matchResultError?.code === '40001' || matchResultError?.message.includes('REQUEST_ID_TAKEN')
     return NextResponse.json(
       { error: isConflict ? 'คะแนนนักกีฬาถูกอัปเดตโดยรายการอื่น กรุณากดคำนวณใหม่แล้วบันทึกอีกครั้ง' : 'บันทึกผลแข่งไม่สำเร็จ' },

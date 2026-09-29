@@ -9,7 +9,7 @@ import { ACTIVE_SPORT } from '@/lib/season'
 
 type Profile = { full_name?: string | null; province?: string | null; team?: string | null; position?: string | null }
 type AthleteProfile = { display_name?: string | null; position?: string | null; province?: string | null; current_team?: string | null; profile_image_url?: string | null; verification_level?: string | null; is_public?: boolean }
-type PlayerRank = { id: string; player_name: string; position: string; ovr: number; pac: number; sho: number; pas: number; dri: number; def: number }
+type PlayerRank = { id: string; player_name: string; position: string; ovr: number; pac: number | null; sho: number | null; pas: number | null; dri: number | null; def: number | null }
 
 export default async function PlayerCardPage() {
   const t = await getTranslations('card')

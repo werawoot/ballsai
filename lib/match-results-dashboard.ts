@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { FIRST_MATCH_RATING, newPlayerKey, profilePosition } from '@/lib/first-match-rank'
 
 // /dashboard/results records a result for one tournament at a time. An organizer picks
 // from their own tournaments and an admin from every tournament in the country, so the
@@ -12,7 +13,9 @@ export const ID_BATCH_SIZE = 100
 
 export type ResultTournament = { id: string; name: string; organizer_id: string }
 export type ResultTeam = { id: string; name: string; tournament_id: string; status: string }
-export type ResultPlayer = { id: string; player_id: string | null; player_name: string; position: string; pts: number; teamId: string }
+// isNew: a roster member with no rank row yet; `id` is then newPlayerKey(athlete) and the
+// row is created by this first verified match (T32, sql/61).
+export type ResultPlayer = { id: string; player_id: string | null; player_name: string; position: string; pts: number; teamId: string; isNew?: boolean }
 export type ResultRow = {
   id: string
   tournament_id: string
@@ -87,9 +90,28 @@ export async function fetchResultTournamentData(client: SupabaseClient, { tourna
   const ranks = await inBatches<Omit<ResultPlayer, 'teamId'>>([...teamIdByAthlete.keys()], batch =>
     client.from('player_ranks').select('id, player_id, player_name, position, pts')
       .eq('sport', sport).eq('season', season).in('player_id', batch))
-  const rosterPlayers = ranks
+  const rankedPlayers = ranks
     .map(player => ({ ...player, teamId: player.player_id ? teamIdByAthlete.get(player.player_id) ?? '' : '' }))
     .filter(player => player.teamId)
+
+  // Members with no rank row yet (T32). Only public profiles are offered: a rank row is
+  // readable by anyone, and a public profile is the one the athlete (and, for a minor,
+  // their guardian) agreed to show. The others are counted so the page can say why.
+  const ranked = new Set(ranks.map(player => player.player_id))
+  const unranked = [...teamIdByAthlete.keys()].filter(athleteId => !ranked.has(athleteId))
+  const profiles = await inBatches<{ user_id: string; display_name: string | null; position: string | null }>(unranked, batch =>
+    client.from('athlete_profiles').select('user_id, display_name, position')
+      .eq('sport', sport).eq('is_public', true).in('user_id', batch))
+  const newPlayers: ResultPlayer[] = profiles.map(profile => ({
+    id: newPlayerKey(profile.user_id),
+    player_id: profile.user_id,
+    player_name: profile.display_name?.trim() || 'Athlete',
+    position: profilePosition(profile.position) ?? '',
+    pts: FIRST_MATCH_RATING,
+    teamId: teamIdByAthlete.get(profile.user_id) ?? '',
+    isNew: true,
+  }))
+  const rosterPlayers = [...rankedPlayers, ...newPlayers]
     .sort((a, b) => a.player_name.localeCompare(b.player_name, 'th'))
 
   return {
@@ -97,6 +119,7 @@ export async function fetchResultTournamentData(client: SupabaseClient, { tourna
     teams,
     confirmedTeams,
     rosterPlayers,
+    unrecordableCount: unranked.length - newPlayers.length,
     matchResults: (historyResult.data ?? []) as ResultRow[],
   }
 }

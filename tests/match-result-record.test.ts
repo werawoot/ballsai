@@ -43,6 +43,27 @@ describe('recording a match result once', () => {
     expect(calls).toHaveLength(1)
   })
 
+  // T32: a performance may name a new athlete (athleteId) instead of a rank row. Only
+  // record_match_result_first_rank (sql/61) can create that row with the match, so there
+  // is no fallback: before SQL61 the call says so instead of recording without them.
+  it('sends a match with new athletes through record_match_result_first_rank', async () => {
+    const withNew = { ...args, performances: [...args.performances, { athleteId: 'ath-1', teamId: 'a', ratingBefore: 1000, ratingAfter: 1016 }] }
+    const { client, calls } = fakeClient({ record_match_result_first_rank: { data: 'match-3', error: null } })
+    expect(await recordMatchResult(client, withNew, REQUEST, { sport: 'football', season: '2026' })).toEqual({ matchResultId: 'match-3', error: null })
+    expect(calls).toEqual([['record_match_result_first_rank', {
+      p_request_id: REQUEST, p_tournament_id: 'cup', p_team_a_id: 'a', p_team_b_id: 'b', p_team_a_score: 0, p_team_b_score: 0,
+      p_performances: withNew.performances, p_sport: 'football', p_season: '2026',
+    }]])
+  })
+
+  it.each(['PGRST202', '42883'])('before SQL61 (%s), refuses a match with new athletes instead of dropping them', async code => {
+    const withNew = { ...args, performances: [{ athleteId: 'ath-1', teamId: 'a' }] }
+    const { client, calls } = fakeClient({ record_match_result_first_rank: { data: null, error: { code, message: 'missing' } } })
+    const result = await recordMatchResult(client, withNew, REQUEST, { sport: 'football', season: '2026' })
+    expect(result).toEqual({ matchResultId: null, error: { code: 'SQL61_MISSING', message: 'record_match_result_first_rank is not applied' } })
+    expect(calls).toHaveLength(1)
+  })
+
   it('accepts only a UUID as a request id', () => {
     expect(parseRequestId(REQUEST)).toBe(REQUEST)
     expect(parseRequestId(REQUEST.toUpperCase())).toBe(REQUEST)

@@ -120,8 +120,10 @@ the API returns HTTP 503 with instructions until then — and
 
 Known manual seams, by design for now:
 
-- `player_ranks` rows are created by an admin at `/admin/create`, one by one or with the
-  batch action. An athlete without one earns no match XP.
+- `player_ranks` rows: until `sql/61-first-match-rank-v1.sql` is applied, an admin creates
+  them at `/admin/create`. After it, an athlete's first verified match creates the row (only
+  for a public profile, because a rank row is public); PAC/SHO/PAS/DRI/DEF stay NULL (not
+  assessed) until a coach or admin assesses them, and the UI shows them as a dash.
 - Team rosters are free text, so the athlete list in `/dashboard/results` is the whole
   season and is searched by name/team.
 - Removing an auth account is a human step: the app holds no service role key on purpose,

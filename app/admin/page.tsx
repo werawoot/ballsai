@@ -6,6 +6,7 @@ import Link from "next/link";
 import DeletePlayerButton from "./DeletePlayerButton";
 import EditPlayerButton from "./EditPlayerButton";
 import { ACTIVE_SEASON, ACTIVE_SPORT } from "@/lib/season";
+import { skillText } from "@/lib/skill-ratings";
 
 const RANKING_PAGE_SIZE = 25
 
@@ -449,7 +450,7 @@ export default async function AdminPage(props: { searchParams?: Promise<{ page?:
                         color: "#111",
                       }}
                     >
-                      {val}
+                      {skillText(val)}
                     </span>
                     <span
                       style={{

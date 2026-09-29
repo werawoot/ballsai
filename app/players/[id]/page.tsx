@@ -9,6 +9,7 @@ import ReportHighlightButton from './ReportHighlightButton'
 import DisputeDataButton from './DisputeDataButton'
 import PageHeader from '@/components/PageHeader'
 import { PUBLIC_PROFILE_COLUMNS, fetchAthleteAge } from '@/lib/athlete-private'
+import { hasAssessedSkills, skillText } from '@/lib/skill-ratings'
 
 type PlayerRecord = {
   id: string
@@ -19,11 +20,11 @@ type PlayerRecord = {
   position: string
   ovr: number
   pts: number
-  pac: number
-  sho: number
-  pas: number
-  dri: number
-  def: number
+  pac: number | null
+  sho: number | null
+  pas: number | null
+  dri: number | null
+  def: number | null
 }
 
 type AthleteProfile = {
@@ -144,6 +145,7 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
       ? 'linear-gradient(160deg,#1a1a1a 0%,#808080 18%,#d0d0d0 30%,#808080 42%,#404040 55%,#808080 70%,#d0d0d0 82%,#1a1a1a 100%)'
       : 'linear-gradient(160deg,#2a1200 0%,#a0522d 18%,#cd7f32 30%,#a0522d 42%,#4a2000 55%,#a0522d 70%,#cd7f32 82%,#2a1200 100%)'
 
+  const skillsAssessed = hasAssessedSkills(typedPlayer)
   const cardStats = [
     { key: 'PAC', val: typedPlayer.pac, label: 'Pace' },
     { key: 'SHO', val: typedPlayer.sho, label: 'Shooting' },
@@ -164,7 +166,9 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
     ? {
         label: verificationLabels[verificationLevel],
         confidence: verificationLevel === 'performance_verified' ? 'สูง' : verificationLevel === 'coach_verified' ? 'กลาง' : 'เริ่มต้น',
-        source: 'Player Rank ที่ผู้ดูแลสร้างจากข้อมูลการแข่งขันในระบบ',
+        source: skillsAssessed
+          ? 'Player Rank ที่ผู้ดูแลสร้าง และคะแนนทักษะจากการประเมินของโค้ชหรือผู้ดูแล'
+          : 'Power Rating จากผลแข่งที่ผู้จัดยืนยันในระบบ · คะแนนทักษะยังไม่ได้ประเมิน',
         detail: verificationLevel === 'performance_verified'
           ? 'มีผลการแข่งขันที่ผ่านการตรวจสอบเป็นฐานของคะแนน'
           : verificationLevel === 'coach_verified'
@@ -191,7 +195,7 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
             <div style={{ position: 'absolute', inset: '55% 0 0', padding: '22px 9px 9px', background: 'linear-gradient(transparent,rgba(0,0,0,.9) 40%)', zIndex: 2 }}>
               <div style={{ fontFamily: 'var(--font-barlow)', fontSize: 16, fontWeight: 800, textAlign: 'center', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>
               <div style={{ fontSize: 10, textAlign: 'center', opacity: .75 }}>{team}</div>
-              {hasRanking && <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9 }}>{cardStats.map(stat => <div key={stat.key} style={{ textAlign: 'center' }}><b style={{ display: 'block', fontFamily: 'var(--font-oswald)', fontSize: 12 }}>{stat.val}</b><span style={{ fontSize: 7, opacity: .65 }}>{stat.key}</span></div>)}</div>}
+              {hasRanking && <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9 }}>{cardStats.map(stat => <div key={stat.key} style={{ textAlign: 'center' }}><b style={{ display: 'block', fontFamily: 'var(--font-oswald)', fontSize: 12 }}>{skillText(stat.val)}</b><span style={{ fontSize: 7, opacity: .65 }}>{stat.key}</span></div>)}</div>}
             </div>
           </div>
           <div style={{ minWidth: 0 }}>
@@ -240,7 +244,7 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
         <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 14 }}><h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16 }}>{assessedStats.length ? 'ASSESSED SKILLS' : 'PLAYER CARD STATS'}</h2><span style={{ fontSize: 10, fontWeight: 800, color: isVerified ? '#15803d' : '#888' }}>{skillAssessment ? verificationLabels[skillAssessment.source_level as keyof typeof verificationLabels] : 'ข้อมูลการ์ดปัจจุบัน'}</span></div>
           <div style={{ display: 'grid', gap: 11 }}>
-            {(assessedStats.length ? assessedStats : cardStats.map(item => ({ label: item.label, value: item.val }))).map(stat => <div key={stat.label}><div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, marginBottom: 5 }}><span>{stat.label}</span><span>{stat.value}</span></div><div style={{ height: 6, background: '#eee', overflow: 'hidden', borderRadius: 3 }}><div style={{ height: '100%', width: `${stat.value ?? 0}%`, background: '#CC0001' }} /></div></div>)}
+            {(assessedStats.length ? assessedStats : cardStats.map(item => ({ label: item.label, value: item.val }))).map(stat => <div key={stat.label}><div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, marginBottom: 5 }}><span>{stat.label}</span><span>{skillText(stat.value)}</span></div><div style={{ height: 6, background: '#eee', overflow: 'hidden', borderRadius: 3 }}><div style={{ height: '100%', width: `${stat.value ?? 0}%`, background: '#CC0001' }} /></div></div>)}
           </div>
         </section>
 

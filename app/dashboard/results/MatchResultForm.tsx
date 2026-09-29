@@ -23,6 +23,7 @@ type PlayerOption = {
   position: string
   pts: number
   teamId: string
+  isNew?: boolean
 }
 
 type PerformanceRow = {
@@ -301,7 +302,7 @@ export default function MatchResultForm({
                   <select value={row.playerRankId} onChange={event => updateRow(row.id, { playerRankId: event.target.value })} style={inputStyle}>
                     <option value="">นักกีฬา</option>
                     {optionsForRow(row.playerRankId, row.teamId).map(player => (
-                      <option key={player.id} value={player.id}>{player.player_name} · {player.position} · {player.pts}</option>
+                      <option key={player.id} value={player.id}>{player.player_name}{player.position ? ` · ${player.position}` : ''} · {player.isNew ? 'ใหม่ · Ranking เริ่มเมื่อยืนยันผลนี้' : player.pts}</option>
                     ))}
                   </select>
                 </div>
