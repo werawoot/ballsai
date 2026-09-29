@@ -4,6 +4,9 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { ACTIVE_SEASON } from '@/lib/season'
 import DiscoverTabs from '@/components/DiscoverTabs'
+import Pagination from '@/components/Pagination'
+import { parsePage } from '@/lib/pagination'
+import { fetchHallPage } from '@/lib/public-hall'
 
 type HallEntry = {
   id: string
@@ -29,7 +32,7 @@ const categoryCopy: Record<HallEntry['category'], { label: string; icon: typeof 
   fair_play: { label: 'FAIR PLAY', icon: Shield, color: '#70c985' },
 }
 
-export default async function HallOfFamePage({ searchParams }: { searchParams: { season?: string; category?: string; age?: string; province?: string } }) {
+export default async function HallOfFamePage({ searchParams }: { searchParams: { season?: string; category?: string; age?: string; province?: string; page?: string } }) {
   const season = searchParams.season || ACTIVE_SEASON
   const category = Object.keys(categoryCopy).includes(searchParams.category || '') ? searchParams.category as HallEntry['category'] : ''
   const age = ['U12', 'U15', 'U18', 'OPEN'].includes(searchParams.age || '') ? searchParams.age! : ''
@@ -38,13 +41,14 @@ export default async function HallOfFamePage({ searchParams }: { searchParams: {
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: { getAll: () => cookieStore.getAll(), setAll: items => items.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) },
   })
-  let query = supabase.from('hall_of_fame_entries').select('id, season, category, age_group, province, athlete_id, player_rank_id, athlete_name, team_name, position, image_url, citation').eq('season', season).order('awarded_at', { ascending: false })
-  if (category) query = query.eq('category', category)
-  if (age) query = query.eq('age_group', age)
-  if (province) query = query.eq('province', province)
-  const { data } = await query
-  const entries = (data ?? []) as HallEntry[]
-  const selected = new URLSearchParams({ ...(category ? { category } : {}), ...(age ? { age } : {}), ...(province ? { province } : {}) })
+  const page = parsePage(searchParams.page)
+  // One page at a time: a season's honours are read 24 at a time, never all at once.
+  const { entries: rows, hasNext } = await fetchHallPage(supabase, { season, page, category, age, province }).catch(error => {
+    console.error(JSON.stringify({ level: 'error', event: 'hall_of_fame_fetch_failed', code: error?.code ?? null }))
+    return { entries: [], hasNext: false }
+  })
+  const entries = rows as HallEntry[]
+  const selected = new URLSearchParams({ ...(searchParams.season ? { season } : {}), ...(category ? { category } : {}), ...(age ? { age } : {}), ...(province ? { province } : {}) })
   const linkFor = (next: Record<string, string>) => {
     const params = new URLSearchParams(selected)
     Object.entries(next).forEach(([key, value]) => value ? params.set(key, value) : params.delete(key))
@@ -70,6 +74,7 @@ export default async function HallOfFamePage({ searchParams }: { searchParams: {
         const content = <article className="hall-entry"><div className="hall-entry-glow" style={{ background: copy.color }} /><div className="hall-entry-top"><span style={{ color: copy.color }}><Icon size={15} /> {copy.label}</span><small>{entry.age_group} · {entry.season}</small></div><div className="hall-entry-avatar" style={entry.image_url ? { backgroundImage: `url(${entry.image_url})` } : undefined}><Icon size={50} /></div><h2>{entry.athlete_name}</h2><p>{[entry.position, entry.team_name, entry.province].filter(Boolean).join(' · ')}</p><blockquote>“{entry.citation}”</blockquote><footer>OFFICIAL BALLDOENSAI HONOUR</footer></article>
         return profileHref ? <Link className="hall-entry-link" href={profileHref} key={entry.id}>{content}</Link> : <div className="hall-entry-link" key={entry.id}>{content}</div>
       })}</div> : <div className="hall-empty"><Award size={38} /><h2>กำลังรอชื่อแรกใน Hall</h2><p>Hall of Fame จะแสดงเฉพาะผลงานที่ผู้จัดหรือผู้ดูแลยืนยันและประกาศอย่างเป็นทางการ</p><Link href="/ranking">ดู LIVE RANKING ระหว่างนี้</Link></div>}
+      <Pagination basePath="/hall-of-fame" page={page} hasNext={hasNext} params={{ ...(searchParams.season ? { season } : {}), category, age, province }} />
     </section>
   </main>
 }
