@@ -41,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# T39 load test reports (may name test ids; keep out of git)
+load-test-report-*.json
