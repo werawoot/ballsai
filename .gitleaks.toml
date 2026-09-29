@@ -1,0 +1,15 @@
+# T22. Secret scan for every push (see .github/workflows/ci.yml, job "secrets").
+# Uses gitleaks' default rules (JWTs, cloud keys, private keys, tokens) plus Supabase's
+# newer key format, which the defaults do not name. A finding fails CI: rotate the key in
+# the Supabase dashboard first, then remove it from the code. Removing it alone is not
+# enough, because the old commit still holds it.
+title = "ballsai"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "supabase-secret-key"
+description = "Supabase secret API key (sb_secret_...), which bypasses RLS"
+regex = '''\bsb_secret_[A-Za-z0-9_-]{20,}'''
+keywords = ["sb_secret_"]

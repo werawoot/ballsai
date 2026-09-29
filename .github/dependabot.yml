@@ -1,0 +1,27 @@
+# T22. Weekly pull requests that keep dependencies current, so fixes arrive without anyone
+# having to look. Minor and patch updates come grouped in one PR; major versions are
+# planned work (they change code) and are left out here. Every PR still needs CI green
+# and the owner's explicit merge, like any other PR.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Bangkok
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']
