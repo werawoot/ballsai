@@ -13,7 +13,9 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        // `headers` forbid caching (Cache-Control private/no-store, Expires, Pragma): a
+        // response that carries one person's session must never be served to another.
+        setAll(cookiesToSet, headers) {
           cookiesToSet.forEach(({ name, value, options }) =>
             request.cookies.set({ name, value, ...options })
           )
@@ -21,6 +23,7 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
+          Object.entries(headers ?? {}).forEach(([key, value]) => supabaseResponse.headers.set(key, value))
         },
       },
     }
