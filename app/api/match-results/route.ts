@@ -1,9 +1,11 @@
+import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { calculateRating, type MatchResult, type PlayerPosition } from '@/lib/rating'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { parseRequestId, recordMatchResult } from '@/lib/match-result-record'
 
 type PerformanceInput = {
   playerRankId?: string
@@ -17,6 +19,7 @@ type PerformanceInput = {
 
 type MatchResultBody = {
   mode?: 'preview' | 'confirm'
+  requestId?: string
   tournamentId?: string
   teamAId?: string
   teamBId?: string
@@ -328,14 +331,18 @@ export async function POST(request: Request) {
     ...item,
     opponentRating: item.teamId === body.teamAId ? teamBAverageRating : teamAAverageRating,
   }))
-  const { data: matchResultId, error: matchResultError } = await supabase.rpc('record_match_result_safely', {
-    p_tournament_id: body.tournamentId,
-    p_team_a_id: body.teamAId,
-    p_team_b_id: body.teamBId,
-    p_team_a_score: teamAScore,
-    p_team_b_score: teamBScore,
-    p_performances: payload,
-  })
+  // One request id per submission (minted by the form at each preview): a retried or
+  // double-clicked confirm returns the first result instead of counting the match twice.
+  // An older client without one still records, just without that protection.
+  const requestId = parseRequestId(body.requestId) ?? randomUUID()
+  const { matchResultId, error: matchResultError } = await recordMatchResult(supabase, {
+    tournamentId: body.tournamentId!,
+    teamAId: body.teamAId!,
+    teamBId: body.teamBId!,
+    teamAScore,
+    teamBScore,
+    performances: payload,
+  }, requestId)
 
   if (matchResultError || !matchResultId) {
     logServerError({
@@ -345,7 +352,7 @@ export async function POST(request: Request) {
       metadata: { tournamentId: body.tournamentId, teamAId: body.teamAId, teamBId: body.teamBId, code: matchResultError?.code },
       error: matchResultError,
     })
-    const isConflict = matchResultError?.message.includes('RATING_CHANGED') || matchResultError?.code === '40001'
+    const isConflict = matchResultError?.message.includes('RATING_CHANGED') || matchResultError?.code === '40001' || matchResultError?.message.includes('REQUEST_ID_TAKEN')
     return NextResponse.json(
       { error: isConflict ? 'คะแนนนักกีฬาถูกอัปเดตโดยรายการอื่น กรุณากดคำนวณใหม่แล้วบันทึกอีกครั้ง' : 'บันทึกผลแข่งไม่สำเร็จ' },
       { status: isConflict ? 409 : 400 },

@@ -83,6 +83,9 @@ export default function MatchResultForm({
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
+  // One id per preview: every confirm of that preview, retried or double-clicked, is the
+  // same submission and records the match once (sql/60). A new preview gets a new id.
+  const [requestId, setRequestId] = useState('')
 
   // Only athletes who accepted the selected tournament team's invitation appear.
   const filteredPlayers = useMemo(() => {
@@ -133,6 +136,7 @@ export default function MatchResultForm({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         mode,
+        requestId: mode === 'confirm' ? requestId : undefined,
         tournamentId,
         teamAId,
         teamBId,
@@ -159,6 +163,7 @@ export default function MatchResultForm({
       setMessage(result?.error ?? 'บันทึกผลไม่สำเร็จ')
     } else {
       setPreview(result?.preview ?? [])
+      if (mode === 'preview') setRequestId(crypto.randomUUID())
       if (mode === 'confirm') {
         setConfirmed(true)
         setMessage(`บันทึกผลเรียบร้อย ${result?.matchResultId ? `#${result.matchResultId.slice(0, 8)}` : ''}`)
@@ -369,7 +374,7 @@ export default function MatchResultForm({
         <button onClick={() => submit('preview')} disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'white', color: '#CC0001', border: '1.5px solid #CC0001', borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 800, cursor: loading ? 'default' : 'pointer' }}>
           <Eye size={16} /> Preview
         </button>
-        <button onClick={() => submit('confirm')} disabled={loading || preview.length === 0} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: loading || preview.length === 0 ? '#eee' : '#CC0001', color: loading || preview.length === 0 ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 800, cursor: loading || preview.length === 0 ? 'default' : 'pointer' }}>
+        <button onClick={() => submit('confirm')} disabled={loading || confirmed || preview.length === 0 || !requestId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: loading || confirmed || preview.length === 0 || !requestId ? '#eee' : '#CC0001', color: loading || confirmed || preview.length === 0 || !requestId ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 800, cursor: loading || confirmed || preview.length === 0 || !requestId ? 'default' : 'pointer' }}>
           <Save size={16} /> Confirm Result
         </button>
       </div>

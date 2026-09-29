@@ -37,6 +37,8 @@ jobs:
           node --check scripts/rls-smoke-test.mjs
           node --check scripts/verify-production-config.mjs
           node --check scripts/smoke-public-pages.mjs
+          node --check scripts/concurrency-checks.mjs
+          node --check scripts/concurrency-plan.mjs
 
       - name: Run lint
         run: npm run lint
