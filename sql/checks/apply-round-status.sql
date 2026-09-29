@@ -16,10 +16,13 @@ select step, migration, present, marker from (values
        exists (select 1 from pg_trigger where tgname = 'venue_booking_notify_requested' and not tgisinternal),
        'trigger venue_booking_notify_requested'),
   (3,  '44 venue photo owner policies fix',
-       exists (select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects'
-               and policyname = 'venue_photos_owner_insert'
-               and coalesce(with_check, qual) like '%foldername(objects.name)%'),
-       'storage policy venue_photos_owner_insert reads objects.name'),
+       -- All three owner policies, not only insert: Staging once had insert repaired while
+       -- read and delete still read the venue's name (29 Sep 2026).
+       (select count(*) from pg_policies where schemaname = 'storage' and tablename = 'objects'
+          and policyname in ('venue_photos_owner_insert', 'venue_photos_owner_or_admin_read', 'venue_photos_owner_or_admin_delete')
+          and (coalesce(qual, '') || coalesce(with_check, '')) like '%foldername(objects.name)%'
+          and (coalesce(qual, '') || coalesce(with_check, '')) not like '%foldername(v.name)%') = 3,
+       'all three venue photo owner policies read objects.name'),
   (4,  'btree_gist extension (for 46)',
        exists (select 1 from pg_extension where extname = 'btree_gist'),
        'extension btree_gist'),

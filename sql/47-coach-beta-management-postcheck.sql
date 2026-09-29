@@ -1,11 +1,13 @@
--- Read-only postcheck for SQL47. Run only against project hivedzrwrrcnjrlirhtv.
+-- Read-only postcheck for SQL47. Check the project ref in the URL first: Staging
+-- vorpnkedpscsqhnrssrl before Production hivedzrwrrcnjrlirhtv. SQL47's team scope helper is
+-- is_team_creator_beta(uuid); an earlier draft of this check named it coach_owns_team_beta.
 select
   to_regclass('public.coach_attestations') is not null as has_table,
   to_regclass('public.coach_verified_fields') is not null as has_field_level_table,
   to_regprocedure('public.manage_coach_beta(text,uuid,jsonb)') is not null as has_manage,
   to_regprocedure('public.attest_coach_claim_beta(uuid,jsonb)') is not null as has_attest,
   to_regprocedure('public.respond_coach_attestation_beta(uuid,text)') is not null as has_respond,
-  to_regprocedure('public.coach_owns_team_beta(uuid)') is not null as has_scope_helper;
+  to_regprocedure('public.is_team_creator_beta(uuid)') is not null as has_scope_helper;
 -- Expected: all true.
 
 select
@@ -16,7 +18,7 @@ from pg_proc p
 join pg_namespace n on n.oid = p.pronamespace
 where n.nspname = 'public'
   and p.proname in ('manage_coach_beta', 'attest_coach_claim_beta',
-                    'respond_coach_attestation_beta', 'coach_owns_team_beta')
+                    'respond_coach_attestation_beta', 'is_team_creator_beta')
 order by p.proname;
 -- Expected: every row is_security_definer true and settings contains search_path=
 -- (empty). A non-empty search_path means STOP.
@@ -30,7 +32,7 @@ from pg_proc p
 join pg_namespace n on n.oid = p.pronamespace
 where n.nspname = 'public'
   and p.proname in ('manage_coach_beta', 'attest_coach_claim_beta',
-                    'respond_coach_attestation_beta', 'coach_owns_team_beta')
+                    'respond_coach_attestation_beta', 'is_team_creator_beta')
 order by p.proname;
 -- Expected: anon false, service_role false, authenticated true, for all four.
 
