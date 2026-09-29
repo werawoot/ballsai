@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Check, ChevronRight, Facebook, KeyRound, Mail, Shield, Sparkles, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { OTP_MAX_LENGTH, canSubmitOtp, normalizeEmail, normalizeOtp, otpErrorKey, resendWaitSeconds } from "@/lib/otp";
 
 type LoginStep = "start" | "email" | "otp" | "admin";
 
@@ -15,6 +17,20 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const t = useTranslations("loginOtp");
+  // When the last code was requested, for the resend countdown; the clock ticks each second.
+  const [sentAt, setSentAt] = useState<number | null>(null);
+  const [sentFor, setSentFor] = useState("");
+  const [resent, setResent] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (sentAt === null) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [sentAt]);
+  // Supabase limits requests per address, so the wait applies to the address it was sent to.
+  const waitFor = (address: string, at: number) => (normalizeEmail(address) === sentFor ? resendWaitSeconds(sentAt, at) : 0);
+  const resendWait = waitFor(email, now);
 
   const callbackUrl = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
 
@@ -54,20 +70,37 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
     }
   };
 
-  const sendOtp = async () => {
+  // Each request replaces the previous code (Supabase keeps one per address), so a
+  // resend is offered only after the wait and says the old code no longer works.
+  const sendOtp = async (resend = false) => {
     if (!acceptedTerms) {
       setMessage("กรุณายอมรับข้อกำหนดและนโยบายความเป็นส่วนตัวก่อน");
+      return;
+    }
+    if (loading) return;
+    const wait = waitFor(email, Date.now());
+    if (wait > 0) {
+      // The code just sent to this address is still the valid one: go back to it rather
+      // than ask for another that would cancel it.
+      if (resend) setMessage(t("resendIn", { seconds: wait }));
+      else setStep("otp");
       return;
     }
     setLoading(true);
     setMessage("");
     const { error } = await createClient().auth.signInWithOtp({
-      email,
+      email: normalizeEmail(email),
       options: { emailRedirectTo: callbackUrl() },
     });
     if (error) {
-      setMessage("ส่งรหัสไม่สำเร็จ: " + error.message);
+      const key = otpErrorKey(error);
+      setMessage(key === "rateLimited" ? t("errors.rateLimited") : t("errors.sendFailed"));
     } else {
+      setSentAt(Date.now());
+      setSentFor(normalizeEmail(email));
+      setNow(Date.now());
+      setOtp("");
+      setResent(resend);
       setStep("otp");
     }
     setLoading(false);
@@ -76,9 +109,9 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
   const verifyOtp = async () => {
     setLoading(true);
     setMessage("");
-    const { error } = await createClient().auth.verifyOtp({ email, token: otp, type: "email" });
+    const { error } = await createClient().auth.verifyOtp({ email: normalizeEmail(email), token: otp, type: "email" });
     if (error) {
-      setMessage("OTP ไม่ถูกต้อง: " + error.message);
+      setMessage(t(`errors.${otpErrorKey(error)}`));
       setLoading(false);
       return;
     }
@@ -178,10 +211,10 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
               <button className="auth-v2-back" onClick={() => go("start")} type="button"><ArrowLeft size={16} /> กลับ</button>
               <p className="auth-v2-eyebrow">EMAIL ACCESS</p>
               <h2>รับรหัสทางอีเมล</h2>
-              <p className="auth-v2-subtitle">เราจะส่งรหัส 6 หลักให้คุณ ไม่ต้องจำรหัสผ่าน</p>
+              <p className="auth-v2-subtitle">{t("emailSubtitle")}</p>
               <label className="auth-v2-label" htmlFor="email">อีเมล</label>
               <div className="auth-v2-input"><Mail size={17} /><input autoComplete="email" id="email" onChange={(event) => setEmail(event.target.value)} placeholder="you@email.com" type="email" value={email} /></div>
-              <button className="auth-v2-primary" disabled={loading || !email} onClick={sendOtp} type="button">{loading ? "กำลังส่ง..." : "ส่งรหัสให้ฉัน"}<ChevronRight size={17} /></button>
+              <button className="auth-v2-primary" disabled={loading || !email} onClick={() => sendOtp()} type="button">{loading ? "กำลังส่ง..." : "ส่งรหัสให้ฉัน"}<ChevronRight size={17} /></button>
             </>
           )}
 
@@ -189,11 +222,13 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
             <>
               <button className="auth-v2-back" onClick={() => go("email")} type="button"><ArrowLeft size={16} /> เปลี่ยนอีเมล</button>
               <p className="auth-v2-eyebrow">VERIFY YOUR EMAIL</p>
-              <h2>ใส่รหัส 6 หลัก</h2>
-              <p className="auth-v2-subtitle">ส่งไปที่ <b>{email}</b></p>
+              <h2>{t("title")}</h2>
+              <p className="auth-v2-subtitle">{t("sentTo")} <b>{normalizeEmail(email)}</b></p>
               <label className="auth-v2-label" htmlFor="otp">OTP CODE</label>
-              <div className="auth-v2-input auth-v2-otp"><KeyRound size={17} /><input autoComplete="one-time-code" id="otp" inputMode="numeric" maxLength={8} onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))} placeholder="000000" value={otp} /></div>
-              <button className="auth-v2-primary" disabled={loading || otp.length < 6} onClick={verifyOtp} type="button">{loading ? "กำลังตรวจสอบ..." : "เข้าสู่ BallDoenSai"}<ChevronRight size={17} /></button>
+              <div className="auth-v2-input auth-v2-otp"><KeyRound size={17} /><input autoComplete="one-time-code" id="otp" inputMode="numeric" maxLength={OTP_MAX_LENGTH} onChange={(event) => setOtp(normalizeOtp(event.target.value))} placeholder="••••••" value={otp} /></div>
+              <p className="auth-v2-note" role="status">{resent ? t("resent") : t("onlyLatest")}</p>
+              <button className="auth-v2-primary" disabled={loading || !canSubmitOtp(otp)} onClick={verifyOtp} type="button">{loading ? "กำลังตรวจสอบ..." : "เข้าสู่ BallDoenSai"}<ChevronRight size={17} /></button>
+              <button className="auth-v2-back" disabled={loading || resendWait > 0} onClick={() => sendOtp(true)} style={{ justifyContent: "center", margin: "14px auto 0", minHeight: 40, width: "100%" }} type="button">{resendWait > 0 ? t("resendIn", { seconds: resendWait }) : t("resend")}</button>
             </>
           )}
 
