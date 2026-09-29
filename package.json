@@ -15,7 +15,8 @@
     "security:rls": "node scripts/rls-smoke-test.mjs",
     "verify:production": "node scripts/verify-production-config.mjs",
     "smoke:public": "node scripts/smoke-public-pages.mjs",
-    "test:concurrency": "node scripts/concurrency-checks.mjs"
+    "test:concurrency": "node scripts/concurrency-checks.mjs",
+    "test:load": "node scripts/load-test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
