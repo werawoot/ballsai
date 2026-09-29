@@ -36,7 +36,8 @@ function errorResponse(code: string | undefined, message: string) {
   return apiError('slotCloseFailed', 400)
 }
 
-export async function DELETE(_request: Request, { params }: { params: { slotId: string } }) {
+export async function DELETE(_request: Request, props: { params: Promise<{ slotId: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return apiError('signInFirst', 401)

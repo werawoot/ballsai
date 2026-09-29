@@ -6,7 +6,8 @@ function getSafeNext(value?: string) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : "/";
 }
 
-export default async function WelcomePage({ searchParams }: { searchParams: { next?: string } }) {
+export default async function WelcomePage(props: { searchParams: Promise<{ next?: string }> }) {
+  const searchParams = await props.searchParams;
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(getSafeNext(searchParams.next))}`);

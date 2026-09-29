@@ -29,8 +29,11 @@ function PositionMark({ position }: { position: string }) {
   return <Star size={25} />
 }
 
-export default async function AthletesPage({ searchParams }: { searchParams: { search?: string; province?: string; position?: string; age?: string; page?: string } }) {
-  const cookieStore = cookies()
+export default async function AthletesPage(
+  props: { searchParams: Promise<{ search?: string; province?: string; position?: string; age?: string; page?: string }> }
+) {
+  const searchParams = await props.searchParams
+  const cookieStore = await cookies()
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {
       getAll: () => cookieStore.getAll(),

@@ -13,7 +13,8 @@ import { sportName } from '@/lib/venue-sport'
 type SlotRow = AvailableSlot & { status: string }
 type Venue = { id: string; name: string; province: string; address: string; contact_phone: string; description: string; amenities: string[]; venue_courts: { id: string; name: string; sport: string; surface: string; capacity: number | null; venue_slots: SlotRow[] | null }[] | null }
 
-export default async function VenueDetailPage({ params }: { params: { id: string } }) {
+export default async function VenueDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data } = await supabase.from('venue_profiles').select('id, name, province, address, contact_phone, description, amenities, venue_courts(id, name, sport, surface, capacity, venue_slots(id, starts_at, ends_at, price_baht, status))').eq('id', params.id).eq('is_published', true).maybeSingle()
   if (!data) notFound()

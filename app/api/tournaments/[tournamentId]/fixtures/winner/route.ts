@@ -7,7 +7,8 @@ import { saveFixtureWinner } from '@/lib/fixture-draw'
 
 // Names the winner of a drawn knockout match (penalties). set_fixture_winner_safely
 // (sql/56) decides who may and that the match really was drawn.
-export async function POST(request: Request, { params }: { params: { tournamentId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ tournamentId: string }> }) {
+  const params = await props.params
   const rateLimit = await checkRateLimit(request, { scope: 'tournament-fixture-winner', limit: 20, windowSeconds: 60 })
   if (!rateLimit.allowed) return apiError('fixturesRateLimited', 429, { retryAfter: String(rateLimit.retryAfterSeconds) })
 

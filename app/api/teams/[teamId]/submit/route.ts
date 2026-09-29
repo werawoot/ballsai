@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 
-export async function POST(_request: Request, { params }: { params: { teamId: string } }) {
+export async function POST(_request: Request, props: { params: Promise<{ teamId: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 })

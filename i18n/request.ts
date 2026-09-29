@@ -7,7 +7,7 @@ import en from '@/messages/en.json'
 // Read once per request by next-intl (wired in next.config.js). Reading the cookie makes
 // every route render per request; see ADR-009 for why that is accepted for now.
 export default getRequestConfig(async () => {
-  const locale = resolveLocale(cookies().get(LOCALE_COOKIE)?.value)
+  const locale = resolveLocale((await cookies()).get(LOCALE_COOKIE)?.value)
   return {
     locale,
     messages: locale === DEFAULT_LOCALE ? th : withFallback(en, th),

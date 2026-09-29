@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { UUID_PATTERN, venuePhotoRpcError } from '@/lib/venue-photo-errors'
 
-type Params = { params: { photoId: string } }
+type Params = { params: Promise<{ photoId: string }> }
 
 // SQL43 owns the authorisation and audit record. This route validates only the HTTP
 // boundary, then delegates the state transition to its SECURITY DEFINER RPC.
-export async function POST(request: Request, { params }: Params) {
+export async function POST(request: Request, props: Params) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 })

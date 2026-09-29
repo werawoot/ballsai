@@ -18,8 +18,9 @@ type TournamentRecord = {
   organizer_id: string
 }
 
-export default async function EditTournamentPage({ params }: { params: { id: string } }) {
-  const cookieStore = cookies()
+export default async function EditTournamentPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

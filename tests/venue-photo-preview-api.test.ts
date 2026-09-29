@@ -38,7 +38,7 @@ const OBJECT_PATH = `${VENUE_ID}/${PHOTO_ID}.webp`
 const SIGNED = 'https://project.supabase.co/storage/v1/object/sign/venue-photos/x?token=abc'
 
 const call = (venueId = VENUE_ID, photoId = PHOTO_ID) =>
-  GET(new Request('http://localhost/x'), { params: { venueId, photoId } })
+  GET(new Request('http://localhost/x'), { params: Promise.resolve({ venueId, photoId }) })
 
 const signedInAs = (id: string) => boundary.getUser.mockResolvedValue({ data: { user: { id } } })
 const photoFound = (venueId = VENUE_ID) =>

@@ -5,10 +5,8 @@ import { checkRateLimit } from '@/lib/rate-limit'
 
 const MAX_REASON_LENGTH = 400
 
-export async function POST(
-  request: Request,
-  { params }: { params: { highlightId: string } },
-) {
+export async function POST(request: Request, props: { params: Promise<{ highlightId: string }> }) {
+  const params = await props.params
   const rateLimit = await checkRateLimit(request, { scope: 'highlight-report', limit: 5, windowSeconds: 10 * 60 })
   if (!rateLimit.allowed) {
     return NextResponse.json(

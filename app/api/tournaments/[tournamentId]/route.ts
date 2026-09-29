@@ -19,10 +19,8 @@ type TournamentOwner = {
   organizer_id: string
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { tournamentId: string } }
-) {
+export async function PATCH(request: Request, props: { params: Promise<{ tournamentId: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const {
     data: { user },

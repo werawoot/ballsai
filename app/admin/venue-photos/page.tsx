@@ -16,7 +16,8 @@ type PhotoRow = {
 
 export const dynamic = 'force-dynamic'
 
-export default async function VenuePhotoModerationPage({ searchParams }: { searchParams?: { queue?: string } }) {
+export default async function VenuePhotoModerationPage(props: { searchParams?: Promise<{ queue?: string }> }) {
+  const searchParams = await props.searchParams
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')

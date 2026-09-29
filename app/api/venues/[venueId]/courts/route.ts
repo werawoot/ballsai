@@ -4,7 +4,8 @@ import { apiError } from '@/lib/api-error'
 
 type CourtBody = { name?: string; sport?: 'football' | 'futsal'; surface?: string; capacity?: number | null }
 
-export async function POST(request: Request, { params }: { params: { venueId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ venueId: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return apiError('signInFirst', 401)

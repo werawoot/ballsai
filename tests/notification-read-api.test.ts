@@ -39,7 +39,7 @@ describe('PATCH /api/notifications/:id', () => {
   it('requires a signed-in user', async () => {
     boundary.getUser.mockResolvedValue({ data: { user: null } })
 
-    const response = await PATCH(patchRequest(), { params: { id: NOTIFICATION_ID } })
+    const response = await PATCH(patchRequest(), { params: Promise.resolve({ id: NOTIFICATION_ID }) })
 
     expect(response.status).toBe(401)
     expect(boundary.update).not.toHaveBeenCalled()
@@ -48,7 +48,7 @@ describe('PATCH /api/notifications/:id', () => {
   it('rejects an id that is not a uuid without touching the database', async () => {
     boundary.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
 
-    const response = await PATCH(patchRequest(), { params: { id: 'not-a-uuid' } })
+    const response = await PATCH(patchRequest(), { params: Promise.resolve({ id: 'not-a-uuid' }) })
 
     expect(response.status).toBe(400)
     expect(boundary.update).not.toHaveBeenCalled()
@@ -58,7 +58,7 @@ describe('PATCH /api/notifications/:id', () => {
     boundary.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
     resolvesWith({ error: null })
 
-    const response = await PATCH(patchRequest(), { params: { id: NOTIFICATION_ID } })
+    const response = await PATCH(patchRequest(), { params: Promise.resolve({ id: NOTIFICATION_ID }) })
 
     expect(response.status).toBe(200)
     const payload = boundary.update.mock.calls[0][0]
@@ -69,7 +69,7 @@ describe('PATCH /api/notifications/:id', () => {
     boundary.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
     resolvesWith({ error: { code: '42P01', message: 'relation "notifications" does not exist' } })
 
-    const response = await PATCH(patchRequest(), { params: { id: NOTIFICATION_ID } })
+    const response = await PATCH(patchRequest(), { params: Promise.resolve({ id: NOTIFICATION_ID }) })
     const body = await response.json()
 
     expect(response.status).toBe(503)
@@ -80,7 +80,7 @@ describe('PATCH /api/notifications/:id', () => {
     boundary.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
     resolvesWith({ error: { code: '42501', message: 'permission denied for table notifications' } })
 
-    const response = await PATCH(patchRequest(), { params: { id: NOTIFICATION_ID } })
+    const response = await PATCH(patchRequest(), { params: Promise.resolve({ id: NOTIFICATION_ID }) })
 
     expect(response.status).toBe(403)
   })

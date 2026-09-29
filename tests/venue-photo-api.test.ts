@@ -40,7 +40,7 @@ beforeEach(() => {
 
 describe('POST /api/venues/:venueId/photos', () => {
   const call = (body: unknown = { objectPath: OBJECT_PATH, caption: 'หญ้าเทียมใหม่' }) =>
-    POST(req(body), { params: { venueId: VENUE_ID } })
+    POST(req(body), { params: Promise.resolve({ venueId: VENUE_ID }) })
 
   it('requires a signed-in user', async () => {
     boundary.getUser.mockResolvedValue({ data: { user: null } })
@@ -52,7 +52,7 @@ describe('POST /api/venues/:venueId/photos', () => {
   it('rejects a venue id that is not a uuid before touching the database', async () => {
     signedIn()
 
-    const response = await POST(req({ objectPath: OBJECT_PATH }), { params: { venueId: 'nope' } })
+    const response = await POST(req({ objectPath: OBJECT_PATH }), { params: Promise.resolve({ venueId: 'nope' }) })
 
     expect(response.status).toBe(400)
     expect(boundary.rpc).not.toHaveBeenCalled()
@@ -134,7 +134,7 @@ describe('PATCH /api/venues/:venueId/photos (reorder)', () => {
     signedIn()
     boundary.rpc.mockResolvedValue({ data: null, error: null })
 
-    const response = await REORDER(req({ photoIds: [PHOTO_ID, VENUE_ID] }), { params: { venueId: VENUE_ID } })
+    const response = await REORDER(req({ photoIds: [PHOTO_ID, VENUE_ID] }), { params: Promise.resolve({ venueId: VENUE_ID }) })
 
     expect(response.status).toBe(200)
     expect(boundary.rpc).toHaveBeenCalledWith('reorder_venue_photos_safely', { p_photo_ids: [PHOTO_ID, VENUE_ID] })
@@ -143,14 +143,14 @@ describe('PATCH /api/venues/:venueId/photos (reorder)', () => {
   it('rejects an empty or oversized list before calling the rpc', async () => {
     signedIn()
 
-    expect((await REORDER(req({ photoIds: [] }), { params: { venueId: VENUE_ID } })).status).toBe(400)
-    expect((await REORDER(req({ photoIds: Array(9).fill(PHOTO_ID) }), { params: { venueId: VENUE_ID } })).status).toBe(400)
+    expect((await REORDER(req({ photoIds: [] }), { params: Promise.resolve({ venueId: VENUE_ID }) })).status).toBe(400)
+    expect((await REORDER(req({ photoIds: Array(9).fill(PHOTO_ID) }), { params: Promise.resolve({ venueId: VENUE_ID }) })).status).toBe(400)
     expect(boundary.rpc).not.toHaveBeenCalled()
   })
 })
 
 describe('PATCH /api/venues/:venueId/photos/:photoId (cover)', () => {
-  const call = () => PATCH(req({}), { params: { venueId: VENUE_ID, photoId: PHOTO_ID } })
+  const call = () => PATCH(req({}), { params: Promise.resolve({ venueId: VENUE_ID, photoId: PHOTO_ID }) })
 
   it('sets the cover through the rpc', async () => {
     signedIn()
@@ -169,7 +169,7 @@ describe('PATCH /api/venues/:venueId/photos/:photoId (cover)', () => {
 })
 
 describe('DELETE /api/venues/:venueId/photos/:photoId', () => {
-  const call = () => DELETE(req(), { params: { venueId: VENUE_ID, photoId: PHOTO_ID } })
+  const call = () => DELETE(req(), { params: Promise.resolve({ venueId: VENUE_ID, photoId: PHOTO_ID }) })
 
   it('removes the storage object only after the rpc succeeds', async () => {
     signedIn()

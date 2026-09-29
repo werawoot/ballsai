@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 
-export async function PATCH(request: Request, { params }: { params: { linkId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ linkId: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 })
@@ -12,7 +13,8 @@ export async function PATCH(request: Request, { params }: { params: { linkId: st
   return NextResponse.json({ ok: true })
 }
 
-export async function DELETE(_request: Request, { params }: { params: { linkId: string } }) {
+export async function DELETE(_request: Request, props: { params: Promise<{ linkId: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 })

@@ -39,13 +39,26 @@ Push protection ใน GitHub เพื่อให้ GitHub บล็อก se
 
 ## สถานะ 29 ก.ย. 2026
 
-| รายการ | ก่อน | หลัง PR นี้ |
+| รายการ | ก่อน | หลัง |
 | --- | --- | --- |
 | secret ในประวัติ git (110 commit ที่ไม่ใช่ merge) | ไม่เคยสแกน | ไม่พบ |
-| `ws` (ใช้โดย supabase-js) high: DoS | 8.19.0 | 8.22.0 แก้แล้ว |
-| `postcss` ใน Next high: อ่านไฟล์ผ่าน sourceMappingURL | 8.4.31 | 8.5.28 ผ่าน `overrides` (CSS ที่ build ออกมาเหมือนเดิมทุกไบต์) |
-| `next` 14.2.35: 8 high + 2 critical | — | ยังค้าง มีข้อยกเว้นถึง **13 ต.ค. 2026** |
+| `ws` (ใช้โดย supabase-js) high: DoS | 8.19.0 | 8.22.0 (PR #58) |
+| `postcss` ใน Next high: อ่านไฟล์ผ่าน sourceMappingURL | 8.4.31 | 8.5.28 ผ่าน `overrides` (PR #58; CSS ที่ build ออกมาเหมือนเดิมทุกไบต์) |
+| `next` 8 high + 2 critical | 14.2.35 (หมดการดูแล) | 15.5.26 พร้อม React 19 |
+| `npm audit` ทั้งโปรเจกต์ | 11 รายการ (1 critical, 7 high) | **0** |
+| `security/audit-exceptions.json` | 10 รายการ | `[]` |
 
-Next.js 14 จบการดูแลแล้ว ทุกช่องโหว่แก้เฉพาะใน 15.5.24 ขึ้นไป งานถัดไปคือ **อัปเกรด Next.js เป็น 15**
-(ต้องเปลี่ยน `params`, `searchParams`, `cookies()` เป็น async ราว 80 ไฟล์) ถ้าไม่เสร็จก่อน 13 ต.ค.
-CI จะ FAIL ทุก branch โดยตั้งใจ T22 ถือว่าเสร็จเมื่อ `security/audit-exceptions.json` เป็น `[]`
+### การอัปเกรด Next.js 15 ตรวจอะไรไปแล้ว
+
+- ใช้ codemod ทางการ `@next/codemod next-async-request-api` เปลี่ยน `params`, `searchParams`,
+  `cookies()` เป็น async ใน 56 ไฟล์ แล้วตรวจทุกจุดที่ codemod ทำเครื่องหมายไว้: จุดเดียวที่ผิดคือ
+  `app/api/venues/[venueId]/photos/[photoId]/route.ts` ซึ่งถ้าใช้ตามที่ codemod ทำ ทุกคำขอตั้งปก/ลบรูปสนาม
+  จะได้ 400 — แก้มือแล้ว และเปลี่ยนชุดทดสอบ API ให้ส่ง `params` เป็น Promise เหมือน Next 15 จริง
+  (ชุดทดสอบนี้ FAIL 5 ข้อกับผลของ codemod ตรง ๆ และผ่านทั้ง 16 ข้อหลังแก้)
+- สถานะ HTTP ของ 18 หน้าหลักเหมือน Next 14 ทุกหน้า
+- ภาพหน้าจอ `/`, `/ranking`, `/login`, `/venues` ทั้ง desktop และมือถือ **ต่างกัน 0 พิกเซล**
+- ทั้ง 110 route เป็น dynamic เหมือนเดิม (next-intl อ่าน cookie ทุกคำขอ) การเปลี่ยนค่า cache ของ Next 15
+  จึงไม่มีผล
+- JS ที่โหลดครั้งแรกเพิ่มราว 9–14 kB ต่อหน้า (React 19)
+
+T22 ถือว่าเสร็จ: อยู่ใน CI และไม่มีช่องโหว่ระดับ high ค้าง ต่อจากนี้ช่องโหว่ใหม่จะทำให้ CI FAIL เอง

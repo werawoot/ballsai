@@ -11,7 +11,11 @@ import { VENUE_PHOTO_PREVIEW_TTL_SECONDS } from '@/lib/venue-photo-preview'
 // all. This route checks the same rule before asking Storage so a refusal is a clear
 // 403 rather than an opaque storage failure, and so a visitor who can read a `visible`
 // row through table RLS still cannot obtain a URL.
-export async function GET(_request: Request, { params }: { params: { venueId: string; photoId: string } }) {
+export async function GET(
+  _request: Request,
+  props: { params: Promise<{ venueId: string; photoId: string }> }
+) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return apiError('signInFirst', 401)

@@ -21,7 +21,7 @@ const deleteRequest = (slotId: string = SLOT_ID) =>
   new Request(`http://localhost/api/venue-slots/${slotId}`, { method: 'DELETE' })
 
 const callDelete = (slotId: string = SLOT_ID) =>
-  DELETE(deleteRequest(slotId), { params: { slotId } })
+  DELETE(deleteRequest(slotId), { params: Promise.resolve({ slotId }) })
 
 const createSlotRequest = () => new Request('http://localhost/api/venue-slots', {
   method: 'POST',

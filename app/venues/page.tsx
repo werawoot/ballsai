@@ -8,7 +8,8 @@ import Pagination from '@/components/Pagination'
 import { fetchPublishedVenuesPage, type PublishedVenue } from '@/lib/public-venues'
 import { parsePage } from '@/lib/pagination'
 
-export default async function VenuesPage({ searchParams }: { searchParams: { page?: string | string[] } }) {
+export default async function VenuesPage(props: { searchParams: Promise<{ page?: string | string[] }> }) {
+  const searchParams = await props.searchParams
   const supabase = await createServerSupabaseClient()
   const page = parsePage(searchParams?.page)
   const now = new Date()

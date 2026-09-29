@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react';
 import { createClient } from '@/lib/supabase'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Trophy, CheckCircle, Upload, Copy, Banknote } from 'lucide-react'
@@ -16,7 +16,8 @@ type Tournament = {
   promptpay: string | null
 }
 
-export default function RegisterPage({ params }: { params: { id: string } }) {
+export default function RegisterPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const searchParams = useSearchParams()
   const requestedTeamId = searchParams.get('teamId') ?? ''
   const [step, setStep] = useState<'form' | 'payment' | 'success'>(() => requestedTeamId ? 'payment' : 'form')

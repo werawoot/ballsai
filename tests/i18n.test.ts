@@ -67,7 +67,7 @@ describe('which language a request gets', () => {
 
   it('is read from that cookie, once per request, with the fallback applied', () => {
     const request = read('i18n/request.ts')
-    expect(request).toContain('resolveLocale(cookies().get(LOCALE_COOKIE)?.value)')
+    expect(request).toContain('resolveLocale((await cookies()).get(LOCALE_COOKIE)?.value)')
     expect(request).toContain('withFallback(en, th)')
     expect(read('next.config.js')).toContain("createNextIntlPlugin('./i18n/request.ts')")
     const layout = read('app/layout.tsx')

@@ -26,10 +26,8 @@ function firstRelation<T>(relation: T | T[] | null): T | null {
   return Array.isArray(relation) ? relation[0] ?? null : relation
 }
 
-export async function POST(
-  request: Request,
-  { params }: { params: { teamId: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ teamId: string }> }) {
+  const params = await props.params
   const rateLimit = await checkRateLimit(request, { scope: 'payment-slip-upload', limit: 8, windowSeconds: 10 * 60 })
   if (!rateLimit.allowed) {
     return NextResponse.json(

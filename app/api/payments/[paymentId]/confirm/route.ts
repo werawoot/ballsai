@@ -13,10 +13,8 @@ function firstRelation<T>(relation: T | T[] | null): T | null {
   return Array.isArray(relation) ? relation[0] ?? null : relation
 }
 
-export async function POST(
-  _request: Request,
-  { params }: { params: { paymentId: string } }
-) {
+export async function POST(_request: Request, props: { params: Promise<{ paymentId: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const {
     data: { user },

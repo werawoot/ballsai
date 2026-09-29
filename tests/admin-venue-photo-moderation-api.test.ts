@@ -23,7 +23,7 @@ const request = (body: unknown) => new Request('http://localhost/x', {
 })
 
 const call = (body: unknown, photoId = PHOTO_ID) =>
-  POST(request(body), { params: { photoId } })
+  POST(request(body), { params: Promise.resolve({ photoId }) })
 
 beforeEach(() => {
   boundary.getUser.mockReset()

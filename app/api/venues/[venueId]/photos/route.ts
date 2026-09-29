@@ -4,7 +4,8 @@ import { apiError } from '@/lib/api-error'
 import { UUID_PATTERN, venuePhotoRpcError } from '@/lib/venue-photo-errors'
 import { VENUE_PHOTO_LIMIT } from '@/lib/venue-photo-upload'
 
-export async function POST(request: Request, { params }: { params: { venueId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ venueId: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return apiError('signInFirst', 401)
@@ -32,7 +33,8 @@ export async function POST(request: Request, { params }: { params: { venueId: st
   return NextResponse.json({ ok: true, photoId: data })
 }
 
-export async function PATCH(request: Request, { params }: { params: { venueId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ venueId: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return apiError('signInFirst', 401)
