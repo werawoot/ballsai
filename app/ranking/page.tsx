@@ -3,7 +3,11 @@ import { Award, Flame, Sparkles, Trophy, MapPin, Zap, Shield, Star } from 'lucid
 import RankingFilter from './RankingFilter'
 import DiscoverTabs from '@/components/DiscoverTabs'
 import { samplePlayerRanks, showDemoData } from '@/lib/sample-data'
-import { getPublicIdentityRankingData, getPublicRankingProvinces, getPublicRankings } from '@/lib/public-data'
+import { getPublicIdentityRankingData, getPublicRankingPage, getPublicRankingProvinces } from '@/lib/public-data'
+import { fetchMyRankingPosition } from '@/lib/public-ranking-page'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { parsePage } from '@/lib/pagination'
+import Pagination from '@/components/Pagination'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
 import { podiumNameLines } from '@/lib/podium-name'
@@ -11,7 +15,7 @@ import { skillText } from '@/lib/skill-ratings'
 
 export default async function RankingPage(
   props: {
-   searchParams: Promise<{ province?: string; position?: string; sport?: string; search?: string; view?: string }>
+   searchParams: Promise<{ province?: string; position?: string; sport?: string; search?: string; view?: string; page?: string }>
   }
 ) {
   const searchParams = await props.searchParams
@@ -20,13 +24,17 @@ export default async function RankingPage(
   const position = searchParams.position ?? ''
   const search = searchParams.search ?? ''
   const view = ['overall', 'trending', 'emerging', 'mvp'].includes(searchParams.view ?? '') ? searchParams.view! : 'overall'
+  // T46: the overall table pages through every ranked athlete, 50 at a time. The other
+  // tabs are top-50 lists by nature and say so.
+  const page = view === 'overall' ? parsePage(searchParams.page) : 1
 
-
-  const [rankings, provinces, identityData] = await Promise.all([
-    getPublicRankings({ sport, season: ACTIVE_SEASON, province, position, search }),
+  const [rankingPage, provinces, identityData, myPosition] = await Promise.all([
+    getPublicRankingPage({ sport, season: ACTIVE_SEASON, province, position, search, page }),
     getPublicRankingProvinces(sport, ACTIVE_SEASON),
     getPublicIdentityRankingData(),
+    findMyPosition(sport),
   ])
+  const rankings = rankingPage.rows as unknown as typeof samplePlayerRanks
 
   const fallbackRankings = showDemoData ? samplePlayerRanks
     .filter(player => player.sport === sport)
@@ -38,10 +46,14 @@ export default async function RankingPage(
 
   const trending = [...displayRankings].filter(player => player.rank_change > 0).sort((a, b) => b.rank_change - a.rank_change || b.pts - a.pts)
   const emerging = (identityData.emerging.length ? identityData.emerging : trending) as typeof displayRankings
-  const mvpLeaders = [...identityData.performance].sort((a, b) => b.mvps - a.mvps || b.goals - a.goals || b.pts - a.pts) as typeof displayRankings
+  const mvpLeaders = [...identityData.performance].sort((a, b) => b.mvps - a.mvps || b.goals - a.goals || b.pts - a.pts) as unknown as typeof displayRankings
   const rankingsForView = view === 'trending' ? (trending.length ? trending : displayRankings) : view === 'emerging' ? (emerging.length ? emerging : displayRankings) : view === 'mvp' ? (mvpLeaders.length ? mvpLeaders : displayRankings) : displayRankings
-  const top3 = rankingsForView.slice(0, 3)
-  const rest = rankingsForView.slice(3)
+  const showPodium = view !== 'overall' || page === 1
+  const top3 = showPodium ? rankingsForView.slice(0, 3) : []
+  const rest = showPodium ? rankingsForView.slice(3) : rankingsForView
+  // The number shown next to each row in the list.
+  const listStart = view === 'overall' ? rankingPage.firstRank + (showPodium ? 3 : 0) : 4
+  const lastShown = rankingPage.firstRank + rankingsForView.length - 1
   const modeCopy = view === 'trending' ? { label: 'WHO IS CLIMBING', title: 'กำลังมาแรง' } : view === 'emerging' ? { label: 'UNDER 18 · PUBLIC PROFILES', title: 'ดาวรุ่งน่าจับตา' } : view === 'mvp' ? { label: 'VERIFIED MATCH STATS', title: 'MVP & สถิติเด่น' } : { label: 'POWER RATING TABLE', title: 'อันดับรวม' }
 
   const cardBg = (rank: number) => {
@@ -89,7 +101,9 @@ export default async function RankingPage(
             <span style={{ WebkitTextStroke: '2px rgba(255,255,255,0.4)', color: 'transparent' }}>RANKING</span>
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10 }}>
-            {rankingsForView.length} นักกีฬา
+            {view === 'overall'
+              ? (rankingsForView.length > 0 ? `อันดับ ${rankingPage.firstRank.toLocaleString()}–${lastShown.toLocaleString()}` : 'ไม่มีนักกีฬาในหน้านี้')
+              : `${rankingsForView.length} นักกีฬา · 50 อันดับแรก`}
             {province && ` · ${province}`}
             {position && ` · ${position}`}
           </p>
@@ -111,6 +125,17 @@ export default async function RankingPage(
           {[{ id: 'overall', label: 'อันดับรวม', icon: Trophy }, { id: 'trending', label: 'กำลังมาแรง', icon: Flame }, { id: 'emerging', label: 'ดาวรุ่ง', icon: Sparkles }, { id: 'mvp', label: 'MVP & สถิติ', icon: Award }].map(item => { const Icon = item.icon; const href = new URLSearchParams({ ...(province ? { province } : {}), ...(position ? { position } : {}), ...(search ? { search } : {}), ...(item.id !== 'overall' ? { view: item.id } : {}) }).toString(); return <Link key={item.id} href={`/ranking${href ? `?${href}` : ''}`} style={{ flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${view === item.id ? '#111827' : '#d8d3c9'}`, background: view === item.id ? '#111827' : 'white', color: view === item.id ? 'white' : '#4d5663', padding: '9px 12px', fontSize: 11, fontWeight: 800, textDecoration: 'none' }}><Icon size={15} color={view === item.id ? '#f4c861' : '#d71920'} />{item.label}</Link> })}
         </div>
       </section>
+      {/* MY POSITION (T46): a signed-in athlete can always find their place. */}
+      {view === 'overall' && myPosition && (
+        <div className="bds-content" style={{ padding: '12px 16px 0' }}>
+          {/* A plain link: a full load lets the browser scroll to the row by its #id. */}
+          <a href={`/ranking?page=${myPosition.page}#rank-${myPosition.rankId}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '11px 14px', background: '#111827', color: 'white', borderRadius: 12, textDecoration: 'none' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700 }}><Star size={16} color="#f5c518" fill="#f5c518" />อันดับของฉัน <b style={{ fontFamily: 'var(--font-oswald)', fontSize: 18 }}>#{myPosition.position.toLocaleString()}</b></span>
+            <span style={{ fontSize: 12, color: '#f5c518', fontWeight: 800 }}>{myPosition.page === page && !province && !position && !search ? 'อยู่ในหน้านี้' : `ไปหน้า ${myPosition.page} →`}</span>
+          </a>
+        </div>
+      )}
+
       {/* TOP 3 */}
       {top3.length > 0 && (
         <>
@@ -171,12 +196,12 @@ export default async function RankingPage(
         <div className="bds-content" style={{ padding: '20px 16px 0' }}>
           <div className="bds-section-title" style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
             <div style={{ width: 4, height: 20, background: '#CC0001', borderRadius: 2 }} />
-            อันดับ 4 ขึ้นไป
+            {showPodium ? 'อันดับ 4 ขึ้นไป' : `อันดับ ${rankingPage.firstRank.toLocaleString()}–${lastShown.toLocaleString()}`}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
        {rest.map((p, i) => (
-        <Link key={p.id} href={`/players/${p.id}`} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 12, padding: '12px 14px', background: 'white', borderRadius: 12, border: '1.5px solid #e5e5e5', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 18, fontWeight: 700, color: '#ccc', width: 26, textAlign: 'center', flexShrink: 0 }}>{i + 4}</div>
+        <Link key={p.id} id={`rank-${p.id}`} href={`/players/${p.id}`} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 12, padding: '12px 14px', background: 'white', borderRadius: 12, border: myPosition?.rankId === p.id ? '2px solid #CC0001' : '1.5px solid #e5e5e5', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', scrollMarginTop: 16 }}>
+          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: listStart + i > 999 ? 13 : 18, fontWeight: 700, color: '#ccc', minWidth: 26, textAlign: 'center', flexShrink: 0 }}>{listStart + i}</div>
           <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f2f2f2', border: '2px solid #e5e5e5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             {p.position === 'GK' || p.position === 'DF'
               ? <Shield size={20} color="#CC0001" strokeWidth={1.5} />
@@ -215,10 +240,29 @@ export default async function RankingPage(
         </div>
       )}
 
+      {view === 'overall' && (
+        <div className="bds-content" style={{ padding: '0 16px' }}>
+          <Pagination basePath="/ranking" page={page} hasNext={rankingPage.hasNext} params={{ province, position, search }} />
+        </div>
+      )}
+
       <div style={{ height: 24 }} />
 
       {/* BOTTOM NAV */}
 
     </main>
   )
+}
+
+// A signed-in athlete's place in the overall table, or null (signed out, no rank row, or
+// the lookup failed: the table must render regardless).
+async function findMyPosition(sport: string) {
+  try {
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+    return await fetchMyRankingPosition(supabase, { sport, season: ACTIVE_SEASON, userId: user.id })
+  } catch {
+    return null
+  }
 }
