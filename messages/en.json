@@ -882,7 +882,10 @@
       "expired": "This code no longer works: it expired, was already used, or a newer code was sent. Use the code in the newest email, or send a new one.",
       "rateLimited": "Too many code requests. Wait a moment and try again.",
       "failed": "Could not verify the code. Please try again.",
-      "sendFailed": "Could not send the code. Please try again."
-    }
+      "sendFailed": "Could not send the code. Please try again.",
+      "captcha": "The check that you are not a bot did not pass. Complete it again and retry."
+    },
+    "captchaNeeded": "Wait for the not-a-bot check to finish, then press the button.",
+    "captchaLabel": "Not-a-bot check"
   }
 }

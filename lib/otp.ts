@@ -16,8 +16,11 @@ type AuthFailure = { code?: string; status?: number; message?: string }
 // "expired": Supabase answers "Token has expired or is invalid" for a code that is past
 // its lifetime, was already used (an email scanner opening a link in the message uses it
 // too), or was replaced by a newer code sent to the same address.
-export function otpErrorKey(error: AuthFailure): 'expired' | 'rateLimited' | 'failed' {
+// "captcha": Supabase refused the request because its Turnstile token was missing, used
+// or expired (T19; docs/research/supabase-captcha-turnstile-2026-09-29.md).
+export function otpErrorKey(error: AuthFailure): 'expired' | 'rateLimited' | 'captcha' | 'failed' {
   const message = error.message ?? ''
+  if (error.code === 'captcha_failed' || /captcha/i.test(message)) return 'captcha'
   if (error.code === 'otp_expired' || /expired or is invalid/i.test(message)) return 'expired'
   if (error.code === 'over_email_send_rate_limit' || error.status === 429 || /security purposes|rate limit/i.test(message)) return 'rateLimited'
   return 'failed'
