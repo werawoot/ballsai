@@ -94,7 +94,10 @@ npm run build
 ```
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs both on every push, plus
-`node --check` on the scripts in `scripts/`. Operational checks:
+`node --check` on the scripts in `scripts/`, a gitleaks scan of the whole git history and
+a production dependency audit that fails on any high/critical advisory without a dated
+entry in `security/audit-exceptions.json` ([docs/security-checks.md](docs/security-checks.md)).
+Operational checks:
 `npm run verify:production`, `npm run smoke:public`, `npm run security:rls`.
 
 ## Current state — 11 August 2026

@@ -39,6 +39,7 @@ jobs:
           node --check scripts/smoke-public-pages.mjs
           node --check scripts/concurrency-checks.mjs
           node --check scripts/concurrency-plan.mjs
+          node --check scripts/audit-gate.mjs
 
       - name: Run lint
         run: npm run lint
@@ -57,3 +58,36 @@ jobs:
 
       - name: Build production bundle
         run: npm run build
+
+  security:
+    # T22. Two checks that need no secret and no install:
+    # - gitleaks reads the whole git history (a key removed in a later commit still leaks),
+    #   with the rules in .gitleaks.toml. The binary is pinned and its checksum verified.
+    # - scripts/audit-gate.mjs fails on any high or critical advisory in a production
+    #   dependency unless security/audit-exceptions.json holds a dated, in-date entry for it.
+    name: Secret scan and dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GITLEAKS_VERSION: 8.28.0
+      GITLEAKS_SHA256: a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb
+    steps:
+      - name: Check out source with full history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Scan git history for secrets (gitleaks)
+        run: |
+          curl -sSfL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum --check --strict
+          tar -xzf gitleaks.tar.gz gitleaks
+          ./gitleaks git --config .gitleaks.toml --redact --no-banner --exit-code 1 .
+
+      - name: Audit production dependencies
+        run: node scripts/audit-gate.mjs

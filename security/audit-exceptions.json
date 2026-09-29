@@ -1,0 +1,72 @@
+[
+  {
+    "advisory": "GHSA-2xp9-vwfh-vxw4",
+    "package": "next",
+    "expires": "2026-10-13",
+    "reason": "RCE in the image optimizer with AVIF input. next.config has no images.remotePatterns and every remote <Image> is unoptimized, so the optimizer only reads files in /public; exposure looks limited but is not proven.",
+    "plan": "Upgrade Next.js 14.2.35 (last 14.x, end of life) to 15.5.24 or later: T22 follow-up PR"
+  },
+  {
+    "advisory": "GHSA-p293-qw3h-jr36",
+    "package": "next",
+    "expires": "2026-10-13",
+    "reason": "RCE on Windows-hosted servers only. Production runs on Vercel (Linux).",
+    "plan": "Upgrade Next.js 14.2.35 (last 14.x, end of life) to 15.5.24 or later: T22 follow-up PR"
+  },
+  {
+    "advisory": "GHSA-h25m-26qc-wcjf",
+    "package": "next",
+    "expires": "2026-10-13",
+    "reason": "DoS through React Server Components request deserialization. The App Router uses Server Components, so this applies.",
+    "plan": "Upgrade Next.js 14.2.35 (last 14.x, end of life) to 15.5.24 or later: T22 follow-up PR"
+  },
+  {
+    "advisory": "GHSA-q4gf-8mx6-v5v3",
+    "package": "next",
+    "expires": "2026-10-13",
+    "reason": "DoS with Server Components. The App Router uses Server Components, so this applies.",
+    "plan": "Upgrade Next.js 14.2.35 (last 14.x, end of life) to 15.5.24 or later: T22 follow-up PR"
+  },
+  {
+    "advisory": "GHSA-8h8q-6873-q5fj",
+    "package": "next",
+    "expires": "2026-10-13",
+    "reason": "DoS with Server Components. The App Router uses Server Components, so this applies.",
+    "plan": "Upgrade Next.js 14.2.35 (last 14.x, end of life) to 15.5.24 or later: T22 follow-up PR"
+  },
+  {
+    "advisory": "GHSA-m99w-x7hq-7vfj",
+    "package": "next",
+    "expires": "2026-10-13",
+    "reason": "DoS in the App Router through Server Actions. The app declares no Server Actions (no use server directive).",
+    "plan": "Upgrade Next.js 14.2.35 (last 14.x, end of life) to 15.5.24 or later: T22 follow-up PR"
+  },
+  {
+    "advisory": "GHSA-89xv-2m56-2m9x",
+    "package": "next",
+    "expires": "2026-10-13",
+    "reason": "SSRF in Server Actions on custom servers. The app has no Server Actions and no custom server.",
+    "plan": "Upgrade Next.js 14.2.35 (last 14.x, end of life) to 15.5.24 or later: T22 follow-up PR"
+  },
+  {
+    "advisory": "GHSA-c4j6-fc7j-m34r",
+    "package": "next",
+    "expires": "2026-10-13",
+    "reason": "SSRF through WebSocket upgrade requests. The app serves no WebSocket route; not verified on Vercel.",
+    "plan": "Upgrade Next.js 14.2.35 (last 14.x, end of life) to 15.5.24 or later: T22 follow-up PR"
+  },
+  {
+    "advisory": "GHSA-36qx-fr4f-26g5",
+    "package": "next",
+    "expires": "2026-10-13",
+    "reason": "Middleware bypass in Pages Router apps with i18n. The app has no pages/ directory.",
+    "plan": "Upgrade Next.js 14.2.35 (last 14.x, end of life) to 15.5.24 or later: T22 follow-up PR"
+  },
+  {
+    "advisory": "GHSA-p9j2-gv94-2wf4",
+    "package": "next",
+    "expires": "2026-10-13",
+    "reason": "SSRF in rewrites. next.config has no rewrites and middleware.ts only redirects to /login.",
+    "plan": "Upgrade Next.js 14.2.35 (last 14.x, end of life) to 15.5.24 or later: T22 follow-up PR"
+  }
+]
