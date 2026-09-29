@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { useTranslations } from 'next-intl'
+import { reportClientError } from '@/lib/report-client-error'
 
 export default function GlobalError({
   error,
@@ -14,6 +15,7 @@ export default function GlobalError({
   const t = useTranslations('fallback')
   useEffect(() => {
     console.error('Unhandled application error', error)
+    reportClientError(error)
   }, [error])
 
   return (
