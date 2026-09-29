@@ -38,6 +38,7 @@ vi.mock('next-intl/server', () => ({
 import VenuesPage from '@/app/venues/page'
 import TournamentsPage from '@/app/tournaments/page'
 import AthletesPage from '@/app/athletes/page'
+import HallOfFamePage from '@/app/hall-of-fame/page'
 
 const venue = (index: number) => ({ id: `v${index}`, name: `Venue ${index}`, province: 'Bangkok', description: '', amenities: [], venue_courts: [] })
 const render = async (page: (props: never) => Promise<ReactElement>, searchParams: Record<string, string>) =>
@@ -99,5 +100,28 @@ describe('/athletes, one page at a time', () => {
     const html = await render(AthletesPage as never, { province: 'เชียงใหม่', age: 'u15', page: '2' })
     const query = (page: number) => `/athletes?${new URLSearchParams({ province: 'เชียงใหม่', age: 'u15', page: String(page) })}`
     expect(hrefs(html)).toEqual(expect.arrayContaining([query(1), query(3)]))
+  })
+})
+
+const honour = (index: number) => ({ id: `h${index}`, season: '2026', category: 'mvp', age_group: 'U15', province: 'น่าน', athlete_id: null, player_rank_id: null, athlete_name: `Honour ${index}`, team_name: null, position: 'MF', image_url: null, citation: 'Best of the season' })
+
+// T49: a season's Hall of Fame used to arrive in one read, cut at the API's row limit.
+describe('/hall-of-fame, one page at a time', () => {
+  it('shows the second page and links back, keeping the season and filters', async () => {
+    table.rows = Array.from({ length: 30 }, (_, index) => honour(index + 1))
+    const html = await render(HallOfFamePage as never, { season: '2026', category: 'mvp', page: '2' })
+    expect(html).toContain('Honour 25')
+    expect(html).toContain('Honour 30')
+    expect(html).not.toContain('Honour 24<')
+    expect(hrefs(html)).toContain(`/hall-of-fame?${new URLSearchParams({ season: '2026', category: 'mvp', page: '1' })}`)
+    expect(hrefs(html).some(href => href.includes('page=3'))).toBe(false)
+  })
+
+  it('offers the next page from the first', async () => {
+    table.rows = Array.from({ length: 30 }, (_, index) => honour(index + 1))
+    const html = await render(HallOfFamePage as never, {})
+    expect(html).toContain('Honour 24')
+    expect(html).not.toContain('Honour 25<')
+    expect(hrefs(html)).toContain('/hall-of-fame?page=2')
   })
 })
