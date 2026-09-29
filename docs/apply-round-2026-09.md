@@ -15,7 +15,19 @@
 ## ขั้น 0 — ดูว่าฐานนี้มีอะไรแล้ว
 
 รัน [`sql/checks/apply-round-status.sql`](../sql/checks/apply-round-status.sql) (อ่านอย่างเดียว)
-ได้ 19 แถว แถวที่ `present = true` แปลว่าขั้นนั้นมีอยู่แล้ว ข้ามได้ (แต่ยังรัน precheck ของขั้นนั้นเพื่อยืนยัน)
+ได้ 19 แถว แถวที่ `present = true` แปลว่าขั้นนั้นมีอยู่แล้ว **ห้ามรันไฟล์หลักซ้ำ** และให้ยืนยันด้วย
+**postcheck** ของขั้นนั้น ไม่ใช่ precheck (precheck ตรวจสภาพ *ก่อน* apply จึงไม่ตรงเสมอเมื่อ apply แล้ว)
+
+ข้อควรรู้จากรอบ Staging 29 ก.ย.:
+
+- หัวไฟล์ SQL41–47 และ precheck/postcheck ของมันเขียนว่า "Run only against hivedzrwrrcnjrlirhtv"
+  เป็นข้อความเก่าก่อนมีขั้นตอน Staging-first ไฟล์ตรวจอ่านอย่างเดียว รันบน Staging ได้
+- คัดลอกไฟล์ด้วยปุ่ม **Copy raw file** บนหน้า GitHub แล้ววางด้วย Ctrl+V ห้ามให้เครื่องมืออัตโนมัติ
+  "พิมพ์" ข้อความ: รอบแรก backtick ในคอมเมนต์กลายเป็นอักขระ NUL และ Postgres ปฏิเสธทั้งไฟล์ (`08P01`)
+- SQL50 สร้างตาราง temp `sql50_before`: Supabase ถามเรื่อง RLS ให้กด **Run without RLS**
+  ถ้าเห็น `relation "sql50_before" does not exist` หลังรัน ให้ตรวจแถว 17 ของ query นี้ก่อน
+  (รอบ Staging ไฟล์ commit สำเร็จแล้ว error มาจากคำสั่งที่ถูกต่อท้ายหลัง `commit;`)
+- ถ้า UI เปลี่ยนแท็บโดยไม่แสดงผล ให้ถือว่ายังไม่ได้รัน ตรวจด้วย postcheck ก่อนรันซ้ำ
 
 ข้อมูลจาก inventory 28 ก.ย.: Staging มี SQL46 และ SQL47 แล้ว, Production ยังไม่มี —
 ปุ่มแก้สนามและจัดการนักกีฬาของโค้ชบน Production จึงตอบ 503 จนกว่าจะถึงขั้น 5–6
