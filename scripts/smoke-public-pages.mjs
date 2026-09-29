@@ -15,6 +15,8 @@ const checks = [
   { path: '/privacy', status: 200, text: 'Privacy' },
   { path: '/terms', status: 200, text: 'Terms' },
   { path: '/not-a-real-page', status: 404, text: 'BALLDOENSAI.COM' },
+  // The uptime monitor's URL (T30): the app and its database answer.
+  { path: '/api/health', status: 200, text: '"status":"ok"' },
 ]
 
 let failed = false
