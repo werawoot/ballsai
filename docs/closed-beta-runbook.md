@@ -532,6 +532,10 @@ SKIP, never as PASS; so is a function it does not have yet. Known finding before
 run: the birth-date and consent checks FAIL until SQL58 is applied (T50, see
 `docs/national-readiness.md`).
 
+Rollback (T31): [`docs/rollback-plan.md`](rollback-plan.md) — roll code back on Vercel first,
+SQL last. Prepared, drilled rollbacks for SQL57–60 are in `sql/rollback/` (incident use only,
+owner approval, Staging first). With SQL58 applied, never roll the app back before PR #49.
+
 Concurrency (T14, `npm run test:concurrency`, `scripts/concurrency-checks.mjs`): fires the
 same write `PARALLEL` (default 8) times at once and checks the data stays correct — one
 booking for one slot, at most one team per coach per tournament, a slip confirmed once, a
