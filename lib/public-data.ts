@@ -4,6 +4,7 @@ import { ACTIVE_SEASON, ACTIVE_SPORT } from './season'
 import { fetchPublicTournamentsPage } from './public-tournaments'
 import { fetchIdentityRanking, type IdentityRanking } from './public-identity-ranking'
 import { fetchRankingProvinces } from './ranking-provinces'
+import { fetchRankingPage } from './public-ranking-page'
 
 const publicSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -91,6 +92,20 @@ export const getPublicRankings = unstable_cache(
     }
   },
   ['public-rankings'],
+  { revalidate: 60, tags: ['public-ranking'] },
+)
+
+// One page of the overall /ranking table (T46). Cached per filters and page.
+export const getPublicRankingPage = unstable_cache(
+  async (filters: RankingFilters & { page: number }) => {
+    try {
+      return await fetchRankingPage(publicSupabase, filters)
+    } catch (error) {
+      console.error(JSON.stringify({ level: 'error', event: 'public_ranking_page_fetch_failed', page: filters.page, error: publicDataErrorDetails(error) }))
+      return { rows: [], hasNext: false, firstRank: (filters.page - 1) * 50 + 1 }
+    }
+  },
+  ['public-ranking-page'],
   { revalidate: 60, tags: ['public-ranking'] },
 )
 
