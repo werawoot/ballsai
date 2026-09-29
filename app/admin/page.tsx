@@ -14,11 +14,12 @@ function pageNumber(value: string | undefined) {
   return Number.isInteger(number) && number > 0 ? number : 1
 }
 
-export default async function AdminPage({ searchParams }: { searchParams?: { page?: string; q?: string } }) {
+export default async function AdminPage(props: { searchParams?: Promise<{ page?: string; q?: string }> }) {
+  const searchParams = await props.searchParams;
   const page = pageNumber(searchParams?.page)
   const query = searchParams?.q?.trim().slice(0, 80) ?? ''
   const offset = (page - 1) * RANKING_PAGE_SIZE
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

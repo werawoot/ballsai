@@ -6,10 +6,8 @@ type ModerateBody = {
   action?: 'hide' | 'unhide' | 'delete'
 }
 
-export async function POST(
-  request: Request,
-  { params }: { params: { highlightId: string } },
-) {
+export async function POST(request: Request, props: { params: Promise<{ highlightId: string }> }) {
+  const params = await props.params
   const highlightId = Number(params.highlightId)
   if (!Number.isSafeInteger(highlightId) || highlightId < 1) {
     return NextResponse.json({ error: 'ไม่พบ Highlight' }, { status: 404 })

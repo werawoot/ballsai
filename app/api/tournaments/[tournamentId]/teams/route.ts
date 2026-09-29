@@ -7,10 +7,8 @@ type CreateTeamBody = {
   name?: string
 }
 
-export async function POST(
-  request: Request,
-  { params }: { params: { tournamentId: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ tournamentId: string }> }) {
+  const params = await props.params
   const rateLimit = await checkRateLimit(request, { scope: 'team-registration', limit: 5, windowSeconds: 10 * 60 })
   if (!rateLimit.allowed) {
     return NextResponse.json(

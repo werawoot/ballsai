@@ -19,7 +19,8 @@ type HighlightRow = {
   created_at: string
 }
 
-export default async function HighlightModerationPage({ searchParams }: { searchParams?: { queue?: string; before?: string } }) {
+export default async function HighlightModerationPage(props: { searchParams?: Promise<{ queue?: string; before?: string }> }) {
+  const searchParams = await props.searchParams
   const supabase = await createServerSupabaseClient()
   const queueMode = searchParams?.queue === 'hidden' ? 'hidden' : 'reported'
   const before = searchParams?.before && !Number.isNaN(Date.parse(searchParams.before)) ? searchParams.before : null

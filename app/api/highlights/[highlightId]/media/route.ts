@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 
-export async function GET(_: Request, { params }: { params: { highlightId: string } }) {
+export async function GET(_: Request, props: { params: Promise<{ highlightId: string }> }) {
+  const params = await props.params
   const highlightId = Number(params.highlightId)
   if (!Number.isSafeInteger(highlightId) || highlightId < 1) {
     return NextResponse.json({ error: 'ไม่พบ Highlight' }, { status: 404 })

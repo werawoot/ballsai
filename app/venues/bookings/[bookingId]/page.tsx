@@ -6,7 +6,8 @@ import BookingCoordination, { type CoordinationRow, type AvailableSlot } from '.
 import { formatVenueBookingDateTime } from '@/lib/venue-booking-time'
 import PageHeader from '@/components/PageHeader'
 
-export default async function BookingDetails({ params }: { params: { bookingId: string } }) {
+export default async function BookingDetails(props: { params: Promise<{ bookingId: string }> }) {
+  const params = await props.params
   if (!/^[0-9a-f-]{36}$/i.test(params.bookingId)) notFound()
   const db = await createServerSupabaseClient()
   const { data: { user } } = await db.auth.getUser()

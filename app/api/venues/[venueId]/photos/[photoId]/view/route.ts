@@ -13,7 +13,11 @@ import { VENUE_PHOTO_PUBLIC_MIGRATION, VENUE_PHOTO_PUBLIC_TTL_SECONDS } from '@/
 //
 // Deliberately unauthenticated: the public gallery has to work signed out. An owner or
 // admin reviewing a pending photo uses the /preview route instead.
-export async function GET(_request: Request, { params }: { params: { venueId: string; photoId: string } }) {
+export async function GET(
+  _request: Request,
+  props: { params: Promise<{ venueId: string; photoId: string }> }
+) {
+  const params = await props.params
   if (!UUID_PATTERN.test(params.venueId) || !UUID_PATTERN.test(params.photoId)) {
     return NextResponse.json({ error: 'รหัสรูปไม่ถูกต้อง' }, { status: 400 })
   }

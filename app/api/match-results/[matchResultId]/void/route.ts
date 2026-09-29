@@ -5,10 +5,8 @@ import { logServerError, logServerEvent } from '@/lib/monitoring'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { apiError } from '@/lib/api-error'
 
-export async function POST(
-  request: Request,
-  { params }: { params: { matchResultId: string } },
-) {
+export async function POST(request: Request, props: { params: Promise<{ matchResultId: string }> }) {
+  const params = await props.params
   const rateLimit = await checkRateLimit(request, { scope: 'match-result-void', limit: 10, windowSeconds: 10 * 60 })
   if (!rateLimit.allowed) {
     return NextResponse.json(

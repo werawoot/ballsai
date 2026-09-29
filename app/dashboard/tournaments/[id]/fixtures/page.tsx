@@ -11,7 +11,8 @@ import PublishFixturesToggle from './PublishFixturesToggle'
 // An organizer's draw for one tournament: make or remake it, and see every fixture by
 // stage, group and round. Only the tournament's organizer or an admin gets here; the
 // database checks the same again when a draw is saved (sql/55).
-export default async function TournamentFixturesPage({ params }: { params: { id: string } }) {
+export default async function TournamentFixturesPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect(`/login?next=/dashboard/tournaments/${params.id}/fixtures`)

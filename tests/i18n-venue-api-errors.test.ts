@@ -69,9 +69,9 @@ describe('venue owner routes answer with a code', () => {
   })
 
   it('names a court without a name, and a failed court', async () => {
-    await expectCode(await createCourt(json({}), { params: { venueId: ID } }), 400, 'courtNameRequired')
+    await expectCode(await createCourt(json({}), { params: Promise.resolve({ venueId: ID }) }), 400, 'courtNameRequired')
     boundary.rpc.mockResolvedValue({ data: null, error: { message: 'x' } })
-    await expectCode(await createCourt(json({ name: 'A' }), { params: { venueId: ID } }), 400, 'courtCreateFailed')
+    await expectCode(await createCourt(json({ name: 'A' }), { params: Promise.resolve({ venueId: ID }) }), 400, 'courtCreateFailed')
   })
 
   it('names an invalid slot', async () => {
@@ -87,21 +87,21 @@ describe('venue owner routes answer with a code', () => {
     ]
     for (const [token, status, code] of cases) {
       boundary.rpc.mockResolvedValue({ error: { message: token } })
-      await expectCode(await closeSlot(new Request('http://localhost/x'), { params: { slotId: ID } }), status, code)
+      await expectCode(await closeSlot(new Request('http://localhost/x'), { params: Promise.resolve({ slotId: ID }) }), status, code)
     }
-    await expectCode(await closeSlot(new Request('http://localhost/x'), { params: { slotId: 'bad' } }), 400, 'slotIdInvalid')
+    await expectCode(await closeSlot(new Request('http://localhost/x'), { params: Promise.resolve({ slotId: 'bad' }) }), 400, 'slotIdInvalid')
   })
 
   it('keeps the migration hint when SQL38 is missing', async () => {
     boundary.rpc.mockResolvedValue({ error: { code: 'PGRST202', message: '' } })
-    const response = await closeSlot(new Request('http://localhost/x'), { params: { slotId: ID } })
+    const response = await closeSlot(new Request('http://localhost/x'), { params: Promise.resolve({ slotId: ID }) })
     expect(await response.json()).toMatchObject({ code: 'slotCloseMigrationMissing', migration: 'sql/38-close-venue-slot-v1.sql' })
   })
 
   it('names a booking response from someone who is not the owner', async () => {
     boundary.rpc.mockResolvedValue({ error: { message: 'VENUE_OWNER_REQUIRED' } })
     const request = new Request('http://localhost/x', { method: 'PATCH', body: JSON.stringify({ status: 'confirmed' }) })
-    await expectCode(await respond(request, { params: { bookingId: ID } }), 403, 'bookingOwnerRequired')
+    await expectCode(await respond(request, { params: Promise.resolve({ bookingId: ID }) }), 403, 'bookingOwnerRequired')
   })
 
   it('maps venue photo tokens to codes', async () => {

@@ -155,7 +155,7 @@ nationwide use") เอกสารนี้คือรายการที่
 | T19 | ใส่ CAPTCHA ก่อนขอ OTP | 🤖 | บอทขอ OTP ซ้ำแล้วถูกบล็อก | ⬜ |
 | T20 | ยืนยันว่า Production ตั้ง Upstash แล้ว | 👤 | ยิงเกิน limit จากสอง instance แล้วโดนบล็อก | ⬜ |
 | T21 | ทดสอบ RLS ด้วย JWT จริงครบทุกบทบาท | 🤖 เขียนชุดทดสอบ, 👤 รันบน Staging | อ่าน/แก้ข้อมูลของคนอื่นถูกปฏิเสธทุกครั้ง | 🔄 ชุดทดสอบเขียนแล้ว (`scripts/rls-minor-checks.mjs` ใน `npm run security:rls`): กวาด 18 ตารางส่วนตัวแบบไม่ล็อกอิน, ตรวจวันเกิดและบันทึกความยินยอมของโปรไฟล์สาธารณะ, และเช็กข้ามบุคคลเมื่อใส่ id ทดสอบ — รอรันบน Staging ด้วย JWT จริง; ข้อวันเกิด (ไม่ล็อกอินและล็อกอินที่ไม่เกี่ยวข้อง) จะ FAIL จนกว่า SQL58 จะ apply |
-| T22 | ตรวจ dependency และสแกน secret ใน CI | 🤖 | อยู่ใน CI ไม่มีช่องโหว่ระดับ high ค้าง | 🔄 อยู่ใน CI แล้ว (`docs/security-checks.md`): gitleaks สแกนประวัติ git ทั้งหมด ไม่พบ secret และตรวจกับ key ปลอมแล้วจับได้; `scripts/audit-gate.mjs` FAIL กับ lockfile เดิม (ws, postcss) และผ่านหลังแก้; Dependabot รายสัปดาห์ — ยังค้าง Next.js 14 (8 high + 2 critical) มีข้อยกเว้นถึง 13 ต.ค. 2026 ต้องอัปเกรดเป็น 15.5.24+ |
+| T22 | ตรวจ dependency และสแกน secret ใน CI | 🤖 | อยู่ใน CI ไม่มีช่องโหว่ระดับ high ค้าง | ✅ อยู่ใน CI (`docs/security-checks.md`): gitleaks สแกนประวัติ git ทั้งหมด ไม่พบ secret และจับ key ปลอมได้; `scripts/audit-gate.mjs` FAIL กับ lockfile เดิมและผ่านหลังแก้; `npm audit` จาก 11 รายการ (1 critical, 7 high) เหลือ 0 หลังอัปเกรด ws, postcss และ Next.js 14 → 15.5.26 + React 19 (18 หน้าตอบสถานะเดิม, ภาพหน้าจอต่าง 0 พิกเซล); ข้อยกเว้นว่าง; Dependabot รายสัปดาห์ |
 | T23 | จ้าง pen test ภายนอก | 👤 | มีรายงาน และแก้ข้อ high ครบ | ⬜ |
 
 ## ระยะ 3 — PDPA และการกู้คืน (หมวด 5–6)

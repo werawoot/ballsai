@@ -21,7 +21,8 @@ function bookingRpcError(error: RpcError, action: 'respond' | 'cancel') {
   return apiError(action === 'respond' ? 'bookingRespondFailed' : 'bookingCancelFailed', 400)
 }
 
-export async function PATCH(request: Request, { params }: { params: { bookingId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ bookingId: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return apiError('signInFirst', 401)
@@ -36,7 +37,8 @@ export async function PATCH(request: Request, { params }: { params: { bookingId:
   return NextResponse.json({ ok: true })
 }
 
-export async function DELETE(_request: Request, { params }: { params: { bookingId: string } }) {
+export async function DELETE(_request: Request, props: { params: Promise<{ bookingId: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return apiError('signInFirst', 401)

@@ -7,7 +7,8 @@ import { parseDrawRequest, saveTournamentDraw } from '@/lib/fixture-draw'
 
 // Makes (or remakes) a tournament's draw. The server builds the fixtures from the
 // tournament's confirmed teams; save_tournament_fixtures_safely (sql/55) decides who may.
-export async function POST(request: Request, { params }: { params: { tournamentId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ tournamentId: string }> }) {
+  const params = await props.params
   const rateLimit = await checkRateLimit(request, { scope: 'tournament-fixtures', limit: 10, windowSeconds: 60 })
   if (!rateLimit.allowed) return apiError('fixturesRateLimited', 429, { retryAfter: String(rateLimit.retryAfterSeconds) })
 

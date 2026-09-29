@@ -58,8 +58,9 @@ const verificationLabels = {
   performance_verified: 'Performance Verified',
 }
 
-export default async function PlayerPage({ params }: { params: { id: string } }) {
-  const cookieStore = cookies()
+export default async function PlayerPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

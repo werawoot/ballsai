@@ -1,3 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-export async function PATCH(request:Request,{params}:{params:{memberId:string}}){const s=await createServerSupabaseClient();const {data:{user}}=await s.auth.getUser();if(!user)return NextResponse.json({error:'กรุณาเข้าสู่ระบบก่อน'},{status:401});const b=await request.json().catch(()=>null) as {status?:string}|null;if(b?.status!=='accepted'&&b?.status!=='declined')return NextResponse.json({error:'สถานะไม่ถูกต้อง'},{status:400});const {error}=await s.rpc('respond_organization_invite_safely',{p_member_id:params.memberId,p_status:b.status});return error?NextResponse.json({error:'ตอบรับคำเชิญไม่สำเร็จ'},{status:400}):NextResponse.json({ok:true})}
+export async function PATCH(request:Request, props:{params: Promise<{memberId:string}>}) {
+  const params = await props.params
+  const s=await createServerSupabaseClient();const {data:{user}}=await s.auth.getUser();if(!user)return NextResponse.json({error:'กรุณาเข้าสู่ระบบก่อน'},{status:401});const b=await request.json().catch(()=>null) as {status?:string}|null;if(b?.status!=='accepted'&&b?.status!=='declined')return NextResponse.json({error:'สถานะไม่ถูกต้อง'},{status:400});const {error}=await s.rpc('respond_organization_invite_safely',{p_member_id:params.memberId,p_status:b.status});return error?NextResponse.json({error:'ตอบรับคำเชิญไม่สำเร็จ'},{status:400}):NextResponse.json({ok:true})
+}

@@ -9,7 +9,10 @@ import MatchPlanTeamFilter from './MatchPlanTeamFilter'
 import { parsePage } from '@/lib/pagination'
 import { fetchMatchPlanTeamsPage, type MatchPlanScope } from '@/lib/match-plan-teams'
 
-export default async function MatchPlanPage({ searchParams = {} }: { searchParams?: { scope?: string; page?: string; q?: string } }) {
+export default async function MatchPlanPage(
+  props: { searchParams?: Promise<{ scope?: string; page?: string; q?: string }> }
+) {
+  const searchParams = (await props.searchParams) ?? {}
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/match-plan')

@@ -13,8 +13,9 @@ import Pagination from '@/components/Pagination'
 import { parsePage } from '@/lib/pagination'
 import { fetchOrganizerDashboard } from '@/lib/organizer-dashboard'
 
-export default async function DashboardPage({ searchParams = {} }: { searchParams?: { page?: string; pending?: string } }) {
-  const cookieStore = cookies()
+export default async function DashboardPage(props: { searchParams?: Promise<{ page?: string; pending?: string }> }) {
+  const searchParams = (await props.searchParams) ?? {}
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

@@ -16,10 +16,8 @@ import {
  * - GET /api/provinces/10?with_region=true
  * - GET /api/provinces/10?language=th
  */
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params
   try {
     const provinceId = parseInt(params.id)
     const { searchParams } = new URL(request.url)
@@ -90,10 +88,8 @@ export async function GET(
  *   region_id?: number
  * }
  */
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params
   try {
     const provinceId = parseInt(params.id)
 
@@ -178,10 +174,8 @@ export async function PATCH(
  * Note: This will likely fail due to the foreign key constraint ON DELETE RESTRICT
  * on the region table if there are other relationships. Consider using soft deletes instead.
  */
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params
   try {
     const provinceId = parseInt(params.id)
 

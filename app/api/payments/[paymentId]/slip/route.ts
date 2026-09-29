@@ -12,10 +12,8 @@ function firstRelation<T>(relation: T | T[] | null): T | null {
   return Array.isArray(relation) ? relation[0] ?? null : relation
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { paymentId: string } },
-) {
+export async function GET(_request: Request, props: { params: Promise<{ paymentId: string }> }) {
+  const params = await props.params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 })

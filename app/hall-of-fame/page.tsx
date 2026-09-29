@@ -32,7 +32,10 @@ const categoryCopy: Record<HallEntry['category'], { label: string; icon: typeof 
   fair_play: { label: 'FAIR PLAY', icon: Shield, color: '#70c985' },
 }
 
-export default async function HallOfFamePage({ searchParams }: { searchParams: { season?: string; category?: string; age?: string; province?: string; page?: string } }) {
+export default async function HallOfFamePage(
+  props: { searchParams: Promise<{ season?: string; category?: string; age?: string; province?: string; page?: string }> }
+) {
+  const searchParams = await props.searchParams
   const season = searchParams.season || ACTIVE_SEASON
   const category = Object.keys(categoryCopy).includes(searchParams.category || '') ? searchParams.category as HallEntry['category'] : ''
   const age = ['U12', 'U15', 'U18', 'OPEN'].includes(searchParams.age || '') ? searchParams.age! : ''

@@ -10,8 +10,11 @@ import PageHeader from '@/components/PageHeader'
 import { parsePage } from '@/lib/pagination'
 import { RESULT_HISTORY_LIMIT, fetchResultTournamentData, fetchResultTournamentsPage } from '@/lib/match-results-dashboard'
 
-export default async function MatchResultsPage({ searchParams = {} }: { searchParams?: { tournament?: string; page?: string; q?: string } }) {
-  const cookieStore = cookies()
+export default async function MatchResultsPage(
+  props: { searchParams?: Promise<{ tournament?: string; page?: string; q?: string }> }
+) {
+  const searchParams = (await props.searchParams) ?? {}
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

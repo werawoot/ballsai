@@ -157,7 +157,7 @@ Google Login ถูกตั้งค่าด้วยบัญชีเจ้�
 ผู้ใช้ (Browser)
         │
         ▼
-Next.js 14 App Router on Vercel
+Next.js 15 App Router on Vercel
         │  ├─ Public pages / Server Components / Cached public data
         │  ├─ Route handlers: teams, payments, results, highlights
         │  └─ Login + onboarding flows
@@ -174,7 +174,7 @@ Supabase
 
 ### Tech stack
 
-- Next.js 14 App Router, React 18, TypeScript
+- Next.js 15 App Router, React 19, TypeScript
 - Supabase Auth, Postgres, Storage, RLS
 - Vercel deployment, Analytics, Speed Insights
 - Resend for transactional email

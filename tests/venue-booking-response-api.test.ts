@@ -41,7 +41,7 @@ describe('PATCH /api/venue-bookings/:bookingId', () => {
       select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { status: 'confirmed' }, error: null }) }) }),
     })
 
-    const response = await PATCH(patchRequest(), { params: { bookingId: BOOKING_ID } })
+    const response = await PATCH(patchRequest(), { params: Promise.resolve({ bookingId: BOOKING_ID }) })
 
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toEqual({ ok: true, alreadyResponded: true })
@@ -50,7 +50,7 @@ describe('PATCH /api/venue-bookings/:bookingId', () => {
   it('rejects a response from someone who is not the venue owner', async () => {
     supabaseBoundary.rpc.mockResolvedValue({ error: { code: '42501', message: 'VENUE_OWNER_REQUIRED' } })
 
-    const response = await PATCH(patchRequest(), { params: { bookingId: BOOKING_ID } })
+    const response = await PATCH(patchRequest(), { params: Promise.resolve({ bookingId: BOOKING_ID }) })
 
     expect(response.status).toBe(403)
   })
@@ -58,7 +58,7 @@ describe('PATCH /api/venue-bookings/:bookingId', () => {
   it('maps a session lost inside the response rpc to 401', async () => {
     supabaseBoundary.rpc.mockResolvedValue({ error: { code: '42501', message: 'AUTH_REQUIRED' } })
 
-    const response = await PATCH(patchRequest(), { params: { bookingId: BOOKING_ID } })
+    const response = await PATCH(patchRequest(), { params: Promise.resolve({ bookingId: BOOKING_ID }) })
 
     expect(response.status).toBe(401)
   })
@@ -66,7 +66,7 @@ describe('PATCH /api/venue-bookings/:bookingId', () => {
   it('returns a setup response when the response rpc is missing', async () => {
     supabaseBoundary.rpc.mockResolvedValue({ error: { code: 'PGRST202', message: 'function not found' } })
 
-    const response = await PATCH(patchRequest(), { params: { bookingId: BOOKING_ID } })
+    const response = await PATCH(patchRequest(), { params: Promise.resolve({ bookingId: BOOKING_ID }) })
 
     expect(response.status).toBe(503)
     await expect(response.json()).resolves.toMatchObject({ migration: 'sql/23-venues-and-bookings-v1.sql' })
@@ -84,7 +84,7 @@ describe('DELETE /api/venue-bookings/:bookingId', () => {
   it('reports a booking that can no longer be cancelled as a conflict', async () => {
     supabaseBoundary.rpc.mockResolvedValue({ error: { code: '22023', message: 'BOOKING_NOT_CANCELLABLE' } })
 
-    const response = await DELETE(new Request(`http://localhost/api/venue-bookings/${BOOKING_ID}`, { method: 'DELETE' }), { params: { bookingId: BOOKING_ID } })
+    const response = await DELETE(new Request(`http://localhost/api/venue-bookings/${BOOKING_ID}`, { method: 'DELETE' }), { params: Promise.resolve({ bookingId: BOOKING_ID }) })
 
     expect(response.status).toBe(409)
   })
@@ -92,7 +92,7 @@ describe('DELETE /api/venue-bookings/:bookingId', () => {
   it('maps a session lost inside the cancellation rpc to 401', async () => {
     supabaseBoundary.rpc.mockResolvedValue({ error: { code: '42501', message: 'AUTH_REQUIRED' } })
 
-    const response = await DELETE(new Request(`http://localhost/api/venue-bookings/${BOOKING_ID}`, { method: 'DELETE' }), { params: { bookingId: BOOKING_ID } })
+    const response = await DELETE(new Request(`http://localhost/api/venue-bookings/${BOOKING_ID}`, { method: 'DELETE' }), { params: Promise.resolve({ bookingId: BOOKING_ID }) })
 
     expect(response.status).toBe(401)
   })

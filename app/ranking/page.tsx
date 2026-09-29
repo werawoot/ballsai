@@ -8,11 +8,12 @@ import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
 import { podiumNameLines } from '@/lib/podium-name'
 
-export default async function RankingPage({
-  searchParams,
-}: {
- searchParams: { province?: string; position?: string; sport?: string; search?: string; view?: string }
-}) {
+export default async function RankingPage(
+  props: {
+   searchParams: Promise<{ province?: string; position?: string; sport?: string; search?: string; view?: string }>
+  }
+) {
+  const searchParams = await props.searchParams
   const sport = searchParams.sport ?? ACTIVE_SPORT
   const province = searchParams.province ?? ''
   const position = searchParams.position ?? ''

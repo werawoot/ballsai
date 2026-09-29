@@ -7,7 +7,8 @@ import { saveFixturesPublished } from '@/lib/fixture-draw'
 
 // Shows or hides a tournament's draw to everyone. set_fixtures_published_safely (sql/57)
 // decides who may.
-export async function POST(request: Request, { params }: { params: { tournamentId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ tournamentId: string }> }) {
+  const params = await props.params
   const rateLimit = await checkRateLimit(request, { scope: 'tournament-fixtures-publish', limit: 20, windowSeconds: 60 })
   if (!rateLimit.allowed) return apiError('fixturesRateLimited', 429, { retryAfter: String(rateLimit.retryAfterSeconds) })
 

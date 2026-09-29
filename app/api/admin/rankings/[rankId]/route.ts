@@ -30,7 +30,8 @@ function validRank(body: RankBody | null) {
     && Number.isInteger(body.rank_change) && Math.abs(body.rank_change ?? 100001) <= 100000
 }
 
-export async function PATCH(request: Request, { params }: { params: { rankId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ rankId: string }> }) {
+  const params = await props.params
   if (!uuidPattern.test(params.rankId)) return NextResponse.json({ error: 'ไม่พบ Ranking' }, { status: 404 })
   const context = await getAdminMutationContext()
   if ('response' in context) return context.response
@@ -48,7 +49,8 @@ export async function PATCH(request: Request, { params }: { params: { rankId: st
   return NextResponse.json({ ok: true })
 }
 
-export async function DELETE(_request: Request, { params }: { params: { rankId: string } }) {
+export async function DELETE(_request: Request, props: { params: Promise<{ rankId: string }> }) {
+  const params = await props.params
   if (!uuidPattern.test(params.rankId)) return NextResponse.json({ error: 'ไม่พบ Ranking' }, { status: 404 })
   const context = await getAdminMutationContext()
   if ('response' in context) return context.response

@@ -8,7 +8,8 @@ import PageHeader from '@/components/PageHeader'
 import Pagination from '@/components/Pagination'
 import TournamentCover from '@/components/TournamentCover'
 
-export default async function TournamentsPage({ searchParams }: { searchParams: { page?: string | string[] } }) {
+export default async function TournamentsPage(props: { searchParams: Promise<{ page?: string | string[] }> }) {
+  const searchParams = await props.searchParams
   const page = parsePage(searchParams?.page)
   const { tournaments, hasNext } = await getPublicTournamentsPage(page)
   // `t` is taken by the tournament in the list below.

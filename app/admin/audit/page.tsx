@@ -55,7 +55,10 @@ function Changes({ before, after }: { before: AuditRow['before_data']; after: Au
   return <div className="audit-changes">{keys.map(key => <span key={key}><b>{visibleFields[key]}</b><i>{valueText(before?.[key])}</i><ChevronRight size={11} /><strong>{valueText(after?.[key])}</strong></span>)}</div>
 }
 
-export default async function AdminAuditPage({ searchParams }: { searchParams?: { action?: string; target?: string; before?: string } }) {
+export default async function AdminAuditPage(
+  props: { searchParams?: Promise<{ action?: string; target?: string; before?: string }> }
+) {
+  const searchParams = await props.searchParams
   const supabase = await createServerSupabaseClient()
   const action = (searchParams?.action ?? '').slice(0, 80)
   const target = (searchParams?.target ?? '').slice(0, 50)
