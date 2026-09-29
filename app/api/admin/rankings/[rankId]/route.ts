@@ -9,11 +9,11 @@ type RankBody = {
   position?: string
   ovr?: number
   pts?: number
-  pac?: number
-  sho?: number
-  pas?: number
-  dri?: number
-  def?: number
+  pac?: number | null
+  sho?: number | null
+  pas?: number | null
+  dri?: number | null
+  def?: number | null
   rank_change?: number
 }
 
@@ -24,8 +24,10 @@ function validRank(body: RankBody | null) {
   if (!body?.player_name?.trim() || !body.team?.trim() || !body.province?.trim()) return false
   if (body.player_id && !uuidPattern.test(body.player_id)) return false
   if (!positions.has(body.position ?? '')) return false
-  const scores = [body.ovr, body.pac, body.sho, body.pas, body.dri, body.def]
-  return scores.every(value => Number.isInteger(value) && (value ?? -1) >= 0 && (value ?? 101) <= 100)
+  const score = (value: unknown) => Number.isInteger(value) && (value as number) >= 0 && (value as number) <= 100
+  // Skill ratings may stay empty (null = not assessed yet, T32); a given one is 0-100.
+  const skills = [body.pac, body.sho, body.pas, body.dri, body.def]
+  return score(body.ovr) && skills.every(value => value === null || score(value))
     && Number.isInteger(body.pts) && (body.pts ?? -1) >= 0 && (body.pts ?? 100001) <= 100000
     && Number.isInteger(body.rank_change) && Math.abs(body.rank_change ?? 100001) <= 100000
 }

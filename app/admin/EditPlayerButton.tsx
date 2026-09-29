@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link2, Pencil, Save, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { SKILL_KEYS, SKILL_NOT_ASSESSED, type SkillKey } from '@/lib/skill-ratings'
 
 type PlayerRecord = {
   id: string
@@ -13,11 +14,11 @@ type PlayerRecord = {
   position: string
   ovr: number
   pts: number
-  pac: number
-  sho: number
-  pas: number
-  dri: number
-  def: number
+  pac: number | null
+  sho: number | null
+  pas: number | null
+  dri: number | null
+  def: number | null
   rank_change: number
 }
 
@@ -146,7 +147,7 @@ export default function EditPlayerButton({
               {[['ชื่อนักกีฬา', 'player_name'], ['ทีม', 'team'], ['จังหวัด', 'province']].map(([label, key]) => (
                 <div key={key}>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#aaa', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>
-                  <input value={form[key as keyof typeof form]} onChange={e => setForm({ ...form, [key]: e.target.value })} style={inputStyle} />
+                  <input value={form[key as 'player_name' | 'team' | 'province']} onChange={e => setForm({ ...form, [key]: e.target.value })} style={inputStyle} />
                 </div>
               ))}
 
@@ -163,7 +164,8 @@ export default function EditPlayerButton({
                 {[['OVR', 'ovr'], ['POWER', 'pts'], ['PAC', 'pac'], ['SHO', 'sho'], ['PAS', 'pas'], ['DRI', 'dri'], ['DEF', 'def'], ['CHANGE', 'rank_change']].map(([label, key]) => (
                   <div key={key}>
                     <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#aaa', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>
-                    <input type="number" value={form[key as keyof typeof form]} onChange={e => setForm({ ...form, [key]: parseInt(e.target.value) || 0 })} style={numInputStyle} />
+                    {/* An empty skill box means not assessed yet (T32) and is saved as empty. */}
+                    <input type="number" value={form[key as keyof typeof form] ?? ''} placeholder={SKILL_KEYS.includes(key as SkillKey) ? SKILL_NOT_ASSESSED : undefined} onChange={e => setForm({ ...form, [key]: SKILL_KEYS.includes(key as SkillKey) && e.target.value === '' ? null : parseInt(e.target.value) || 0 })} style={numInputStyle} />
                   </div>
                 ))}
               </div>

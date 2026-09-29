@@ -105,3 +105,40 @@ describe('the chosen tournament\'s teams, rosters and history', () => {
     expect(asAdmin?.matchResults.map(result => result.id)).toEqual(['other'])
   })
 })
+
+// T32: a roster member without a rank row used to vanish from the athlete list, so their
+// first match could not be recorded without an admin. Public ones are now listed as new
+// (their rank row is created with that first verified match, sql/61); private ones are
+// not listed, only counted, because a rank row is public.
+describe('roster members who have no rank yet', () => {
+  const tournament = { id: 'cup', name: 'Cup', organizer_id: ME }
+  const teams = [{ id: 'ta', name: 'A', tournament_id: 'cup', status: 'confirmed' }]
+  const members = ['ranked', 'fresh', 'private', 'no-profile'].map(athlete => ({ team_id: 'ta', athlete_id: athlete, status: 'accepted' }))
+  const tables = {
+    tournaments: [tournament], teams, team_members: members, match_results: [],
+    player_ranks: [{ id: 'rank-ranked', player_id: 'ranked', player_name: 'Ranked', position: 'GK', pts: 1200, sport: 'football', season: '2026' }],
+    athlete_profiles: [
+      { user_id: 'fresh', display_name: 'Fresh', position: 'fw', sport: 'football', is_public: true },
+      { user_id: 'private', display_name: 'Hidden', position: 'MF', sport: 'football', is_public: false },
+    ],
+  }
+  const options = { tournamentId: 'cup', userId: ME, isAdmin: false, sport: 'football', season: '2026' }
+
+  it('lists public ones as new, keyed by athlete, at the starting rating', async () => {
+    const { client } = fakeSupabase(tables)
+    const data = await fetchResultTournamentData(client as never, options)
+    expect(data?.rosterPlayers).toEqual([
+      { id: 'new:fresh', player_id: 'fresh', player_name: 'Fresh', position: 'FW', pts: 1000, teamId: 'ta', isNew: true },
+      expect.objectContaining({ id: 'rank-ranked', player_id: 'ranked', player_name: 'Ranked', position: 'GK', pts: 1200, teamId: 'ta' }),
+    ])
+  })
+
+  it('does not list private or profile-less members, and says how many there are', async () => {
+    const { client, calls } = fakeSupabase(tables)
+    const data = await fetchResultTournamentData(client as never, options)
+    expect(data?.rosterPlayers.map(player => player.player_id)).not.toContain('private')
+    expect(data?.unrecordableCount).toBe(2)
+    const profiles = calls.find(call => call.table === 'athlete_profiles')!
+    expect(profiles.filters).toEqual(expect.arrayContaining(['sport=football', 'is_public=true']))
+  })
+})

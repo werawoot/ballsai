@@ -85,6 +85,7 @@ export default async function MatchResultsPage(
 
       {data && <>
         <p style={{ margin: '14px 16px 0', fontSize: 12, color: '#666' }}>{t('selected')} <b style={{ color: '#111' }}>{data.tournament.name}</b></p>
+        {data.unrecordableCount > 0 && <p role="note" style={{ margin: '8px 16px 0', fontSize: 12, color: '#8a5a12', background: '#fff6db', borderRadius: 8, padding: '8px 10px' }}>{t('unrecordable', { count: data.unrecordableCount })}</p>}
         {/* Keyed by tournament, so choosing another one starts the form afresh. */}
         <MatchResultForm
           key={data.tournament.id}

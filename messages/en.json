@@ -550,7 +550,8 @@
     "empty": "No tournaments found",
     "selected": "Recording results for",
     "notFound": "This tournament was not found, or you do not organise it",
-    "history": "Showing this tournament's {count} latest results"
+    "history": "Showing this tournament's {count} latest results",
+    "unrecordable": "{count} team members have no Ranking and no public profile yet, so they are not listed. Once their profile is public (a minor needs guardian consent), their first confirmed result creates their Ranking."
   },
   "matchPlan": {
     "scopeLabel": "Choose which teams",

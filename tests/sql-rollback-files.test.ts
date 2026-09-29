@@ -15,6 +15,7 @@ describe('rollback files', () => {
     expect(files.sort()).toEqual([
       '57-public-fixtures-down.sql', '58-athlete-private-columns-down.sql',
       '59-ranking-provinces-view-down.sql', '60-match-result-request-id-down.sql',
+      '61-first-match-rank-down.sql',
     ])
     const plan = readFileSync(new URL('../docs/rollback-plan.md', import.meta.url), 'utf8')
     for (const name of files) expect(plan).toContain(`sql/rollback/${name}`)

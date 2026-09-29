@@ -80,6 +80,9 @@ select step, migration, present, marker from (values
        'function public_tournament_fixtures'),
   (19, '58 athlete private columns (after 50)',
        not has_column_privilege('anon', 'public.athlete_profiles', 'birth_date', 'SELECT'),
-       'anon cannot read athlete_profiles.birth_date')
+       'anon cannot read athlete_profiles.birth_date'),
+  (20, '61 first match rank (after 60)',
+       to_regprocedure('public.record_match_result_first_rank(uuid, uuid, uuid, uuid, integer, integer, jsonb, text, text)') is not null,
+       'function record_match_result_first_rank')
 ) as status(step, migration, present, marker)
 order by step;

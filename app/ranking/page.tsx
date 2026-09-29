@@ -7,6 +7,7 @@ import { getPublicIdentityRankingData, getPublicRankingProvinces, getPublicRanki
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
 import { podiumNameLines } from '@/lib/podium-name'
+import { skillText } from '@/lib/skill-ratings'
 
 export default async function RankingPage(
   props: {
@@ -148,7 +149,7 @@ export default async function RankingPage(
                       <div style={{ display: 'flex', justifyContent: 'space-around', borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: 4 }}>
                         {[['PAC', p.pac], ['SHO', p.sho], ['PAS', p.pas], ['DRI', p.dri], ['DEF', p.def]].map(([key, val]) => (
                           <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                            <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 11, fontWeight: 700, color: 'white', lineHeight: 1 }}>{val}</span>
+                            <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 11, fontWeight: 700, color: 'white', lineHeight: 1 }}>{skillText(val)}</span>
                             <span style={{ fontFamily: 'var(--font-barlow)', fontSize: 7, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>{key}</span>
                           </div>
                         ))}
