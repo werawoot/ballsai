@@ -155,7 +155,9 @@ begin
       -- OVR and Power Rating at the start of the rating scale; the match below moves both.
       60, 1000, null, null, null, null, null, 0
     )
-    on conflict (player_id, sport, season) do nothing;
+    -- The unique index is partial (where player_id is not null), so the conflict target
+    -- repeats its predicate; without it Postgres finds no matching index.
+    on conflict (player_id, sport, season) where player_id is not null do nothing;
 
     select r.id into v_rank from public.player_ranks r
     where r.player_id = v_athlete and r.sport = p_sport and r.season = p_season;
