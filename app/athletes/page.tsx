@@ -11,6 +11,7 @@ import Pagination from '@/components/Pagination'
 import { parsePage } from '@/lib/pagination'
 import { fetchPublicAthletesPage, type PublicAthlete as AthleteProfile, type PublicAthleteRank as PlayerRank } from '@/lib/public-athletes'
 import { PROVINCE_NAMES_EN } from '@/lib/thai-provinces'
+import { withAvatarUrls } from '@/lib/athlete-avatar'
 type DirectoryAthlete = AthleteProfile & { sampleRank?: (typeof samplePlayerRanks)[number] }
 
 function matchesAge(age: number | null, group: string) {
@@ -48,12 +49,14 @@ export default async function AthletesPage(
   const page = parsePage(searchParams.page)
   // Every filter, the age group included, runs in the database before it pages, so each
   // page is full and every matching athlete is on exactly one of them.
-  const { athletes: realProfiles, ranks: rankRows, hasNext } = await fetchPublicAthletesPage(supabase, {
+  const { athletes: storedProfiles, ranks: rankRows, hasNext } = await fetchPublicAthletesPage(supabase, {
     page, sport: ACTIVE_SPORT, season: ACTIVE_SEASON, search, province, position, ageGroup,
   }).catch(error => {
     console.error(JSON.stringify({ level: 'error', event: 'public_athletes_fetch_failed', message: error?.message ?? String(error) }))
     return { athletes: [] as AthleteProfile[], ranks: [] as PlayerRank[], hasNext: false }
   })
+  // Photos are private objects (T51); one signed URL request covers the whole page.
+  const realProfiles = await withAvatarUrls(supabase, storedProfiles)
   const rankByAthlete = new Map(rankRows.map(rank => [rank.player_id, rank]))
 
   const profiles: DirectoryAthlete[] = realProfiles.length > 0 ? realProfiles : showDemoData ? samplePlayerRanks.map(player => ({

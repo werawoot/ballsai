@@ -9,13 +9,16 @@ import { track } from '@vercel/analytics'
 import { createClient } from '@/lib/supabase'
 import { ACTIVE_SPORT } from '@/lib/season'
 import { skillEntries, skillText } from '@/lib/skill-ratings'
+import { AVATAR_BUCKET, avatarPath } from '@/lib/athlete-avatar'
 
 type Player = {
   name: string
   position: string
   team: string
   province: string
+  // A signed URL to show, and the stored object path (T51: the bucket is private).
   imageUrl: string | null
+  imagePath: string | null
   isVerified: boolean
   isRanked: boolean
   // Skill ratings are null until a coach or admin assesses them (T32); shown as a dash.
@@ -51,7 +54,8 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
   const [format, setFormat] = useState<Format>('story')
   const [localImage, setLocalImage] = useState<string | null>(null)
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null)
-  const [savedImage, setSavedImage] = useState<string | null>(player.imageUrl)
+  const savedImage = player.imageUrl
+  const [savedPath, setSavedPath] = useState<string | null>(player.imagePath)
   const [name, setName] = useState(player.name === 'YOUR NAME' ? '' : player.name)
   const [position, setPosition] = useState(player.position)
   const [team, setTeam] = useState(player.team === 'BALLDOENSAI ACADEMY' ? '' : player.team)
@@ -81,12 +85,13 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
     setSavingProfile(true)
     setStatus(t('saving'))
     const supabase = createClient()
-    let profileImageUrl = savedImage
+    let profileImagePath = savedPath
+    let uploadedPath: string | null = null
 
     if (selectedPhoto) {
       const extension = selectedPhoto.type === 'image/png' ? 'png' : selectedPhoto.type === 'image/webp' ? 'webp' : 'jpg'
       const path = `${userId}/card-${Date.now()}.${extension}`
-      const { error: uploadError } = await supabase.storage.from('athlete-avatars').upload(path, selectedPhoto, {
+      const { error: uploadError } = await supabase.storage.from(AVATAR_BUCKET).upload(path, selectedPhoto, {
         cacheControl: '3600', contentType: selectedPhoto.type, upsert: false,
       })
       if (uploadError) {
@@ -94,7 +99,8 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
         setStatus(uploadError.message.includes('Bucket') ? t('noBucket') : t('uploadFailed', { message: uploadError.message }))
         return
       }
-      profileImageUrl = supabase.storage.from('athlete-avatars').getPublicUrl(path).data.publicUrl
+      profileImagePath = path
+      uploadedPath = path
     }
 
     const [{ error: profileError }, { error: athleteError }] = await Promise.all([
@@ -106,19 +112,23 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
         position: position || null,
         province: province.trim() || null,
         current_team: team.trim() || null,
-        profile_image_url: profileImageUrl || null,
+        profile_image_url: profileImagePath || null,
       }, { onConflict: 'user_id' }),
     ])
     setSavingProfile(false)
     if (profileError || athleteError) {
       const error = profileError || athleteError
+      if (uploadedPath) await supabase.storage.from(AVATAR_BUCKET).remove([uploadedPath])
       setStatus(error?.message.includes('athlete_profiles') ? t('profileNotReady') : t('saveFailed', { message: error?.message ?? '' }))
       return
     }
-    setSavedImage(profileImageUrl)
+    // The replaced photo would otherwise stay in storage after the athlete changed it.
+    const previousPath = uploadedPath ? avatarPath(savedPath, userId) : null
+    if (previousPath) await supabase.storage.from(AVATAR_BUCKET).remove([previousPath])
+    setSavedPath(profileImagePath)
     setSelectedPhoto(null)
     setStatus(t('saved'))
-    track('player_card_identity_saved', { has_photo: Boolean(profileImageUrl), position })
+    track('player_card_identity_saved', { has_photo: Boolean(profileImagePath), position })
     router.refresh()
   }
 

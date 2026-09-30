@@ -3,16 +3,9 @@ import { revalidateTag } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { AVATAR_BUCKET, avatarPath as ownAvatarPath, ownAvatarPaths } from '@/lib/athlete-avatar'
 
 const CONFIRM_PHRASE = 'ลบข้อมูลของฉัน'
-
-function avatarPathFromPublicUrl(value: string, userId: string) {
-  const marker = '/storage/v1/object/public/athlete-avatars/'
-  const markerIndex = value.indexOf(marker)
-  if (markerIndex === -1) return null
-  const path = decodeURIComponent(value.slice(markerIndex + marker.length).split('?')[0])
-  return path.startsWith(`${userId}/`) ? path : null
-}
 
 export async function POST(request: Request) {
   const rateLimit = await checkRateLimit(request, { scope: 'account-data-deletion', limit: 3, windowSeconds: 60 * 60 })
@@ -44,9 +37,7 @@ export async function POST(request: Request) {
     .select('profile_image_url')
     .eq('user_id', user.id)
     .maybeSingle()
-  const avatarPath = athlete?.profile_image_url
-    ? avatarPathFromPublicUrl(athlete.profile_image_url, user.id)
-    : null
+  const avatarPath = ownAvatarPath(athlete?.profile_image_url, user.id)
 
   const { data: result, error } = await supabase.rpc('delete_my_athlete_data')
 
@@ -84,14 +75,22 @@ export async function POST(request: Request) {
     }
   }
 
-  if (avatarPath) {
-    const { error: avatarError } = await supabase.storage.from('athlete-avatars').remove([avatarPath])
+  // Every photo in the athlete's folder, not only the current one: a replaced photo stays
+  // in storage otherwise (T51).
+  const avatarPaths = await ownAvatarPaths(supabase, user.id)
+    .then(paths => [...new Set([...(avatarPath ? [avatarPath] : []), ...paths])])
+    .catch(error => {
+      logServerError({ event: 'account_data_deletion_storage_failed', userId: user.id, route: '/api/account/delete-athlete-data', metadata: { bucket: AVATAR_BUCKET, step: 'list' }, error })
+      return avatarPath ? [avatarPath] : []
+    })
+  for (let start = 0; start < avatarPaths.length; start += 100) {
+    const { error: avatarError } = await supabase.storage.from(AVATAR_BUCKET).remove(avatarPaths.slice(start, start + 100))
     if (avatarError) {
       logServerError({
         event: 'account_data_deletion_storage_failed',
         userId: user.id,
         route: '/api/account/delete-athlete-data',
-        metadata: { bucket: 'athlete-avatars' },
+        metadata: { bucket: AVATAR_BUCKET, files: avatarPaths.length },
         error: avatarError,
       })
     }
@@ -104,7 +103,7 @@ export async function POST(request: Request) {
     metadata: {
       anonymisedRankings: payload.anonymisedRankings ?? 0,
       removedHighlights: highlightPaths.length,
-      removedAvatar: Boolean(avatarPath),
+      removedAvatars: avatarPaths.length,
     },
   })
 
