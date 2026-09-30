@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
-import { ArrowLeft, Trophy } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import BrandMark from '@/components/BrandMark'
 import LanguageSwitch from '@/components/LanguageSwitch'
 
 // The one top bar for content pages. Before it there were nine hand-written headers
@@ -39,8 +40,8 @@ export default function PageHeader({ back, eyebrow, actions }: {
           <span>{back.label}</span>
         </Link>
       : <Link href="/" className="bds-page-header-brand" aria-label={t('home')}>
-          <Trophy size={20} aria-hidden="true" />
-          <span>BallDoenSai<em>.com</em></span>
+          <BrandMark size={24} />
+          <span>BallDoenSai.com</span>
         </Link>}
     <div className="bds-page-header-end">
       {actions

@@ -125,6 +125,18 @@
         "title": "Support athletes",
         "description": "Offer opportunities that young athletes choose to take up"
       }
+    },
+    "hello": "Hi {name} 👋",
+    "helloNoName": "Welcome 👋",
+    "recommended": "Recommended",
+    "destinations": {
+      "player_card": "Opens Player Card",
+      "find_competitions": "Opens tournaments",
+      "follow_athlete": "Opens athlete search",
+      "follow_athlete_guardian": "Opens the guardian page",
+      "discover_talent": "Opens athlete search",
+      "manage_venue": "Opens venue manager",
+      "support_athletes": "Opens the sponsor page"
     }
   },
   "card": {
@@ -715,7 +727,9 @@
           "title": "Make your profile public",
           "hint": "Anyone can then see your page and share it."
         }
-      }
+      },
+      "cta": "Do this step",
+      "showAll": "See every step"
     },
     "card": {
       "title": "Player card",
@@ -785,6 +799,13 @@
       "title": "Account",
       "signedInAs": "Signed in as",
       "signOut": "Sign out"
+    },
+    "guardianInvite": {
+      "button": "Send the link to my guardian",
+      "text": "Please join BallDoenSai as my guardian and enter my account email: {email}",
+      "copied": "Link copied — send it to your guardian by LINE or message",
+      "failed": "Could not share the link. Copy it from the guardian page instead",
+      "how": "Your guardian signs up → chooses \"Guardian\" → enters your email, then you accept on the guardian page"
     }
   },
   "profileEdit": {

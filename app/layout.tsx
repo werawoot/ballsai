@@ -6,6 +6,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import SiteNav from '@/components/SiteNav'
 import './globals.css'
+import './ui.css'
 
 const sarabun = Sarabun({
   subsets: ['thai', 'latin'],

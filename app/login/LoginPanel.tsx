@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeft, Check, ChevronRight, Facebook, KeyRound, Mail, Shield, Sparkles, Trophy } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Facebook, Mail, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { OTP_MAX_LENGTH, canSubmitOtp, normalizeEmail, normalizeOtp, otpErrorKey, resendWaitSeconds } from "@/lib/otp";
 import { captchaSiteKey, withCaptcha } from "@/lib/captcha";
 import TurnstileWidget from "@/components/TurnstileWidget";
+import BrandMark from "@/components/BrandMark";
+import "./login.css";
 
 type LoginStep = "start" | "email" | "otp" | "admin";
 
@@ -158,122 +160,101 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
     setMessage("");
   };
 
+  const otpSlots = Math.min(OTP_MAX_LENGTH, Math.max(8, otp.length + (otp.length < OTP_MAX_LENGTH ? 1 : 0)));
+
   return (
-    <main className="auth-v2">
-      <section className="auth-v2-stage">
-        <div className="auth-v2-geometry auth-v2-geometry-one" />
-        <div className="auth-v2-geometry auth-v2-geometry-two" />
-        <Link className="auth-v2-brand" href="/">
-          <span><Trophy size={19} /></span>
-          BallDoenSai<span>.com</span>
-        </Link>
-
-        <div className="auth-v2-copy">
-          <p className="auth-v2-kicker"><Sparkles size={14} /> YOUR GAME · YOUR STORY</p>
-          <h1>ทุกก้าวในสนาม<br /><em>คือชื่อคุณ</em></h1>
-          <p>ทุกแมตช์ที่คุณลงเล่น กลายเป็น Player Card, Power Rating และ Highlight ที่เป็นของคุณเอง</p>
-          <div className="auth-v2-points">
-            <span><Check size={14} /> สร้าง Player Card</span>
-            <span><Check size={14} /> เก็บทุก Highlight</span>
-            <span><Check size={14} /> เติบโตจากทุกนัด</span>
+    <main className="lg ui-dark">
+      <div className="lg-shell">
+        <section className="lg-hero">
+          <Link className="ui-brand" href="/" aria-label="BallDoenSai.com"><BrandMark size={26} />BallDoenSai.com</Link>
+          <div className="lg-hero-copy">
+            <p className="ui-eyebrow">YOUR GAME · YOUR STORY</p>
+            <h1 className="ui-hero">ทุกนัดที่เล่น<br />กลายเป็น<em>ตัวตน</em><br />ของคุณ</h1>
+            <p className="lg-lead">ผลแข่งที่ผู้จัดยืนยัน กลายเป็น Player Card, Power Rating และ Ranking ทั่วประเทศ</p>
           </div>
-
-          <div className="auth-v2-preview" aria-hidden="true">
-            <p className="auth-v2-preview-tag"><Sparkles size={12} /> ตัวอย่าง · นี่คือสิ่งที่คุณกำลังจะสร้าง</p>
-            <div className="auth-v2-preview-card">
-              <div className="auth-v2-preview-card-shine" />
-              <svg aria-hidden="true" className="auth-v2-preview-card-figure" viewBox="0 0 120 140">
-                <circle cx="70" cy="22" r="12" />
-                <path d="M70 34c-11 0-19 7-21 18l-4 24c-1 6 4 11 10 10l2 0 4-20 5 3-3 26c-1 6 4 11 10 10l12-2c5-1 8-6 7-11l-5-23 12 5 15-11c4-3 4-9 0-12l-1-1-17 8-13-7c-4-2-8-3-13-3z" />
-                <circle cx="108" cy="102" r="8" />
-              </svg>
-              <div className="auth-v2-preview-card-top">
-                <span className="auth-v2-preview-card-name">นักเตะ [ชื่อคุณ]</span>
-                <span className="auth-v2-preview-card-position">กองหน้า</span>
-              </div>
-              <div className="auth-v2-preview-card-power">
-                <span>POWER RATING</span>
-                <b>78</b>
-              </div>
-              <div className="auth-v2-preview-card-badges">
-                <Trophy size={14} /><Shield size={14} /><Sparkles size={14} />
-              </div>
-            </div>
+          {/* An example card, not a person: the numbers are marked as an example. */}
+          <div className="lg-sample" aria-hidden="true">
+            <b>74</b>
+            <small>FW · POWER 1,184</small>
+            <span className="ui-chip is-performance"><Check size={11} strokeWidth={3} /> ผลแข่งยืนยัน</span>
+            <em>ตัวอย่าง</em>
           </div>
-        </div>
+        </section>
 
-        <div className="auth-v2-panel">
+        <section className="lg-panel">
           {step === "start" && (
             <>
-              <p className="auth-v2-eyebrow">WELCOME TO THE PITCH</p>
-              <h2>เริ่มเส้นทางของคุณ</h2>
-              <p className="auth-v2-subtitle">เข้ามาดูก่อนก็ได้ แล้วค่อยตั้งค่าโปรไฟล์ของคุณภายใน</p>
-
-              <label className="auth-v2-consent">
+              <h2 className="ui-h1 lg-title">เริ่มเส้นทางของคุณ</h2>
+              <label className={`lg-consent${acceptedTerms ? " is-checked" : ""}`}>
                 <input checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} type="checkbox" />
-                <span>ฉันยอมรับ <Link href="/terms">ข้อกำหนดการใช้งาน</Link> และ <Link href="/privacy">นโยบายความเป็นส่วนตัว/PDPA</Link></span>
+                <i aria-hidden="true">{acceptedTerms && <Check size={14} strokeWidth={3.5} />}</i>
+                <span>ฉันยอมรับ <Link href="/terms">ข้อกำหนดการใช้งาน</Link> และ <Link href="/privacy">นโยบายความเป็นส่วนตัว (PDPA)</Link></span>
               </label>
-
-              <button className="auth-v2-google" disabled={loading} onClick={signInWithGoogle} type="button">
-                <span className="auth-v2-google-mark">G</span>
-                {loading ? "กำลังพาไป Google..." : "ดำเนินการต่อด้วย Google"}
+              <button className="ui-btn ui-btn-white" disabled={loading} onClick={signInWithGoogle} type="button">
+                <span className="lg-google" aria-hidden="true" />
+                {loading ? "กำลังพาไป Google..." : "เข้าสู่ระบบด้วย Google"}
               </button>
-              <button className="auth-v2-google auth-v2-facebook" disabled={loading} onClick={signInWithFacebook} type="button">
-                <Facebook size={17} fill="currentColor" />
-                {loading ? "กำลังพาไป Facebook..." : "ดำเนินการต่อด้วย Facebook"}
+              <p className="lg-or"><span>หรือ</span></p>
+              <button className="ui-btn ui-btn-ghost-d" onClick={() => go("email")} type="button">
+                <Mail size={18} /> รับรหัสทางอีเมล
               </button>
-              <button className="auth-v2-email" onClick={() => go("email")} type="button">
-                <Mail size={17} /> ใช้อีเมลรับรหัส <ChevronRight size={17} />
+              <button className="ui-btn ui-btn-ghost-d lg-quiet" disabled={loading} onClick={signInWithFacebook} type="button">
+                <Facebook size={16} fill="currentColor" /> {loading ? "กำลังพาไป Facebook..." : "Facebook"}
               </button>
-              <p className="auth-v2-note">ไม่มีการสร้างรหัสผ่านสำหรับนักกีฬา · เข้าใช้ง่ายและปลอดภัย</p>
+              <p className="lg-trust"><Shield size={15} /> ข้อมูลเด็กเปิดเผยได้เมื่อผู้ปกครองยินยอมเท่านั้น · ไม่ต้องตั้งรหัสผ่าน</p>
             </>
           )}
 
           {step === "email" && (
             <>
-              <button className="auth-v2-back" onClick={() => go("start")} type="button"><ArrowLeft size={16} /> กลับ</button>
-              <p className="auth-v2-eyebrow">EMAIL ACCESS</p>
-              <h2>รับรหัสทางอีเมล</h2>
-              <p className="auth-v2-subtitle">{t("emailSubtitle")}</p>
-              <label className="auth-v2-label" htmlFor="email">อีเมล</label>
-              <div className="auth-v2-input"><Mail size={17} /><input autoComplete="email" id="email" onChange={(event) => setEmail(event.target.value)} placeholder="you@email.com" type="email" value={email} /></div>
+              <button className="lg-back" onClick={() => go("start")} type="button"><ArrowLeft size={18} /> กลับ</button>
+              <p className="ui-eyebrow">ขั้นตอน 1 จาก 2</p>
+              <h2 className="ui-h1 lg-title">รับรหัสทางอีเมล</h2>
+              <p className="lg-sub">{t("emailSubtitle")}</p>
+              <label className="ui-field" htmlFor="email">
+                <span>อีเมล</span>
+                <input autoComplete="email" id="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} placeholder="you@email.com" type="email" value={email} />
+              </label>
               {captcha}
-              <button className="auth-v2-primary" disabled={loading || !email || captchaMissing} onClick={() => sendOtp()} type="button">{loading ? "กำลังส่ง..." : "ส่งรหัสให้ฉัน"}<ChevronRight size={17} /></button>
+              <button className="ui-btn ui-btn-primary" disabled={loading || !email || captchaMissing} onClick={() => sendOtp()} type="button">{loading ? "กำลังส่ง..." : "ส่งรหัสให้ฉัน"}<ChevronRight size={18} /></button>
             </>
           )}
 
           {step === "otp" && (
             <>
-              <button className="auth-v2-back" onClick={() => go("email")} type="button"><ArrowLeft size={16} /> เปลี่ยนอีเมล</button>
-              <p className="auth-v2-eyebrow">VERIFY YOUR EMAIL</p>
-              <h2>{t("title")}</h2>
-              <p className="auth-v2-subtitle">{t("sentTo")} <b>{normalizeEmail(email)}</b></p>
-              <label className="auth-v2-label" htmlFor="otp">OTP CODE</label>
-              <div className="auth-v2-input auth-v2-otp"><KeyRound size={17} /><input autoComplete="one-time-code" id="otp" inputMode="numeric" maxLength={OTP_MAX_LENGTH} onChange={(event) => setOtp(normalizeOtp(event.target.value))} placeholder="••••••" value={otp} /></div>
-              <p className="auth-v2-note" role="status">{resent ? t("resent") : t("onlyLatest")}</p>
-              <button className="auth-v2-primary" disabled={loading || !canSubmitOtp(otp)} onClick={verifyOtp} type="button">{loading ? "กำลังตรวจสอบ..." : "เข้าสู่ BallDoenSai"}<ChevronRight size={17} /></button>
+              <button className="lg-back" onClick={() => go("email")} type="button"><ArrowLeft size={18} /> เปลี่ยนอีเมล</button>
+              <p className="ui-eyebrow">ขั้นตอน 2 จาก 2</p>
+              <h2 className="ui-h1 lg-title">{t("title")}</h2>
+              <p className="lg-sub">{t("sentTo")} <b>{normalizeEmail(email)}</b></p>
+              <label className="lg-otp" htmlFor="otp">
+                <span className="lg-sr">OTP</span>
+                <input autoComplete="one-time-code" autoFocus id="otp" inputMode="numeric" maxLength={OTP_MAX_LENGTH} onChange={(event) => setOtp(normalizeOtp(event.target.value))} value={otp} />
+                <span className="lg-otp-boxes" aria-hidden="true" style={{ gridTemplateColumns: `repeat(${otpSlots}, minmax(0, 1fr))` }}>
+                  {Array.from({ length: otpSlots }, (_, index) => <i key={index} className={index === otp.length ? "is-next" : otp[index] ? "is-filled" : ""}>{otp[index] ?? ""}</i>)}
+                </span>
+              </label>
+              <button className="ui-btn ui-btn-primary" disabled={loading || !canSubmitOtp(otp)} onClick={verifyOtp} type="button">{loading ? "กำลังตรวจสอบ..." : "เข้าสู่ BallDoenSai"}<ChevronRight size={18} /></button>
               {resendWait === 0 && captcha}
-              <button className="auth-v2-back" disabled={loading || resendWait > 0 || captchaMissing} onClick={() => sendOtp(true)} style={{ justifyContent: "center", margin: "14px auto 0", minHeight: 40, width: "100%" }} type="button">{resendWait > 0 ? t("resendIn", { seconds: resendWait }) : t("resend")}</button>
+              <button className="lg-resend" disabled={loading || resendWait > 0 || captchaMissing} onClick={() => sendOtp(true)} type="button">{resendWait > 0 ? t("resendIn", { seconds: resendWait }) : t("resend")}</button>
+              <p className="lg-note" role="status">{resent ? t("resent") : t("onlyLatest")}</p>
             </>
           )}
 
           {step === "admin" && adminEntry && (
             <>
-              <Link className="auth-v2-back" href="/login"><ArrowLeft size={16} /> กลับหน้าเข้าสู่ระบบ</Link>
-              <p className="auth-v2-eyebrow">PRIVATE ACCESS</p>
-              <h2>เข้าสู่ระบบผู้ดูแล</h2>
-              <label className="auth-v2-label" htmlFor="admin-email">อีเมลผู้ดูแล</label>
-              <div className="auth-v2-input"><Mail size={17} /><input autoComplete="email" id="admin-email" onChange={(event) => setEmail(event.target.value)} type="email" value={email} /></div>
-              <label className="auth-v2-label" htmlFor="admin-password">รหัสผ่าน</label>
-              <div className="auth-v2-input"><Shield size={17} /><input autoComplete="current-password" id="admin-password" onChange={(event) => setPassword(event.target.value)} type="password" value={password} /></div>
+              <Link className="lg-back" href="/login"><ArrowLeft size={18} /> กลับหน้าเข้าสู่ระบบ</Link>
+              <p className="ui-eyebrow">PRIVATE ACCESS</p>
+              <h2 className="ui-h1 lg-title">เข้าสู่ระบบผู้ดูแล</h2>
+              <label className="ui-field" htmlFor="admin-email"><span>อีเมลผู้ดูแล</span><input autoComplete="email" id="admin-email" onChange={(event) => setEmail(event.target.value)} type="email" value={email} /></label>
+              <label className="ui-field" htmlFor="admin-password"><span>รหัสผ่าน</span><input autoComplete="current-password" id="admin-password" onChange={(event) => setPassword(event.target.value)} type="password" value={password} /></label>
               {captcha}
-              <button className="auth-v2-primary" disabled={loading || !email || !password || captchaMissing} onClick={adminLogin} type="button">{loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ Dashboard"}<ChevronRight size={17} /></button>
+              <button className="ui-btn ui-btn-primary" disabled={loading || !email || !password || captchaMissing} onClick={adminLogin} type="button">{loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ Dashboard"}<ChevronRight size={18} /></button>
             </>
           )}
 
-          {message && <p className="auth-v2-message" role="alert">{message}</p>}
-        </div>
-      </section>
+          {message && <p className="lg-message" role="alert">{message}</p>}
+        </section>
+      </div>
     </main>
   );
 }

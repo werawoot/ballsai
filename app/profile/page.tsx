@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import PublicProfileShare from './PublicProfileShare'
 import DeleteMyDataSection from './DeleteMyDataSection'
+import GuardianInviteButton from './GuardianInviteButton'
 import PageHeader from '@/components/PageHeader'
 import { calculateLevel, identityTierKey, levelProgress } from '@/lib/digital-identity'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
@@ -176,27 +177,40 @@ export default async function ProfilePage() {
             <Link href="/profile/edit" className="pf-btn pf-btn-primary"><Camera size={17} aria-hidden="true" />{t('noAthlete.cta')}</Link>
           </section>}
 
-          {readiness && (readiness.next || !athlete?.is_public ? <section className="pf-card" aria-labelledby="pf-readiness">
+          {readiness && (readiness.next || !athlete?.is_public ? <section className="pf-card pf-next-card" aria-labelledby="pf-readiness">
             <div className="pf-card-head">
               <h2 id="pf-readiness" className="pf-card-title">{t('readiness.title')}</h2>
               <span className="pf-card-meta">{t('readiness.progress', { done: readiness.done, total: readiness.total })}</span>
             </div>
-            <div className="pf-segments" aria-hidden="true">{readiness.items.map(item => <i key={item.key} className={item.done ? 'is-done' : undefined} />)}</div>
-            <ol className="pf-steps">
-              {readiness.items.map(item => {
-                const state = item.done ? ' is-done' : item.blocked ? ' is-blocked' : item.key === readiness.next?.key ? ' is-next' : ''
-                const body = <>
-                  <span className="pf-step-icon" aria-hidden="true">{item.done ? <Check size={16} strokeWidth={3} /> : item.blocked ? <Lock size={13} /> : null}</span>
-                  <span>
-                    <span className="pf-step-title">{t(`readiness.items.${item.key}.title`)}</span>
-                    {!item.done && <span className="pf-step-hint">{item.blocked ? t('readiness.blocked') : t(`readiness.items.${item.key}.hint`)}</span>}
-                    {!item.done && item.pending ? <span className="pf-step-pending">{t('readiness.pending', { count: item.pending })}</span> : null}
-                  </span>
-                  <span className="pf-step-tag">{stepTag(item)}{!item.done && !item.blocked && <ChevronRight size={15} aria-hidden="true" style={{ verticalAlign: '-3px' }} />}</span>
-                </>
-                return <li key={item.key} className={`pf-step${state}`}>{item.done || item.blocked ? <div>{body}</div> : <Link href={item.href}>{body}</Link>}</li>
-              })}
-            </ol>
+            <div className="pf-segments" aria-hidden="true">{readiness.items.map(item => <i key={item.key} className={item.done ? 'is-done' : item.key === readiness.next?.key ? 'is-now' : undefined} />)}</div>
+            {/* One thing to do now, in full; every step stays listed below. */}
+            {readiness.next && <div className="pf-next">
+              <span className="ui-chip is-red">{t('readiness.next')}</span>
+              <b className="pf-next-title">{t(`readiness.items.${readiness.next.key}.title`)}</b>
+              <p className="pf-next-hint">{t(`readiness.items.${readiness.next.key}.hint`)}</p>
+              {readiness.next.pending ? <p className="pf-step-pending">{t('readiness.pending', { count: readiness.next.pending })}</p> : null}
+              {readiness.next.key === 'guardian' && !readiness.next.pending
+                ? <GuardianInviteButton email={user.email ?? ''} />
+                : <Link href={readiness.next.href} className="pf-btn pf-btn-primary pf-btn-block">{t('readiness.cta')}<ChevronRight size={17} aria-hidden="true" /></Link>}
+            </div>}
+            <details className="pf-all-steps" open={!readiness.next}>
+              <summary>{t('readiness.showAll')}</summary>
+              <ol className="pf-steps">
+                {readiness.items.map(item => {
+                  const state = item.done ? ' is-done' : item.blocked ? ' is-blocked' : item.key === readiness.next?.key ? ' is-next' : ''
+                  const body = <>
+                    <span className="pf-step-icon" aria-hidden="true">{item.done ? <Check size={16} strokeWidth={3} /> : item.blocked ? <Lock size={13} /> : null}</span>
+                    <span>
+                      <span className="pf-step-title">{t(`readiness.items.${item.key}.title`)}</span>
+                      {!item.done && <span className="pf-step-hint">{item.blocked ? t('readiness.blocked') : t(`readiness.items.${item.key}.hint`)}</span>}
+                      {!item.done && item.pending ? <span className="pf-step-pending">{t('readiness.pending', { count: item.pending })}</span> : null}
+                    </span>
+                    <span className="pf-step-tag">{stepTag(item)}{!item.done && !item.blocked && <ChevronRight size={15} aria-hidden="true" style={{ verticalAlign: '-3px' }} />}</span>
+                  </>
+                  return <li key={item.key} className={`pf-step${state}`}>{item.done || item.blocked ? <div>{body}</div> : <Link href={item.href}>{body}</Link>}</li>
+                })}
+              </ol>
+            </details>
           </section> : <section className="pf-card" aria-labelledby="pf-readiness">
             <div className="pf-card-head"><h2 id="pf-readiness" className="pf-card-title">{t('readiness.titleDone')}</h2></div>
             <p className="pf-ready"><BadgeCheck size={20} aria-hidden="true" />{t('readiness.doneNote')}</p>
