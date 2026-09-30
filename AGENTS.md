@@ -30,7 +30,9 @@ Fame. Users are minors, their guardians, coaches and tournament organizers.
 5. Demo data renders only when `NEXT_PUBLIC_SHOW_DEMO_DATA` is exactly `true`. Closed
    beta and production run on real data.
 6. Payment slips are private. The app stores an object path and serves a 60-second
-   signed URL after checking the viewer. Never switch a slip to a public URL.
+   signed URL after checking the viewer. Never switch a slip to a public URL. Athlete
+   photos (`athlete-avatars`) follow the same rule: store the object path and show it
+   through `lib/athlete-avatar.ts`; never `getPublicUrl` (T51, SQL62).
 7. Preserve the home page visual language: dark sport editorial, red accent `#CC0001`,
    dynamic motion, athlete pride. Do not restyle the home page as a side effect.
 8. For any athlete-facing data, answer "where does this come from and how verified is

@@ -6,6 +6,7 @@ import { Trophy } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import PlayerCardBuilder from './PlayerCardBuilder'
 import { ACTIVE_SPORT } from '@/lib/season'
+import { signAvatarUrls } from '@/lib/athlete-avatar'
 
 type Profile = { full_name?: string | null; province?: string | null; team?: string | null; position?: string | null }
 type AthleteProfile = { display_name?: string | null; position?: string | null; province?: string | null; current_team?: string | null; profile_image_url?: string | null; verification_level?: string | null; is_public?: boolean }
@@ -31,6 +32,9 @@ export default async function PlayerCardPage() {
   const p = (profile ?? {}) as Profile
   const athleteProfile = (athlete ?? {}) as AthleteProfile
   const playerRank = rank as PlayerRank | null
+  // The photo is a private object (T51); the owner may always sign their own.
+  const storedImage = athleteProfile.profile_image_url || null
+  const imageUrl = storedImage ? (await signAvatarUrls(supabase, [storedImage])).get(storedImage) ?? null : null
   const name = playerRank?.player_name || athleteProfile.display_name || p.full_name || 'YOUR NAME'
 
   return (
@@ -47,7 +51,8 @@ export default async function PlayerCardPage() {
           position: playerRank?.position || athleteProfile.position || p.position || 'MF',
           team: athleteProfile.current_team || p.team || 'BALLDOENSAI ACADEMY',
           province: athleteProfile.province || p.province || 'THAILAND',
-          imageUrl: athleteProfile.profile_image_url || null,
+          imageUrl,
+          imagePath: storedImage,
           isVerified: athleteProfile.verification_level === 'performance_verified' || athleteProfile.verification_level === 'coach_verified',
           isRanked: Boolean(playerRank),
           stats: playerRank ? { ovr: playerRank.ovr, pac: playerRank.pac, sho: playerRank.sho, pas: playerRank.pas, dri: playerRank.dri, def: playerRank.def } : { ovr: 65, pac: 66, sho: 62, pas: 64, dri: 65, def: 55 },

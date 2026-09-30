@@ -15,6 +15,7 @@ import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import { PROFILE_MENU } from '@/lib/site-nav'
 import { PUBLIC_PROFILE_COLUMNS, fetchMyAthletePrivate, thaiDate } from '@/lib/athlete-private'
 import { profileReadiness, type ReadinessItem } from '@/lib/profile-readiness'
+import { signAvatarUrls } from '@/lib/athlete-avatar'
 import type messagesTh from '@/messages/th.json'
 import './profile.css'
 
@@ -87,10 +88,15 @@ export default async function ProfilePage() {
   const rank = rankRow as PlayerRank | null
   const memberships = (membershipRows ?? []) as unknown as Membership[]
   // The birth date and consent time come only through my_athlete_private (sql/58).
-  const athletePrivate = athlete ? await fetchMyAthletePrivate(supabase, user.id).catch(error => {
-    console.error(JSON.stringify({ level: 'error', event: 'athlete_private_read_failed', code: error?.code ?? null }))
-    return { birth_date: null, guardian_consent_at: null }
-  }) : null
+  const [athletePrivate, avatarUrls] = await Promise.all([
+    athlete ? fetchMyAthletePrivate(supabase, user.id).catch(error => {
+      console.error(JSON.stringify({ level: 'error', event: 'athlete_private_read_failed', code: error?.code ?? null }))
+      return { birth_date: null, guardian_consent_at: null }
+    }) : null,
+    // The photo is a private object (T51); the owner may always sign their own.
+    signAvatarUrls(supabase, [athlete?.profile_image_url]),
+  ])
+  const avatarUrl = athlete?.profile_image_url ? avatarUrls.get(athlete.profile_image_url) ?? null : null
 
   const progress = progressRow as { xp_total: number; current_level: number } | null
   const xp = progress?.xp_total ?? 0
@@ -129,8 +135,8 @@ export default async function ProfilePage() {
         <aside className="pf-aside">
           <section className="pf-hero" aria-labelledby="pf-name">
             <div className="pf-id">
-              <div className="pf-avatar" style={athlete?.profile_image_url ? { backgroundImage: `url(${athlete.profile_image_url})` } : undefined} aria-hidden="true">
-                {!athlete?.profile_image_url && initials(name)}
+              <div className="pf-avatar" style={avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : undefined} aria-hidden="true">
+                {!avatarUrl && initials(name)}
               </div>
               <div style={{ minWidth: 0 }}>
                 <h1 id="pf-name" className="pf-name">{name}</h1>

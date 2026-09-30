@@ -9,6 +9,7 @@ import ReportHighlightButton from './ReportHighlightButton'
 import DisputeDataButton from './DisputeDataButton'
 import PageHeader from '@/components/PageHeader'
 import { PUBLIC_PROFILE_COLUMNS, fetchAthleteAge } from '@/lib/athlete-private'
+import { withAvatarUrls } from '@/lib/athlete-avatar'
 import { hasAssessedSkills, skillText } from '@/lib/skill-ratings'
 
 type PlayerRecord = {
@@ -105,7 +106,8 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
       // An age, never the birth date: public_athlete_age (sql/58) works it out in the database.
       fetchAthleteAge(supabase, athleteId),
     ])
-    athleteProfile = profileResult.data as AthleteProfile | null
+    // The photo is a private object (T51): signed only if this viewer may see it.
+    athleteProfile = profileResult.data ? (await withAvatarUrls(supabase, [profileResult.data as AthleteProfile]))[0] : null
     videos = (videoResult.data ?? []) as AthleteVideo[]
     uploadedHighlights = (highlightResult.data ?? []) as AthleteHighlight[]
     achievements = (achievementResult.data ?? []) as AthleteAchievement[]

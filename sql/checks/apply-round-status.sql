@@ -83,6 +83,9 @@ select step, migration, present, marker from (values
        'anon cannot read athlete_profiles.birth_date'),
   (20, '61 first match rank (after 60)',
        to_regprocedure('public.record_match_result_first_rank(uuid, uuid, uuid, uuid, integer, integer, jsonb, text, text)') is not null,
-       'function record_match_result_first_rank')
+       'function record_match_result_first_rank'),
+  (21, '62 private athlete avatars',
+       coalesce((select not b.public from storage.buckets b where b.id = 'athlete-avatars'), false),
+       'athlete-avatars bucket is private')
 ) as status(step, migration, present, marker)
 order by step;

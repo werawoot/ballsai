@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase'
 import { ACTIVE_SPORT } from '@/lib/season'
 import { ageOn, saveAthleteProfile, thaiDate } from '@/lib/athlete-private'
 import { MINOR_UNDER } from '@/lib/profile-readiness'
+import { AVATAR_BUCKET, avatarPath } from '@/lib/athlete-avatar'
 import type messagesTh from '@/messages/th.json'
 
 type ProfileForm = { full_name?: string | null; province?: string | null; team?: string | null; position?: string | null }
@@ -51,14 +52,6 @@ function isSupportedVideoUrl(value: string) {
   }
 }
 
-function avatarPathFromPublicUrl(value: string, userId: string) {
-  const marker = '/storage/v1/object/public/athlete-avatars/'
-  const markerIndex = value.indexOf(marker)
-  if (markerIndex === -1) return null
-  const path = decodeURIComponent(value.slice(markerIndex + marker.length).split('?')[0])
-  return path.startsWith(`${userId}/`) ? path : null
-}
-
 // The database enforces the publishing rules as well as this form (sql/21,
 // guardian-consent-enforcement). Its codes become a sentence a young athlete can act on;
 // anything unexpected is logged, never shown raw.
@@ -89,6 +82,7 @@ export default function EditProfileForm({
   achievements: initialAchievements,
   highlights: initialHighlights,
   userId,
+  avatarUrl,
 }: {
   profile: ProfileForm | null
   athleteProfile: AthleteProfileForm | null
@@ -96,6 +90,8 @@ export default function EditProfileForm({
   achievements: Achievement[]
   highlights: UploadedHighlight[]
   userId: string
+  // A signed URL for the stored photo (T51); profile_image_url itself is an object path.
+  avatarUrl?: string | null
 }) {
   const t = useTranslations('profileEdit')
   const router = useRouter()
@@ -141,7 +137,7 @@ export default function EditProfileForm({
   const age = fields.birthDate && /^\d{4}-\d{2}-\d{2}$/.test(fields.birthDate) ? ageOn(fields.birthDate, thaiDate(new Date())) : null
   const isMinor = age !== null && age < MINOR_UNDER
   const canPublish = Boolean(fields.birthDate) && (!isMinor || hasGuardianConsent)
-  const displayedImageUrl = imagePreviewUrl || (removeCurrentImage ? '' : profileImageUrl)
+  const displayedImageUrl = imagePreviewUrl || (removeCurrentImage || !profileImageUrl ? '' : avatarUrl ?? '')
   const dirty = selectedImage !== null || removeCurrentImage || (Object.keys(fields) as (keyof typeof fields)[]).some(key => fields[key] !== saved[key])
 
   const shownStatus = detailsStatus && (detailsStatus.kind === 'error' || !dirty) ? detailsStatus : null
@@ -171,14 +167,14 @@ export default function EditProfileForm({
 
     const supabase = createClient()
     setSaving(true)
-    const previousAvatarPath = avatarPathFromPublicUrl(profileImageUrl, userId)
+    const previousAvatarPath = avatarPath(profileImageUrl, userId)
     let uploadedAvatarPath: string | null = null
     let nextProfileImageUrl = removeCurrentImage ? '' : profileImageUrl
 
     if (selectedImage) {
       const extensionByType: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
       uploadedAvatarPath = `${userId}/profile-${Date.now()}.${extensionByType[selectedImage.type]}`
-      const { error: uploadError } = await supabase.storage.from('athlete-avatars').upload(uploadedAvatarPath, selectedImage, {
+      const { error: uploadError } = await supabase.storage.from(AVATAR_BUCKET).upload(uploadedAvatarPath, selectedImage, {
         cacheControl: '3600',
         contentType: selectedImage.type,
         upsert: false,
@@ -187,7 +183,8 @@ export default function EditProfileForm({
         setSaving(false)
         return setDetailsStatus({ kind: 'error', key: uploadError.message.includes('Bucket') ? 'storageNotReady' : 'photoUploadFailed' })
       }
-      nextProfileImageUrl = supabase.storage.from('athlete-avatars').getPublicUrl(uploadedAvatarPath).data.publicUrl
+      // The bucket is private (sql/62): store the object path, never a public URL.
+      nextProfileImageUrl = uploadedAvatarPath
     }
 
     const [{ error: privateProfileError }, { error: athleteProfileError }] = await Promise.all([
@@ -220,17 +217,18 @@ export default function EditProfileForm({
 
     const error = privateProfileError || athleteProfileError
     if (error) {
-      if (uploadedAvatarPath) await supabase.storage.from('athlete-avatars').remove([uploadedAvatarPath])
+      if (uploadedAvatarPath) await supabase.storage.from(AVATAR_BUCKET).remove([uploadedAvatarPath])
       return setDetailsStatus({ kind: 'error', key: saveErrorKey(error.message) })
     }
 
     if (previousAvatarPath && (removeCurrentImage || uploadedAvatarPath)) {
-      await supabase.storage.from('athlete-avatars').remove([previousAvatarPath])
+      await supabase.storage.from(AVATAR_BUCKET).remove([previousAvatarPath])
     }
     setHasProfile(true)
     setProfileImageUrl(nextProfileImageUrl)
     setSelectedImage(null)
-    setImagePreviewUrl('')
+    // A new photo keeps showing from the local preview until the page brings its signed URL.
+    if (!uploadedAvatarPath) setImagePreviewUrl('')
     setRemoveCurrentImage(false)
     setSaved(fields)
     setDetailsStatus({ kind: 'success', key: 'saved' })

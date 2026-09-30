@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import EditProfileForm from '../EditProfileForm'
+import { signAvatarUrls } from '@/lib/athlete-avatar'
 import PageHeader from '@/components/PageHeader'
 import { PUBLIC_PROFILE_COLUMNS, fetchMyAthletePrivate } from '@/lib/athlete-private'
 import '../profile.css'
@@ -29,10 +30,15 @@ export default async function EditProfilePage() {
     supabase.from('athlete_highlights').select('id, title, media_path, media_type, moderation_status').eq('athlete_id', user.id).order('created_at', { ascending: false }),
   ])
   // The birth date and consent time come only through my_athlete_private (sql/58).
-  const athletePrivate = athleteProfile ? await fetchMyAthletePrivate(supabase, user.id).catch(error => {
-    console.error(JSON.stringify({ level: 'error', event: 'athlete_private_read_failed', code: error?.code ?? null }))
-    return { birth_date: null, guardian_consent_at: null }
-  }) : null
+  const storedAvatar = (athleteProfile as { profile_image_url?: string | null } | null)?.profile_image_url
+  const [athletePrivate, avatarUrls] = await Promise.all([
+    athleteProfile ? fetchMyAthletePrivate(supabase, user.id).catch(error => {
+      console.error(JSON.stringify({ level: 'error', event: 'athlete_private_read_failed', code: error?.code ?? null }))
+      return { birth_date: null, guardian_consent_at: null }
+    }) : null,
+    // The photo is a private object (T51): the form keeps the stored path, shows this URL.
+    signAvatarUrls(supabase, [storedAvatar]),
+  ])
 
   return (
     <main className="pf">
@@ -46,6 +52,7 @@ export default async function EditProfilePage() {
           achievements={(achievements ?? []) as never}
           highlights={(highlights ?? []) as never}
           userId={user.id}
+          avatarUrl={storedAvatar ? avatarUrls.get(storedAvatar) ?? null : null}
         />
       </div>
     </main>

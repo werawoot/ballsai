@@ -55,7 +55,7 @@ Staging `vorpnkedpscsqhnrssrl` และ Production `hivedzrwrrcnjrlirhtv` (ส�
 | `slips` | Private | ✅ | สลิปใช้ signed URL 60 วินาทีหลังตรวจสิทธิ์ (กฎข้อ 6 ใน `AGENTS.md`) |
 | `venue-photos` | Private | ✅ | |
 | `athlete-highlights` | Private | ✅ | |
-| `athlete-avatars` | **Public** | ✅ ตาม `sql/athlete-profile-v2.sql` และ runbook §storage; โค้ดใช้ `getPublicUrl` | 🟡 รูปของโปรไฟล์ที่ไม่สาธารณะ (ผู้เยาว์ที่ยังไม่มีความยินยอมผู้ปกครอง หรือปิดโปรไฟล์) ยังเปิดได้โดยไม่ล็อกอินถ้ารู้ URL — งาน T51; ห้ามเปลี่ยนเป็น Private ใน Dashboard ตรง ๆ เพราะรูปโปรไฟล์ทุกหน้าจะหาย |
+| `athlete-avatars` | **Public** | ✅ ตาม `sql/athlete-profile-v2.sql` และ runbook §storage; โค้ดใช้ `getPublicUrl` | 🟡 รูปของโปรไฟล์ที่ไม่สาธารณะ (ผู้เยาว์ที่ยังไม่มีความยินยอมผู้ปกครอง หรือปิดโปรไฟล์) ยังเปิดได้โดยไม่ล็อกอินถ้ารู้ URL — T51 แก้ด้วย `sql/62-private-athlete-avatars-v1.sql` (ขั้น 21); ห้ามเปลี่ยนเป็น Private ใน Dashboard ตรง ๆ แทนการ apply ไฟล์ |
 
 ### Auth URL Configuration (แก้แล้ว 30 ก.ย.)
 
