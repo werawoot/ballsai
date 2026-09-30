@@ -98,7 +98,6 @@
   "app/team-members/TeamMembersClient.tsx",
   "app/team-members/page.tsx",
   "app/terms/page.tsx",
-  "app/tournaments/[id]/page.tsx",
   "app/venue/VenueOperations.tsx",
   "app/venues/BookingRequestClient.tsx",
   "app/venues/bookings/BookingHistoryList.tsx",

@@ -1,255 +1,139 @@
-'use client'
-
-import { useState, useEffect, use } from 'react';
-import { createClient } from '@/lib/supabase'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Trophy, CheckCircle, Upload, Copy, Banknote } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { Calendar, ChevronRight, ListOrdered, MapPin, SearchX } from 'lucide-react'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { sampleTournaments, showDemoData } from '@/lib/sample-data'
+import { bangkokToday } from '@/lib/public-tournaments'
+import { tournamentCover } from '@/lib/tournament-cover'
+import { tournamentDateRange, tournamentDayBox, tournamentFee } from '@/lib/tournament-dates'
 import PageHeader from '@/components/PageHeader'
-import { useTranslations } from 'next-intl'
+import TeamStep from './TeamStep'
+import PaymentStep from './PaymentStep'
+import '../tournaments.css'
+
+// One tournament: what, when, where and how much first (Stadium header, Paper facts),
+// then one primary action at the thumb. Entering a team is ?step=team; paying for a team
+// already entered is ?teamId=… (the link /team-members gives once the roster is ready).
+// The database has the last word on everything the buttons offer: who may enter, whether
+// it is still open or full, and who may see a team.
 
 type Tournament = {
   id: string
   name: string
+  description: string | null
+  location: string | null
+  start_date: string
+  end_date: string | null
   fee: number
+  max_teams: number | null
   promptpay: string | null
+  status: string | null
+  fixtures_published_at?: string | null
+  sport?: unknown
 }
 
-export default function RegisterPage(props: { params: Promise<{ id: string }> }) {
-  const params = use(props.params);
-  const searchParams = useSearchParams()
-  const requestedTeamId = searchParams.get('teamId') ?? ''
-  const [step, setStep] = useState<'form' | 'payment' | 'success'>(() => requestedTeamId ? 'payment' : 'form')
-  const [teamName, setTeamName] = useState('')
-  const [teamId, setTeamId] = useState(requestedTeamId)
-  const [slipFile, setSlipFile] = useState<File | null>(null)
-  const [slipPreview, setSlipPreview] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const [tournament, setTournament] = useState<Tournament | null>(null)
-  const router = useRouter()
-  const fixturesText = useTranslations('fixtures')
+export default async function TournamentPage(props: { params: Promise<{ id: string }>; searchParams: Promise<{ step?: string; teamId?: string }> }) {
+  const [{ id }, searchParams] = await Promise.all([props.params, props.searchParams])
+  const supabase = await createServerSupabaseClient()
+  const [{ data }, t, cover, locale] = await Promise.all([
+    supabase.from('tournaments').select('*').eq('id', id).maybeSingle(),
+    getTranslations('tournament'),
+    getTranslations('tournamentCover'),
+    getLocale(),
+  ])
+  const tournament = (data ?? (showDemoData ? sampleTournaments.find(item => item.id === id) : null)) as Tournament | null
 
-  useEffect(() => {
-    const load = async () => {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('tournaments')
-        .select('*')
-        .eq('id', params.id)
-        .single()
-      setTournament(data)
-    }
-    load()
-  }, [params.id])
-
-  const handleSubmitTeam = async () => {
-    if (!teamName.trim()) return
-    setLoading(true)
-    setMessage('')
-
-    const response = await fetch(`/api/tournaments/${params.id}/teams`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: teamName,
-      }),
-    })
-
-    if (response.status === 401) {
-      setLoading(false)
-      router.push('/login')
-      return
-    }
-
-    const result = (await response.json().catch(() => null)) as
-      | { error?: string; teamId?: string }
-      | null
-
-    if (!response.ok || !result?.teamId) {
-      setMessage(result?.error ?? 'เกิดข้อผิดพลาดในการสมัครทีม')
-    } else {
-      setTeamId(result.teamId)
-      router.push(`/team-members?team=${encodeURIComponent(result.teamId)}`)
-    }
-    setLoading(false)
+  if (!tournament) {
+    return <main className="bds-page tn-page">
+      <PageHeader back={{ href: '/tournaments', label: t('back') }} />
+      <div className="tn-wrap"><div className="tn-empty ui-card" role="status">
+        <SearchX size={40} strokeWidth={1.4} aria-hidden="true" />
+        <h1 className="ui-h2">{t('notFound')}</h1>
+        <p className="tn-empty-hint">{t('notFoundHint')}</p>
+      </div></div>
+    </main>
   }
 
-  const handleSlipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setSlipFile(file)
-    setSlipPreview(URL.createObjectURL(file))
+  const today = bangkokToday()
+  const finished = (tournament.end_date ?? tournament.start_date) < today
+  const live = !finished && tournament.start_date < today
+  const open = tournament.status === 'open' && !finished
+  const fee = tournamentFee(tournament.fee)
+  const box = tournamentDayBox(locale, tournament.start_date)
+  const summary = { ...box, name: tournament.name, line: [tournament.location, fee ? `${fee} ${t('perTeam')}` : t('free')].filter(Boolean).join(' · ') }
+  const back = { href: '/tournaments', label: t('back') }
+  const self = { href: `/tournaments/${tournament.id}`, label: tournament.name }
+
+  if (searchParams.teamId) {
+    // RLS lets the team's creator, the organizer and admins read it; anyone else sees no name.
+    const { data: team } = await supabase.from('teams').select('name').eq('id', searchParams.teamId).maybeSingle()
+    return <main className="bds-page tn-page tn-detail">
+      <PageHeader back={self} />
+      <PaymentStep fee={fee} promptpay={tournament.promptpay?.trim() || null} summary={summary} teamId={searchParams.teamId} teamName={team?.name ?? null} tournamentId={tournament.id} />
+    </main>
   }
 
-  const handleUploadSlip = async () => {
-    if (!slipFile) return
-    setLoading(true)
-    setMessage('')
-
-    const formData = new FormData()
-    formData.append('slip', slipFile)
-
-    const response = await fetch(`/api/teams/${teamId}/payment`, {
-      method: 'POST',
-      body: formData,
-    })
-
-    if (response.status === 401) {
-      setLoading(false)
-      router.push('/login')
-      return
-    }
-
-    const result = (await response.json().catch(() => null)) as { error?: string } | null
-
-    if (!response.ok) {
-      setMessage(result?.error ?? 'บันทึกการชำระเงินไม่สำเร็จ')
-    } else {
-      setStep('success')
-    }
-    setLoading(false)
+  if (searchParams.step === 'team' && open) {
+    return <main className="bds-page tn-page tn-detail">
+      <PageHeader back={self} />
+      <TeamStep summary={summary} tournamentId={tournament.id} />
+    </main>
   }
 
-  const copyPromptPay = () => {
-    if (tournament?.promptpay) {
-      navigator.clipboard.writeText(tournament.promptpay)
-    }
-  }
-
-  if (step === 'success') {
-    return (
-      <main style={{ minHeight: '100vh', background: '#f8f8f8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <CheckCircle size={72} color="#16a34a" strokeWidth={1.5} style={{ marginBottom: 20 }} />
-        <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 26, fontWeight: 700, color: '#111', marginBottom: 8, textAlign: 'center' }}>สมัครสำเร็จ!</div>
-        <p style={{ fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 24 }}>ส่งสลิปเรียบร้อยแล้ว รอ Organizer ยืนยันครับ</p>
-        <Link href="/tournaments" style={{ background: '#CC0001', color: 'white', borderRadius: 12, padding: '13px 32px', fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-oswald)', textDecoration: 'none' }}>
-          กลับหน้ารายการแข่ง
-        </Link>
-      </main>
-    )
-  }
-
+  const heading = tournamentCover(tournament)
   return (
-    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden', paddingBottom: 40 }}>
-
-      <PageHeader back={{ href: '/tournaments', label: 'รายการแข่ง' }} />
-
-      {/* STEP INDICATOR */}
-      <div className="bds-hero" style={{ background: '#CC0001', padding: '0 16px 20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          {['สร้างทีม', 'เชิญสมาชิก', 'ส่งสมัคร & ชำระเงิน'].map((label, i) => {
-            const isActive = i === 0 && step === 'form'
-            const isDone = false
-            return (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDone ? '#16a34a' : isActive ? 'white' : 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-oswald)', fontSize: 13, fontWeight: 700, color: isDone ? 'white' : isActive ? '#CC0001' : 'rgba(255,255,255,0.7)' }}>
-                    {isDone ? '✓' : i + 1}
-                  </div>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? 'white' : 'rgba(255,255,255,0.6)' }}>{label}</span>
-                </div>
-                {i < 1 && <div style={{ flex: 1, height: 2, background: step === 'payment' ? '#16a34a' : 'rgba(255,255,255,0.3)', margin: '0 8px', marginBottom: 18 }} />}
-              </div>
-            )
-          })}
+    <main className="bds-page tn-page tn-detail">
+      <PageHeader back={back} />
+      <div className="tn-hero ui-dark">
+        {heading.kind === 'photo' && <span className="tn-hero-photo"><Image alt={cover('photoAlt', { venue: heading.venue ?? '' })} fill sizes="100vw" src={heading.src} unoptimized /></span>}
+        <div className="tn-hero-inner">
+          <div className="tn-hero-chips">
+            {finished
+              ? <span className="ui-chip is-self">{t('finished')}</span>
+              : heading.status && <span className={`ui-chip ${heading.status === 'open' ? 'is-performance' : 'is-self'}`}>{cover(`status.${heading.status}`)}</span>}
+            {live && <span className="ui-chip is-red">{t('live')}</span>}
+            {heading.sport && <span className="ui-chip is-self">{cover(`sport.${heading.sport}`)}</span>}
+          </div>
+          <h1>{tournament.name}</h1>
+          <ul className="tn-hero-meta">
+            <li><Calendar size={16} aria-hidden="true" /><span>{tournamentDateRange(locale, tournament.start_date, tournament.end_date)}</span></li>
+            {heading.venue && <li><MapPin size={16} aria-hidden="true" /><span>{heading.venue}</span></li>}
+          </ul>
         </div>
       </div>
 
-      <svg viewBox="0 0 375 28" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 28, marginTop: -1 }}>
-        <path d="M0,0 C100,28 275,0 375,20 L375,0 Z" fill="#CC0001" />
-      </svg>
+      <div className="tn-detail-body">
+        <div className="tn-facts">
+          <div className="tn-fact"><small>{t('fee')}</small><b>{fee ?? t('free')}</b>{fee && <span>{t('perTeam')}</span>}</div>
+          {Number(tournament.max_teams) > 0 && <div className="tn-fact"><small>{t('maxTeams')}</small><b>{Number(tournament.max_teams)}</b><span>{t('teams')}</span></div>}
+        </div>
 
-      <div style={{ padding: '16px' }}>
-
-        {/* Shows the organizer's draw once it is published (sql/57); the page says so if not. */}
-        <Link href={`/tournaments/${params.id}/fixtures`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, marginBottom: 12, background: '#111827', color: 'white', borderRadius: 12, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>
-          {fixturesText('publicTitle')}
+        <Link className="tn-link" href={`/tournaments/${tournament.id}/fixtures`}>
+          <span className="tn-link-icon"><ListOrdered size={20} aria-hidden="true" /></span>
+          <span className="tn-link-text"><b>{t('fixturesTitle')}</b><small>{tournament.fixtures_published_at ? t('fixturesPublished') : t('fixturesNotYet')}</small></span>
+          <ChevronRight size={18} aria-hidden="true" />
         </Link>
 
-        {step === 'form' && (
-          <aside style={{ marginBottom: 12, background: '#eef6ff', border: '1px solid #bfdbfe', borderRadius: 12, padding: '12px 14px', color: '#1e3a5f', fontSize: 13, lineHeight: 1.55 }}>
-            <strong>สำหรับนักกีฬา:</strong> ดูรายละเอียดรายการนี้ได้เลย แต่การเข้าร่วมต้องให้โค้ชหรือผู้จัดสร้างทีมและเชิญบัญชีของคุณก่อน
-            <Link href="/team-members" style={{ display: 'inline-block', marginLeft: 6, color: '#CC0001', fontWeight: 800, textDecoration: 'none' }}>ดูคำเชิญของฉัน →</Link>
-          </aside>
-        )}
+        {tournament.description?.trim() && <section className="tn-section">
+          <h2>{t('about')}</h2>
+          <p className="tn-desc">{tournament.description.trim()}</p>
+        </section>}
 
-        {step === 'form' && (
-          <div style={{ background: 'white', borderRadius: 16, border: '1.5px solid #e5e5e5', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-            <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#CC0001', textTransform: 'uppercase', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Trophy size={16} /> ข้อมูลทีม
-            </div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>ชื่อทีม *</label>
-            <div style={{ position: 'relative', marginBottom: 20 }}>
-              <Trophy size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }} />
-              <input type="text" value={teamName} onChange={e => setTeamName(e.target.value)} placeholder="เช่น FC อยุธยา" style={{ width: '100%', border: '1.5px solid #e5e5e5', borderRadius: 10, padding: '11px 14px 11px 40px', fontSize: 14, outline: 'none', fontFamily: 'var(--font-sarabun)', color: '#111', background: '#fafafa' }} />
-            </div>
-            <div style={{ background: '#fff8f7', border: '1px solid #f2d0d0', borderRadius: 10, padding: '12px 14px', color: '#7f1d1d', fontSize: 13, lineHeight: 1.55, marginBottom: 24 }}>
-              สร้างทีมก่อน แล้วเชิญนักกีฬาด้วยอีเมลให้กดตอบรับ จากนั้นจึงส่งสมัครและอัปโหลดสลิป
-            </div>
-            {message && <p style={{ textAlign: 'center', fontSize: 13, color: '#CC0001', fontWeight: 600, marginBottom: 14 }}>{message}</p>}
-            <button onClick={handleSubmitTeam} disabled={loading || !teamName} style={{ width: '100%', background: loading || !teamName ? '#eee' : '#CC0001', color: loading || !teamName ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: '15px', fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: loading || !teamName ? 'default' : 'pointer' }}>
-              {loading ? 'กำลังสร้าง...' : 'สร้างทีมและเชิญสมาชิก'}
-            </button>
-          </div>
-        )}
-
-        {step === 'payment' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ background: 'white', borderRadius: 16, border: '1.5px solid #e5e5e5', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-              <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#CC0001', textTransform: 'uppercase', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Banknote size={16} /> ชำระเงิน
-              </div>
-              <div style={{ background: '#f8f8f8', borderRadius: 12, padding: '16px', marginBottom: 16, textAlign: 'center' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#888', marginBottom: 4, textTransform: 'uppercase' }}>ยอดชำระ</div>
-                <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 36, fontWeight: 800, color: '#CC0001' }}>฿{tournament?.fee?.toLocaleString()}</div>
-              </div>
-              {tournament?.promptpay && (
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 8, textTransform: 'uppercase' }}>เบอร์ PromptPay</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8f8f8', borderRadius: 10, padding: '12px 14px', border: '1.5px solid #e5e5e5' }}>
-                    <span style={{ flex: 1, fontFamily: 'var(--font-oswald)', fontSize: 20, fontWeight: 700, color: '#111', letterSpacing: 1 }}>{tournament.promptpay}</span>
-                    <button onClick={copyPromptPay} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#CC0001', color: 'white', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                      <Copy size={13} /> คัดลอก
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div style={{ background: 'white', borderRadius: 16, border: '1.5px solid #e5e5e5', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-              <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#CC0001', textTransform: 'uppercase', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Upload size={16} /> อัปโหลดสลิป
-              </div>
-              <label style={{ display: 'block', cursor: 'pointer' }}>
-                <input type="file" accept="image/*" onChange={handleSlipChange} style={{ display: 'none' }} />
-                {slipPreview ? (
-                  <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', border: '2px solid #CC0001' }}>
-                    <Image src={slipPreview} alt="slip" width={640} height={900} unoptimized style={{ width: '100%', maxHeight: 300, height: 'auto', objectFit: 'contain', display: 'block' }} />
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(204,0,1,0.8)', color: 'white', textAlign: 'center', padding: '8px', fontSize: 12, fontWeight: 700 }}>
-                      แตะเพื่อเปลี่ยนสลิป
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ border: '2px dashed #e5e5e5', borderRadius: 12, padding: '40px 20px', textAlign: 'center', background: '#fafafa' }}>
-                    <Upload size={32} color="#ccc" strokeWidth={1.5} style={{ marginBottom: 10 }} />
-                    <p style={{ fontSize: 14, fontWeight: 700, color: '#aaa', marginBottom: 4 }}>แตะเพื่อเลือกสลิป</p>
-                    <p style={{ fontSize: 12, color: '#ccc' }}>รองรับ JPG, PNG</p>
-                  </div>
-                )}
-              </label>
-            </div>
-
-            {message && <p style={{ textAlign: 'center', fontSize: 13, color: '#CC0001', fontWeight: 600 }}>{message}</p>}
-
-            <button onClick={handleUploadSlip} disabled={loading || !slipFile} style={{ width: '100%', background: loading || !slipFile ? '#eee' : '#CC0001', color: loading || !slipFile ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: '15px', fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 1, cursor: loading || !slipFile ? 'default' : 'pointer' }}>
-              {loading ? 'กำลังส่ง...' : 'ยืนยันการชำระเงิน'}
-            </button>
-          </div>
-        )}
-
+        {!finished && <section className="tn-section">
+          <h2>{t('howTitle')}</h2>
+          <ol className="ui-card tn-steps">
+            {(['team', 'invite', 'submit'] as const).map((step, index) => <li key={step}><i>{index + 1}</i><div><b>{t(`how.${step}.title`)}</b><small>{t(`how.${step}.text`)}</small></div></li>)}
+          </ol>
+        </section>}
       </div>
+
+      <div className="tn-dock"><div className="tn-dock-inner">
+        {open
+          ? <Link className="ui-btn ui-btn-primary" href={`/tournaments/${tournament.id}?step=team`}>{fee ? t('register', { fee }) : t('registerFree')}</Link>
+          : <p className="tn-dock-status" role="status">{finished ? t('finished') : t('closed')}</p>}
+        {!finished && <p className="tn-dock-hint">{t('athleteHint')} <Link href="/team-members">{t('athleteLink')}</Link></p>}
+      </div></div>
     </main>
   )
 }

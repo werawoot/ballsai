@@ -1,97 +1,101 @@
 import Link from 'next/link'
-import { getTranslations } from 'next-intl/server'
-import { Trophy, Calendar, ChevronRight } from 'lucide-react'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { MapPin, Trophy } from 'lucide-react'
 import { sampleTournaments, isSampleId, showDemoData } from '@/lib/sample-data'
 import { getPublicTournamentsPage } from '@/lib/public-data'
+import { bangkokToday, groupTournamentsByMonth, parseTournamentView, TOURNAMENT_VIEWS, type PublicTournament } from '@/lib/public-tournaments'
+import { tournamentCoverSport, tournamentCoverStatus } from '@/lib/tournament-cover'
+import { tournamentDayBox, tournamentFee, tournamentMonthLabel } from '@/lib/tournament-dates'
 import { parsePage } from '@/lib/pagination'
+import { ACTIVE_SEASON } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
 import Pagination from '@/components/Pagination'
-import TournamentCover from '@/components/TournamentCover'
+import './tournaments.css'
 
-export default async function TournamentsPage(props: { searchParams: Promise<{ page?: string | string[] }> }) {
+// Paper surface (docs/design-system.md): a list read in sunlight at the pitch. Three tabs,
+// so finished tournaments never crowd page 1; each page is grouped by month and every card
+// is one link. The card shows only what the row holds: a missing sport or status says
+// nothing rather than guessing (lib/tournament-cover.ts).
+
+export default async function TournamentsPage(props: { searchParams: Promise<{ page?: string | string[]; view?: string | string[] }> }) {
   const searchParams = await props.searchParams
   const page = parsePage(searchParams?.page)
-  const { tournaments, hasNext } = await getPublicTournamentsPage(page)
-  // `t` is taken by the tournament in the list below.
-  const text = await getTranslations('tournaments')
+  const view = parseTournamentView(searchParams?.view)
+  const today = bangkokToday()
+  const [{ tournaments, hasNext }, t, cover, locale] = await Promise.all([
+    getPublicTournamentsPage(page, view, today),
+    getTranslations('tournaments'),
+    getTranslations('tournamentCover'),
+    getLocale(),
+  ])
   // Demo rows stand in only for an empty first page, never for a page past the end.
-  const displayTournaments = tournaments.length > 0
-    ? tournaments
-    : showDemoData && page === 1
-      ? sampleTournaments
-      : []
+  const demo = tournaments.length === 0 && showDemoData && page === 1 && view !== 'past'
+  const rows: PublicTournament[] = tournaments.length > 0 ? tournaments : demo ? sampleTournaments : []
+  const params: Record<string, string> = view === 'upcoming' ? {} : { view }
+  const groups = groupTournamentsByMonth(rows)
+  // The soonest tournament gets the red date box: the one to act on first.
+  const nextId = view !== 'past' && page === 1 ? rows[0]?.id : undefined
 
   return (
-    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden' }}>
-
-      {/* TOPBAR */}
+    <main className="bds-page tn-page">
       <PageHeader />
-
-      {/* HERO */}
-      <div className="bds-hero" style={{ background: '#CC0001', padding: '20px 16px 32px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg,transparent,transparent 20px,rgba(255,255,255,0.03) 20px,rgba(255,255,255,0.03) 21px)' }} />
-        <div style={{ position: 'relative' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 20, padding: '4px 12px', marginBottom: 10 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} />
-            <span style={{ fontFamily: 'var(--font-barlow)', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'white', textTransform: 'uppercase' }}>OPEN · SEASON 2026</span>
+      <div className="tn-wrap">
+        <div className="tn-top">
+          <div>
+            <p className="ui-eyebrow">{t('eyebrow', { season: ACTIVE_SEASON })}</p>
+            <h1 className="ui-h1 tn-title">{t('title')}</h1>
+            <p className="tn-intro">{t('intro')}</p>
           </div>
-          <h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(32px,9vw,52px)', fontWeight: 700, lineHeight: 0.9, textTransform: 'uppercase', color: 'white' }}>
-            {text('titleTop')}<br />
-            <span style={{ WebkitTextStroke: '2px rgba(255,255,255,0.4)', color: 'transparent' }}>{text('titleBottom')}</span>
-          </h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10 }}>{text('intro')}</p>
+          <nav className="tn-tabs" aria-label={t('tabsLabel')}>
+            {TOURNAMENT_VIEWS.map(item => <Link aria-current={item === view ? 'page' : undefined} className={item === view ? 'is-on' : ''} href={item === 'upcoming' ? '/tournaments' : `/tournaments?view=${item}`} key={item}>{t(`tabs.${item}`)}</Link>)}
+          </nav>
         </div>
-      </div>
 
-      {/* Wave */}
-      <svg className="bds-wave" viewBox="0 0 375 28" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 28, marginTop: -1 }}>
-        <path d="M0,0 C100,28 275,0 375,20 L375,0 Z" fill="#CC0001" />
-      </svg>
-
-      {/* LIST */}
-      <div className="bds-content" style={{ padding: '16px 16px 0' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {displayTournaments.length > 0 ? displayTournaments.map((t) => (
-            <div className="bds-list-card" key={t.id} style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-              {/* Card top bar */}
-              <div style={{ height: 6, background: 'linear-gradient(90deg,#CC0001,#ff4444)' }} />
-              {/* Venue, sport and registration status; the status used to be a hard-coded
-                  "open" on every card, closed ones included. */}
-              <TournamentCover tournament={t} />
-              <div style={{ padding: '14px 16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h2 style={{ fontSize: 16, fontWeight: 800, color: '#111', marginBottom: 10, lineHeight: 1.3 }}>{t.name}</h2>
-                    <p style={{ fontSize: 13, color: '#888', marginBottom: 10 }}>{t.description}</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#555' }}>
-                        <Calendar size={13} color="#CC0001" /> {t.start_date}
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, flexShrink: 0 }}>
-                    <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 20, fontWeight: 700, color: '#CC0001' }}>฿{t.fee}</div>
-                  </div>
-                </div>
-                <Link className="bds-primary" href={isSampleId(t.id) ? '/login' : `/tournaments/${t.id}`} style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, boxSizing: 'border-box', minHeight: 44, background: '#CC0001', color: 'white', borderRadius: 10, padding: '11px', fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-oswald)', letterSpacing: 0.5, textDecoration: 'none' }}>
-                  {text('details')} <ChevronRight size={16} />
-                </Link>
+        {groups.length > 0
+          ? groups.map(group => <section className="tn-month" key={group.month}>
+              <h2 className="tn-month-label">{tournamentMonthLabel(locale, group.month)}</h2>
+              <div className="tn-grid">
+                {group.tournaments.map(item => {
+                  const box = tournamentDayBox(locale, item.start_date)
+                  const status = tournamentCoverStatus(item.status)
+                  const sport = tournamentCoverSport((item as { sport?: unknown }).sport)
+                  const fee = tournamentFee(item.fee)
+                  const sample = isSampleId(item.id)
+                  // Started already but not over (a league, a two-day cup): say so, so a
+                  // date box in the past does not read as a mistake.
+                  const live = view !== 'past' && item.start_date < today
+                  return <Link className={`tn-card${view === 'past' ? ' is-past' : ''}`} href={sample ? '/login' : `/tournaments/${item.id}`} key={item.id}>
+                    <span className={`tn-date${item.id === nextId ? ' is-next' : ''}`} aria-hidden="true"><b>{box.day}</b><small>{box.month}</small></span>
+                    <span className="tn-body">
+                      <span className="tn-head">
+                        <b className="tn-name">{item.name}</b>
+                        <span className="tn-fee">{fee ?? t('free')}{fee && <small>{t('perTeam')}</small>}</span>
+                      </span>
+                      {item.location && <span className="tn-venue"><MapPin size={13} aria-hidden="true" /><span>{item.location}</span></span>}
+                      <span className="tn-chips">
+                        {live && <span className="ui-chip is-red">{t('live')}</span>}
+                        {status && <span className={`ui-chip ${status === 'open' ? 'is-performance' : 'is-self'}`}>{cover(`status.${status}`)}</span>}
+                        {sport && <span className="ui-chip is-self">{cover(`sport.${sport}`)}</span>}
+                        {Number(item.max_teams) > 0 && <span className="ui-chip is-self">{t('maxTeams', { count: Number(item.max_teams) })}</span>}
+                        {sample && <span className="ui-chip is-warn">{t('sample')}</span>}
+                      </span>
+                    </span>
+                  </Link>
+                })}
               </div>
-            </div>
-          )) : (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#aaa' }}>
-              <Trophy size={48} color="#ddd" strokeWidth={1} style={{ marginBottom: 12 }} />
-              <p style={{ fontSize: 15, fontWeight: 600 }}>{text('empty')}</p>
-            </div>
-          )}
-        </div>
-        <Pagination basePath="/tournaments" page={page} hasNext={hasNext} />
+            </section>)
+          : <div className="tn-empty ui-card">
+              <Trophy size={40} strokeWidth={1.4} aria-hidden="true" />
+              <p className="ui-h2">{t(`empty.${view}`)}</p>
+              {view !== 'past' && <p className="tn-empty-hint">{t('emptyHint')}</p>}
+              <div className="tn-empty-actions">
+                {view !== 'past' && <Link className="ui-btn ui-btn-ghost ui-btn-sm" href="/dashboard">{t('emptyCta')}</Link>}
+                {view !== 'past' && <Link className="ui-btn ui-btn-ghost ui-btn-sm" href="/tournaments?view=past">{t('seePast')}</Link>}
+              </div>
+            </div>}
+
+        <Pagination basePath="/tournaments" page={page} hasNext={hasNext} params={params} />
       </div>
-
-      <div style={{ height: 24 }} />
-
-      {/* BOTTOM NAV */}
-
     </main>
   )
 }

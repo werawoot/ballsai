@@ -31,11 +31,28 @@
     }
   },
   "tournaments": {
-    "titleTop": "All",
-    "titleBottom": "Tournaments",
-    "intro": "Every BallDoenSai circuit tournament open for entries",
-    "details": "View details",
-    "empty": "No tournaments yet"
+    "intro": "Youth football tournaments. Results the organizer verifies go onto every player's Player Card.",
+    "empty": {
+      "upcoming": "No upcoming tournaments yet",
+      "open": "No tournament is taking entries right now",
+      "past": "No finished tournaments yet"
+    },
+    "eyebrow": "SEASON {season}",
+    "title": "Tournaments",
+    "tabsLabel": "Choose which tournaments to show",
+    "tabs": {
+      "upcoming": "Upcoming",
+      "open": "Open for entry",
+      "past": "Finished"
+    },
+    "perTeam": "/team",
+    "free": "Free",
+    "maxTeams": "{count} teams",
+    "sample": "Sample",
+    "emptyHint": "Organizing a tournament? Create it from your dashboard.",
+    "emptyCta": "Go to the organizer dashboard",
+    "seePast": "See finished tournaments",
+    "live": "In progress"
   },
   "tournamentCover": {
     "status": {
@@ -946,5 +963,73 @@
     },
     "captchaNeeded": "Wait for the not-a-bot check to finish, then press the button.",
     "captchaLabel": "Not-a-bot check"
+  },
+  "tournament": {
+    "back": "Tournaments",
+    "notFound": "Tournament not found",
+    "notFoundHint": "It may have been removed, or the link is wrong.",
+    "fee": "Entry fee",
+    "perTeam": "per team",
+    "free": "Free",
+    "maxTeams": "Up to",
+    "teams": "teams",
+    "fixturesTitle": "Fixtures and results",
+    "fixturesPublished": "The organizer has published the fixtures",
+    "fixturesNotYet": "The organizer has not published the fixtures yet",
+    "about": "About this tournament",
+    "howTitle": "How to enter",
+    "how": {
+      "team": {
+        "title": "A coach creates the team",
+        "text": "Name the team for this tournament"
+      },
+      "invite": {
+        "title": "Invite the players",
+        "text": "Each player accepts with their own account"
+      },
+      "submit": {
+        "title": "Submit and attach the slip",
+        "text": "The organizer checks the slip and confirms the team"
+      }
+    },
+    "register": "Enter a team · {fee}",
+    "registerFree": "Enter a team",
+    "closed": "Entries are closed",
+    "finished": "This tournament has finished",
+    "athleteHint": "A player?",
+    "athleteLink": "See my team invitations",
+    "steps": {
+      "team": "Create team",
+      "invite": "Invite players",
+      "pay": "Submit & pay"
+    },
+    "stepsLabel": "Step {step} of 3",
+    "teamTitle": "Name your team",
+    "teamIntro": "This name appears in the fixtures and on the Career Timeline of every player in the team.",
+    "teamName": "Team name",
+    "teamPlaceholder": "e.g. Ayutthaya FC U16",
+    "teamNext": "Next: invite players by email. Each one accepts, then you submit the entry and attach the slip.",
+    "teamSubmit": "Create team and invite players",
+    "teamSaving": "Creating the team…",
+    "teamFailed": "Could not create the team",
+    "amount": "Amount to transfer",
+    "amountFor": "Amount to transfer · {team}",
+    "promptpay": "Organizer's PromptPay",
+    "copy": "Copy",
+    "copied": "Copied",
+    "noPromptpay": "The organizer has not added a PromptPay number. Contact the organizer to ask how to pay.",
+    "slipTitle": "Attach the transfer slip",
+    "slipPick": "Tap to choose the slip photo",
+    "slipTypes": "JPG, PNG or WEBP",
+    "slipChange": "Tap to change the slip",
+    "slipAlt": "Chosen slip",
+    "slipPrivate": "Only you and this tournament's organizer can see the slip. It has no public link.",
+    "slipSubmit": "Send the slip to the organizer",
+    "slipSaving": "Sending…",
+    "slipFailed": "Could not send the slip",
+    "doneTitle": "Slip sent",
+    "doneText": "The organizer will check the slip and confirm your team.",
+    "doneBack": "Back to the tournament",
+    "live": "In progress"
   }
 }

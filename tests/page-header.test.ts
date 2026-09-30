@@ -75,7 +75,6 @@ describe('back navigation', () => {
   const THAI_LABEL_WAITING = new Set([
     'app/players/[id]/page.tsx', // changed on codex/player-card-beta: translate after the branches meet
     'app/team-members/page.tsx', // same
-    'app/tournaments/[id]/page.tsx', // same
     'app/privacy/page.tsx', // legal pages: professional, legally reviewed translation only
     'app/terms/page.tsx',
   ])
