@@ -82,8 +82,11 @@ before checking any item below.
 - [ ] Configure Vercel production variables, then run `npm run verify:production` in
   that production environment. The local command alone is not evidence because it does
   not load production variables.
-- [x] Custom SMTP sender and Email OTP were operator-tested on 2 September 2026.
-  Preserve the sender/domain evidence outside git; do not record credentials here.
+- [ ] Custom SMTP sender and Email OTP. Operator-tested on 2 September 2026, **but the
+  30 September read-only check found custom SMTP off on Production** (Supabase's own
+  sender: team addresses only, 2 emails/hour) and a placeholder `example.com` sender on
+  Staging (`docs/supabase-settings-2026-09-30.md`). Redo with a verified domain:
+  [`email-auth-setup.md`](email-auth-setup.md). Do not record credentials here.
 - [ ] Configure Upstash Redis for distributed rate limits.
 - [ ] Confirm `NEXT_PUBLIC_SHOW_DEMO_DATA` is not `true` in the release environment.
 - [x] Production app URL and redirect URL
@@ -91,6 +94,8 @@ before checking any item below.
   2026.
 - [x] Google, Facebook and Email OTP login were operator-confirmed on 2 September 2026.
 - [ ] Ensure backup/PITR, deployment rollback and runtime-error monitoring are enabled.
+  30 September: **Production is on the Free plan with no backups and no PITR** — upgrade
+  to Pro before inviting testers (T29).
 
 ## Multi-account pilot script
 
