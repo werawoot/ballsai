@@ -6,7 +6,6 @@
 body:has(.card-page) { background: #07090d; }
 .card-page .card-page-header { border-bottom: 1px solid var(--pc-line); min-height: 60px; }
 .card-page .card-page-logo { font-size: 19px; gap: 9px; letter-spacing: 1.2px; }
-.card-page .card-page-logo i { background: var(--pc-red); display: inline-block; height: 22px; transform: skew(-10deg); width: 22px; }
 .card-page .card-page-header > div { display: flex; gap: 8px; }
 .card-page .card-page-profile-link { border-color: rgba(255,255,255,.2); border-radius: 10px; }
 

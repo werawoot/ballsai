@@ -185,3 +185,64 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf-spin { animation:pf-spin 1s linear infinite; }
 @keyframes pf-spin { to { transform:rotate(360deg); } }
 .pf-sr { clip:rect(0 0 0 0); height:1px; overflow:hidden; position:absolute; white-space:nowrap; width:1px; }
+
+/* ── Design system v1 (docs/design-system.md): the same ink/red identity with rounded
+   surfaces, soft shadows and solid Thai headings; replaces the hard offset shadows. ── */
+.pf { --pf-bg:var(--ui-paper); background:var(--ui-paper); }
+.pf-hero { background:radial-gradient(circle at 92% 0%,rgba(204,0,1,.55),transparent 42%),var(--ui-ink); border-radius:24px; box-shadow:0 18px 40px rgba(11,15,22,.22); }
+.pf-hero::before { display:none; }
+.pf-avatar { border:3px solid rgba(255,255,255,.16); border-radius:22px; box-shadow:none; color:#fff; }
+.pf-name { font:800 clamp(24px,6.6vw,30px)/1.15 var(--font-sarabun),sans-serif; letter-spacing:0; }
+.pf-chip { border-radius:99px; min-height:26px; padding:0 10px; }
+.pf-chip.is-gold { background:rgba(244,185,66,.18); border-color:transparent; }
+.pf-chip.is-green { background:rgba(20,154,90,.92); border-color:transparent; color:#fff; }
+.pf-level { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:14px; margin-top:16px; padding:12px 14px; }
+.pf-level-num small { color:rgba(255,255,255,.62); }
+.pf-level-num b { font-weight:800; }
+.pf-bar { border-radius:7px; height:7px; }
+.pf-bar i { background:linear-gradient(90deg,var(--ui-red),#ff5a5f); border-radius:7px; }
+
+.pf-btn { border-radius:14px; font-weight:800; min-height:48px; }
+.pf-btn-primary, .pf-hero .pf-btn-primary { background:var(--ui-red); box-shadow:0 10px 22px rgba(204,0,1,.26); }
+.pf-btn-primary:hover { background:#e00001; box-shadow:0 10px 22px rgba(204,0,1,.3); transform:none; }
+.pf-btn-line { border:1.5px solid var(--ui-line); }
+.pf-btn-line:hover { background:#fff; border-color:#cfc8bd; color:var(--pf-ink) !important; }
+.pf-btn-sm { border-radius:11px; min-height:40px; }
+.pf-btn-block { width:100%; }
+
+.pf-card { border-radius:20px; box-shadow:0 10px 24px rgba(17,24,39,.05); }
+.pf-card-title { font:800 18px/1.3 var(--font-sarabun),sans-serif; letter-spacing:0; }
+.pf-card-title::before { display:none; }
+.pf-card-desc { margin-left:0; }
+.pf-card-meta { background:var(--ui-red-soft); border-radius:99px; color:var(--ui-red); padding:5px 10px; }
+.pf-segments { gap:5px; margin:-2px 0 16px; }
+.pf-segments i { border-radius:6px; }
+.pf-segments i.is-now { background:var(--ui-red); }
+.pf-step-pending { border-radius:10px; }
+.pf-ready { border-radius:14px; }
+
+/* The one step to do now */
+.pf-next { display:flex; flex-direction:column; gap:8px; }
+.pf-next .ui-chip { align-self:flex-start; }
+.pf-next-title { font-size:17px; line-height:1.35; }
+.pf-next-hint { color:var(--pf-muted); font-size:14px; line-height:1.55; margin:0 0 4px; }
+.pf-next-how { color:var(--pf-muted); font-size:12.5px; line-height:1.5; margin:2px 0 0; }
+.pf-next-status { background:#e3f6ec; border-radius:12px; color:#0c7a45; font-size:13px; font-weight:700; margin:4px 0 0; padding:9px 12px; }
+.pf-all-steps { border-top:1px solid #efebe3; margin-top:16px; padding-top:6px; }
+.pf-all-steps summary { color:var(--pf-muted); cursor:pointer; font-size:13.5px; font-weight:700; list-style:none; min-height:40px; display:flex; align-items:center; gap:6px; }
+.pf-all-steps summary::-webkit-details-marker { display:none; }
+.pf-all-steps summary::after { content:'▾'; font-size:12px; }
+.pf-all-steps[open] summary::after { content:'▴'; }
+.pf-step.is-next a { border-radius:12px; }
+
+.pf-fut { border-radius:14px; }
+.pf-power { font-weight:800; }
+
+/* Shortcuts as tiles: two per row on a phone, thumb-sized. */
+.pf-links { grid-template-columns:1fr 1fr; }
+.pf-link { align-content:space-between; border-radius:18px; display:grid; gap:10px; grid-template-columns:1fr; min-height:112px; padding:14px; }
+.pf-link > svg { display:none; }
+.pf-link-icon { background:var(--ui-red-soft); border-radius:11px; color:var(--ui-red); }
+.pf-link small { display:block; }
+.pf-link:hover { border-color:#cfc8bd; transform:none; }
+@media (max-width:959px) { .pf-aside { margin-bottom:16px; } }
