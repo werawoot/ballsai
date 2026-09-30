@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase'
 import { ACTIVE_SPORT } from '@/lib/season'
 import { skillEntries, skillText } from '@/lib/skill-ratings'
 import { AVATAR_BUCKET, avatarPath } from '@/lib/athlete-avatar'
+import type { PlayerCardStats } from '@/lib/player-card'
 
 type Player = {
   name: string
@@ -22,7 +23,7 @@ type Player = {
   isVerified: boolean
   isRanked: boolean
   // Skill ratings are null until a coach or admin assesses them (T32); shown as a dash.
-  stats: { ovr: number; pac: number | null; sho: number | null; pas: number | null; dri: number | null; def: number | null }
+  stats: PlayerCardStats
 }
 
 type Theme = 'gold' | 'red' | 'ice'
@@ -165,7 +166,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
         ctx.fillStyle = fade; ctx.fillRect(cardX + 48, cardY + 145, cardW - 96, 530); ctx.restore()
       } catch { /* Public profile photo is optional; the card still exports cleanly. */ }
     }
-    ctx.textAlign = 'left'; ctx.fillStyle = colors.ink; ctx.font = '900 126px Impact, sans-serif'; ctx.fillText(String(cardPlayer.stats.ovr), cardX + 58, cardY + 120)
+    ctx.textAlign = 'left'; ctx.fillStyle = colors.ink; ctx.font = '900 126px Impact, sans-serif'; ctx.fillText(skillText(cardPlayer.stats.ovr), cardX + 58, cardY + 120)
     ctx.font = '800 42px Arial, sans-serif'; ctx.fillText(cardPlayer.position, cardX + 64, cardY + 172)
     ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = '900 54px Arial, sans-serif'; ctx.fillText(cardPlayer.name.toUpperCase(), width / 2, cardY + 758)
     ctx.fillStyle = 'rgba(255,255,255,.78)'; ctx.font = '600 29px Arial, sans-serif'; ctx.fillText(`${cardPlayer.team} · ${cardPlayer.province}`, width / 2, cardY + 805)
@@ -308,7 +309,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId }:
     </div>
     <div className="card-builder-preview">
       <div className={`player-card-poster is-${format}`}><div className={`player-card is-${theme}`}>
-        <div className="player-card-glint" /><div className="player-card-rating"><b>{cardPlayer.stats.ovr}</b><span>{cardPlayer.position}</span></div>
+        <div className="player-card-glint" /><div className="player-card-rating"><b>{skillText(cardPlayer.stats.ovr)}</b><span>{cardPlayer.position}</span></div>
         {!player.isRanked && <span className="player-card-starter">STARTER · UNRANKED</span>}
         <div className="player-card-photo" style={imageUrl ? { backgroundImage: `url("${imageUrl}")` } : undefined}><div className="player-card-photo-fallback">{cardPlayer.position}</div></div>
         <div className="player-card-detail"><h2>{cardPlayer.name}</h2>{player.isVerified && <CheckCircle2 size={17} />}<p>{cardPlayer.team} · {cardPlayer.province}</p><div>{skillEntries(cardPlayer.stats).map(([key, value]) => <span key={key}><b>{skillText(value)}</b><small>{key}</small></span>)}</div></div>

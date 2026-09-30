@@ -7,6 +7,7 @@ import { getTranslations } from 'next-intl/server'
 import PlayerCardBuilder from './PlayerCardBuilder'
 import { ACTIVE_SPORT } from '@/lib/season'
 import { signAvatarUrls } from '@/lib/athlete-avatar'
+import { playerCardStats } from '@/lib/player-card'
 
 type Profile = { full_name?: string | null; province?: string | null; team?: string | null; position?: string | null }
 type AthleteProfile = { display_name?: string | null; position?: string | null; province?: string | null; current_team?: string | null; profile_image_url?: string | null; verification_level?: string | null; is_public?: boolean }
@@ -55,7 +56,8 @@ export default async function PlayerCardPage() {
           imagePath: storedImage,
           isVerified: athleteProfile.verification_level === 'performance_verified' || athleteProfile.verification_level === 'coach_verified',
           isRanked: Boolean(playerRank),
-          stats: playerRank ? { ovr: playerRank.ovr, pac: playerRank.pac, sho: playerRank.sho, pas: playerRank.pas, dri: playerRank.dri, def: playerRank.def } : { ovr: 65, pac: 66, sho: 62, pas: 64, dri: 65, def: 55 },
+          // A starter card (no rank row) shows no numbers: never a default as performance.
+          stats: playerCardStats(playerRank),
         }}
       />
     </main>
