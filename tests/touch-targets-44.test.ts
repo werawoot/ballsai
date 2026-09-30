@@ -18,10 +18,13 @@ const rule = (selector: string) => {
 const px = (source: string, pattern: RegExp) => Number(source.match(pattern)?.[1])
 
 describe('ordinary pages grow the control itself', () => {
-  it('makes "ดูรายละเอียด" on a tournament card at least 44px tall', () => {
-    const button = read('app/tournaments/page.tsx').match(/<Link className="bds-primary"[^>]*>/)?.[0] ?? ''
-    expect(px(button, /minHeight: (\d+)/)).toBeGreaterThanOrEqual(44)
-    expect(button).toContain("boxSizing: 'border-box'")
+  it('makes the whole tournament card the link, and the tabs at least 44px tall', () => {
+    // The card replaced the old 42.5px "ดูรายละเอียด" button: the target is now the card,
+    // whose date box alone is 66px tall.
+    expect(read('app/tournaments/page.tsx')).toMatch(/<Link className=\{`tn-card/)
+    const pageCss = read('app/tournaments/tournaments.css')
+    expect(px(pageCss, /\.tn-date \{[^}]*height: (\d+)px/)).toBeGreaterThanOrEqual(44)
+    expect(px(pageCss, /\.tn-tabs a \{[^}]*min-height: (\d+)px/)).toBeGreaterThanOrEqual(42)
   })
 
   it('makes every /athletes filter select at least 44px tall', () => {

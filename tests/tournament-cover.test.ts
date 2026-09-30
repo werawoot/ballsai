@@ -49,45 +49,19 @@ describe('what a tournament card cover shows', () => {
   })
 })
 
-describe('the cover on the tournaments page', () => {
-  const page = read('app/tournaments/page.tsx')
-  const component = read('components/TournamentCover.tsx')
-  const css = read('app/globals.css')
+describe('the tournament pages read status, sport and photo only through the seam', () => {
+  const list = read('app/tournaments/page.tsx')
+  const detail = read('app/tournaments/[id]/page.tsx')
 
-  it('is drawn on every card from the row itself', () => {
-    expect(page).toContain('<TournamentCover tournament={t} />')
+  it('words the status from the row on every card, never a fixed "open"', () => {
+    expect(list).toContain('tournamentCoverStatus(item.status)')
+    expect(list).not.toMatch(/^\s*เปิดรับสมัคร\s*$/m)
   })
 
-  it('no longer tells every card it is open', () => {
-    expect(page).not.toMatch(/^\s*เปิดรับสมัคร\s*$/m)
-  })
-
-  it('renders a photo only through the one seam', () => {
-    // A picture element may appear only on the photo branch, which only the seam reaches.
-    expect(component).toContain("cover.kind === 'photo'")
-    expect(component.match(/<Image\b/g)?.length).toBe(1)
-    expect(component).not.toContain('<img')
-    expect(page).not.toMatch(/<Image\b|<img\b|VenuePitchCover/)
-  })
-
-  it('keeps the graphic abstract: no drawn pitch, no image URL', () => {
-    // VenuePitchCover draws a grass pitch with markings -- exactly what could pass for the venue.
-    expect(component).not.toContain('VenuePitchCover')
-    const rules = css.slice(css.indexOf('.bds-tcover {'), css.indexOf('@media (max-width:359px) { .bds-tcover-venue'))
-    expect(rules).not.toMatch(/url\(/)
-    expect(rules).not.toMatch(/#1[0-9a-f]5[0-9a-f]3f|green/i)
-  })
-
-  it('uses the brand red and gold', () => {
-    const rule = css.slice(css.indexOf('.bds-tcover {'), css.indexOf('}', css.indexOf('.bds-tcover {')))
-    expect(rule).toContain('--tc-red:#CC0001')
-    expect(rule).toContain('--tc-gold:#f4b942')
-  })
-
-  it('wraps a long venue name instead of cutting it off', () => {
-    const start = css.indexOf('\n.bds-tcover-venue {')
-    const rule = css.slice(start, css.indexOf('}', start))
-    expect(rule).toContain('overflow-wrap:anywhere')
-    expect(rule).not.toMatch(/text-overflow|line-clamp|white-space:nowrap/)
+  it('shows no picture on the list, and on the detail only the photo the seam returns', () => {
+    expect(list).not.toMatch(/<Image\b|<img\b|VenuePitchCover/)
+    expect(detail).toContain("heading.kind === 'photo'")
+    expect(detail.match(/<Image\b/g)?.length).toBe(1)
+    expect(detail).not.toMatch(/<img\b|VenuePitchCover/)
   })
 })

@@ -350,26 +350,6 @@ body:has(.card-page) { background: #070d18; }
 @media (max-width:720px) { .scout-layout { grid-template-columns:minmax(0,1fr); } }
 @media (max-width:560px) { .scout-filters { grid-template-columns:repeat(2,minmax(0,1fr)); } .scout-filter-search { grid-column:1 / -1; } }
 
-/* Tournament card cover: a brand graphic, never a photo (see lib/tournament-cover.ts).
-   Abstract shapes only -- no pitch lines, no grass -- so it cannot pass for the venue. */
-.bds-tcover { --tc-red:#CC0001; --tc-gold:#f4b942; background:#0d0f14; color:#fff; display:flex; flex-direction:column; gap:14px; justify-content:space-between; min-height:112px; overflow:hidden; padding:14px 16px; position:relative; }
-.bds-tcover-art, .bds-tcover-photo { inset:0; position:absolute; }
-.bds-tcover-photo { object-fit:cover; }
-.bds-tcover.is-photo::after { background:linear-gradient(180deg,rgba(13,15,20,.15),rgba(13,15,20,.82)); content:""; inset:0; position:absolute; }
-.bds-tcover-art i { position:absolute; }
-.bds-tcover-art i:nth-child(1) { background:var(--tc-red); clip-path:polygon(38% 0,100% 0,100% 100%,62% 100%); inset:0 -8% 0 auto; width:58%; }
-.bds-tcover-art i:nth-child(2) { background:repeating-linear-gradient(-58deg,transparent 0 9px,rgba(255,255,255,.07) 9px 10px); clip-path:polygon(38% 0,100% 0,100% 100%,62% 100%); inset:0 -8% 0 auto; width:58%; }
-.bds-tcover-art i:nth-child(3) { background:var(--tc-gold); clip-path:polygon(0 0,100% 0,calc(100% - 7px) 100%,-7px 100%); height:100%; right:47%; transform:skewX(-29deg); width:4px; }
-.bds-tcover-top, .bds-tcover-venue { position:relative; z-index:1; }
-.bds-tcover-top { align-items:center; display:flex; flex-wrap:wrap; gap:6px; }
-.bds-tcover-status, .bds-tcover-sport { align-items:center; background:rgba(13,15,20,.78); border:1px solid rgba(255,255,255,.26); display:inline-flex; font:800 11px/1.2 var(--font-sarabun),sans-serif; gap:6px; padding:5px 9px; }
-.bds-tcover-status::before { background:rgba(255,255,255,.55); border-radius:50%; content:""; flex:none; height:6px; width:6px; }
-.bds-tcover-status.is-open { border-color:var(--tc-gold); color:var(--tc-gold); }
-.bds-tcover-status.is-open::before { background:var(--tc-gold); box-shadow:0 0 0 3px rgba(244,185,66,.22); }
-.bds-tcover-venue { align-items:flex-start; display:flex; font:800 15px/1.35 var(--font-sarabun),sans-serif; gap:6px; margin:0; max-width:72%; overflow-wrap:anywhere; text-shadow:0 1px 8px rgba(0,0,0,.55); }
-.bds-tcover-venue svg { color:var(--tc-gold); flex:none; margin-top:3px; }
-@media (max-width:359px) { .bds-tcover-venue { max-width:none; } }
-
 /* Designed identity headers (impact, career, card, hall-of-fame) keep their look; only the
    area a finger can hit grows. The pseudo-element is invisible and centred on the link,
    at least 44px each way (Apple HIG minimum), so a 12px text link is still easy to tap. */
