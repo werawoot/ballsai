@@ -1,7 +1,7 @@
 # ค่าตั้ง Supabase ที่ตรวจแล้ว — Staging, 30 ก.ย. 2026
 
-ตรวจแบบอ่านอย่างเดียวผ่าน Dashboard (ChatGPT computer use, เจ้าของส่งผลมา) โปรเจกต์ Staging
-`vorpnkedpscsqhnrssrl` เท่านั้น ไม่ได้แก้ค่าใด ๆ **Production ยังไม่ได้ตรวจ**
+ตรวจแบบอ่านอย่างเดียวผ่าน Dashboard (ChatGPT computer use, เจ้าของส่งผลมา) ไม่ได้แก้ค่าใด ๆ
+Staging `vorpnkedpscsqhnrssrl` และ Production `hivedzrwrrcnjrlirhtv` (ส่วนท้าย)
 
 | หัวข้อ | ค่าบน Staging | ผลต่อระบบ | ต้องทำ |
 | --- | --- | --- | --- |
@@ -22,3 +22,28 @@
 รหัสที่พิมพ์ได้ไม่ครบจึงถูกปฏิเสธเป็น "Token has expired or is invalid" — ตรงกับอาการที่เจอ
 หน้า login ตอนนี้รับ 6–10 หลักแล้ว สิ่งที่เหลือ: แก้ข้อความใน template และทดสอบเข้าสู่ระบบ 5 ครั้งติด
 (ถ้ายังล้ม ให้เปิด Auth logs ภายในชั่วโมงนั้น เพราะ Free plan เก็บ log ไม่นาน)
+
+## Production `hivedzrwrrcnjrlirhtv` — 30 ก.ย. 2026
+
+### 🔴 ต้องแก้ก่อน W1 (มีข้อมูลจริงของผู้เยาว์)
+
+| หัวข้อ | ค่า | ทำไมต้องแก้ | ทำอะไร |
+| --- | --- | --- | --- |
+| แพ็กเกจ / backup | **Free**: ไม่มี daily backup, ไม่มี PITR | ข้อมูลผลแข่ง โปรไฟล์ และความยินยอมผู้ปกครองหายแล้วกู้ไม่ได้; โปรเจกต์ Free ถูกพักอัตโนมัติเมื่อไม่มีการใช้งานนานพอ ทำให้เว็บล่ม | 👤 อัปเป็น **Pro** (daily backup เก็บ 7 วัน) ก่อนเชิญผู้ทดสอบ W1; พิจารณา PITR เมื่อผู้ใช้โต; แล้วซ้อมกู้ (T29) |
+| ส่งอีเมล | **ไม่ใช้ custom SMTP, เพดาน 2 ฉบับ/ชั่วโมงทั้งโปรเจกต์** | ทั้งเว็บขอรหัส OTP ได้แค่ 2 ครั้งต่อชั่วโมง ผู้ทดสอบคนที่ 3 จะเจอ "ขอรหัสถี่เกินไป" — น่าจะเป็นอาการ OTP ที่เคยเจอบน Production | 👤 T17: ตั้ง custom SMTP ด้วยโดเมนจริงที่ยืนยันแล้ว (SPF/DKIM/DMARC) แล้วค่อยยกเพดาน |
+
+### 🟡 ควรแก้ / ต้องรู้
+
+| หัวข้อ | Production | Staging | หมายเหตุ |
+| --- | --- | --- | --- |
+| Email OTP | 8 หลัก, 3,600 วินาที | 8 หลัก, 3,600 วินาที | ตรงกัน; หน้า login รับ 6–10 หลัก |
+| Confirm email | **ปิด** | เปิด | ต่างกัน: ผู้ใช้ใหม่บน Production ได้อีเมลจาก template Magic Link (มี `{{ .Token }}`) ส่วน Staging ได้จาก Confirm signup |
+| Template Confirm signup | **ไม่มี `{{ .Token }}`** | มี (แต่เขียน "6 หลัก") | ถ้าวันหนึ่งเปิด Confirm email บน Production ผู้ใช้ใหม่จะไม่มีรหัสให้พิมพ์ — ควรเพิ่ม `{{ .Token }}` ไว้ก่อน |
+| Template Magic Link | มี `{{ .Token }}`, ไม่ระบุจำนวนหลัก | มี, เขียน "6 หลัก" | Production ถูกแล้ว; แก้ Staging ให้เหมือน |
+| Google / Facebook | เปิดทั้งคู่ | — | T18: Google OAuth ต้อง publish/verify; Facebook app ต้องอยู่ใน Live mode ไม่อย่างนั้นคนทั่วไปเข้าไม่ได้ |
+| ตรวจ OTP | 30 ครั้ง/5 นาที | 30 ครั้ง/5 นาที ต่อ IP | ตรงกัน |
+| CAPTCHA | ตรวจไม่ได้ (หน้าเมนู 404) | ไม่ได้ตรวจ | โค้ด T19 ยังปิด CAPTCHA อยู่ ถ้าเปิดใน Supabase โดยไม่มี key บน Vercel จะล็อกอินไม่ได้ |
+| Region | Singapore `ap-southeast-1` | Singapore | T26 ส่งข้อมูลข้ามแดน รอนักกฎหมาย |
+| Compute | `t4g.nano` | — | พอสำหรับ W1; ประเมินใหม่ตามผล load test (T39) |
+| Max rows | 1,000 | 1,000 | รายการแบ่งหน้าหมดแล้ว |
+| Usage (DB size, storage, MAU, egress) | **ตรวจไม่ได้** (หน้า usage ไม่แสดงค่า) | — | T38: ดูจาก Organization → Usage/Billing ภายหลัง |
