@@ -400,3 +400,48 @@ Apps
 - Techne Futbol — https://apps.apple.com/app/id1298569303
 - DribbleUp — https://dribbleup.com/products/smart-soccer-ball ; https://apps.apple.com/us/app/dribbleup-sports-fitness/id1451878715
 - Train Effective — https://apps.apple.com/app/id1425844780
+
+---
+
+## Addendum (1 Oct 2026): open-licence sources found by the owner (via ChatGPT)
+
+The owner ran a second search with ChatGPT (web mode) asking only for sources whose
+**licence** allows commercial use and adaptation. Its findings are below with our check.
+**Status: not opened from this environment** (the proxy still refuses `pmc.ncbi.nlm.nih.gov`,
+`journals.plos.org`, `www.mdpi.com`, `injuryprevention.bmj.com`, `legal.fifa.com`). The
+publisher-level facts are consistent with what we know of these publishers (Frontiers, PLOS,
+MDPI publish under CC BY 4.0; BMJ marks CC BY articles "Re-use permitted under CC BY"), but
+each article's licence line must still be opened and saved as a snapshot before launch.
+
+| Source | Ages | Licence claimed | Use for us | Caveat |
+|---|---|---|---|---|
+| FIFA 11+ Kids performance RCT, Frontiers in Pediatrics 2018 — [PMC5844920](https://pmc.ncbi.nlm.nih.gov/articles/PMC5844920/) | 7–13 | CC BY 4.0 | Exercise list (7 exercises, 3 levels, 15–20 min) as described in the article | Only what the article itself describes; FIFA's manual, posters, videos, name/logo stay under FIFA terms |
+| FIFA 11+ Kids meta-analysis — [PMC9566496](https://pmc.ncbi.nlm.nih.gov/articles/PMC9566496/) | 7–13 | (not stated) | Evidence: overall injury RR 0.52, severe RR 0.33, lower-limb RR 0.51 | Evidence citation only |
+| Modified 11+ (M11+) vs FIFA 11+, youth male — [PMC9584367](https://pmc.ncbi.nlm.nih.gov/articles/PMC9584367/) | 16–19 | CC BY | 4-part 20-min warm-up structure, 3 levels | Team warm-up 3×/week in a club; includes Nordic and partner drills |
+| Knee Control+ implementation study, Injury Prevention (BMJ) 2023 — [injuryprevention.bmj.com/content/29/5/399](https://injuryprevention.bmj.com/content/29/5/399) | ≥14 | CC BY | Structure: 5-min run + 6 categories (squat, lunge, jump/landing, core, hamstring, groin), 10 progressions each | **The article licence covers the article, not the Knee Control+ app/manual**; only exercises actually described in a CC BY article may be adapted |
+| Groin pain prevention, elite youth (Healthcare, MDPI) 2023 — [PMC10486402](https://pmc.ncbi.nlm.nih.gov/articles/PMC10486402/) | ~17 | CC BY 4.0 | 6 exercises, 24-week progression | Primary outcome not significant (RR 0.50, p=0.28): never claim it prevents groin injury |
+| Copenhagen adduction, U17 (IJERPH, MDPI) 2021 — [PMC8701296](https://pmc.ncbi.nlm.nih.gov/articles/PMC8701296/) | U17 | CC BY 4.0 | 8-week dose table | Partner-held, high load; no injury outcome; coach-led only |
+| Differential learning + small-sided games, U15/U17 (PLOS ONE) 2018 — [journal.pone.0199008](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0199008) | U15–U17 | CC BY | 10 weeks, 2×25 min: 10 min varied technique/agility + 15 min SSG | SSG needs other players |
+| Wikimedia Commons exercise media (e.g. Squat.png CC BY 3.0, squat video CC BY 3.0, football drill photos CC BY-SA 4.0) | — | per file | Possible illustrations | Per-file licence; BY-SA makes our derivative BY-SA; photos of people raise image rights — prefer our own illustrations |
+| FIFA 11+ / 11+ Kids official manual, posters, videos, logo — [legal.fifa.com/terms-of-service](https://legal.fifa.com/terms-of-service) | — | FIFA terms (not open) | Link only | Do not copy, embed or use the FIFA name to suggest endorsement (same verdict as §1) |
+
+**What this changes.** Describing exercises in our own words was already allowed (Thai Copyright
+Act s.6, §1). CC BY articles additionally let us adapt their text and figures, with attribution,
+a licence link and a note of changes — but each figure's credit line must be checked, because a
+figure reproduced from elsewhere is not covered.
+
+**Revised programme plan** (still "Draft — awaiting coach review"):
+
+- **A (U10–U13) injury-prevention warm-up:** unchanged, now cited to the CC BY 11+ Kids RCT.
+- **B (U10–U13) ball mastery & agility:** unchanged (our own drills).
+- **C (U14–U17) injury-prevention warm-up:** structure from Knee Control+ (categories) and M11+
+  (4 parts, 20 min); solo-safe exercises only at home; Nordic and partner drills hidden until a
+  coach unlocks them.
+- **D (U14–U17) game technique, speed & strength:** add the differential-learning idea (vary
+  the constraint each repetition) for solo technique; small-sided games only "with friends".
+- **E (U16–U17, coach-led, hidden by default) hip & groin strength:** from the groin protocol
+  and Copenhagen dose table; shown only when a coach assigns it; no prevention claim.
+
+**Provenance per drill** (owner's suggestion, adopted): every drill stores source study, DOI or
+URL, licence, attribution text, whether we adapted it, and the licence of any media shown. The
+drill page shows "Source" so anyone can follow drill → study → licence.
