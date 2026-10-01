@@ -73,8 +73,7 @@ describe('back navigation', () => {
   // Thai written straight into a back label reads as Thai under an English header. These
   // pages still do it, each for a reason; the list may only shrink.
   const THAI_LABEL_WAITING = new Set([
-    'app/players/[id]/page.tsx', // changed on codex/player-card-beta: translate after the branches meet
-    'app/team-members/page.tsx', // same
+    'app/team-members/page.tsx', // changed on codex/player-card-beta: translate after the branches meet
     'app/privacy/page.tsx', // legal pages: professional, legally reviewed translation only
     'app/terms/page.tsx',
   ])

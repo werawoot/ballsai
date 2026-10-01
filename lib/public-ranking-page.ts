@@ -26,15 +26,21 @@ export async function fetchRankingPage(client: SupabaseClient, { sport, season, 
   return { rows: rows.slice(0, RANKING_PAGE_SIZE), hasNext: rows.length > RANKING_PAGE_SIZE, firstRank: from + 1 }
 }
 
-// Where a signed-in athlete stands in the overall table (no filters): everyone with more
-// Power, plus those with equal Power and a smaller id, are ahead. Two counts on the index,
-// never a read of the table. Null when the athlete has no rank row this season.
+// Where a signed-in athlete stands in the overall table (no filters). Null when the
+// athlete has no rank row this season.
 export async function fetchMyRankingPosition(client: SupabaseClient, { sport, season, userId }: { sport: string; season: string; userId: string }) {
   const { data: mine, error } = await client.from('player_ranks').select('id, pts')
     .eq('player_id', userId).eq('sport', sport).eq('season', season).maybeSingle()
   if (error) throw error
   if (!mine) return null
   const { id, pts } = mine as { id: string; pts: number }
+  return fetchRankPosition(client, { sport, season, id, pts })
+}
+
+// The overall position of one rank row: everyone with more Power, plus those with equal
+// Power and a smaller id, are ahead. Two counts on the index, never a read of the table.
+// The same order as fetchRankingPage, so the number matches the row's place in the table.
+export async function fetchRankPosition(client: SupabaseClient, { sport, season, id, pts }: { sport: string; season: string; id: string; pts: number }) {
   const count = () => client.from('player_ranks').select('id', { count: 'exact', head: true }).eq('sport', sport).eq('season', season)
   const [above, tiedAhead] = await Promise.all([
     count().gt('pts', pts),

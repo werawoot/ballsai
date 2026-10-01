@@ -1,12 +1,15 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Search } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { provinceName } from '@/lib/thai-provinces'
 
-const POSITIONS = ['FW', 'MF', 'DF', 'GK']
+const POSITIONS = ['FW', 'MF', 'DF', 'GK'] as const
 
+// Search, province and position on one row. A filter change starts again from page 1.
+// The search waits until typing pauses, so a name is one request, not one per letter.
 export default function RankingFilter({ provinces, currentProvince, currentPosition, currentSearch }: {
   provinces: string[]
   currentProvince: string
@@ -15,63 +18,44 @@ export default function RankingFilter({ provinces, currentProvince, currentPosit
 }) {
   const router = useRouter()
   const t = useTranslations('filters')
+  const positions = useTranslations('player.positions')
   const locale = useLocale()
   const searchParams = useSearchParams()
+  const [search, setSearch] = useState(currentSearch)
+  const first = useRef(true)
 
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (value) {
-      params.set(key, value)
-    } else {
-      params.delete(key)
-    }
-    router.push(`/ranking?${params.toString()}`)
+    if (value) params.set(key, value)
+    else params.delete(key)
+    params.delete('page')
+    const query = params.toString()
+    router.replace(`/ranking${query ? `?${query}` : ''}`)
   }
 
-  return (
-    <div style={{ padding: '14px 16px 0' }}>
+  // A link elsewhere on the page (clear filters) changes the URL: follow it.
+  useEffect(() => { setSearch(value => value.trim() === currentSearch ? value : currentSearch) }, [currentSearch])
 
-      {/* SEARCH BOX */}
-      <div style={{ position: 'relative', marginBottom: 14 }}>
-        <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }} />
-        <input
-          type="text"
-          defaultValue={currentSearch}
-          placeholder={t('searchAthletes')}
-          onChange={e => updateFilter('search', e.target.value)}
-          style={{ width: '100%', border: '1.5px solid #e5e5e5', borderRadius: 10, padding: '10px 14px 10px 36px', fontSize: 14, outline: 'none', fontFamily: 'var(--font-sarabun)', color: '#111', background: '#fafafa' }}
-        />
-      </div>
+  useEffect(() => {
+    if (first.current) { first.current = false; return }
+    const timer = setTimeout(() => { if (search.trim() !== currentSearch) updateFilter('search', search.trim()) }, 400)
+    return () => clearTimeout(timer)
+    // updateFilter reads the current URL each time; only the typed text should re-arm it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
-      {/* POSITION FILTER */}
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>{t('position')}</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => updateFilter('position', '')} style={{ padding: '6px 14px', borderRadius: 20, border: '1.5px solid', borderColor: !currentPosition ? '#CC0001' : '#e5e5e5', background: !currentPosition ? '#CC0001' : 'white', color: !currentPosition ? 'white' : '#555', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-barlow)', letterSpacing: 0.5 }}>
-            {t('all')}
-          </button>
-          {POSITIONS.map(pos => (
-            <button key={pos} onClick={() => updateFilter('position', pos === currentPosition ? '' : pos)} style={{ padding: '6px 14px', borderRadius: 20, border: '1.5px solid', borderColor: currentPosition === pos ? '#CC0001' : '#e5e5e5', background: currentPosition === pos ? '#CC0001' : 'white', color: currentPosition === pos ? 'white' : '#555', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-barlow)', letterSpacing: 0.5 }}>
-              {pos}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* PROVINCE FILTER */}
-      <div style={{ marginBottom: 4 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>{t('province')}</div>
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
-          <button onClick={() => updateFilter('province', '')} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: '1.5px solid', borderColor: !currentProvince ? '#CC0001' : '#e5e5e5', background: !currentProvince ? '#CC0001' : 'white', color: !currentProvince ? 'white' : '#555', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-            {t('all')}
-          </button>
-          {provinces.map(prov => (
-            <button key={prov} onClick={() => updateFilter('province', prov === currentProvince ? '' : prov)} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: '1.5px solid', borderColor: currentProvince === prov ? '#CC0001' : '#e5e5e5', background: currentProvince === prov ? '#CC0001' : 'white', color: currentProvince === prov ? 'white' : '#555', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-              {provinceName(prov, locale)}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
+  return <div className="rk-filters">
+    <label className="rk-search">
+      <Search size={16} aria-hidden="true" />
+      <input aria-label={t('searchAthletes')} onChange={event => setSearch(event.target.value)} placeholder={t('searchAthletes')} type="search" value={search} />
+    </label>
+    <select aria-label={t('province')} className="rk-select" onChange={event => updateFilter('province', event.target.value)} value={currentProvince}>
+      <option value="">{t('allProvinces')}</option>
+      {provinces.map(item => <option key={item} value={item}>{provinceName(item, locale)}</option>)}
+    </select>
+    <select aria-label={t('position')} className="rk-select" onChange={event => updateFilter('position', event.target.value)} value={currentPosition}>
+      <option value="">{t('allPositions')}</option>
+      {POSITIONS.map(item => <option key={item} value={item}>{positions(item)}</option>)}
+    </select>
+  </div>
 }

@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Award, Flame, Sparkles, Trophy, MapPin, Zap, Shield, Star } from 'lucide-react'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { ChevronRight, Star, Trophy } from 'lucide-react'
 import RankingFilter from './RankingFilter'
 import DiscoverTabs from '@/components/DiscoverTabs'
 import { samplePlayerRanks, showDemoData } from '@/lib/sample-data'
@@ -7,11 +8,26 @@ import { getPublicIdentityRankingData, getPublicRankingPage, getPublicRankingPro
 import { fetchMyRankingPosition } from '@/lib/public-ranking-page'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { parsePage } from '@/lib/pagination'
+import { provinceName } from '@/lib/thai-provinces'
 import Pagination from '@/components/Pagination'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
 import { podiumNameLines } from '@/lib/podium-name'
-import { skillText } from '@/lib/skill-ratings'
+import './ranking.css'
+
+// /ranking on the Paper surface (docs/design-system.md): a plain header, one row of views,
+// one row of filters, the signed-in athlete's own place, a podium that shows only what is
+// known (name, place, Power -- no card full of unassessed dashes) and rows that read at a
+// glance. The data and paging are unchanged (T46): 50 per page over every ranked athlete.
+
+const VIEWS = ['overall', 'trending', 'emerging', 'mvp'] as const
+type View = (typeof VIEWS)[number]
+type Row = { id: string; player_name: string; team?: string | null; province?: string | null; position?: string | null; pts: number; rank_change?: number | null; mvps?: number | null; goals?: number | null }
+
+// A steady colour per athlete for the initials, from the row id.
+const AVATAR_TONES = ['#2a3446', '#3b4a63', '#5a2a2a', '#1f3b3a', '#4a3a24']
+const tone = (id: string) => AVATAR_TONES[[...id].reduce((sum, char) => sum + char.charCodeAt(0), 0) % AVATAR_TONES.length]
+const initials = (name: string) => name.trim().split(/\s+/).map(part => [...part][0] ?? '').join('').slice(0, 2).toUpperCase()
 
 export default async function RankingPage(
   props: {
@@ -23,233 +39,139 @@ export default async function RankingPage(
   const province = searchParams.province ?? ''
   const position = searchParams.position ?? ''
   const search = searchParams.search ?? ''
-  const view = ['overall', 'trending', 'emerging', 'mvp'].includes(searchParams.view ?? '') ? searchParams.view! : 'overall'
+  const view: View = (VIEWS as readonly string[]).includes(searchParams.view ?? '') ? searchParams.view as View : 'overall'
   // T46: the overall table pages through every ranked athlete, 50 at a time. The other
   // tabs are top-50 lists by nature and say so.
   const page = view === 'overall' ? parsePage(searchParams.page) : 1
 
-  const [rankingPage, provinces, identityData, myPosition] = await Promise.all([
+  const [rankingPage, provinces, identityData, myPosition, t, tSport, locale] = await Promise.all([
     getPublicRankingPage({ sport, season: ACTIVE_SEASON, province, position, search, page }),
     getPublicRankingProvinces(sport, ACTIVE_SEASON),
     getPublicIdentityRankingData(),
     findMyPosition(sport),
+    getTranslations('ranking'),
+    getTranslations('tournamentCover.sport'),
+    getLocale(),
   ])
-  const rankings = rankingPage.rows as unknown as typeof samplePlayerRanks
+  const rankings = rankingPage.rows as unknown as Row[]
 
-  const fallbackRankings = showDemoData ? samplePlayerRanks
+  const fallbackRankings: Row[] = showDemoData ? samplePlayerRanks
     .filter(player => player.sport === sport)
     .filter(player => !province || player.province === province)
     .filter(player => !position || player.position === position)
     .filter(player => !search || player.player_name.includes(search)) : []
-  const displayRankings = rankings && rankings.length > 0 ? rankings : fallbackRankings
+  const displayRankings = rankings.length > 0 ? rankings : fallbackRankings
   const uniqueProvinces = [...new Set(provinces.length > 0 ? provinces : showDemoData ? samplePlayerRanks.map(p => p.province) : [])]
 
-  const trending = [...displayRankings].filter(player => player.rank_change > 0).sort((a, b) => b.rank_change - a.rank_change || b.pts - a.pts)
-  const emerging = (identityData.emerging.length ? identityData.emerging : trending) as typeof displayRankings
-  const mvpLeaders = [...identityData.performance].sort((a, b) => b.mvps - a.mvps || b.goals - a.goals || b.pts - a.pts) as unknown as typeof displayRankings
-  const rankingsForView = view === 'trending' ? (trending.length ? trending : displayRankings) : view === 'emerging' ? (emerging.length ? emerging : displayRankings) : view === 'mvp' ? (mvpLeaders.length ? mvpLeaders : displayRankings) : displayRankings
-  const showPodium = view !== 'overall' || page === 1
-  const top3 = showPodium ? rankingsForView.slice(0, 3) : []
-  const rest = showPodium ? rankingsForView.slice(3) : rankingsForView
+  const trending = [...displayRankings].filter(player => (player.rank_change ?? 0) > 0).sort((a, b) => (b.rank_change ?? 0) - (a.rank_change ?? 0) || b.pts - a.pts)
+  const emerging = (identityData.emerging.length ? identityData.emerging : trending) as unknown as Row[]
+  const mvpLeaders = [...identityData.performance].sort((a, b) => b.mvps - a.mvps || b.goals - a.goals || b.pts - a.pts) as unknown as Row[]
+  const rows = view === 'trending' ? (trending.length ? trending : displayRankings) : view === 'emerging' ? (emerging.length ? emerging : displayRankings) : view === 'mvp' ? (mvpLeaders.length ? mvpLeaders : displayRankings) : displayRankings
+  const showPodium = (view !== 'overall' || page === 1) && rows.length >= 3
+  const top3 = showPodium ? rows.slice(0, 3) : []
+  const rest = showPodium ? rows.slice(3) : rows
   // The number shown next to each row in the list.
-  const listStart = view === 'overall' ? rankingPage.firstRank + (showPodium ? 3 : 0) : 4
-  const lastShown = rankingPage.firstRank + rankingsForView.length - 1
-  const modeCopy = view === 'trending' ? { label: 'WHO IS CLIMBING', title: 'กำลังมาแรง' } : view === 'emerging' ? { label: 'UNDER 18 · PUBLIC PROFILES', title: 'ดาวรุ่งน่าจับตา' } : view === 'mvp' ? { label: 'VERIFIED MATCH STATS', title: 'MVP & สถิติเด่น' } : { label: 'POWER RATING TABLE', title: 'อันดับรวม' }
-
-  const cardBg = (rank: number) => {
-    if (rank === 1) return {
-      bg: 'linear-gradient(160deg,#3d2a00 0%,#c8860a 18%,#f5c518 30%,#c8860a 42%,#7a4f00 55%,#c8860a 70%,#f5c518 82%,#3d2a00 100%)',
-      shadow: '0 0 0 2px rgba(245,197,24,0.7),0 10px 30px rgba(200,134,10,0.4)',
-      badge: 'linear-gradient(135deg,#f5c518,#c8860a)', badgeColor: '#1a0800'
-    }
-    if (rank === 2) return {
-      bg: 'linear-gradient(160deg,#1a1a1a 0%,#808080 18%,#d0d0d0 30%,#808080 42%,#404040 55%,#808080 70%,#d0d0d0 82%,#1a1a1a 100%)',
-      shadow: '0 0 0 2px rgba(200,200,200,0.5),0 8px 20px rgba(100,100,100,0.3)',
-      badge: 'linear-gradient(135deg,#d0d0d0,#808080)', badgeColor: '#1a1a1a'
-    }
-    return {
-      bg: 'linear-gradient(160deg,#2a1200 0%,#a0522d 18%,#cd7f32 30%,#a0522d 42%,#4a2000 55%,#a0522d 70%,#cd7f32 82%,#2a1200 100%)',
-      shadow: '0 0 0 2px rgba(205,127,50,0.5),0 8px 20px rgba(160,82,45,0.3)',
-      badge: 'linear-gradient(135deg,#cd7f32,#6b3a10)', badgeColor: '#fff'
-    }
+  const firstRank = view === 'overall' ? rankingPage.firstRank : 1
+  const listStart = firstRank + (showPodium ? 3 : 0)
+  const lastShown = firstRank + rows.length - 1
+  const filtered = Boolean(province || position || search)
+  const sportName = sport === 'football' || sport === 'futsal' ? tSport(sport) : sport
+  const viewHref = (item: View) => {
+    const query = new URLSearchParams({ ...(province ? { province } : {}), ...(position ? { position } : {}), ...(search ? { search } : {}), ...(item !== 'overall' ? { view: item } : {}) }).toString()
+    return `/ranking${query ? `?${query}` : ''}`
   }
-
-  const PosIcon = ({ pos, size = 52 }: { pos: string; size?: number }) => {
-    if (pos === 'GK' || pos === 'DF') return <Shield size={size} color="rgba(255,255,255,0.9)" strokeWidth={1.5} />
-    if (pos === 'MF') return <Zap size={size} color="rgba(255,255,255,0.9)" strokeWidth={1.5} />
-    return <Star size={size} color="rgba(255,255,255,0.9)" strokeWidth={1.5} />
+  const change = (value: number | null | undefined) => {
+    const n = value ?? 0
+    return n > 0 ? { cls: 'is-up', text: `▲ ${n}`, label: t('change.up', { count: n }) } : n < 0 ? { cls: 'is-down', text: `▼ ${-n}`, label: t('change.down', { count: -n }) } : { cls: 'is-same', text: '–', label: t('change.same') }
   }
-
-  const orderedTop3 = top3.length === 3 ? [top3[1], top3[0], top3[2]] : top3
+  const sub = (p: Row) => [p.position, p.team, p.province ? provinceName(p.province, locale) : null].filter(Boolean).join(' · ')
 
   return (
-    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden' }}>
-
-      {/* TOPBAR */}
+    <main className="bds-page rk">
       <PageHeader />
-
-      {/* HERO */}
-      <div className="bds-hero" style={{ background: '#CC0001', padding: '20px 16px 32px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg,transparent,transparent 20px,rgba(255,255,255,0.03) 20px,rgba(255,255,255,0.03) 21px)' }} />
-        <div style={{ position: 'relative' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 20, padding: '4px 12px', marginBottom: 10 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} />
-            <span style={{ fontFamily: 'var(--font-barlow)', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'white', textTransform: 'uppercase' }}>LIVE RANKING · SEASON 2026</span>
-          </div>
-          <h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(32px,9vw,52px)', fontWeight: 700, lineHeight: 0.9, textTransform: 'uppercase', color: 'white' }}>
-            THAI YOUTH<br />
-            <span style={{ WebkitTextStroke: '2px rgba(255,255,255,0.4)', color: 'transparent' }}>RANKING</span>
-          </h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10 }}>
-            {view === 'overall'
-              ? (rankingsForView.length > 0 ? `อันดับ ${rankingPage.firstRank.toLocaleString()}–${lastShown.toLocaleString()}` : 'ไม่มีนักกีฬาในหน้านี้')
-              : `${rankingsForView.length} นักกีฬา · 50 อันดับแรก`}
-            {province && ` · ${province}`}
-            {position && ` · ${position}`}
-          </p>
-          <Link href="/hall-of-fame" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 14, border: '1px solid rgba(245,197,24,.7)', color: '#f5c518', padding: '7px 10px', fontFamily: 'var(--font-oswald)', fontSize: 10, fontWeight: 800, letterSpacing: 1, textDecoration: 'none' }}><Award size={14} /> HALL OF FAME</Link>
-        </div>
-      </div>
-
-      {/* Wave */}
-      <svg className="bds-wave" viewBox="0 0 375 28" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 28, marginTop: -1 }}>
-        <path d="M0,0 C100,28 275,0 375,20 L375,0 Z" fill="#CC0001" />
-      </svg>
-
       <DiscoverTabs current="/ranking" />
 
-      {/* FILTERS */}
-<RankingFilter provinces={uniqueProvinces} currentProvince={province} currentPosition={position} currentSearch={search} />
-      <section className="bds-content" style={{ paddingTop: 8, paddingBottom: 0 }}>
-        <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 6 }}>
-          {[{ id: 'overall', label: 'อันดับรวม', icon: Trophy }, { id: 'trending', label: 'กำลังมาแรง', icon: Flame }, { id: 'emerging', label: 'ดาวรุ่ง', icon: Sparkles }, { id: 'mvp', label: 'MVP & สถิติ', icon: Award }].map(item => { const Icon = item.icon; const href = new URLSearchParams({ ...(province ? { province } : {}), ...(position ? { position } : {}), ...(search ? { search } : {}), ...(item.id !== 'overall' ? { view: item.id } : {}) }).toString(); return <Link key={item.id} href={`/ranking${href ? `?${href}` : ''}`} style={{ flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${view === item.id ? '#111827' : '#d8d3c9'}`, background: view === item.id ? '#111827' : 'white', color: view === item.id ? 'white' : '#4d5663', padding: '9px 12px', fontSize: 11, fontWeight: 800, textDecoration: 'none' }}><Icon size={15} color={view === item.id ? '#f4c861' : '#d71920'} />{item.label}</Link> })}
+      <div className="rk-wrap">
+        <div className="rk-top">
+          <div>
+            <p className="ui-eyebrow">{t('eyebrow', { season: ACTIVE_SEASON, sport: sportName })}</p>
+            <h1 className="ui-h1 rk-title">{t('title')}</h1>
+            <p className="rk-intro">{t('intro')}</p>
+          </div>
+          <nav className="rk-views" aria-label={t('viewsLabel')}>
+            {VIEWS.map(item => <Link aria-current={item === view ? 'page' : undefined} className={item === view ? 'is-on' : ''} href={viewHref(item)} key={item}>{t(`views.${item}`)}</Link>)}
+          </nav>
         </div>
-      </section>
-      {/* MY POSITION (T46): a signed-in athlete can always find their place. */}
-      {view === 'overall' && myPosition && (
-        <div className="bds-content" style={{ padding: '12px 16px 0' }}>
-          {/* A plain link: a full load lets the browser scroll to the row by its #id. */}
-          <a href={`/ranking?page=${myPosition.page}#rank-${myPosition.rankId}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '11px 14px', background: '#111827', color: 'white', borderRadius: 12, textDecoration: 'none' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700 }}><Star size={16} color="#f5c518" fill="#f5c518" />อันดับของฉัน <b style={{ fontFamily: 'var(--font-oswald)', fontSize: 18 }}>#{myPosition.position.toLocaleString()}</b></span>
-            <span style={{ fontSize: 12, color: '#f5c518', fontWeight: 800 }}>{myPosition.page === page && !province && !position && !search ? 'อยู่ในหน้านี้' : `ไปหน้า ${myPosition.page} →`}</span>
-          </a>
+
+        <div className="rk-layout">
+          <aside className="rk-side">
+            <RankingFilter provinces={uniqueProvinces} currentProvince={province} currentPosition={position} currentSearch={search} />
+
+            {/* MY POSITION (T46): a signed-in athlete can always find their place. A plain
+                link: a full load lets the browser scroll to the row by its #id. */}
+            {view === 'overall' && myPosition && (
+              <a className="rk-me" href={`/ranking?page=${myPosition.page}#rank-${myPosition.rankId}`}>
+                <Star size={16} aria-hidden="true" />
+                <span>{t('myRank')}</span>
+                <b>#{myPosition.position.toLocaleString('en-US')}</b>
+                <em>{myPosition.page === page && !filtered ? t('onThisPage') : t('goToPage', { page: myPosition.page })}</em>
+              </a>
+            )}
+
+            {top3.length === 3 && (
+              <section className="rk-podium" aria-label={t('podiumLabel')}>
+                {[top3[1], top3[0], top3[2]].map((p, index) => {
+                  const place = index === 0 ? 2 : index === 1 ? 1 : 3
+                  return <Link className={`rk-pod${place === 1 ? ' is-first' : ''}`} href={`/players/${p.id}`} id={`rank-${p.id}`} key={p.id}>
+                    <span className={`rk-medal is-${place}`}>{place}</span>
+                    <span className="rk-av" style={{ background: tone(p.id) }} aria-hidden="true">{initials(p.player_name)}</span>
+                    <b className="rk-pod-name">{podiumNameLines(p.player_name).map((line, i) => <span key={i}>{line}</span>)}</b>
+                    <small>{[p.position, p.province ? provinceName(p.province, locale) : null].filter(Boolean).join(' · ')}</small>
+                    <span className="rk-pod-power">{view === 'mvp' ? t('mvpLine', { mvps: p.mvps ?? 0, goals: p.goals ?? 0 }) : p.pts.toLocaleString('en-US')}</span>
+                  </Link>
+                })}
+              </section>
+            )}
+          </aside>
+
+          <section className="rk-main">
+            <p className="rk-hint">{view === 'overall' ? t('viewHint.overall', { from: firstRank.toLocaleString('en-US'), to: lastShown.toLocaleString('en-US') }) : t(`viewHint.${view}`)}</p>
+            {rest.length > 0 && <>
+              {showPodium && <h2 className="rk-rest-title">{t('restTitle', { from: listStart.toLocaleString('en-US'), to: lastShown.toLocaleString('en-US') })}</h2>}
+              <div className="rk-head" aria-hidden="true"><span>{t('table.rank')}</span><span>{t('table.athlete')}</span><span>{t('table.position')}</span><span>{t('table.province')}</span><span>{t('table.power')}</span><span>{t('table.change')}</span></div>
+              <ol className="rk-rows" start={listStart}>
+                {rest.map((p, i) => {
+                  const c = change(p.rank_change)
+                  return <li key={p.id}>
+                    <Link className={`rk-row${myPosition?.rankId === p.id ? ' is-mine' : ''}`} href={`/players/${p.id}`} id={`rank-${p.id}`}>
+                      <span className="rk-n">{(listStart + i).toLocaleString('en-US')}</span>
+                      <span className="rk-who">
+                        <span className="rk-av" style={{ background: tone(p.id) }} aria-hidden="true">{initials(p.player_name)}</span>
+                        <span className="rk-name"><b>{p.player_name}</b><small>{view === 'mvp' ? t('mvpLine', { mvps: p.mvps ?? 0, goals: p.goals ?? 0 }) : sub(p)}</small></span>
+                      </span>
+                      <span className="rk-col">{p.position}</span>
+                      <span className="rk-col">{p.province ? provinceName(p.province, locale) : ''}</span>
+                      <span className="rk-power"><b>{p.pts.toLocaleString('en-US')}</b><small className={c.cls} aria-label={c.label}>{c.text}</small></span>
+                      <span className={`rk-col rk-change ${c.cls}`} aria-hidden="true">{c.text}</span>
+                    </Link>
+                  </li>
+                })}
+              </ol>
+            </>}
+
+            {rows.length === 0 && (
+              <div className="ui-card rk-empty" role="status">
+                <Trophy size={40} strokeWidth={1.4} aria-hidden="true" />
+                <p className="ui-h2">{filtered ? t('empty') : t('emptyNoData')}</p>
+                <p>{t('emptyHint')}</p>
+                {filtered && <Link className="ui-btn ui-btn-ghost ui-btn-sm" href={view === 'overall' ? '/ranking' : `/ranking?view=${view}`}>{t('clearFilters')} <ChevronRight size={16} aria-hidden="true" /></Link>}
+              </div>
+            )}
+
+            {view === 'overall' && <Pagination basePath="/ranking" page={page} hasNext={rankingPage.hasNext} params={{ province, position, search }} />}
+          </section>
         </div>
-      )}
-
-      {/* TOP 3 */}
-      {top3.length > 0 && (
-        <>
-          <div className="bds-content" style={{ padding: '16px 16px 0' }}>
-            <div className="bds-section-title" style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-              <div style={{ width: 4, height: 20, background: '#CC0001', borderRadius: 2 }} />
-              <span style={{ color: '#d71920', marginRight: 6 }}>{modeCopy.label}</span>{modeCopy.title}
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 10, padding: '8px 12px 4px' }}>
-            {orderedTop3.map((p, idx) => {
-              const rank = idx === 0 ? 2 : idx === 1 ? 1 : 3
-              const isFirst = rank === 1
-              const s = cardBg(rank)
-              return (
-                <div key={p.id} style={{ flex: 1, maxWidth: isFirst ? 150 : 130, position: 'relative', marginBottom: isFirst ? 16 : 0 }}>
-                  {isFirst && (
-                    <div style={{ position: 'absolute', top: -18, left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
-                      <Trophy size={20} style={{ color: '#f5c518', filter: 'drop-shadow(0 2px 4px rgba(200,134,10,0.6))' }} />
-                    </div>
-                  )}
-                  <div style={{ position: 'absolute', top: -10, right: -8, width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-oswald)', fontSize: 11, fontWeight: 800, zIndex: 10, border: '2px solid #f8f8f8', background: s.badge, color: s.badgeColor }}>#{rank}</div>
-                  <div style={{ width: '100%', aspectRatio: '2/3', borderRadius: 10, position: 'relative', overflow: 'hidden', background: s.bg, boxShadow: s.shadow }}>
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg,rgba(255,255,255,0.4) 0%,rgba(255,255,255,0) 40%,rgba(255,255,255,0.12) 70%,rgba(255,255,255,0) 100%)' }} />
-                    <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 2 }}>
-                      <div style={{ fontFamily: 'var(--font-oswald)', fontSize: isFirst ? 30 : 26, fontWeight: 800, color: 'rgba(0,0,0,0.75)', lineHeight: 1 }}>{p.ovr}</div>
-                      <div style={{ fontFamily: 'var(--font-barlow)', fontSize: 11, fontWeight: 700, color: 'rgba(0,0,0,0.65)', letterSpacing: 1 }}>{p.position}</div>
-                    </div>
-                    <div style={{ position: 'absolute', top: 8, right: 6, background: 'rgba(0,0,0,0.35)', borderRadius: 4, padding: '2px 5px', fontSize: 7, fontWeight: 700, color: 'rgba(255,255,255,0.9)', zIndex: 3 }}>{p.province}</div>
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '62%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-                      <PosIcon pos={p.position} size={isFirst ? 64 : 52} />
-                    </div>
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '6px 6px 8px', background: 'linear-gradient(180deg,transparent 0%,rgba(0,0,0,0.7) 30%,rgba(0,0,0,0.88) 100%)', zIndex: 2 }}>
-                      <div style={{ fontFamily: 'var(--font-barlow)', fontSize: isFirst ? 14 : 13, fontWeight: 800, color: 'white', textAlign: 'center', textTransform: 'uppercase', lineHeight: 1.2, marginBottom: 2, overflowWrap: 'anywhere' }}>{podiumNameLines(p.player_name).map((line, index) => <span key={index} style={{ display: 'block' }}>{line}</span>)}</div>
-                      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginBottom: 5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.team}</div>
-                      <div style={{ display: 'flex', justifyContent: 'space-around', borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: 4 }}>
-                        {[['PAC', p.pac], ['SHO', p.sho], ['PAS', p.pas], ['DRI', p.dri], ['DEF', p.def]].map(([key, val]) => (
-                          <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                            <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 11, fontWeight: 700, color: 'white', lineHeight: 1 }}>{skillText(val)}</span>
-                            <span style={{ fontFamily: 'var(--font-barlow)', fontSize: 7, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>{key}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'center', marginTop: 8, fontFamily: 'var(--font-oswald)', fontSize: isFirst ? 15 : 13, fontWeight: 700, color: '#CC0001' }}>
-                    {p.pts.toLocaleString()} Power
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </>
-      )}
-
-      {/* RANK LIST */}
-      {rest.length > 0 && (
-        <div className="bds-content" style={{ padding: '20px 16px 0' }}>
-          <div className="bds-section-title" style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <div style={{ width: 4, height: 20, background: '#CC0001', borderRadius: 2 }} />
-            {showPodium ? 'อันดับ 4 ขึ้นไป' : `อันดับ ${rankingPage.firstRank.toLocaleString()}–${lastShown.toLocaleString()}`}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-       {rest.map((p, i) => (
-        <Link key={p.id} id={`rank-${p.id}`} href={`/players/${p.id}`} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 12, padding: '12px 14px', background: 'white', borderRadius: 12, border: myPosition?.rankId === p.id ? '2px solid #CC0001' : '1.5px solid #e5e5e5', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', scrollMarginTop: 16 }}>
-          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: listStart + i > 999 ? 13 : 18, fontWeight: 700, color: '#ccc', minWidth: 26, textAlign: 'center', flexShrink: 0 }}>{listStart + i}</div>
-          <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f2f2f2', border: '2px solid #e5e5e5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            {p.position === 'GK' || p.position === 'DF'
-              ? <Shield size={20} color="#CC0001" strokeWidth={1.5} />
-              : p.position === 'MF'
-              ? <Zap size={20} color="#CC0001" strokeWidth={1.5} />
-              : <Star size={20} color="#CC0001" strokeWidth={1.5} />
-            }
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>{p.player_name}</div>
-            <div style={{ display: 'flex', gap: 6, marginTop: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 9, fontWeight: 800, background: '#CC0001', color: 'white', borderRadius: 4, padding: '1px 6px', fontFamily: 'var(--font-barlow)', letterSpacing: 0.5 }}>{p.position}</span>
-              <span style={{ fontSize: 11, color: '#888' }}>{p.team}</span>
-              <span style={{ fontSize: 9, fontWeight: 700, color: '#555', background: '#f2f2f2', border: '1px solid #e5e5e5', borderRadius: 4, padding: '1px 6px', display: 'flex', alignItems: 'center', gap: 2 }}>
-                <MapPin size={8} />{p.province}
-              </span>
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
-            <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 17, fontWeight: 700, color: '#111' }}>{p.pts.toLocaleString()}</span>
-            <span style={{ fontSize: 9, fontWeight: 800, color: '#aaa', textTransform: 'uppercase' }}>Power</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: p.rank_change > 0 ? '#16a34a' : p.rank_change < 0 ? '#CC0001' : '#888' }}>
-              {p.rank_change > 0 ? `▲ ${p.rank_change}` : p.rank_change < 0 ? `▼ ${Math.abs(p.rank_change)}` : '– 0'}
-            </span>
-          </div>
-        </Link>
-      ))}
-          </div>
-        </div>
-      )}
-
-      {rankingsForView.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-          <Trophy size={48} color="#ddd" strokeWidth={1} style={{ marginBottom: 12 }} />
-          <p style={{ fontSize: 15, fontWeight: 600, color: '#aaa' }}>ไม่พบนักกีฬาที่ค้นหา</p>
-        </div>
-      )}
-
-      {view === 'overall' && (
-        <div className="bds-content" style={{ padding: '0 16px' }}>
-          <Pagination basePath="/ranking" page={page} hasNext={rankingPage.hasNext} params={{ province, position, search }} />
-        </div>
-      )}
-
-      <div style={{ height: 24 }} />
-
-      {/* BOTTOM NAV */}
-
+      </div>
     </main>
   )
 }

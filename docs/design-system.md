@@ -49,7 +49,7 @@
 | ชุด | หน้า | สถานะ |
 | --- | --- | --- |
 | 1 | `/login`, `/welcome`, `/profile` (+ `/profile/edit` ใช้ CSS เดียวกัน), `/card`, โลโก้ใน `PageHeader` | ✅ |
-| 2 | `/players/[id]`, `/ranking` | ⬜ |
+| 2 | `/players/[id]` (การ์ดเดียวกับ /card, สถิติฤดูกาลจาก player_ratings, ที่มาของข้อมูล), `/ranking` (มุมมอง/ตัวกรองแถวเดียว, โพเดียม, ตารางบนจอคอม) | ✅ |
 | 1b | `/tournaments` (แท็บ จะมาถึง / เปิดรับสมัคร / จบแล้ว, จัดกลุ่มตามเดือน), `/tournaments/[id]` (ข้อมูลรายการ + สร้างทีม + ชำระเงิน) | ✅ |
 | 3 | `/dashboard`, `/dashboard/results` | ⬜ |
 | 4 | `/athletes`, `/hall-of-fame`, `/notifications`, `/career`, `/venues` | ⬜ |

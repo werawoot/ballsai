@@ -14,11 +14,11 @@ describe('/ranking podium names on a 320px phone', () => {
   })
 
   it('never cuts the name off: no ellipsis, and a part too wide still wraps', () => {
-    const page = read('app/ranking/page.tsx')
-    const name = page.slice(page.indexOf('podiumNameLines(p.player_name)') - 400, page.indexOf('podiumNameLines(p.player_name)'))
-    const style = name.slice(name.lastIndexOf('<div style={{'))
-    expect(style).not.toMatch(/textOverflow|whiteSpace: 'nowrap'/)
-    expect(style).toContain("overflowWrap: 'anywhere'")
+    expect(read('app/ranking/page.tsx')).toContain('<b className="rk-pod-name">{podiumNameLines(p.player_name)')
+    const css = read('app/ranking/ranking.css')
+    const rule = css.slice(css.indexOf('.rk-pod-name {'), css.indexOf('}', css.indexOf('.rk-pod-name {')))
+    expect(rule).toContain('overflow-wrap: anywhere')
+    expect(rule).not.toMatch(/text-overflow|white-space: nowrap/)
   })
 })
 
