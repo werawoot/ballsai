@@ -86,6 +86,10 @@ select step, migration, present, marker from (values
        'function record_match_result_first_rank'),
   (21, '62 private athlete avatars',
        coalesce((select not b.public from storage.buckets b where b.id = 'athlete-avatars'), false),
-       'athlete-avatars bucket is private')
+       'athlete-avatars bucket is private'),
+  (22, '63 training',
+       to_regclass('public.training_checkins') is not null
+         and to_regprocedure('public.training_self_start_programs()') is not null,
+       'tables training_enrollments + training_checkins')
 ) as status(step, migration, present, marker)
 order by step;

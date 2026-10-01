@@ -16,6 +16,17 @@ Athlete (U10–U17) opens "Training" from the card on /profile or the signed-in 
 
 Every programme shows **"Draft — awaiting coach review"** until a licensed coach signs it off.
 
+## Built in V1 (SQL63 + app)
+
+- `/training` (band from the athlete's age), `/training/<programme>`, `/start` (weekdays),
+  `/session` (heat advice → pain gate → checklist with timers → "Done"),
+  `/training/drills/<drill>` (picture, how-to, full provenance), and the card on `/profile`.
+- Pictures: our own faceless 3D mannequin renders (`scripts/training-art/`, committed as
+  WebP in `public/training/drills/`). Real photos or video can replace a picture later; they
+  must follow rule 1 and, for any minor shown, carry guardian consent.
+- Not yet: the card on the signed-in home page (home is redesigned only on purpose, AGENTS.md
+  rule 7), reminders (needs notifications), coach assignments.
+
 ## Locked rules (owner, 1 Oct 2026)
 
 ### 1. Content and copyright
@@ -103,7 +114,8 @@ non-solo drill, or if a programme name contains "FIFA" or another owner's progra
 - `training_checkins` — athlete, enrollment, session date, completed drills. Unique per
   (enrollment, session date) so a retried "Done" never counts twice.
 - `training_assignments` — coach → athlete (or team) → programme, for `coach_guided` content
-  and programme E.
+  and programme E. **Not in SQL63**: until it exists, E and the Nordic exercise show as
+  locked ("coach-assigned only") and cannot be started.
 - RLS: the athlete reads and writes their own rows; an accepted guardian reads; a coach reads
   only what they assigned. Nothing is public. No pain answers anywhere.
 
