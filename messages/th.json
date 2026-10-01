@@ -1031,5 +1031,138 @@
     "doneText": "ผู้จัดจะตรวจสลิปและยืนยันทีมของคุณ",
     "doneBack": "กลับไปที่รายการแข่ง",
     "live": "กำลังแข่ง"
+  },
+  "player": {
+    "back": "นักกีฬา",
+    "positions": {
+      "FW": "กองหน้า",
+      "MF": "กองกลาง",
+      "DF": "กองหลัง",
+      "GK": "ผู้รักษาประตู"
+    },
+    "age": "{age} ปี",
+    "verification": {
+      "self": "กรอกเอง",
+      "coach_verified": "โค้ชยืนยัน",
+      "performance_verified": "ผลแข่งยืนยัน"
+    },
+    "starterChip": "STARTER CARD",
+    "level": "Level {level}",
+    "share": "แชร์โปรไฟล์",
+    "shareText": "ดูโปรไฟล์นักกีฬาของ {name} บน BallDoenSai.com",
+    "shareCopied": "คัดลอกลิงก์แล้ว",
+    "shareFailed": "แชร์ไม่สำเร็จ ลองคัดลอกลิงก์จากแถบที่อยู่",
+    "inRanking": "ดูในอันดับ",
+    "season": "ฤดูกาล {season}",
+    "seasonSource": "จากผลแข่งที่ผู้จัดยืนยัน",
+    "power": "POWER RATING",
+    "rank": "อันดับ",
+    "matches": "นัด",
+    "goals": "ประตู",
+    "assists": "แอสซิสต์",
+    "mvps": "MVP",
+    "teamResults": "ผลทีม",
+    "wins": "ชนะ {count}",
+    "draws": "เสมอ {count}",
+    "losses": "แพ้ {count}",
+    "cleanSheets": "คลีนชีต {count}",
+    "noSeasonTitle": "ยังไม่มีผลแข่งที่ยืนยัน",
+    "noSeasonText": "Power Rating ทักษะ และอันดับ จะขึ้นหลังลงแข่งนัดแรกที่ผู้จัดยืนยันผล",
+    "noSeasonRankedText": "ยังไม่มีผลแข่งที่ยืนยันในฤดูกาลนี้ ตัวเลขฤดูกาลจะขึ้นหลังนัดแรกที่ผู้จัดยืนยันผล",
+    "noSeasonCta": "ดูรายการที่เปิดรับสมัคร",
+    "skills": "ทักษะ",
+    "skillNames": {
+      "pac": "ความเร็ว",
+      "sho": "ยิงประตู",
+      "pas": "จ่ายบอล",
+      "dri": "เลี้ยงบอล",
+      "def": "เกมรับ",
+      "speed": "ความเร็ว",
+      "stamina": "ความอึด",
+      "strength": "ความแข็งแรง",
+      "technique": "เทคนิค",
+      "vision": "การอ่านเกม"
+    },
+    "skillSource": {
+      "assessed": "โค้ช/ผู้ดูแลประเมิน",
+      "notAssessed": "ยังไม่ประเมิน",
+      "self": "กรอกเอง",
+      "coach_verified": "โค้ชประเมิน",
+      "performance_verified": "ยืนยันจากผลแข่ง"
+    },
+    "skillDash": "“—” คือยังไม่ได้ประเมิน ไม่ใช่ศูนย์",
+    "identity": "Digital Sports Identity",
+    "xpBadges": "{xp} XP · {badges} Badge",
+    "about": "ข้อมูลนักกีฬา",
+    "facts": {
+      "age": "อายุ",
+      "height": "ส่วนสูง",
+      "weight": "น้ำหนัก",
+      "province": "จังหวัด"
+    },
+    "cm": "{value} ซม.",
+    "kg": "{value} กก.",
+    "notSet": "—",
+    "highlights": "ไฮไลต์",
+    "uploadedVideo": "วิดีโอ",
+    "uploadedImage": "รูป",
+    "externalVideo": "ลิงก์วิดีโอ",
+    "achievements": "ผลงานและรางวัล",
+    "verifiedAchievement": "ตรวจสอบแล้ว",
+    "trustTitle": "ข้อมูลนี้มาจากไหน?",
+    "trust": {
+      "performance_verified": "ตัวเลขฤดูกาลมาจากผลแข่งที่ผู้จัดยืนยัน",
+      "coach_verified": "โค้ชรับรองโปรไฟล์ ตัวเลขฤดูกาลมาจากผลแข่งที่ผู้จัดยืนยัน",
+      "self": "ข้อมูลโปรไฟล์มาจากนักกีฬาเอง ยังไม่ใช่หลักฐานผลงาน",
+      "starter": "ยังไม่มีอันดับ จึงไม่แสดงค่าเริ่มต้นเป็นผลงาน"
+    },
+    "trustSkills": {
+      "assessed": "ทักษะประเมินโดยโค้ชหรือผู้ดูแล",
+      "notAssessed": "ทักษะยังไม่ได้ประเมิน"
+    },
+    "trustNote": "ระบบแยกข้อมูลที่นักกีฬากรอกเองออกจากข้อมูลที่โค้ชหรือผลการแข่งขันยืนยัน และไม่ถือค่าเริ่มต้นเป็นผลงานจริง",
+    "fallbackName": "นักกีฬา BallDoenSai"
+  },
+  "ranking": {
+    "eyebrow": "SEASON {season} · {sport}",
+    "title": "อันดับนักกีฬา",
+    "intro": "Power Rating จากผลแข่งที่ผู้จัดยืนยันเท่านั้น",
+    "viewsLabel": "มุมมองอันดับ",
+    "views": {
+      "overall": "อันดับรวม",
+      "trending": "มาแรง",
+      "emerging": "ดาวรุ่ง",
+      "mvp": "MVP & สถิติ"
+    },
+    "viewHint": {
+      "overall": "เรียงตาม Power Rating · {from}–{to}",
+      "trending": "อันดับที่ขยับขึ้นมากที่สุด",
+      "emerging": "นักกีฬาอายุไม่เกิน 18 ปีที่เปิดโปรไฟล์สาธารณะ · 50 อันดับแรก",
+      "mvp": "MVP และประตูจากผลแข่งที่ยืนยัน · 50 อันดับแรก"
+    },
+    "myRank": "อันดับของฉัน",
+    "onThisPage": "อยู่ในหน้านี้",
+    "goToPage": "ไปหน้า {page}",
+    "podiumLabel": "3 อันดับแรก",
+    "restTitle": "อันดับ {from}–{to}",
+    "power": "Power",
+    "mvpLine": "MVP {mvps} · ประตู {goals}",
+    "change": {
+      "up": "ขึ้น {count} อันดับ",
+      "down": "ลง {count} อันดับ",
+      "same": "อันดับเท่าเดิม"
+    },
+    "empty": "ไม่พบนักกีฬาตามตัวกรองนี้",
+    "emptyNoData": "ยังไม่มีนักกีฬาในอันดับฤดูกาลนี้",
+    "emptyHint": "อันดับจะขึ้นหลังนักกีฬาลงแข่งนัดที่ผู้จัดยืนยันผล",
+    "clearFilters": "ล้างตัวกรอง",
+    "table": {
+      "rank": "#",
+      "athlete": "นักกีฬา",
+      "position": "ตำแหน่ง",
+      "province": "จังหวัด",
+      "power": "POWER",
+      "change": "±"
+    }
   }
 }

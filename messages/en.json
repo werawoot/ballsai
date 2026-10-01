@@ -1031,5 +1031,138 @@
     "doneText": "The organizer will check the slip and confirm your team.",
     "doneBack": "Back to the tournament",
     "live": "In progress"
+  },
+  "player": {
+    "back": "Athletes",
+    "positions": {
+      "FW": "Forward",
+      "MF": "Midfielder",
+      "DF": "Defender",
+      "GK": "Goalkeeper"
+    },
+    "age": "{age} yrs",
+    "verification": {
+      "self": "Self-reported",
+      "coach_verified": "Coach verified",
+      "performance_verified": "Verified results"
+    },
+    "starterChip": "STARTER CARD",
+    "level": "Level {level}",
+    "share": "Share profile",
+    "shareText": "See {name}'s athlete profile on BallDoenSai.com",
+    "shareCopied": "Link copied",
+    "shareFailed": "Could not share. Copy the link from the address bar.",
+    "inRanking": "See in ranking",
+    "season": "Season {season}",
+    "seasonSource": "From results the organizer verified",
+    "power": "POWER RATING",
+    "rank": "Rank",
+    "matches": "Matches",
+    "goals": "Goals",
+    "assists": "Assists",
+    "mvps": "MVP",
+    "teamResults": "Team results",
+    "wins": "Won {count}",
+    "draws": "Drew {count}",
+    "losses": "Lost {count}",
+    "cleanSheets": "Clean sheets {count}",
+    "noSeasonTitle": "No verified results yet",
+    "noSeasonText": "Power Rating, skills and rank appear after the first match an organizer verifies.",
+    "noSeasonRankedText": "No verified results this season yet. Season numbers appear after the first match an organizer verifies.",
+    "noSeasonCta": "See tournaments open for entry",
+    "skills": "Skills",
+    "skillNames": {
+      "pac": "Pace",
+      "sho": "Shooting",
+      "pas": "Passing",
+      "dri": "Dribbling",
+      "def": "Defending",
+      "speed": "Speed",
+      "stamina": "Stamina",
+      "strength": "Strength",
+      "technique": "Technique",
+      "vision": "Vision"
+    },
+    "skillSource": {
+      "assessed": "Coach or admin assessed",
+      "notAssessed": "Not assessed yet",
+      "self": "Self-reported",
+      "coach_verified": "Coach assessed",
+      "performance_verified": "From verified results"
+    },
+    "skillDash": "“—” means not assessed yet, not zero.",
+    "identity": "Digital Sports Identity",
+    "xpBadges": "{xp} XP · {badges} badges",
+    "about": "About",
+    "facts": {
+      "age": "Age",
+      "height": "Height",
+      "weight": "Weight",
+      "province": "Province"
+    },
+    "cm": "{value} cm",
+    "kg": "{value} kg",
+    "notSet": "—",
+    "highlights": "Highlights",
+    "uploadedVideo": "Video",
+    "uploadedImage": "Photo",
+    "externalVideo": "Video link",
+    "achievements": "Achievements",
+    "verifiedAchievement": "Verified",
+    "trustTitle": "Where does this come from?",
+    "trust": {
+      "performance_verified": "Season numbers come from results the organizer verified.",
+      "coach_verified": "A coach vouched for this profile. Season numbers come from verified results.",
+      "self": "Profile details come from the athlete and are not proof of performance.",
+      "starter": "Not ranked yet, so no starting value is shown as performance."
+    },
+    "trustSkills": {
+      "assessed": "Skills assessed by a coach or admin.",
+      "notAssessed": "Skills not assessed yet."
+    },
+    "trustNote": "Self-reported details are kept apart from what a coach or a match result confirms, and a starting value is never treated as performance.",
+    "fallbackName": "BallDoenSai athlete"
+  },
+  "ranking": {
+    "eyebrow": "SEASON {season} · {sport}",
+    "title": "Athlete ranking",
+    "intro": "Power Rating from results the organizer verified, nothing else.",
+    "viewsLabel": "Ranking views",
+    "views": {
+      "overall": "Overall",
+      "trending": "Climbing",
+      "emerging": "Rising stars",
+      "mvp": "MVP & stats"
+    },
+    "viewHint": {
+      "overall": "By Power Rating · {from}–{to}",
+      "trending": "Biggest climbs in rank",
+      "emerging": "Under-18 athletes with public profiles · top 50",
+      "mvp": "MVPs and goals from verified results · top 50"
+    },
+    "myRank": "My rank",
+    "onThisPage": "On this page",
+    "goToPage": "Go to page {page}",
+    "podiumLabel": "Top 3",
+    "restTitle": "Ranks {from}–{to}",
+    "power": "Power",
+    "mvpLine": "MVP {mvps} · goals {goals}",
+    "change": {
+      "up": "Up {count}",
+      "down": "Down {count}",
+      "same": "No change"
+    },
+    "empty": "No athletes match these filters",
+    "emptyNoData": "No athletes ranked this season yet",
+    "emptyHint": "Ranks appear after an athlete plays a match whose result the organizer verifies.",
+    "clearFilters": "Clear filters",
+    "table": {
+      "rank": "#",
+      "athlete": "Athlete",
+      "position": "Position",
+      "province": "Province",
+      "power": "POWER",
+      "change": "±"
+    }
   }
 }

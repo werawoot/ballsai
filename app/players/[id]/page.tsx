@@ -1,26 +1,42 @@
+import Link from 'next/link'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { Award, CalendarDays, CheckCircle2, ExternalLink, MapPin, PlayCircle, Ruler, Shield, Star, Users, Weight, Zap } from 'lucide-react'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { Award, Check, CheckCircle2, ChevronRight, ExternalLink, Image as ImageIcon, PlayCircle, ShieldCheck, Trophy } from 'lucide-react'
 import { isSampleId, samplePlayerRanks, showDemoData } from '@/lib/sample-data'
-import { IDENTITY_BADGES, calculateLevel, identityTitle } from '@/lib/digital-identity'
-import { ACTIVE_SPORT } from '@/lib/season'
-import ReportHighlightButton from './ReportHighlightButton'
-import DisputeDataButton from './DisputeDataButton'
-import PageHeader from '@/components/PageHeader'
+import { IDENTITY_BADGES, calculateLevel, identityTierKey, levelProgress } from '@/lib/digital-identity'
+import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import { PUBLIC_PROFILE_COLUMNS, fetchAthleteAge } from '@/lib/athlete-private'
 import { withAvatarUrls } from '@/lib/athlete-avatar'
-import { hasAssessedSkills, skillText } from '@/lib/skill-ratings'
+import { SKILL_KEYS, skillText } from '@/lib/skill-ratings'
+import { cardProvenance } from '@/lib/player-card'
+import { seasonSummary } from '@/lib/player-profile'
+import { fetchRankPosition } from '@/lib/public-ranking-page'
+import PageHeader from '@/components/PageHeader'
+import ReportHighlightButton from './ReportHighlightButton'
+import DisputeDataButton from './DisputeDataButton'
+import ShareProfileButton from './ShareProfileButton'
+import './player.css'
+
+// A public athlete profile (docs/design-system.md). Stadium header with the same card the
+// athlete builds at /card, then Paper sections in the order a coach or scout reads them:
+// this season's verified numbers, skills, identity, about, highlights, achievements, and
+// where it all comes from. AGENTS.md rule 8 throughout: every number says its source, a
+// skill nobody assessed is a dash, and a profile with no player_ranks row is a STARTER
+// card that shows no Power, rank or skills at all.
 
 type PlayerRecord = {
   id: string
   player_id?: string | null
   player_name: string
-  team: string
-  province: string
-  position: string
-  ovr: number
-  pts: number
+  team: string | null
+  province: string | null
+  position: string | null
+  sport?: string | null
+  season?: string | null
+  ovr: number | null
+  pts: number | null
   pac: number | null
   sho: number | null
   pas: number | null
@@ -43,22 +59,14 @@ type AthleteProfile = {
 
 type AthleteVideo = { id: number; title: string; video_url: string; video_type: string }
 type AthleteHighlight = { id: number; title: string; media_type: 'image' | 'video' }
-type AthleteAchievement = { id: number; title: string; event_name?: string | null; achievement_year?: number | null; proof_url?: string | null; verification_status: string }
+type AthleteAchievement = { id: number; title: string; event_name?: string | null; achievement_year?: number | null; verification_status: string }
 type SkillAssessment = { speed?: number | null; stamina?: number | null; strength?: number | null; technique?: number | null; vision?: number | null; source_level: string }
 type IdentityProgress = { xp_total: number; current_level: number }
 type AthleteBadge = { badge_key: string; awarded_at: string }
 
-function PositionIcon({ pos, size = 80 }: { pos: string; size?: number }) {
-  if (pos === 'GK' || pos === 'DF') return <Shield size={size} color="rgba(255,255,255,0.9)" strokeWidth={1.5} />
-  if (pos === 'MF') return <Zap size={size} color="rgba(255,255,255,0.9)" strokeWidth={1.5} />
-  return <Star size={size} color="rgba(255,255,255,0.9)" strokeWidth={1.5} />
-}
-
-const verificationLabels = {
-  self: 'ข้อมูลจากนักกีฬา',
-  coach_verified: 'Coach Verified',
-  performance_verified: 'Performance Verified',
-}
+const POSITIONS = ['FW', 'MF', 'DF', 'GK'] as const
+const ASSESSED_KEYS = ['speed', 'stamina', 'strength', 'technique', 'vision'] as const
+const VERIFICATION = ['self', 'coach_verified', 'performance_verified'] as const
 
 export default async function PlayerPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params
@@ -73,188 +81,229 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
       },
     }
   )
+  const [t, tCard, tHome, locale] = await Promise.all([getTranslations('player'), getTranslations('card'), getTranslations('profileHome'), getLocale()])
 
   const { data: player } = showDemoData && isSampleId(params.id)
     ? { data: samplePlayerRanks.find(item => item.id === params.id) ?? null }
-    : await supabase.from('player_ranks').select('*').eq('id', params.id).single()
+    : await supabase.from('player_ranks').select('*').eq('id', params.id).maybeSingle()
 
   const routeIsUserId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(params.id)
   const linkedPlayerResult = !player && routeIsUserId
-    ? await supabase.from('player_ranks').select('*').eq('player_id', params.id).eq('sport', ACTIVE_SPORT).maybeSingle()
+    ? await supabase.from('player_ranks').select('*').eq('player_id', params.id).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).maybeSingle()
     : { data: null }
-  const rankedPlayer = (player || linkedPlayerResult.data) as PlayerRecord | null
-  const athleteId = rankedPlayer?.player_id || (routeIsUserId ? params.id : null)
+  const rank = (player || linkedPlayerResult.data) as PlayerRecord | null
+  const athleteId = rank?.player_id || (routeIsUserId ? params.id : null)
+  const rankSport = rank?.sport || ACTIVE_SPORT
+  const rankSeason = rank?.season || ACTIVE_SEASON
 
-  let athleteProfile: AthleteProfile | null = null
-  let videos: AthleteVideo[] = []
-  let uploadedHighlights: AthleteHighlight[] = []
-  let achievements: AthleteAchievement[] = []
-  let skillAssessment: SkillAssessment | null = null
-  let identityProgress: IdentityProgress | null = null
-  let athleteBadges: AthleteBadge[] = []
-  let age: number | null = null
+  const [profileResult, videoResult, highlightResult, achievementResult, skillResult, progressResult, badgeResult, age, ratingResult, position] = await Promise.all([
+    athleteId ? supabase.from('athlete_profiles').select(PUBLIC_PROFILE_COLUMNS).eq('user_id', athleteId).maybeSingle() : null,
+    athleteId ? supabase.from('athlete_videos').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6) : null,
+    athleteId ? supabase.from('athlete_highlights').select('id, title, media_type').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6) : null,
+    athleteId ? supabase.from('athlete_achievements').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(8) : null,
+    athleteId ? supabase.from('athlete_skill_assessments').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(1).maybeSingle() : null,
+    athleteId ? supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', athleteId).maybeSingle() : null,
+    athleteId ? supabase.from('athlete_badges').select('badge_key, awarded_at').eq('athlete_id', athleteId).order('awarded_at', { ascending: false }) : null,
+    // An age, never the birth date: public_athlete_age (sql/58) works it out in the database.
+    athleteId ? fetchAthleteAge(supabase, athleteId) : null,
+    // This season's verified results behind the rank row (public read, written only by
+    // verified match results).
+    rank && !isSampleId(rank.id) ? supabase.from('player_ratings').select('power_rating, matches_played, wins, draws, losses, goals, assists, clean_sheets, mvps').eq('player_rank_id', rank.id).eq('sport', rankSport).eq('season', rankSeason).maybeSingle() : null,
+    rank && typeof rank.pts === 'number' && !isSampleId(rank.id) ? fetchRankPosition(supabase, { sport: rankSport, season: rankSeason, id: rank.id, pts: rank.pts }).catch(() => null) : null,
+  ])
+  // The photo is a private object (T51): signed only if this viewer may see it.
+  const athleteProfile = profileResult?.data ? (await withAvatarUrls(supabase, [profileResult.data as AthleteProfile]))[0] : null
+  const videos = (videoResult?.data ?? []) as AthleteVideo[]
+  const uploadedHighlights = (highlightResult?.data ?? []) as AthleteHighlight[]
+  const achievements = (achievementResult?.data ?? []) as AthleteAchievement[]
+  const skillAssessment = skillResult?.data as SkillAssessment | null
+  const identityProgress = progressResult?.data as IdentityProgress | null
+  const athleteBadges = (badgeResult?.data ?? []) as AthleteBadge[]
 
-  if (athleteId) {
-    const [profileResult, videoResult, highlightResult, achievementResult, skillResult, progressResult, badgeResult, athleteAge] = await Promise.all([
-      supabase.from('athlete_profiles').select(PUBLIC_PROFILE_COLUMNS).eq('user_id', athleteId).maybeSingle(),
-      supabase.from('athlete_videos').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6),
-      supabase.from('athlete_highlights').select('id, title, media_type').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6),
-      supabase.from('athlete_achievements').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(8),
-      supabase.from('athlete_skill_assessments').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-      supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', athleteId).maybeSingle(),
-      supabase.from('athlete_badges').select('badge_key, awarded_at').eq('athlete_id', athleteId).order('awarded_at', { ascending: false }),
-      // An age, never the birth date: public_athlete_age (sql/58) works it out in the database.
-      fetchAthleteAge(supabase, athleteId),
-    ])
-    // The photo is a private object (T51): signed only if this viewer may see it.
-    athleteProfile = profileResult.data ? (await withAvatarUrls(supabase, [profileResult.data as AthleteProfile]))[0] : null
-    videos = (videoResult.data ?? []) as AthleteVideo[]
-    uploadedHighlights = (highlightResult.data ?? []) as AthleteHighlight[]
-    achievements = (achievementResult.data ?? []) as AthleteAchievement[]
-    skillAssessment = skillResult.data as SkillAssessment | null
-    identityProgress = progressResult.data as IdentityProgress | null
-    athleteBadges = (badgeResult.data ?? []) as AthleteBadge[]
-    age = athleteAge
-  }
+  if (!rank && !athleteProfile) redirect('/athletes')
+  const hasRanking = Boolean(rank)
+  const season = seasonSummary(ratingResult?.data ?? null)
 
-  if (!rankedPlayer && !athleteProfile) redirect('/athletes')
-  const hasRanking = Boolean(rankedPlayer)
-  const typedPlayer: PlayerRecord = rankedPlayer || {
-    id: params.id,
-    player_id: athleteId,
-    player_name: athleteProfile?.display_name || 'BallDoenSai.com Athlete',
-    team: athleteProfile?.current_team || '-',
-    province: athleteProfile?.province || '-',
-    position: athleteProfile?.position || 'FW',
-    ovr: 0,
-    pts: 0,
-    pac: 0,
-    sho: 0,
-    pas: 0,
-    dri: 0,
-    def: 0,
-  }
+  const displayName = athleteProfile?.display_name || rank?.player_name || t('fallbackName')
+  const team = athleteProfile?.current_team || rank?.team || null
+  const province = athleteProfile?.province || rank?.province || null
+  const positionCode = athleteProfile?.position || rank?.position || null
+  const positionName = positionCode && (POSITIONS as readonly string[]).includes(positionCode) ? t(`positions.${positionCode as (typeof POSITIONS)[number]}`) : positionCode
+  const verification = (VERIFICATION as readonly string[]).includes(athleteProfile?.verification_level ?? '') ? athleteProfile!.verification_level : 'self'
+  // As on /card: the card's source chip reads the same rule for every athlete.
+  const provenance = cardProvenance({ matches: season?.matches ?? null, verificationLevel: verification })
+  const cardChip = provenance === 'performance'
+    ? (season ? tCard('provenance.performance', { count: season.matches }) : tCard('provenance.performanceNoCount'))
+    : tCard(`provenance.${provenance}`)
+  // The source level the page states, from the strongest evidence there is: verified
+  // results outrank a coach's vouching, which outranks a self-entered profile.
+  const evidence = provenance === 'performance' ? 'performance_verified' : provenance === 'coach' ? 'coach_verified' : 'self'
+  const power = hasRanking ? (season?.power ?? rank?.pts ?? null) : null
+  const photo = athleteProfile?.profile_image_url ?? null
+  const initials = displayName.trim().split(/\s+/).map(part => [...part][0] ?? '').join('').slice(0, 2).toUpperCase()
 
-  const displayName = athleteProfile?.display_name || typedPlayer.player_name
-  const team = athleteProfile?.current_team || typedPlayer.team
-  const province = athleteProfile?.province || typedPlayer.province
-  const position = athleteProfile?.position || typedPlayer.position
-  const verificationLevel = athleteProfile?.verification_level || 'self'
-  const isVerified = verificationLevel !== 'self'
-  const cardBg = typedPlayer.pts >= 2000
-    ? 'linear-gradient(160deg,#3d2a00 0%,#c8860a 18%,#f5c518 30%,#c8860a 42%,#7a4f00 55%,#c8860a 70%,#f5c518 82%,#3d2a00 100%)'
-    : typedPlayer.pts >= 1500
-      ? 'linear-gradient(160deg,#1a1a1a 0%,#808080 18%,#d0d0d0 30%,#808080 42%,#404040 55%,#808080 70%,#d0d0d0 82%,#1a1a1a 100%)'
-      : 'linear-gradient(160deg,#2a1200 0%,#a0522d 18%,#cd7f32 30%,#a0522d 42%,#4a2000 55%,#a0522d 70%,#cd7f32 82%,#2a1200 100%)'
+  const cardSkills = SKILL_KEYS.map(key => ({ key, label: t(`skillNames.${key}`), short: key.toUpperCase(), value: rank?.[key] ?? null }))
+  const assessed = skillAssessment ? ASSESSED_KEYS.map(key => ({ key, label: t(`skillNames.${key}`), value: skillAssessment[key] ?? null })).filter(item => item.value !== null) : []
+  const skillRows = assessed.length ? assessed : hasRanking ? cardSkills : []
+  const anyCardSkill = cardSkills.some(item => item.value !== null)
+  const skillChip = assessed.length
+    ? { tone: skillAssessment!.source_level === 'self' ? 'is-self' : 'is-coach', text: (VERIFICATION as readonly string[]).includes(skillAssessment!.source_level) ? t(`skillSource.${skillAssessment!.source_level as (typeof VERIFICATION)[number]}`) : t('skillSource.assessed') }
+    : anyCardSkill ? { tone: 'is-coach', text: t('skillSource.assessed') } : { tone: 'is-self', text: t('skillSource.notAssessed') }
 
-  const skillsAssessed = hasAssessedSkills(typedPlayer)
-  const cardStats = [
-    { key: 'PAC', val: typedPlayer.pac, label: 'Pace' },
-    { key: 'SHO', val: typedPlayer.sho, label: 'Shooting' },
-    { key: 'PAS', val: typedPlayer.pas, label: 'Passing' },
-    { key: 'DRI', val: typedPlayer.dri, label: 'Dribbling' },
-    { key: 'DEF', val: typedPlayer.def, label: 'Defending' },
-  ]
-  const assessedStats = skillAssessment ? [
-    { label: 'Speed', value: skillAssessment.speed },
-    { label: 'Stamina', value: skillAssessment.stamina },
-    { label: 'Strength', value: skillAssessment.strength },
-    { label: 'Technique', value: skillAssessment.technique },
-    { label: 'Vision', value: skillAssessment.vision },
-  ].filter(item => item.value !== null && item.value !== undefined) : []
   const level = identityProgress?.current_level ?? calculateLevel(0)
-  const earnedBadgeKeys = new Set(athleteBadges.map(item => item.badge_key))
-  const trustSummary = hasRanking
-    ? {
-        label: verificationLabels[verificationLevel],
-        confidence: verificationLevel === 'performance_verified' ? 'สูง' : verificationLevel === 'coach_verified' ? 'กลาง' : 'เริ่มต้น',
-        source: skillsAssessed
-          ? 'Player Rank ที่ผู้ดูแลสร้าง และคะแนนทักษะจากการประเมินของโค้ชหรือผู้ดูแล'
-          : 'Power Rating จากผลแข่งที่ผู้จัดยืนยันในระบบ · คะแนนทักษะยังไม่ได้ประเมิน',
-        detail: verificationLevel === 'performance_verified'
-          ? 'มีผลการแข่งขันที่ผ่านการตรวจสอบเป็นฐานของคะแนน'
-          : verificationLevel === 'coach_verified'
-            ? 'มีผู้ฝึกสอนรับรองโปรไฟล์ แต่ยังควรตรวจผลแข่งประกอบ'
-            : 'ข้อมูลโปรไฟล์มาจากนักกีฬาเอง ยังไม่ใช่หลักฐานผลงานการแข่งขัน',
-      }
-    : {
-        label: 'Starter Card',
-        confidence: 'ยังไม่จัดอันดับ',
-        source: 'ข้อมูลโปรไฟล์ที่นักกีฬากรอกเอง',
-        detail: 'ยังไม่มี player_ranks row จึงไม่แสดงค่าเริ่มต้นเป็น Performance Rating',
-      }
+  const xp = identityProgress?.xp_total ?? 0
+  const earned = new Set(athleteBadges.map(item => item.badge_key))
+  const facts = [
+    { label: t('facts.age'), value: age !== null && age !== undefined ? t('age', { age }) : t('notSet') },
+    { label: t('facts.height'), value: athleteProfile?.height_cm ? t('cm', { value: athleteProfile.height_cm }) : t('notSet') },
+    { label: t('facts.weight'), value: athleteProfile?.weight_kg ? t('kg', { value: athleteProfile.weight_kg }) : t('notSet') },
+    { label: t('facts.province'), value: province ?? t('notSet') },
+  ]
+  const subline = [positionName, team, province, age !== null && age !== undefined ? t('age', { age }) : null].filter(Boolean).join(' · ')
+  const meta = [team, province].filter(Boolean).join(' · ')
 
   return (
-    <main className="bds-page" style={{ background: '#f6f6f4', minHeight: '100vh', overflowX: 'hidden' }}>
-      <PageHeader back={{ href: '/athletes', label: 'นักกีฬา' }} />
+    <main className="bds-page pp">
+      <PageHeader back={{ href: '/athletes', label: t('back') }} />
 
-      <section className="bds-hero" style={{ background: '#CC0001', color: 'white', padding: '24px 16px 44px' }}>
-        <div style={{ maxWidth: 760, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(130px,180px) minmax(0,1fr)', gap: 20, alignItems: 'center' }}>
-          <div style={{ width: '100%', aspectRatio: '2/3', borderRadius: 8, position: 'relative', overflow: 'hidden', background: cardBg, boxShadow: '0 16px 40px rgba(0,0,0,0.32)' }}>
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg,rgba(255,255,255,.35),transparent 42%,rgba(255,255,255,.1) 72%,transparent)' }} />
-            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 2 }}><div style={{ fontFamily: 'var(--font-oswald)', fontSize: hasRanking ? 34 : 18, fontWeight: 800, color: '#211500', lineHeight: 1 }}>{hasRanking ? typedPlayer.ovr : 'NEW'}</div><div style={{ fontFamily: 'var(--font-barlow)', fontSize: 13, fontWeight: 800, color: '#211500' }}>{position}</div></div>
-            <div style={{ position: 'absolute', inset: '8% 8% 34%', background: athleteProfile?.profile_image_url ? `url(${athleteProfile.profile_image_url}) center top/cover no-repeat` : undefined, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>{!athleteProfile?.profile_image_url && <PositionIcon pos={position} />}</div>
-            <div style={{ position: 'absolute', inset: '55% 0 0', padding: '22px 9px 9px', background: 'linear-gradient(transparent,rgba(0,0,0,.9) 40%)', zIndex: 2 }}>
-              <div style={{ fontFamily: 'var(--font-barlow)', fontSize: 16, fontWeight: 800, textAlign: 'center', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>
-              <div style={{ fontSize: 10, textAlign: 'center', opacity: .75 }}>{team}</div>
-              {hasRanking && <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9 }}>{cardStats.map(stat => <div key={stat.key} style={{ textAlign: 'center' }}><b style={{ display: 'block', fontFamily: 'var(--font-oswald)', fontSize: 12 }}>{skillText(stat.val)}</b><span style={{ fontSize: 7, opacity: .65 }}>{stat.key}</span></div>)}</div>}
+      <section className="pp-hero ui-dark">
+        <div className="pp-hero-inner">
+          <div className={`pp-card is-${provenance}`} aria-hidden="true">
+            <div className="pp-card-photo" style={photo ? { backgroundImage: `url("${photo}")` } : undefined}>{!photo && <span>{initials}</span>}</div>
+            <div className="pp-card-scrim" />
+            <div className={`pp-card-ovr${hasRanking && rank?.ovr != null ? '' : ' is-empty'}`}>
+              <b>{hasRanking ? skillText(rank?.ovr) : 'STARTER'}</b>
+              <span>{positionCode}{power !== null ? ` · POWER ${power.toLocaleString('en-US')}` : ''}</span>
+            </div>
+            <i className="pp-card-brand">B</i>
+            <div className="pp-card-info">
+              <span className={`pp-card-chip is-${provenance}`}>{provenance !== 'self' && <Check size={11} strokeWidth={3} />}{cardChip}</span>
+              <b className="pp-card-name">{displayName}</b>
+              {meta && <small className="pp-card-meta">{meta}</small>}
+              {hasRanking
+                ? <div className="pp-card-stats">{cardSkills.map(item => <div key={item.key}><b>{skillText(item.value)}</b><span>{item.short}</span></div>)}</div>
+                : <p className="pp-card-unlock">{tCard('unlockBefore')}<b>{tCard('unlockRating')}</b>{tCard('unlockAfter')}</p>}
+              <div className="pp-card-foot"><span>BALLDOENSAI.COM</span><span>SEASON {rankSeason}</span></div>
             </div>
           </div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid rgba(255,255,255,.35)', padding: '4px 9px', borderRadius: 6, fontSize: 10, fontWeight: 800, marginBottom: 10 }}><CheckCircle2 size={13} />{verificationLabels[verificationLevel]}</div>
-            <h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(28px,7vw,48px)', lineHeight: 1, letterSpacing: 0, overflowWrap: 'anywhere' }}>{displayName}</h1>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12, fontSize: 12, color: 'rgba(255,255,255,.82)' }}><span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={14} />{province}</span><span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Users size={14} />{team}</span></div>
-            <div style={{ marginTop: 16, fontFamily: 'var(--font-oswald)', fontSize: 25, fontWeight: 700 }}>{hasRanking ? typedPlayer.pts.toLocaleString() : 'UNRATED'} <span style={{ fontSize: 12, opacity: .7 }}>POWER RATING</span></div>
+          <div className="pp-hero-text">
+            <h1>{displayName}</h1>
+            {subline && <p className="pp-sub">{subline}</p>}
+            <div className="pp-chips">
+              {!hasRanking && <span className="ui-chip is-self">{t('starterChip')}</span>}
+              {/* The same source as the chip on the card: verified results outrank a self-entered profile. */}
+              <span className={`ui-chip ${provenance === 'performance' ? 'is-performance' : provenance === 'coach' ? 'is-coach' : 'is-self'}`}>{provenance !== 'self' && <CheckCircle2 size={13} aria-hidden="true" />}{t(`verification.${evidence}`)}</span>
+              {athleteId && <span className="ui-chip is-self">{t('level', { level: String(level).padStart(2, '0') })}</span>}
+            </div>
+            <div className="pp-actions">
+              <ShareProfileButton name={displayName} />
+              {position && <Link className="ui-btn ui-btn-ghost-d pp-rank-link" href={`/ranking?page=${position.page}#rank-${position.rankId}`}>{t('inRanking')}</Link>}
+            </div>
           </div>
         </div>
       </section>
 
-      <div className="bds-content" style={{ maxWidth: 760, margin: '-20px auto 0', padding: '0 16px', position: 'relative' }}>
-        <section aria-label="Data trust explanation" style={{ background: '#fffdf5', border: '1px solid #eadca6', borderRadius: 8, padding: 16, marginBottom: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-            <div>
-              <p style={{ margin: 0, color: '#8a5a00', fontSize: 10, fontWeight: 800, letterSpacing: 1 }}>DATA TRUST · ทำไมคะแนนนี้ถึงเชื่อถือได้</p>
-              <h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 18, margin: '5px 0 8px' }}>{trustSummary.label}</h2>
+      <div className="pp-body">
+        <section className="pp-section">
+          <div className="pp-section-head"><h2>{t('season', { season: rankSeason })}</h2>{season && <span className="ui-chip is-performance">{t('seasonSource')}</span>}</div>
+          {hasRanking
+            ? <div className="ui-card pp-season">
+                <div className="pp-power">
+                  <div><small>{t('power')}</small><b>{power !== null ? power.toLocaleString('en-US') : '—'}</b></div>
+                  {position && <div className="pp-rank"><small>{t('rank')}</small><b>#{position.position.toLocaleString('en-US')}</b></div>}
+                </div>
+                {season
+                  ? <>
+                      <div className="pp-tiles">
+                        {([['matches', season.matches], ['goals', season.goals], ['assists', season.assists], ['mvps', season.mvps]] as const).map(([key, value]) => <div key={key}><b>{value}</b><small>{t(key)}</small></div>)}
+                      </div>
+                      <p className="pp-wdl"><span>{t('teamResults')}</span><i className="is-w">{t('wins', { count: season.wins })}</i><i className="is-d">{t('draws', { count: season.draws })}</i><i className="is-l">{t('losses', { count: season.losses })}</i><span>· {t('cleanSheets', { count: season.cleanSheets })}</span></p>
+                    </>
+                  : <p className="pp-note">{t('noSeasonRankedText')}</p>}
+              </div>
+            : <div className="ui-card pp-starter">
+                <Trophy size={28} strokeWidth={1.6} aria-hidden="true" />
+                <b>{t('noSeasonTitle')}</b>
+                <p>{t('noSeasonText')}</p>
+                <Link className="ui-btn ui-btn-ghost ui-btn-sm" href="/tournaments?view=open">{t('noSeasonCta')}</Link>
+              </div>}
+        </section>
+
+        {skillRows.length > 0 && <section className="pp-section">
+          <div className="pp-section-head"><h2>{t('skills')}</h2><span className={`ui-chip ${skillChip.tone}`}>{skillChip.text}</span></div>
+          <div className="ui-card pp-bars">
+            {skillRows.map(item => <div className={`pp-bar${item.value === null ? ' is-na' : ''}`} key={item.key}>
+              <span>{item.label}</span>
+              <span className="pp-track" aria-hidden="true">{item.value !== null && <i style={{ width: `${Math.max(0, Math.min(100, item.value))}%` }} />}</span>
+              <b>{skillText(item.value)}</b>
+            </div>)}
+            {skillRows.some(item => item.value === null) && <p className="pp-note">{t('skillDash')}</p>}
+          </div>
+        </section>}
+
+        {athleteId && <section className="pp-section">
+          <div className="ui-card pp-identity">
+            <div className="pp-level">
+              <span className="pp-level-n">{String(level).padStart(2, '0')}</span>
+              <div><small>{tHome(`tiers.${identityTierKey(level)}`)}</small><b>{t('identity')}</b><span>{t('xpBadges', { xp: xp.toLocaleString('en-US'), badges: earned.size })}</span></div>
             </div>
-            <span style={{ flex: '0 0 auto', borderRadius: 999, padding: '5px 8px', background: '#f6e9b0', color: '#745000', fontSize: 10, fontWeight: 800 }}>{trustSummary.confidence}</span>
+            <div className="pp-xp" aria-hidden="true"><i style={{ width: `${levelProgress(xp, level).percentage}%` }} /></div>
+            <ul className="pp-badges">
+              {IDENTITY_BADGES.map(badge => <li className={earned.has(badge.key) ? 'is-on' : ''} key={badge.key}>{locale === 'th' ? badge.thaiName : badge.name}</li>)}
+            </ul>
           </div>
-          <dl style={{ display: 'grid', gap: 7, margin: 0, fontSize: 12 }}>
-            <div><dt style={{ display: 'inline', color: '#7a6a43' }}>แหล่งข้อมูล: </dt><dd style={{ display: 'inline', margin: 0, fontWeight: 700 }}>{trustSummary.source}</dd></div>
-            <div><dt style={{ display: 'inline', color: '#7a6a43' }}>สถานะการตรวจ: </dt><dd style={{ display: 'inline', margin: 0 }}>{trustSummary.detail}</dd></div>
-          </dl>
-          <p style={{ margin: '10px 0 0', color: '#756b55', fontSize: 10, lineHeight: 1.6 }}>ระบบจะแยกข้อมูลที่นักกีฬาแจ้งเองออกจากข้อมูลที่โค้ชหรือผลการแข่งขันยืนยันแล้ว และจะไม่ถือค่าเริ่มต้นเป็นผลงานจริง</p>
-          {athleteId && <DisputeDataButton subjectType={hasRanking ? 'player_rank' : 'athlete_profile'} subjectId={hasRanking ? typedPlayer.id : athleteId} />}
-        </section>
-        {athleteId && <section style={{ background: '#111827', color: 'white', borderRadius: 8, padding: 18, marginBottom: 12, overflow: 'hidden', position: 'relative' }}>
-          <div style={{ position: 'absolute', width: 170, height: 170, border: '1px solid rgba(245,197,24,.28)', borderRadius: '50%', right: -52, top: -95 }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}><div style={{ borderRight: '1px solid rgba(255,255,255,.2)', minWidth: 70, paddingRight: 14, textAlign: 'center' }}><small style={{ color: '#f5c518', fontSize: 9, fontWeight: 800, letterSpacing: 1.1 }}>LEVEL</small><b style={{ display: 'block', fontFamily: 'var(--font-oswald)', fontSize: 45, lineHeight: .9 }}>{level.toString().padStart(2, '0')}</b></div><div><small style={{ color: '#f5c518', fontSize: 9, fontWeight: 800, letterSpacing: 1.1 }}>{identityTitle(level).toUpperCase()}</small><b style={{ display: 'block', fontSize: 15, marginTop: 4 }}>Digital Sports Identity</b><span style={{ color: 'rgba(255,255,255,.62)', display: 'block', fontSize: 11, marginTop: 3 }}>{identityProgress?.xp_total?.toLocaleString() ?? 0} XP · {earnedBadgeKeys.size} Achievement</span></div></div>
-          <div style={{ display: 'flex', gap: 7, marginTop: 15, overflowX: 'auto', paddingBottom: 2, position: 'relative' }}>{IDENTITY_BADGES.map(badge => <div key={badge.key} title={badge.thaiName} style={{ alignItems: 'center', background: earnedBadgeKeys.has(badge.key) ? 'rgba(245,197,24,.17)' : 'rgba(255,255,255,.06)', border: `1px solid ${earnedBadgeKeys.has(badge.key) ? 'rgba(245,197,24,.65)' : 'rgba(255,255,255,.1)'}`, color: earnedBadgeKeys.has(badge.key) ? '#f5c518' : 'rgba(255,255,255,.33)', display: 'flex', flex: '0 0 auto', fontSize: 9, fontWeight: 800, minHeight: 31, padding: '0 8px' }}>{badge.name}</div>)}</div>
-        </section>}
-        {(assessedStats.length > 0 || hasRanking) && <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}>
-          <h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, marginBottom: 14 }}>ATHLETE SNAPSHOT</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
-            {[
-              { icon: <CalendarDays size={17} />, label: 'อายุ', value: age !== null ? `${age} ปี` : 'ยังไม่ระบุ' },
-              { icon: <MapPin size={17} />, label: 'จังหวัด', value: province },
-              { icon: <Ruler size={17} />, label: 'ส่วนสูง', value: athleteProfile?.height_cm ? `${athleteProfile.height_cm} ซม.` : 'ยังไม่ระบุ' },
-              { icon: <Weight size={17} />, label: 'น้ำหนัก', value: athleteProfile?.weight_kg ? `${athleteProfile.weight_kg} กก.` : 'ยังไม่ระบุ' },
-            ].map(item => <div key={item.label} style={{ padding: 12, background: '#f7f7f5', borderRadius: 6, minWidth: 0 }}><span style={{ color: '#CC0001', display: 'flex', marginBottom: 7 }}>{item.icon}</span><span style={{ display: 'block', fontSize: 10, color: '#888' }}>{item.label}</span><b style={{ display: 'block', fontSize: 13, marginTop: 2, overflowWrap: 'anywhere' }}>{item.value}</b></div>)}
-          </div>
-          {athleteProfile?.bio && <p style={{ marginTop: 14, fontSize: 13, lineHeight: 1.7, color: '#444' }}>{athleteProfile.bio}</p>}
         </section>}
 
-        <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 14 }}><h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16 }}>{assessedStats.length ? 'ASSESSED SKILLS' : 'PLAYER CARD STATS'}</h2><span style={{ fontSize: 10, fontWeight: 800, color: isVerified ? '#15803d' : '#888' }}>{skillAssessment ? verificationLabels[skillAssessment.source_level as keyof typeof verificationLabels] : 'ข้อมูลการ์ดปัจจุบัน'}</span></div>
-          <div style={{ display: 'grid', gap: 11 }}>
-            {(assessedStats.length ? assessedStats : cardStats.map(item => ({ label: item.label, value: item.val }))).map(stat => <div key={stat.label}><div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, marginBottom: 5 }}><span>{stat.label}</span><span>{skillText(stat.value)}</span></div><div style={{ height: 6, background: '#eee', overflow: 'hidden', borderRadius: 3 }}><div style={{ height: '100%', width: `${stat.value ?? 0}%`, background: '#CC0001' }} /></div></div>)}
+        {athleteProfile && <section className="pp-section">
+          <div className="pp-section-head"><h2>{t('about')}</h2></div>
+          <div className="ui-card pp-about">
+            <dl className="pp-facts">{facts.map(item => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl>
+            {athleteProfile.bio && <p className="pp-bio">{athleteProfile.bio}</p>}
           </div>
+        </section>}
+
+        {(uploadedHighlights.length > 0 || videos.length > 0) && <section className="pp-section">
+          <div className="pp-section-head"><h2>{t('highlights')}</h2></div>
+          <div className="pp-highlights">
+            {uploadedHighlights.map(item => <div className="pp-hl" key={`upload-${item.id}`}>
+              <a href={`/api/highlights/${item.id}/media`} rel="noreferrer" target="_blank">
+                <span className="pp-hl-icon">{item.media_type === 'video' ? <PlayCircle size={26} aria-hidden="true" /> : <ImageIcon size={24} aria-hidden="true" />}</span>
+                <b>{item.title}</b><small>{item.media_type === 'video' ? t('uploadedVideo') : t('uploadedImage')}</small>
+              </a>
+              <span className="pp-hl-report"><ReportHighlightButton highlightId={item.id} /></span>
+            </div>)}
+            {videos.map(video => <div className="pp-hl" key={`link-${video.id}`}>
+              <a href={video.video_url} rel="noreferrer" target="_blank">
+                <span className="pp-hl-icon"><PlayCircle size={26} aria-hidden="true" /></span>
+                <b>{video.title}</b><small>{t('externalVideo')} <ExternalLink size={11} aria-hidden="true" /></small>
+              </a>
+            </div>)}
+          </div>
+        </section>}
+
+        {achievements.length > 0 && <section className="pp-section">
+          <div className="pp-section-head"><h2>{t('achievements')}</h2></div>
+          <ul className="ui-card pp-achievements">
+            {achievements.map(item => <li key={item.id}>
+              <Award size={19} aria-hidden="true" className={item.verification_status === 'verified' ? 'is-verified' : ''} />
+              <div><b>{item.title}</b>{(item.event_name || item.achievement_year) && <small>{[item.event_name, item.achievement_year].filter(Boolean).join(' · ')}</small>}</div>
+              {item.verification_status === 'verified' && <span className="ui-chip is-performance">{t('verifiedAchievement')}</span>}
+            </li>)}
+          </ul>
+        </section>}
+
+        <section className="pp-section">
+          <details className="ui-card pp-trust">
+            <summary><ShieldCheck size={20} aria-hidden="true" /><span><b>{t('trustTitle')}</b><small>{hasRanking ? t(`trust.${evidence}`) : t('trust.starter')}</small></span><ChevronRight size={18} aria-hidden="true" className="pp-trust-chevron" /></summary>
+            <ul>
+              <li>{hasRanking ? t(`trust.${evidence}`) : t('trust.starter')}</li>
+              {hasRanking && <li>{anyCardSkill || assessed.length ? t('trustSkills.assessed') : t('trustSkills.notAssessed')}</li>}
+              <li>{t('trustNote')}</li>
+            </ul>
+            {athleteId && <DisputeDataButton subjectType={hasRanking ? 'player_rank' : 'athlete_profile'} subjectId={hasRanking ? rank!.id : athleteId} />}
+          </details>
         </section>
-
-        {(videos.length > 0 || uploadedHighlights.length > 0) && <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}><h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, marginBottom: 12 }}>HIGHLIGHT MOMENTS</h2><div style={{ display: 'grid', gap: 7 }}>{uploadedHighlights.map(item => <div key={`upload-${item.id}`} style={{ display: 'flex', alignItems: 'center', gap: 4, minHeight: 46, padding: '0 6px 0 0', border: '1px solid #e5e5e5', borderRadius: 6 }}><a href={`/api/highlights/${item.id}/media`} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, padding: '9px 11px', color: '#111', textDecoration: 'none' }}><PlayCircle size={19} color="#CC0001" /><span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{item.title}<small style={{ display: 'block', color: '#888', marginTop: 2 }}>{item.media_type === 'video' ? 'วิดีโอที่อัปโหลด' : 'รูปที่อัปโหลด'}</small></span><ExternalLink size={14} color="#999" /></a><ReportHighlightButton highlightId={item.id} /></div>)}{videos.map(video => <a key={`link-${video.id}`} href={video.video_url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 46, padding: '9px 11px', border: '1px solid #e5e5e5', borderRadius: 6, color: '#111', textDecoration: 'none' }}><PlayCircle size={19} color="#CC0001" /><span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{video.title}</span><ExternalLink size={14} color="#999" /></a>)}</div></section>}
-
-        {achievements.length > 0 && <section style={{ background: 'white', border: '1px solid #e2e2df', borderRadius: 8, padding: 18, marginBottom: 12 }}><h2 style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, marginBottom: 12 }}>ACHIEVEMENTS</h2><div>{achievements.map(item => <div key={item.id} style={{ display: 'flex', gap: 11, padding: '10px 0', borderBottom: '1px solid #eee' }}><Award size={19} color={item.verification_status === 'verified' ? '#15803d' : '#CC0001'} /><div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 800 }}>{item.title}</div><div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{[item.event_name, item.achievement_year].filter(Boolean).join(' · ') || 'BallDoenSai.com Athlete'}</div></div>{item.verification_status === 'verified' && <CheckCircle2 size={16} color="#15803d" />}</div>)}</div></section>}
       </div>
-
     </main>
   )
 }

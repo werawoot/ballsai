@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { RANKING_PAGE_SIZE, fetchMyRankingPosition, fetchRankingPage } from '@/lib/public-ranking-page'
+import { RANKING_PAGE_SIZE, fetchMyRankingPosition, fetchRankPosition, fetchRankingPage } from '@/lib/public-ranking-page'
 
 // T46: /ranking showed the top 50 and nothing else, so an athlete ranked 51st or lower
 // could never find themselves. It now pages through every ranked athlete, 50 at a time,
@@ -96,5 +96,13 @@ describe('my position', () => {
   it('is empty for someone with no rank row this season', async () => {
     const { client } = fakeClient(athletes)
     expect(await fetchMyRankingPosition(client, { ...base, userId: 'nobody' })).toBeNull()
+  })
+})
+
+describe('the position of any rank row (a public profile)', () => {
+  it('is the same number the table and "my position" give', async () => {
+    const { client } = fakeClient(athletes)
+    expect(await fetchRankPosition(client, { ...base, id: 'r087', pts: 2000 - 43 * 5 })).toEqual({ rankId: 'r087', position: 88, page: 2 })
+    expect((await fetchRankPosition(client, { ...base, id: 'r000', pts: 2000 }))?.position).toBe(1)
   })
 })
