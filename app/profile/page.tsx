@@ -10,6 +10,7 @@ import {
 import PublicProfileShare from './PublicProfileShare'
 import DeleteMyDataSection from './DeleteMyDataSection'
 import GuardianInviteButton from './GuardianInviteButton'
+import TrainingCard from './TrainingCard'
 import PageHeader from '@/components/PageHeader'
 import { calculateLevel, identityTierKey, levelProgress } from '@/lib/digital-identity'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
@@ -17,6 +18,7 @@ import { PROFILE_MENU } from '@/lib/site-nav'
 import { PUBLIC_PROFILE_COLUMNS, fetchMyAthletePrivate, thaiDate } from '@/lib/athlete-private'
 import { profileReadiness, type ReadinessItem } from '@/lib/profile-readiness'
 import { signAvatarUrls } from '@/lib/athlete-avatar'
+import { fetchMyTraining } from '@/lib/training/data'
 import type messagesTh from '@/messages/th.json'
 import './profile.css'
 
@@ -89,13 +91,15 @@ export default async function ProfilePage() {
   const rank = rankRow as PlayerRank | null
   const memberships = (membershipRows ?? []) as unknown as Membership[]
   // The birth date and consent time come only through my_athlete_private (sql/58).
-  const [athletePrivate, avatarUrls] = await Promise.all([
+  const [athletePrivate, avatarUrls, training] = await Promise.all([
     athlete ? fetchMyAthletePrivate(supabase, user.id).catch(error => {
       console.error(JSON.stringify({ level: 'error', event: 'athlete_private_read_failed', code: error?.code ?? null }))
       return { birth_date: null, guardian_consent_at: null }
     }) : null,
     // The photo is a private object (T51); the owner may always sign their own.
     signAvatarUrls(supabase, [athlete?.profile_image_url]),
+    // Training (sql/63) is the athlete's own; nothing to show without an athlete profile.
+    athlete ? fetchMyTraining(supabase, user.id) : null,
   ])
   const avatarUrl = athlete?.profile_image_url ? avatarUrls.get(athlete.profile_image_url) ?? null : null
 
@@ -215,6 +219,8 @@ export default async function ProfilePage() {
             <div className="pf-card-head"><h2 id="pf-readiness" className="pf-card-title">{t('readiness.titleDone')}</h2></div>
             <p className="pf-ready"><BadgeCheck size={20} aria-hidden="true" />{t('readiness.doneNote')}</p>
           </section>)}
+
+          {training && <TrainingCard training={training} today={thaiDate(new Date())} />}
 
           {athlete?.is_public && <PublicProfileShare profilePath={publicPath} isPublic />}
 

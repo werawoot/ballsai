@@ -15,7 +15,7 @@ describe('rollback files', () => {
     expect(files.sort()).toEqual([
       '57-public-fixtures-down.sql', '58-athlete-private-columns-down.sql',
       '59-ranking-provinces-view-down.sql', '60-match-result-request-id-down.sql',
-      '61-first-match-rank-down.sql', '62-private-athlete-avatars-down.sql',
+      '61-first-match-rank-down.sql', '62-private-athlete-avatars-down.sql', '63-training-down.sql',
     ])
     const plan = readFileSync(new URL('../docs/rollback-plan.md', import.meta.url), 'utf8')
     for (const name of files) expect(plan).toContain(`sql/rollback/${name}`)
@@ -34,7 +34,7 @@ describe('rollback files', () => {
 
   it('drops only what its migration created, and says what is lost', () => {
     const tables = files.flatMap(name => [...code(name).matchAll(/drop table (\S+)/g)].map(match => `${name}: ${match[1]}`))
-    expect(tables).toEqual(['60-match-result-request-id-down.sql: public.match_result_submissions;'])
+    expect(tables).toEqual(['60-match-result-request-id-down.sql: public.match_result_submissions;', '63-training-down.sql: public.training_checkins;', '63-training-down.sql: public.training_enrollments;'])
     expect(files.some(name => /\b(delete from|truncate)\b/i.test(code(name)))).toBe(false)
     expect(raw('57-public-fixtures-down.sql')).toMatch(/LOSES which tournaments were published/)
     expect(raw('58-athlete-private-columns-down.sql')).toMatch(/puts back the leak/)
