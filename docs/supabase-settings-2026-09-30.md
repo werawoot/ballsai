@@ -69,5 +69,20 @@ Staging `vorpnkedpscsqhnrssrl` และ Production `hivedzrwrrcnjrlirhtv` (ส�
 - ผล: เว็บบนเครื่อง (`localhost`) และ Vercel Preview ล็อกอินเข้า Production ไม่ได้แล้ว — ตั้งใจ; งานพัฒนาใช้ Staging `vorpnkedpscsqhnrssrl`
 - 👤 ยังต้องยืนยัน: ล็อกอินที่ `https://ballsai-teal.vercel.app/login` ด้วย Google และ OTP อย่างละครั้ง (ถ้า OTP ไม่มา ดู T17 ก่อน — เพดาน 2 ฉบับ/ชม.)
 
+### Vercel Preview ใช้ฐาน Staging (แก้แล้ว 3 ต.ค.)
+
+เดิม `NEXT_PUBLIC_SUPABASE_URL` และ `NEXT_PUBLIC_SUPABASE_ANON_KEY` ตั้งเป็น All Environments จึงทำให้ Preview ทุก branch
+คุยกับ Production `hivedzrwrrcnjrlirhtv` (ยกเว้น 2 branch ของ codex ที่มี override) ทดสอบฟีเจอร์ที่ SQL ยังอยู่แค่ Staging ไม่ได้
+
+| ตัวแปร | Production, Development | Preview (ทุก branch) | Preview override (`codex/sql46-staging-privilege-fix`, `codex/player-card-beta`) |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | `hivedzrwrrcnjrlirhtv` (ค่าเดิม) | `vorpnkedpscsqhnrssrl` | `vorpnkedpscsqhnrssrl` (ไม่แตะ) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ค่าเดิม | anon public ของ Staging | ไม่แตะ |
+
+- ยืนยันแล้ว: Redeploy Preview ของ `claude/beautiful-rubin-xyygat` (ไม่ใช้ build cache) แล้วค้น `supabase.co` ในไฟล์ JavaScript ที่โหลด
+  เจอเฉพาะ `vorpnkedpscsqhnrssrl`; CAPTCHA ของ Staging ปิด (`NEXT_PUBLIC_TURNSTILE_SITE_KEY` ไม่มีใน Vercel)
+- Preview ที่ build ก่อน 3 ต.ค. ยังฝังค่าเดิม (Production) จนกว่าจะ Redeploy
+- ตรวจว่า deployment ไหนคุยกับฐานไหน: ค้น `supabase.co` ในไฟล์ที่โหลด (DevTools → Ctrl+Shift+F) ก่อนล็อกอิน หน้าเว็บไม่เรียก Supabase จากเบราว์เซอร์ แท็บ Network จึงไม่ช่วย
+
 **เมื่อย้ายไปโดเมนจริง** (เช่น `www.balldoensai.com`): เพิ่ม `https://<โดเมน>/auth/callback` ใน Redirect URLs **ก่อน** ย้าย แล้วเปลี่ยน Site URL เป็นโดเมนใหม่ในรอบเดียวกับที่ Vercel ชี้โดเมน; เก็บ callback ของ `ballsai-teal.vercel.app` ไว้จนกว่าจะไม่มีใครใช้ แล้วค่อยลบ ถ้าลืมเพิ่มก่อน ทุกคนจะล็อกอินไม่ได้
 ถ้าวันหนึ่งมีแอปมือถือ ใช้ Android App Links / iOS Universal Links บนโดเมนที่ยืนยันแล้ว แทน custom scheme
