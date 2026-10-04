@@ -182,7 +182,7 @@ create index venue_coordination_booking_idx on public.venue_booking_coordination
 create unique index venue_coordination_pending_idx on public.venue_booking_coordination(booking_id)
   where kind<>'message' and status='pending';
 alter table public.venue_booking_coordination enable row level security;
-revoke all on public.venue_booking_coordination from anon,authenticated;
+revoke all on public.venue_booking_coordination from anon,authenticated,service_role;
 grant select on public.venue_booking_coordination to authenticated;
 create policy venue_coordination_participants on public.venue_booking_coordination for select to authenticated
 using(public.venue_booking_participant_beta(booking_id));
