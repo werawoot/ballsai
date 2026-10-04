@@ -3,8 +3,15 @@
 Use this checklist before inviting real organizers and athletes. Closed beta runs on
 real database data only — never on the demo fallback.
 
-Document status: updated **17 August 2026**, verified against the SQL files and
+Document status: updated **24 September 2026**, verified against the SQL files and
 route handlers in this repository.
+
+### Staging verification checkpoint — 24 September 2026
+
+The dedicated Staging project ref `vorpnkedpscsqhnrssrl` has passed SQL46 and SQL47
+apply plus postcheck. SQL46 requires the `btree_gist` extension in schema
+`extensions`. Production ref `hivedzrwrrcnjrlirhtv` was not changed; do not apply
+SQL46 or SQL47 there without separate explicit production approval.
 
 Reading order: `README.md` first (vision, status, routes), then this runbook
 (operations). Section 6 is the W1 pilot script and is written in Thai because the
@@ -448,6 +455,57 @@ LINE group + Google Form 5 ช่อง: บทบาท / หน้าจอท
 ## 7. End-To-End Smoke Tests By Role
 
 Run these once per environment, in addition to the W1 pilot.
+
+### Closed Beta acceptance for organizer, coach, and venue owner
+
+Run this acceptance pass on Staging with approved disposable accounts and data before
+inviting these roles to a real pilot. Do not use production data for mutation tests.
+Capture the account role, record IDs, expected result, actual result, and a screenshot
+or request ID for each case. Stop the pass and report a blocker if an unauthorized
+operation succeeds, a required operation fails, or one user's private data is exposed.
+
+#### Organizer
+
+- Sign in as the tournament owner and confirm the owner can edit/manage that tournament.
+- Sign in as a different organizer and confirm they cannot edit or manage the first
+  organizer's tournament.
+- Confirm a coach-only account and an unrelated account cannot use organizer actions.
+- For an authorized organizer, complete the existing W1 tournament flow with disposable
+  team/payment data: review a payment, confirm a team, preview a result, then record the
+  disposable match. Verify the expected tournament/team/match records and rating events.
+
+#### Coach
+
+- As a coach who created a team, remove one disposable member and confirm a coach who
+  did not create that team cannot remove its members solely by having a coach profile.
+- Submit one allowed playing-position attestation (`GK`, `DF`, `MF`, or `FW`) for a
+  disposable athlete. Confirm the athlete's existing value does not change until that
+  athlete explicitly accepts the proposed value.
+- Confirm acceptance changes only the playing-position field and records its provenance;
+  unrelated athlete profile fields remain unchanged.
+- Confirm invalid position values and an unrelated user's attestation attempt are
+  rejected.
+
+#### Venue owner
+
+- Create weekly availability for a disposable venue for a supported 1–12 week period
+  using Thailand local time; confirm the displayed slots match the submitted schedule.
+- Attempt overlapping availability/bookings and confirm the database rejects the
+  overlap. Then update a future court or slot and confirm past bookings/slots remain
+  unchanged.
+- Create a disposable confirmed booking and request a move or cancellation. Confirm
+  the change is not finalized until the other party responds.
+- Send coordination text containing a phone number, email address, or private note and
+  confirm those details are not exposed to the other party.
+- Confirm a venue owner cannot manage a venue they do not own.
+
+#### Evidence and completion
+
+For every role, run both the authorized success case and the relevant unauthorized
+case. Record the result in the disposable-fixture authorization matrix, including any
+SQL/RPC/API error code. A pass requires all expected denials, all required success
+paths, no cross-account data exposure, and no unresolved blocker. This acceptance pass
+does not authorize applying SQL46/47 to Production or deploying the application.
 
 ### Player
 
