@@ -133,3 +133,27 @@ body:has(.bds-nav) .tn-dock { bottom: calc(70px + env(safe-area-inset-bottom)); 
 .tn-done .ui-btn { margin-top: 10px; max-width: 320px; }
 
 @media (prefers-reduced-motion: reduce) { .tn-card { transition: none; } }
+
+/* /tournaments/[id]/fixtures: Stadium heading with progress, Paper board (components/FixtureBoard) */
+.fxp-page { background: var(--ui-paper); min-height: 100vh; }
+.fxp-hero { background: radial-gradient(420px 220px at 10% 0%, rgba(204,0,1,.38), transparent 70%), var(--ui-ink); color: #fff; padding: 14px 16px 20px; }
+.fxp-hero > * { margin-left: auto; margin-right: auto; max-width: 1120px; }
+.fxp-eyebrow { color: var(--ui-gold); font-size: 13.5px; font-weight: 700; margin-bottom: 4px; margin-top: 0; }
+.fxp-hero h1 { font: 800 clamp(24px, 6.8vw, 36px)/1.3 var(--font-sarabun), sans-serif; margin-bottom: 0; margin-top: 0; overflow-wrap: anywhere; }
+.fxp-progress { margin-top: 16px; }
+.fxp-progress p { color: rgba(255,255,255,.78); font-size: 13.5px; margin: 0 auto 7px; }
+.fxp-progress b { color: #fff; }
+.fxp-track { background: rgba(255,255,255,.14); border-radius: 9px; height: 6px; overflow: hidden; }
+.fxp-track i { background: linear-gradient(90deg, var(--ui-red-hot), var(--ui-gold)); border-radius: 9px; display: block; height: 100%; }
+.fxp-body { margin: 0 auto; max-width: 1120px; padding: 0 16px 32px; }
+.fxp-empty { background: #fff; border: 1px solid var(--ui-line); border-radius: 18px; margin-top: 18px; padding: 26px 20px; text-align: center; }
+.fxp-empty-icon { align-items: center; background: var(--ui-red-soft); border-radius: 18px; color: var(--ui-red); display: inline-flex; height: 60px; justify-content: center; margin-bottom: 12px; width: 60px; }
+.fxp-empty h2 { font: 800 18px/1.4 var(--font-sarabun), sans-serif; margin: 0 0 6px; }
+.fxp-empty p { color: var(--ui-mute); font-size: 14.5px; line-height: 1.6; margin: 0; }
+.fxp-empty-back { align-items: center; border: 1.5px solid var(--ui-line); border-radius: 12px; color: var(--ui-text); display: inline-flex; font-weight: 700; gap: 6px; margin-top: 16px; min-height: 46px; padding: 0 18px; text-decoration: none; }
+@media (min-width: 960px) {
+  .fxp-hero { padding: 22px 40px 26px; }
+  .fxp-progress { max-width: 1120px; }
+  .fxp-progress p, .fxp-track { max-width: 520px; margin-left: 0; }
+  .fxp-body { padding: 18px 40px 40px; }
+}

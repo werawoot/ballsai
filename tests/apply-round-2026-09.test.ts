@@ -31,8 +31,9 @@ describe('the September apply round', () => {
     // on purpose too. SQL61 revokes anon from its own function, so either side is safe;
     // it is listed after SQL50 because Staging had already applied SQL50. SQL62 creates no
     // function at all (bucket and storage policies only), so it sits at the end too, and
-    // SQL63's functions are not security definer and revoke public themselves.
-    const afterRevoke = ['57-public-fixtures', '58-athlete-private', '61-first-match-rank', '62-private-athlete-avatars', '63-training']
+    // SQL63's functions are not security definer and revoke public themselves; SQL64 also
+    // revokes anon, which Supabase grants directly until SQL50 changes the defaults.
+    const afterRevoke = ['57-public-fixtures', '58-athlete-private', '61-first-match-rank', '62-private-athlete-avatars', '63-training', '64-training-anon']
     expect(stepOf('50-anon-definer')).toBe(Math.max(...steps.filter(match => !afterRevoke.some(name => match[2].includes(name))).map(match => Number(match[1]))))
     for (const name of afterRevoke) expect(stepOf(name)).toBeGreaterThan(stepOf('50-anon-definer'))
     // SQL58 recreates SQL52's view and relies on SQL53's directory index.
@@ -40,6 +41,8 @@ describe('the September apply round', () => {
     expect(stepOf('58-athlete-private')).toBeGreaterThan(stepOf('53-athletes-directory'))
     // SQL61 records through SQL60's record_match_result_once.
     expect(stepOf('61-first-match-rank')).toBeGreaterThan(stepOf('60-match-result-request-id'))
+    // SQL64 fixes the execute rights of SQL63's functions.
+    expect(stepOf('64-training-anon')).toBeGreaterThan(stepOf('63-training'))
   })
 
   it('never lists a file that must not be applied', () => {
@@ -49,6 +52,6 @@ describe('the September apply round', () => {
   it('checks status without writing anything', () => {
     expect(status).toMatch(/\bselect\b/i)
     expect(status).not.toMatch(/\b(insert|update|delete|alter|drop|create|grant|revoke|truncate)\b/i)
-    expect(status.match(/^\s*\((\d+),/gm)).toHaveLength(22)
+    expect(status.match(/^\s*\((\d+),/gm)).toHaveLength(23)
   })
 })

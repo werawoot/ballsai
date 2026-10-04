@@ -90,6 +90,11 @@ select step, migration, present, marker from (values
   (22, '63 training',
        to_regclass('public.training_checkins') is not null
          and to_regprocedure('public.training_self_start_programs()') is not null,
-       'tables training_enrollments + training_checkins')
+       'tables training_enrollments + training_checkins'),
+  (23, '64 training functions closed to anon (after 63)',
+       to_regprocedure('public.training_today()') is not null
+         and not has_function_privilege('anon', 'public.training_today()', 'EXECUTE')
+         and not has_function_privilege('anon', 'public.training_self_start_programs()', 'EXECUTE'),
+       'anon cannot execute training functions')
 ) as status(step, migration, present, marker)
 order by step;
