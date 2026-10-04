@@ -71,9 +71,11 @@ describe('/dashboard/tournaments/[id]/fixtures', () => {
     const html = await render()
     expect(html).toContain('2 confirmed teams')
     expect(html).toContain('Redraw (replaces the current one)')
-    expect(html).toContain('Knockout · Round 1')
-    expect(html).toMatch(/Lions<\/span>.*vs.*Tigers/)
-    expect(html).toContain('Winner of round 1 match 1')
+    // Two knockout rounds read as the semi-finals and the final, not "round 1" and "round 2".
+    expect(html).toContain('Semi-finals')
+    expect(html).toContain('Final')
+    expect(html).toMatch(/Lions<\/span><\/span><span class="fx-vs">Not played<\/span>.*Tigers/)
+    expect(html).toContain('Winner of Semi-finals, match 1')
     expect(html).toContain('Group A #2')
     // A draw exists: the organizer may publish it, and nothing is public until they do.
     expect(html).toContain('Publish fixtures')
@@ -108,9 +110,9 @@ describe('/dashboard/tournaments/[id]/fixtures', () => {
       ],
     }
     const html = await render()
-    expect(html).toMatch(/Lions<\/span><span[^>]*>1 – 3<\/span><span[^>]*>Tigers/)
+    expect(html).toMatch(/Lions<\/span><\/span><span class="fx-score is-lose">1<\/span>.*?Tigers<\/span><\/span><span class="fx-score">3<\/span>/)
     expect(html).toContain('Group A table')
-    expect(html).toMatch(/1\. Tigers<\/th>(<td[^>]*>[^<]*<\/td>){5}<td[^>]*>3<\/td>/)
+    expect(html).toMatch(/<span class="fx-pos">1<\/span>Tigers<\/th>(<td[^>]*>[^<]*<\/td>){5}<td[^>]*>3<\/td>/)
     expect(html).toContain('Drawn — choose who won on penalties')
     expect(html).toContain('Lions won')
   })
@@ -122,7 +124,7 @@ describe('/dashboard/tournaments/[id]/fixtures', () => {
       match_results: [{ id: 'r2', team_a_id: 'a', team_b_id: 'b', team_a_score: 1, team_b_score: 1, status: 'confirmed' }],
     }
     const html = await render()
-    expect(html).toContain('Tigers (won on penalties)')
+    expect(html).toContain('Tigers won on penalties')
     expect(html).not.toContain('choose who won on penalties')
   })
 

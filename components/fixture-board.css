@@ -1,0 +1,78 @@
+/* FixtureBoard: Paper cards on the design-system tokens (app/ui.css). Team names may wrap;
+   numbers never do and line up (tabular figures). */
+
+.fx-board { display: grid; gap: 14px; }
+
+.fx-tabs { background: #fff; border-bottom: 1px solid var(--ui-line); display: flex; gap: 4px; margin: 0 -16px; overflow-x: auto; padding: 4px 12px 0; position: sticky; top: 0; z-index: 2; }
+.fx-tab { border-bottom: 3px solid transparent; color: var(--ui-mute); flex: 1 0 auto; font-size: 15px; font-weight: 700; min-height: 48px; padding: 12px 10px; text-align: center; text-decoration: none; white-space: nowrap; }
+.fx-tab.is-on { border-color: var(--ui-red); color: var(--ui-text); }
+
+.fx-filters { display: flex; gap: 8px; margin: 0 -16px; overflow-x: auto; padding: 2px 16px 4px; }
+.fx-filter { align-items: center; background: #fff; border: 1.5px solid var(--ui-line); border-radius: 99px; color: var(--ui-text); display: inline-flex; flex: none; font-size: 14px; font-weight: 700; min-height: 40px; padding: 0 16px; text-decoration: none; }
+.fx-filter.is-on { background: var(--ui-text); border-color: var(--ui-text); color: #fff; }
+
+.fx-provenance { align-items: center; color: var(--ui-mute); display: flex; flex-wrap: wrap; font-size: 13px; gap: 8px; margin: 0; }
+
+.fx-split, .fx-main { display: grid; gap: 14px; }
+.fx-aside { display: none; }
+.fx-section { display: grid; gap: 10px; }
+.fx-section-title { align-items: baseline; display: flex; justify-content: space-between; margin: 6px 2px 0; }
+.fx-section-title b { font: 800 17px/1.4 var(--font-sarabun), sans-serif; }
+.fx-section-title small { color: var(--ui-mute); font-size: 13px; font-weight: 600; }
+.fx-matches { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
+
+.fx-match { align-items: center; background: #fff; border: 1px solid var(--ui-line); border-radius: 16px; box-shadow: 0 1px 2px rgba(17,24,39,.04); display: grid; gap: 8px 12px; grid-template-columns: minmax(0, 1fr) auto; padding: 12px 14px; }
+.fx-team { align-items: center; display: flex; font-size: 15.5px; font-weight: 600; gap: 10px; line-height: 1.4; min-width: 0; }
+.fx-team.is-win { font-weight: 800; }
+.fx-team.is-lose { color: var(--ui-mute); }
+.fx-team.is-source { color: var(--ui-mute); font-size: 14.5px; font-style: italic; font-weight: 500; }
+.fx-name { overflow-wrap: anywhere; }
+.fx-badge { align-items: center; border-radius: 8px; color: #fff; display: flex; flex: none; font: 700 12px/1 var(--font-sarabun), sans-serif; height: 28px; justify-content: center; width: 28px; }
+.fx-score { font: 700 21px/1 var(--font-oswald), sans-serif; font-variant-numeric: tabular-nums; min-width: 22px; text-align: right; }
+.fx-score.is-lose { color: #9aa1ab; }
+.fx-vs { color: #8b929c; font-size: 13px; font-weight: 600; grid-row: span 2; text-align: right; }
+.fx-foot { align-items: center; border-top: 1px dashed var(--ui-line); color: var(--ui-mute); display: flex; font-size: 12.5px; gap: 8px; grid-column: 1 / -1; justify-content: space-between; padding-top: 8px; }
+.fx-status { border-radius: 99px; font-size: 12px; font-weight: 800; padding: 3px 10px; text-align: right; }
+.fx-status.is-done { background: #e3f6ec; color: #0c7a45; }
+.fx-status.is-wait { background: #eeebe5; color: var(--ui-mute); }
+.fx-status.is-pen { background: #fff3db; color: #8a5a00; }
+.fx-match > :last-child:not(.fx-foot) { grid-column: 1 / -1; }
+
+.fx-table-card { background: #fff; border: 1px solid var(--ui-line); border-radius: 16px; padding: 12px 12px 8px; }
+.fx-table-title { align-items: baseline; display: flex; justify-content: space-between; margin: 2px 4px 6px; }
+.fx-table-title b { font: 800 17px/1.4 var(--font-sarabun), sans-serif; }
+.fx-table-title small { color: var(--ui-mute); font-size: 12.5px; font-weight: 600; }
+.fx-table-scroll { overflow-x: auto; }
+.fx-table { border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; width: 100%; }
+.fx-table th, .fx-table td { padding: 9px 5px; text-align: right; white-space: nowrap; }
+.fx-table thead th { color: var(--ui-mute); font-size: 12px; font-weight: 600; }
+.fx-table thead th:first-child { text-align: left; }
+.fx-table tbody th { font-weight: 700; min-width: 120px; overflow-wrap: anywhere; text-align: left; white-space: normal; }
+.fx-table tbody tr { border-top: 1px solid #f0ece6; }
+.fx-table tbody tr.is-through th { box-shadow: inset 3px 0 0 var(--ui-green); }
+.fx-pos { color: var(--ui-mute); display: inline-block; font-weight: 700; padding-left: 6px; width: 24px; }
+.fx-points { font-weight: 800; }
+.fx-legend { align-items: center; color: var(--ui-mute); display: flex; font-size: 12.5px; gap: 6px; margin: 6px 4px 4px; }
+.fx-legend i { background: var(--ui-green); border-radius: 3px; height: 10px; width: 10px; }
+
+.fx-bracket { display: flex; gap: 14px; overflow-x: auto; padding: 4px 0 12px; scroll-padding-left: 0; scroll-snap-type: x mandatory; }
+.fx-bracket-round { display: flex; flex: 0 0 min(78%, 300px); flex-direction: column; gap: 12px; justify-content: space-around; scroll-snap-align: start; }
+.fx-bracket-round h2 { color: var(--ui-mute); font: 800 14.5px/1.4 var(--font-sarabun), sans-serif; margin: 0; }
+.fx-bracket-match { background: #fff; border: 1px solid var(--ui-line); border-radius: 14px; overflow: hidden; }
+.fx-bracket-match small { background: #fff3db; color: #8a5a00; display: block; font-size: 12px; font-weight: 700; padding: 5px 12px; }
+.fx-slot { align-items: center; display: flex; line-height: 1.45; font-size: 14.5px; font-weight: 600; gap: 10px; justify-content: space-between; min-height: 42px; padding: 8px 12px; }
+.fx-slot + .fx-slot { border-top: 1px solid #f0ece6; }
+.fx-slot.is-win { background: #fbfaf7; font-weight: 800; }
+.fx-slot b { font-family: var(--font-oswald), sans-serif; font-variant-numeric: tabular-nums; }
+.fx-source { color: var(--ui-mute); font-size: 13.5px; font-style: italic; font-weight: 500; }
+.fx-champion { align-items: center; background: linear-gradient(160deg, #2b1d05, #e7b54a); border-radius: 14px; color: #fff; display: flex; font-size: 14.5px; font-weight: 800; gap: 8px; justify-content: center; margin: 0; padding: 14px; }
+
+@media (min-width: 960px) {
+  .fx-tabs { margin: 0; border-radius: 14px 14px 0 0; }
+  .fx-tab { flex: 0 0 auto; padding: 12px 18px; }
+  .fx-filters { margin: 0; padding: 2px 0 4px; }
+  .fx-split.has-aside { align-items: start; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 24px; }
+  .fx-aside { display: grid; gap: 14px; position: sticky; top: 64px; }
+  .fx-matches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fx-bracket-round { flex: 1 1 0; min-width: 240px; }
+}
