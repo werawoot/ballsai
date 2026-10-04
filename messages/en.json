@@ -546,58 +546,159 @@
   },
   "impact": {
     "back": "Home",
+    "directory": "Athletes",
+    "eyebrow": "Our story",
     "hero": {
-      "line1": "Big dreams",
-      "line2": "shouldn't wait",
-      "line3": "for a chance",
-      "body": "We want the results, effort and ability of young Thai athletes to be seen by the people who can help them go further."
+      "line1": "Kids with a dream",
+      "line2": "shouldn't have to ",
+      "line3": "wait for a chance",
+      "body": "BallDoenSai.com turns what young Thai footballers do on the pitch into a sports identity where every number says where it came from, built to be safe for children."
     },
-    "statement": {
-      "line1": "Not just a ranking,",
-      "before": "but a ",
-      "strong": "starting point",
-      "after": " for everyone",
-      "line3": "to see what young players can do"
+    "trust": {
+      "consent": "Parents consent before a profile goes public",
+      "source": "Every value shows its source",
+      "delete": "Delete your data yourself"
     },
-    "path": {
-      "title1": "From small pitches",
-      "title2": "to bigger chances",
-      "body": "One platform built so a young athlete's path can really keep going.",
-      "see": {
-        "title": "Get seen",
-        "copy": "Bring a young player's identity, position and results together in one profile you can share."
+    "heroTags": {
+      "verified": "Verified by real matches",
+      "rating": "Power Rating · Player Card"
+    },
+    "roles": {
+      "eyebrow": "Who it is for",
+      "title": "Everyone on a young player's path",
+      "body": "Pick your role and see where to start.",
+      "athlete": {
+        "title": "Athletes",
+        "a": "Your own Player Card",
+        "b": "Power Rating from verified matches",
+        "c": "Training programmes for your age",
+        "link": "Make a Player Card"
       },
-      "connect": {
-        "title": "Get a chance",
-        "copy": "Connect young players with tournaments, clubs, coaches and a football community looking for talent."
+      "guardian": {
+        "title": "Parents",
+        "a": "Consent before your child's profile goes public",
+        "b": "Link accounts to follow their progress",
+        "c": "Delete your child's data at any time",
+        "link": "Parent page"
       },
-      "grow": {
-        "title": "Grow",
-        "copy": "Turn real matches and results into a development path everyone can see."
+      "coach": {
+        "title": "Coaches",
+        "a": "Invite athletes to your team by email",
+        "b": "Send your team list to a tournament",
+        "c": "Plan before a match",
+        "link": "Manage your team"
+      },
+      "organizer": {
+        "title": "Organizers",
+        "a": "Open team registration and check payment slips",
+        "b": "Record results and preview the rating change first",
+        "c": "Confirmed results become each player's record",
+        "link": "Organizer dashboard"
       }
     },
-    "outcomes": {
-      "title1": "Chances",
-      "title2": "for every kid",
+    "steps": {
+      "eyebrow": "How it works",
+      "title1": "From a small pitch",
+      "title2": "to bigger chances",
       "profile": {
-        "line1": "A profile",
-        "line2": "that means something",
-        "body": "Not just a name, but a portfolio that keeps growing with the player."
+        "title": "Create a profile",
+        "copy": "Add position, team and birth date. Players under 20 need a parent's consent before anyone else can see the profile."
       },
-      "story": {
-        "line1": "Results",
-        "line2": "that tell a story",
-        "body": "Highlights and achievements show what numbers alone can't."
+      "play": {
+        "title": "Play and train",
+        "copy": "Enter tournaments here and train with a programme made for your age, logging every session."
       },
-      "community": {
-        "line1": "A community",
-        "line2": "that passes it on",
-        "body": "Parents, coaches, clubs and organizers all see the same path."
+      "grow": {
+        "title": "Real results become your identity",
+        "copy": "Results confirmed by the organizer build your Power Rating, XP, badges and your path to the Hall of Fame."
+      }
+    },
+    "safety": {
+      "eyebrow": "Safe for children",
+      "title": "Built for young athletes from day one",
+      "body": "Most of our users are young athletes, so these are rules of the system, not settings.",
+      "consent": {
+        "title": "Parents consent first",
+        "copy": "A profile of a player under 20 cannot be shown to the public until a parent consents."
+      },
+      "private": {
+        "title": "Photos and birth dates stay private",
+        "copy": "Athlete photos open through short-lived links after a permission check. Public profiles show age, never the birth date."
+      },
+      "health": {
+        "title": "No health data kept",
+        "copy": "Before a session we ask \"Does anything hurt right now?\" so a player stops if it does. The answer is never stored."
+      },
+      "delete": {
+        "title": "Delete it yourself",
+        "copy": "Delete all athlete data from the profile page, as Thailand's Personal Data Protection Act allows."
+      }
+    },
+    "levels": {
+      "title": "Every number shows its source",
+      "body": "Card data comes in three levels, so you can see at a glance how far to trust it. A value nobody has assessed shows as \"—\", never a guess.",
+      "self": {
+        "chip": "Self-reported",
+        "who": "Entered by the player or a parent,",
+        "copy": "such as position or height"
+      },
+      "coach": {
+        "chip": "Coach verified",
+        "who": "Confirmed by the team's coach,",
+        "copy": "with the player's consent"
+      },
+      "performance": {
+        "chip": "Match verified",
+        "who": "From results the organizer confirmed,",
+        "copy": "such as Power Rating"
+      }
+    },
+    "features": {
+      "eyebrow": "Ready today",
+      "title": "Start with what works right now",
+      "new": "New",
+      "card": {
+        "title": "Player Card",
+        "copy": "Your own athlete card, shareable, with a source for every value"
+      },
+      "training": {
+        "title": "Training for your age",
+        "copy": "Programmes drawn from research, with a picture for every drill"
+      },
+      "tournaments": {
+        "title": "Tournaments",
+        "copy": "Find a tournament, register your team and send the slip in one place"
+      },
+      "ranking": {
+        "title": "Ranking and Hall of Fame",
+        "copy": "Ranked by verified results, not by votes"
+      }
+    },
+    "faq": {
+      "eyebrow": "Questions from parents",
+      "title": "Common questions",
+      "who": {
+        "q": "Who can see my child's data?",
+        "a": "A profile stays private until you choose to open it. For players under 20, a parent must consent first. Once open, the public sees name, team, position, age and results, but not the birth date."
+      },
+      "rating": {
+        "q": "Where does Power Rating come from?",
+        "a": "Only from results confirmed by the tournament organizer. A player without results gets a STARTER card, which says plainly that nothing is verified yet."
+      },
+      "training": {
+        "q": "How reliable are the training programmes?",
+        "a": "They are drawn from research on injury prevention and skill development in youth football, with a source for every drill. They are still drafts awaiting review by a licensed coach."
+      },
+      "delete": {
+        "q": "How do I delete the data?",
+        "a": "Open the profile page with your child's account and choose to delete athlete data. Everything about the athlete is erased and a request to close the account goes to our team."
       }
     },
     "action": {
-      "title1": "Their story",
-      "title2": "should start today",
+      "eyebrow": "Start with one profile",
+      "title1": "Your child's story",
+      "title2": "deserves to start today",
+      "body": "A profile takes only a few minutes.",
       "create": "Create an athlete profile",
       "browse": "Browse athletes"
     }
