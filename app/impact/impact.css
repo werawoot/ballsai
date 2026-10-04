@@ -3,9 +3,9 @@
 
 .impact-page { background: var(--ui-paper); color: var(--ui-text); min-height: 100vh; }
 .impact-header { align-items: center; background: var(--ui-ink); color: #fff; display: flex; height: 64px; justify-content: space-between; padding: 0 clamp(16px, 5vw, 70px); }
-.impact-back, .impact-directory { align-items: center; color: rgba(255,255,255,.76); display: flex; font-size: 14px; font-weight: 700; gap: 6px; text-decoration: none; }
+.impact-back, .impact-directory { align-items: center; color: rgba(255,255,255,.76); display: flex; min-height: 44px; font-size: 14px; font-weight: 700; gap: 6px; text-decoration: none; }
 .impact-back:hover, .impact-directory:hover { color: #fff; }
-.impact-logo { align-items: center; color: #fff; display: flex; font: 700 20px/1 var(--font-oswald), sans-serif; gap: 9px; letter-spacing: 1.3px; text-decoration: none; }
+.impact-logo { align-items: center; color: #fff; display: flex; min-height: 44px; font: 700 20px/1 var(--font-oswald), sans-serif; gap: 9px; letter-spacing: 1.3px; text-decoration: none; }
 .impact-logo .bds-brand-mark { height: 24px; width: 26px; }
 
 .im-wrap { margin: 0 auto; max-width: 1120px; padding: 0 20px; }

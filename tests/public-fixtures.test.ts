@@ -93,6 +93,39 @@ describe('views of a group stage with a knockout', () => {
   })
 })
 
+describe('a big draw', () => {
+  // 10 teams, 9 matchdays, 45 matches + one more matchday's worth: over the 48 limit.
+  const league = () => {
+    const rows = []
+    for (let round = 1; round <= 10; round += 1) for (let match = 1; match <= 5; match += 1) {
+      const played = round <= 3
+      rows.push(row(`L-R${round}-M${match}`, [`h${round}${match}`, `Home ${round}.${match}`, match], [`a${round}${match}`, `Away ${round}.${match}`, 10 + match],
+        { stage: 'league', group_label: null, round, home_score: played ? 1 : null, away_score: played ? 0 : null }))
+    }
+    return rows
+  }
+
+  it('shows one round at a time, opening on the first round not finished, with plain links to the others', async () => {
+    rpc.answer = { error: null, data: league() }
+    const html = await render()
+    // The fixtures column only; the table beside it lists every team.
+    const main = html.slice(html.indexOf('class="fx-main"'), html.indexOf('class="fx-aside"'))
+    expect(main.split('class="fx-match"').length - 1).toBe(5)
+    expect(main).toContain('Home 4.1')
+    expect(main).not.toContain('Home 1.1')
+    expect(html).toContain('href="/tournaments/cup/fixtures?round=m3"')
+    expect(html).toContain('href="/tournaments/cup/fixtures?round=m5"')
+    // Full page loads: soft navigation dropped some taps on this page (QA, 4 Oct).
+    expect(html).not.toMatch(/<a[^>]+class="fx-(tab|filter)[^"]*"[^>]*data-/)
+  })
+
+  it('opens the round asked for, and ignores one that does not exist', async () => {
+    rpc.answer = { error: null, data: league() }
+    expect(await render({ round: 'm9' })).toContain('Home 9.1')
+    expect(await render({ round: 'm99' })).toContain('Home 4.1')
+  })
+})
+
 describe('publishing', () => {
   it.each([
     [null, { ok: true }],

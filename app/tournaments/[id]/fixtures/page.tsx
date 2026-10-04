@@ -12,7 +12,8 @@ import '../../tournaments.css'
 // A tournament's fixtures, results and tables for everyone, once its organizer has
 // published them (sql/57). Read with the anonymous key: what a signed-out visitor sees
 // is exactly what this page shows, whoever is looking. ?view= picks fixtures, tables or
-// the knockout bracket and ?filter= a group, so every view is a plain link.
+// the knockout bracket, ?filter= a group and ?round= one round of a big draw, so every
+// view is a plain link (a full page load: soft navigation dropped some taps, QA 4 Oct).
 export const revalidate = 60
 
 type Heading = { name: string; location: string | null; start_date: string; end_date: string | null }
@@ -26,8 +27,8 @@ async function fetchHeading(client: SupabaseClient, id: string): Promise<Heading
   }
 }
 
-export default async function PublicFixturesPage(props: { params: Promise<{ id: string }>; searchParams?: Promise<{ view?: string; filter?: string }> }) {
-  const [params, searchParams] = await Promise.all([props.params, props.searchParams ?? Promise.resolve({} as { view?: string; filter?: string })])
+export default async function PublicFixturesPage(props: { params: Promise<{ id: string }>; searchParams?: Promise<{ view?: string; filter?: string; round?: string }> }) {
+  const [params, searchParams] = await Promise.all([props.params, props.searchParams ?? Promise.resolve({} as { view?: string; filter?: string; round?: string })])
   const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     auth: { persistSession: false, autoRefreshToken: false },
   })
@@ -39,10 +40,11 @@ export default async function PublicFixturesPage(props: { params: Promise<{ id: 
     fetchHeading(client, params.id),
   ])
   const base = `/tournaments/${params.id}/fixtures`
-  const href = (view: BoardView, filter?: string) => {
+  const href = (view: BoardView, filter?: string, round?: string) => {
     const query = new URLSearchParams()
     if (view !== 'fixtures') query.set('view', view)
     if (filter && filter !== 'all') query.set('filter', filter)
+    if (round) query.set('round', round)
     return query.size ? `${base}?${query}` : base
   }
   const view = (['fixtures', 'tables', 'bracket'] as const).find(item => item === searchParams.view) ?? 'fixtures'
@@ -67,7 +69,7 @@ export default async function PublicFixturesPage(props: { params: Promise<{ id: 
       </div>
       <div className="fxp-body">
         {draw
-          ? <FixtureBoard draw={draw} nav={{ view, filter: searchParams.filter ?? 'all', href }} />
+          ? <FixtureBoard draw={draw} nav={{ view, filter: searchParams.filter ?? 'all', round: searchParams.round, href }} />
           : <div className="fxp-empty" role="status">
             <span className="fxp-empty-icon" aria-hidden="true"><CalendarClock size={28} /></span>
             <h2>{migrationMissing || failed ? t('publicUnavailable') : t('notPublished')}</h2>

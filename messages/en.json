@@ -809,7 +809,8 @@
     "progress": "{played} of {total} matches played",
     "progressLabel": "Tournament progress",
     "notPublishedHint": "Once the organizer makes the draw and publishes it, fixtures, results and tables appear here.",
-    "emptyBack": "Back to the tournament"
+    "emptyBack": "Back to the tournament",
+    "roundLabel": "Choose a round"
   },
   "profileHome": {
     "eyebrow": "My profile",
