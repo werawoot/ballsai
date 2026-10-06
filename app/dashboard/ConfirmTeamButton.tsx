@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 
 export default function ConfirmTeamButton({ teamId, action }: { teamId: string, action: 'confirmed' | 'rejected' }) {
+  const t = useTranslations('approval')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const router = useRouter()
@@ -21,7 +23,7 @@ export default function ConfirmTeamButton({ teamId, action }: { teamId: string, 
 
     if (!response.ok) {
       const data = (await response.json().catch(() => null)) as { error?: string } | null
-      setMessage(data?.error ?? 'อัปเดตสถานะทีมไม่สำเร็จ')
+      setMessage(data?.error ?? t('teamFailed'))
       setLoading(false)
       return
     }
@@ -36,7 +38,7 @@ export default function ConfirmTeamButton({ teamId, action }: { teamId: string, 
     <div>
       <button className={`ui-btn ${isConfirm ? 'ui-btn-primary' : 'ui-btn-ghost'}`} onClick={handleClick} disabled={loading} type="button">
         {isConfirm ? <CheckCircle size={18} aria-hidden="true" /> : <XCircle size={18} aria-hidden="true" />}
-        {loading ? '...' : isConfirm ? 'ยืนยัน' : 'ปฏิเสธ'}
+        {loading ? '...' : isConfirm ? t('confirm') : t('reject')}
       </button>
       {message ? (
         <p style={{ marginTop: 6, fontSize: 11, color: '#CC0001', textAlign: 'center' }}>{message}</p>

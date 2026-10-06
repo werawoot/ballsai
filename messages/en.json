@@ -730,6 +730,34 @@
     "meanwhile": "Meanwhile you can browse open tournaments and register a team as a coach.",
     "cta": "See open tournaments"
   },
+  "teamRoster": {
+    "title": "My teams",
+    "loadFailed": "Could not load your team. Please reload the page.",
+    "inviteFirst": "Invite your first athlete",
+    "invite": "Invite athletes",
+    "emailLabel": "The email the athlete signed up with",
+    "send": "Send invitation",
+    "sending": "Sending…",
+    "sent": "Invitation sent",
+    "sendFailed": "Could not send the invitation",
+    "hint": "Each player accepts in the app · you can submit once one player has accepted · no need to wait for the whole team",
+    "counts": "Accepted {accepted} · waiting {pending}",
+    "submit": "Submit the team → go to payment",
+    "submitting": "Sending…",
+    "submitFailed": "Could not submit the team",
+    "needAccepted": "You can submit once at least 1 athlete has accepted (now {count})",
+    "team": "Team"
+  },
+  "approval": {
+    "confirmTeamAndPayment": "Confirm team and payment",
+    "confirm": "Confirm",
+    "reject": "Reject",
+    "working": "Working...",
+    "confirmingTitle": "Confirming the payment",
+    "confirmingSub": "Please wait, it can take 2-3 seconds",
+    "paymentFailed": "Could not confirm the payment",
+    "teamFailed": "Could not update the team's status"
+  },
   "matchEntry": {
     "eyebrow": "This match",
     "teamsTitle": "Which two teams played?",

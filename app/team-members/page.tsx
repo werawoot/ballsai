@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import TeamMembersClient from './TeamMembersClient'
 import NoTeamYet from './NoTeamYet'
 import CoachTeamOverview from './CoachTeamOverview'
@@ -20,7 +21,8 @@ export default async function TeamMembersPage() {
   })
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/team-members')
-  const [{ data: teams }, { data: invites }] = await Promise.all([
+  const t = await getTranslations('teamRoster')
+  const [{ data: teams, error: teamsError }, { data: invites, error: invitesError }] = await Promise.all([
     supabase.from('teams').select('id, name, tournament_id, status, tournaments(name)').eq('created_by', user.id).order('created_at', { ascending: false }),
     supabase.from('team_members').select('id, team_id, athlete_id, status, invited_at, teams(name)').eq('athlete_id', user.id).order('created_at', { ascending: false }),
   ])
@@ -34,6 +36,13 @@ export default async function TeamMembersPage() {
       .in('team_id', teamIds)
       .order('invited_at', { ascending: true })
     : { data: [], error: null }
+  // How many have answered, per team: the submit button says why it waits.
+  const countsByTeam: Record<string, { accepted: number; pending: number }> = {}
+  for (const row of (roster ?? []) as unknown as { team_id: string; status: string }[]) {
+    const count = (countsByTeam[row.team_id] ??= { accepted: 0, pending: 0 })
+    if (row.status === 'accepted') count.accepted += 1
+    else if (row.status === 'pending') count.pending += 1
+  }
   const overview = coachTeamOverview(
     (teams ?? []) as unknown as CoachTeamRow[],
     (roster ?? []) as unknown as RosterRow[],
@@ -67,8 +76,12 @@ export default async function TeamMembersPage() {
       .order('created_at', { ascending: true })
     : { data: [], error: null }
   const attestationState = latestAttestations(coachAttestationRows as AttestationRow[] | null)
-  return <main style={{ minHeight: '100vh', background: '#f7f7f7' }}><PageHeader back={{ href: '/profile', label: 'โปรไฟล์' }} /><div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px 80px' }}><h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 32, marginBottom: 8 }}>TEAM ROSTER</h1><p style={{ color: '#777', marginBottom: 14 }}>เชื่อมสมาชิกทีมกับบัญชีจริง เพื่อให้ผลแข่งและเส้นทางนักกีฬาถูกต้อง</p>{teams?.length ? <Link href="/match-plan" style={{ marginBottom: 20, background: '#101827', color: 'white', borderRadius: 10, padding: '11px 13px', display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}><ClipboardPenLine size={16} color="#f5c518" /> วางแผนก่อนแข่ง</Link> : null}{attestationError
+  return <main style={{ minHeight: '100vh', background: '#f7f7f7' }}><PageHeader back={{ href: '/profile', label: 'โปรไฟล์' }} /><div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px 170px' }}><h1 className="ui-h1" style={{ marginBottom: 8 }}>{t('title')}</h1><p style={{ color: '#777', marginBottom: 14 }}>เชื่อมสมาชิกทีมกับบัญชีจริง เพื่อให้ผลแข่งและเส้นทางนักกีฬาถูกต้อง</p>{teams?.length ? <Link href="/match-plan" style={{ marginBottom: 20, background: '#101827', color: 'white', borderRadius: 10, padding: '11px 13px', display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}><ClipboardPenLine size={16} color="#f5c518" /> วางแผนก่อนแข่ง</Link> : null}{attestationError
       ? <p role="alert" style={{ margin: '0 0 16px', padding: '9px 11px', borderRadius: 9, background: '#fff1f1', color: '#b91c1c', fontSize: 12, fontWeight: 700 }}>โหลดคำรับรองจากโค้ชไม่สำเร็จ กรุณาโหลดหน้าใหม่</p>
       : <AthleteAttestationInbox attestations={attestations} />}
-    <CoachTeamOverview teams={overview} rosterError={Boolean(rosterError)} attestations={attestationState} attestationError={Boolean(coachAttestationError)} />{!teams?.length && !invites?.length ? <NoTeamYet /> : <TeamMembersClient teams={teams ?? []} invites={(invites ?? []) as never[]} />}</div></main>
+    {teamsError || invitesError ? <p role="alert" style={{ margin: '0 0 16px', padding: '9px 11px', borderRadius: 9, background: '#fff1f1', color: '#b91c1c', fontSize: 13, fontWeight: 700 }}>{t('loadFailed')}</p> : null}
+    {!teamsError && !invitesError && !teams?.length && !invites?.length ? <NoTeamYet /> : null}
+    {/* The invitation form comes first: it is the step the coach is on (UX mockup v3-A). */}
+    {teams?.length || invites?.length ? <TeamMembersClient teams={teams ?? []} invites={(invites ?? []) as never[]} counts={rosterError ? null : countsByTeam} /> : null}
+    <div style={{ marginTop: 16 }}><CoachTeamOverview teams={overview} rosterError={Boolean(rosterError)} attestations={attestationState} attestationError={Boolean(coachAttestationError)} /></div></div></main>
 }

@@ -58,8 +58,6 @@
   "app/athletes/page.tsx",
   "app/bds-wallet/page.tsx",
   "app/career/page.tsx",
-  "app/dashboard/ConfirmPaymentButton.tsx",
-  "app/dashboard/ConfirmTeamButton.tsx",
   "app/dashboard/ToggleTournamentStatusButton.tsx",
   "app/dashboard/create/page.tsx",
   "app/dashboard/page.tsx",

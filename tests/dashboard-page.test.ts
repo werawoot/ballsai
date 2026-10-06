@@ -88,31 +88,31 @@ describe('/dashboard approval cards: one button per pending team', () => {
   it('confirms the team and its payment with one button when a slip is waiting', async () => {
     db.tables = { ...base, teams: [team('a', 500)], payments: [paying('a')] }
     const html = await render({})
-    expect(html).toContain('ยืนยันทีมและการชำระ')
-    expect(html).not.toContain('>ยืนยัน<')
-    expect(html).toContain('ปฏิเสธ')
+    expect(html).toContain('Confirm team and payment')
+    expect(html).not.toContain('>Confirm<')
+    expect(html).toContain('Reject')
   })
 
   it('offers only the team confirmation where there is no fee and no payment', async () => {
     db.tables = { ...base, teams: [team('b', 0)], payments: [] }
     const html = await render({})
-    expect(html).toContain('>ยืนยัน<')
-    expect(html).not.toContain('ยืนยันทีมและการชำระ')
+    expect(html).toContain('>Confirm<')
+    expect(html).not.toContain('Confirm team and payment')
   })
 
   it('offers only the team confirmation once the payment is confirmed', async () => {
     db.tables = { ...base, teams: [team('c', 500)], payments: [paying('c', 'confirmed')] }
     const html = await render({})
-    expect(html).toContain('>ยืนยัน<')
-    expect(html).not.toContain('ยืนยันทีมและการชำระ')
+    expect(html).toContain('>Confirm<')
+    expect(html).not.toContain('Confirm team and payment')
   })
 
   it('waits for the slip of a paid tournament: no confirm button, a way to reject', async () => {
     db.tables = { ...base, teams: [team('d', 500)], payments: [] }
     const html = await render({})
-    expect(html).not.toContain('>ยืนยัน<')
-    expect(html).not.toContain('ยืนยันทีมและการชำระ')
-    expect(html).toContain('ปฏิเสธ')
+    expect(html).not.toContain('>Confirm<')
+    expect(html).not.toContain('Confirm team and payment')
+    expect(html).toContain('Reject')
   })
 })
 

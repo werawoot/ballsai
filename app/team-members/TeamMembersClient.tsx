@@ -5,18 +5,22 @@ import { useRouter } from 'next/navigation'
 import { MailPlus, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { RegisterSteps } from '@/app/tournaments/[id]/RegisterSteps'
+import '@/app/tournaments/tournaments.css'
 
 type TournamentRelation = { name: string | null } | { name: string | null }[] | null
 type Team = { id: string; name: string; tournament_id: string; status: string; tournaments?: TournamentRelation }
 type Member = { id: string; team_id: string; athlete_id: string; status: string; invited_at: string; teams?: { name: string | null } | null }
 
-export default function TeamMembersClient({ teams, invites }: { teams: Team[]; invites: Member[] }) {
+export default function TeamMembersClient({ teams, invites, counts }: { teams: Team[]; invites: Member[]; counts: Record<string, { accepted: number; pending: number }> | null }) {
   const tInvite = useTranslations('teamInvite')
+  const t = useTranslations('teamRoster')
   const [selectedTeam, setSelectedTeam] = useState(teams[0]?.id ?? '')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [inviteMessage, setInviteMessage] = useState('')
   const [busy, setBusy] = useState(false)
+  const [inviteOk, setInviteOk] = useState(false)
   const [inviteState, setInviteState] = useState(invites)
   const router = useRouter()
 
@@ -24,7 +28,9 @@ export default function TeamMembersClient({ teams, invites }: { teams: Team[]; i
     setBusy(true); setMessage('')
     const response = await fetch(`/api/teams/${selectedTeam}/members`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
     const result = await response.json().catch(() => null) as { error?: string } | null
-    setMessage(response.ok ? 'ส่งคำเชิญแล้ว' : (result?.error ?? 'ส่งคำเชิญไม่สำเร็จ'))
+    // The server's own wording for a refusal is shown as it is sent.
+    setInviteOk(response.ok)
+    setMessage(response.ok ? t('sent') : (result?.error ?? t('sendFailed')))
     if (response.ok) setEmail('')
     setBusy(false)
   }
@@ -48,7 +54,8 @@ export default function TeamMembersClient({ teams, invites }: { teams: Team[]; i
     const response = await fetch(`/api/teams/${team.id}/submit`, { method: 'POST' })
     const result = await response.json().catch(() => null) as { error?: string } | null
     if (!response.ok) {
-      setMessage(result?.error ?? 'ส่งสมัครทีมไม่สำเร็จ')
+      setInviteOk(false)
+      setMessage(result?.error ?? t('submitFailed'))
       setBusy(false)
       return
     }
@@ -62,18 +69,25 @@ export default function TeamMembersClient({ teams, invites }: { teams: Team[]; i
     : selectedTournament?.name
 
   return <div style={{ display: 'grid', gap: 16 }}>
-    {teams.length > 0 && <section style={{ background: 'white', borderRadius: 16, padding: 18, border: '1px solid #e5e7eb' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, marginBottom: 12 }}><MailPlus size={18} color="#CC0001" /> เชิญนักกีฬาเข้าทีม</div>
-      <select value={selectedTeam} onChange={e => setSelectedTeam(e.target.value)} style={{ width: '100%', padding: 11, borderRadius: 10, border: '1px solid #ddd', marginBottom: 10 }}>
+    {teams.length > 0 && <section aria-label={t('invite')} style={{ display: 'grid', gap: 12 }}>
+      {selected?.status === 'draft' && <RegisterSteps current={2} />}
+      <p className="ui-eyebrow" style={{ letterSpacing: 0, textTransform: 'none', fontSize: 13, margin: 0 }}>{selected?.name}{selectedTournamentName ? ` · ${selectedTournamentName}` : ''}</p>
+      <h2 className="ui-h1" style={{ margin: 0 }}>{(counts?.[selectedTeam]?.accepted ?? 0) + (counts?.[selectedTeam]?.pending ?? 0) === 0 ? t('inviteFirst') : t('invite')}</h2>
+      {teams.length > 1 && <select aria-label={t('team')} value={selectedTeam} onChange={e => setSelectedTeam(e.target.value)} style={{ width: '100%', padding: 11, borderRadius: 10, border: '1px solid #ddd' }}>
         {teams.map(team => <option key={team.id} value={team.id}>{team.name}</option>)}
-      </select>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="อีเมลบัญชีนักกีฬา" type="email" style={{ flex: 1, padding: 11, borderRadius: 10, border: '1px solid #ddd' }} />
-        <button onClick={invite} disabled={busy || !email || !selectedTeam} style={{ background: '#CC0001', color: 'white', border: 0, borderRadius: 10, padding: '0 16px', fontWeight: 800 }}>{busy ? 'กำลังส่ง' : 'เชิญ'}</button>
-      </div>
-      {message && <p style={{ margin: '10px 0 0', color: message === 'ส่งคำเชิญแล้ว' ? '#15803d' : '#b91c1c', fontSize: 13 }}>{message}</p>}
-      {selected?.status === 'draft' && <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #eee' }}><p style={{ color: '#666', fontSize: 13, lineHeight: 1.5, marginBottom: 10 }}>เมื่อนักกีฬาอย่างน้อยหนึ่งคนตอบรับแล้ว ส่งสมัครรายการเพื่อไปขั้นชำระเงิน</p><button onClick={submitTeam} disabled={busy} style={{ background: '#172033', color: 'white', border: 0, borderRadius: 10, padding: '10px 14px', fontWeight: 800 }}>{busy ? 'กำลังส่ง...' : 'ส่งสมัครรายการ'}</button></div>}
-      {selected && <p style={{ color: '#888', fontSize: 12, marginTop: 10 }}>รายการ: {selectedTournamentName ?? '—'} · สถานะ: {selected.status === 'draft' ? 'กำลังจัด roster' : selected.status === 'pending' ? 'รอตรวจสอบ' : selected.status === 'confirmed' ? 'ยืนยันแล้ว' : 'ไม่ผ่าน'}</p>}
+      </select>}
+      <label className="ui-field">
+        <span>{t('emailLabel')}</span>
+        <input autoComplete="off" inputMode="email" onChange={e => setEmail(e.target.value)} placeholder="name@example.com" type="email" value={email} />
+      </label>
+      <button className="ui-btn ui-btn-ghost" disabled={busy || !email || !selectedTeam} onClick={invite} type="button"><MailPlus size={18} aria-hidden="true" />{busy ? t('sending') : t('send')}</button>
+      {message && <p role={inviteOk ? 'status' : 'alert'} style={{ margin: 0, color: inviteOk ? '#15803d' : '#b91c1c', fontSize: 14 }}>{message}</p>}
+      <p style={{ margin: 0, color: 'var(--ui-mute)', fontSize: 13, lineHeight: 1.55 }}>{t('hint')}</p>
+      {counts && selected && <p style={{ margin: 0, color: 'var(--ui-mute)', fontSize: 13, fontWeight: 700 }}>{t('counts', { accepted: counts[selected.id]?.accepted ?? 0, pending: counts[selected.id]?.pending ?? 0 })}</p>}
+      {selected?.status === 'draft' && <div className="tn-dock"><div className="tn-dock-inner">
+        {counts && (counts[selected.id]?.accepted ?? 0) < 1 && <p style={{ margin: '0 0 8px', textAlign: 'center', color: 'var(--ui-mute)', fontSize: 13 }}>{t('needAccepted', { count: counts[selected.id]?.accepted ?? 0 })}</p>}
+        <button className="ui-btn ui-btn-primary" disabled={busy || Boolean(counts && (counts[selected.id]?.accepted ?? 0) < 1)} onClick={submitTeam} type="button">{busy ? t('submitting') : t('submit')}</button>
+      </div></div>}
     </section>}
 
     {inviteState.length > 0 && <section style={{ background: 'white', borderRadius: 16, padding: 18, border: '1px solid #e5e7eb' }}>

@@ -6,7 +6,7 @@ const STEPS = ['team', 'invite', 'pay'] as const
 
 export type TournamentSummaryProps = { day: string; month: string; name: string; line: string }
 
-export function RegisterSteps({ current }: { current: 1 | 3 }) {
+export function RegisterSteps({ current }: { current: 1 | 2 | 3 }) {
   const t = useTranslations('tournament')
   return <ol className="tn-flow" aria-label={t('stepsLabel', { step: current })}>
     {STEPS.map((step, index) => <li aria-current={index + 1 === current ? 'step' : undefined} className={index + 1 < current ? 'is-done' : index + 1 === current ? 'is-now' : ''} key={step}>
