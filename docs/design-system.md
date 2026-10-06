@@ -52,5 +52,6 @@
 | 2 | `/players/[id]` (การ์ดเดียวกับ /card, สถิติฤดูกาลจาก player_ratings, ที่มาของข้อมูล), `/ranking` (มุมมอง/ตัวกรองแถวเดียว, โพเดียม, ตารางบนจอคอม) | ✅ |
 | 1b | `/tournaments` (แท็บ จะมาถึง / เปิดรับสมัคร / จบแล้ว, จัดกลุ่มตามเดือน), `/tournaments/[id]` (ข้อมูลรายการ + สร้างทีม + ชำระเงิน) | ✅ |
 | T | `/training` (ใหม่): รายการโปรแกรม, รายละเอียด, ตั้งตาราง, ซ้อมวันนี้, ที่มาของท่า, การ์ดบน `/profile` · ภาพ 3D ของเราเอง | ✅ |
-| 3 | `/dashboard`, `/dashboard/results` | ⬜ |
+| 3 | `/dashboard/results` (บันทึกผลด้วยการแตะ, mockup v2-3) | ✅ |
+| 3 | `/dashboard` | ⬜ |
 | 4 | `/athletes`, `/hall-of-fame`, `/notifications`, `/career`, `/venues` | ⬜ |

@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 
 export default function ConfirmTeamButton({ teamId, action }: { teamId: string, action: 'confirmed' | 'rejected' }) {
+  const t = useTranslations('approval')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const router = useRouter()
@@ -21,7 +23,7 @@ export default function ConfirmTeamButton({ teamId, action }: { teamId: string, 
 
     if (!response.ok) {
       const data = (await response.json().catch(() => null)) as { error?: string } | null
-      setMessage(data?.error ?? 'อัปเดตสถานะทีมไม่สำเร็จ')
+      setMessage(data?.error ?? t('teamFailed'))
       setLoading(false)
       return
     }
@@ -33,31 +35,10 @@ export default function ConfirmTeamButton({ teamId, action }: { teamId: string, 
   const isConfirm = action === 'confirmed'
 
   return (
-    <div style={{ flex: 1 }}>
-      <button
-        onClick={handleClick}
-        disabled={loading}
-        style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 6,
-          padding: '10px',
-          borderRadius: 10,
-          border: 'none',
-          cursor: loading ? 'default' : 'pointer',
-          background: isConfirm ? '#CC0001' : '#f8f8f8',
-          color: isConfirm ? 'white' : '#888',
-          fontSize: 13,
-          fontWeight: 800,
-          fontFamily: 'var(--font-oswald)',
-          letterSpacing: 0.5,
-          opacity: loading ? 0.6 : 1,
-        }}
-      >
-        {isConfirm ? <CheckCircle size={16} /> : <XCircle size={16} />}
-        {loading ? '...' : isConfirm ? 'ยืนยัน' : 'ปฏิเสธ'}
+    <div>
+      <button className={`ui-btn ${isConfirm ? 'ui-btn-primary' : 'ui-btn-ghost'}`} onClick={handleClick} disabled={loading} type="button">
+        {isConfirm ? <CheckCircle size={18} aria-hidden="true" /> : <XCircle size={18} aria-hidden="true" />}
+        {loading ? '...' : isConfirm ? t('confirm') : t('reject')}
       </button>
       {message ? (
         <p style={{ marginTop: 6, fontSize: 11, color: '#CC0001', textAlign: 'center' }}>{message}</p>

@@ -19,6 +19,8 @@ export default function FixtureDrawForm({ tournamentId, hasDraw, locked }: { tou
   const [advancePerGroup, setAdvancePerGroup] = useState(2)
   const [order, setOrder] = useState<'random' | 'registration'>('random')
   const [saving, setSaving] = useState(false)
+  // Redrawing replaces the whole current draw, so it asks once before it does.
+  const [confirming, setConfirming] = useState(false)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
 
   const submit = async () => {
@@ -75,9 +77,17 @@ export default function FixtureDrawForm({ tournamentId, hasDraw, locked }: { tou
         <option value="registration">{t('orderRegistration')}</option>
       </select>
 
-      <button type="button" onClick={() => void submit()} disabled={saving} style={{ marginTop: 16, width: '100%', minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, border: 0, borderRadius: 12, background: '#CC0001', color: 'white', fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-sarabun)', cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.6 : 1 }}>
-        <Shuffle size={16} aria-hidden="true" />{saving ? t('saving') : hasDraw ? t('recreate') : t('create')}
-      </button>
+      {hasDraw && confirming
+        ? <div role="alertdialog" aria-label={t('recreate')} style={{ marginTop: 16, display: 'grid', gap: 8 }}>
+          <p style={{ margin: 0, fontSize: 13, color: '#9b1d27', fontWeight: 700 }}>{t('recreateConfirm')}</p>
+          <button type="button" className="ui-btn ui-btn-ghost" onClick={() => { setConfirming(false); void submit() }} disabled={saving}>
+            <Shuffle size={16} aria-hidden="true" />{saving ? t('saving') : t('recreate')}
+          </button>
+          <button type="button" className="ui-btn ui-btn-ghost" onClick={() => setConfirming(false)}>{t('recreateCancel')}</button>
+        </div>
+        : <button type="button" className={`ui-btn ${hasDraw ? 'ui-btn-ghost' : 'ui-btn-primary'}`} style={{ marginTop: 16 }} onClick={() => (hasDraw ? setConfirming(true) : void submit())} disabled={saving}>
+          <Shuffle size={16} aria-hidden="true" />{saving ? t('saving') : hasDraw ? t('recreate') : t('create')}
+        </button>}
       {message && <p role={message.ok ? 'status' : 'alert'} style={{ margin: '12px 0 0', fontSize: 13, color: message.ok ? '#166534' : '#9b1d27' }}>{message.text}</p>}
     </div>
   )

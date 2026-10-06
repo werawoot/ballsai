@@ -491,6 +491,7 @@
     }
   },
   "apiErrors": {
+    "playerGoalsOverScore": "Players' goals add up to more than the team's score. Check the score or each player's goals.",
     "signInFirst": "Please sign in first.",
     "signInAgain": "Please sign in again.",
     "venueFieldsRequired": "Fill in the venue name, province, address and contact.",
@@ -709,7 +710,98 @@
     "next": "Next",
     "current": "Page {page}"
   },
+  "teamMembersEmpty": {
+    "eyebrow": "My teams",
+    "title": "No team yet",
+    "text": "Start by choosing a tournament that is open for registration, then name your team.",
+    "cta": "See all tournaments",
+    "athleteHint": "If you are an athlete, your coach's invitation will appear here."
+  },
+  "teamInvite": {
+    "join": "Join the team",
+    "decline": "Don't join",
+    "ifJoin": "If you join: the coach can pick you for this team's results once the team is confirmed, and the coach will see your name on your profile.",
+    "ifDecline": "If you don't join: the coach will see that you are not joining."
+  },
+  "notOrganizer": {
+    "eyebrow": "Organizer dashboard",
+    "title": "This account is not an organizer yet",
+    "text": "An admin turns on organizer access. Once it is on, you can create tournaments and take team registrations from this page.",
+    "meanwhile": "Meanwhile you can browse open tournaments and register a team as a coach.",
+    "cta": "See open tournaments"
+  },
+  "teamRoster": {
+    "title": "My teams",
+    "loadFailed": "Could not load your team. Please reload the page.",
+    "inviteFirst": "Invite your first athlete",
+    "invite": "Invite athletes",
+    "emailLabel": "The email the athlete signed up with",
+    "send": "Send invitation",
+    "sending": "Sending…",
+    "sent": "Invitation sent",
+    "sendFailed": "Could not send the invitation",
+    "hint": "Each player accepts in the app · you can submit once one player has accepted · no need to wait for the whole team",
+    "counts": "Accepted {accepted} · waiting {pending}",
+    "submit": "Submit the team → go to payment",
+    "submitting": "Sending…",
+    "submitFailed": "Could not submit the team",
+    "needAccepted": "You can submit once at least 1 athlete has accepted (now {count})",
+    "team": "Team"
+  },
+  "approval": {
+    "confirmTeamAndPayment": "Confirm team and payment",
+    "confirm": "Confirm",
+    "reject": "Reject",
+    "working": "Working...",
+    "confirmingTitle": "Confirming the payment",
+    "confirmingSub": "Please wait, it can take 2-3 seconds",
+    "paymentFailed": "Could not confirm the payment",
+    "teamFailed": "Could not update the team's status"
+  },
+  "matchEntry": {
+    "eyebrow": "This match",
+    "teamsTitle": "Which two teams played?",
+    "teamsHint": "Tap the home team, then the away team",
+    "home": "Home",
+    "away": "Away",
+    "noTeams": "This tournament has no confirmed teams yet. Confirm teams on the dashboard first.",
+    "changeTeams": "Change teams",
+    "scoreHint": "Tap the players who played. Tap ⚽ for a goal. The score follows.",
+    "searchPlaceholder": "Search players",
+    "noPlayers": "This team has no athletes on its roster",
+    "played": "Played: {name}",
+    "goal": "Add a goal for {name}",
+    "goalLess": "Remove a goal for {name}",
+    "mvp": "MVP: {name}",
+    "more": "Details for {name}",
+    "goalWord": "Goals",
+    "assists": "Assists",
+    "cleanSheet": "Clean sheet",
+    "less": "Less",
+    "moreCount": "More",
+    "newPlayer": "New · Ranking starts when this result is confirmed",
+    "unattributed": "Goals with no scorer recorded",
+    "blockTeams": "Choose both teams first",
+    "blockSameTeam": "Choose two different teams",
+    "blockNoPlayers": "Tap at least one player who played",
+    "preview": "Preview the result",
+    "previewing": "Calculating…",
+    "previewEyebrow": "Preview · not saved yet",
+    "previewSub": "The figures below come from this result. They are saved only when you confirm.",
+    "ratingLine": "Match {match} · Performance +{bonus}",
+    "confirm": "Confirm this result",
+    "confirming": "Saving…",
+    "back": "Go back and edit",
+    "once": "The result is saved once. Tapping again or a retry will not duplicate it.",
+    "done": "Result saved",
+    "next": "Record the next match",
+    "failed": "The result could not be saved",
+    "network": "Could not connect. Try again."
+  },
   "matchResults": {
+    "change": "Change",
+    "eyebrow": "Organizer",
+    "title": "Record a result",
     "pickerTitle": "Choose a tournament",
     "searchLabel": "Search tournaments",
     "searchPlaceholder": "Tournament name",
@@ -730,6 +822,9 @@
     "empty": "No teams here yet"
   },
   "fixtures": {
+    "record": "Record result",
+    "recreateConfirm": "Redrawing replaces the whole current draw",
+    "recreateCancel": "Keep the current draw",
     "open": "Fixtures",
     "eyebrow": "FIXTURES",
     "title": "Draw and fixtures",
@@ -809,7 +904,8 @@
     "progress": "{played} of {total} matches played",
     "progressLabel": "Tournament progress",
     "notPublishedHint": "Once the organizer makes the draw and publishes it, fixtures, results and tables appear here.",
-    "emptyBack": "Back to the tournament"
+    "emptyBack": "Back to the tournament",
+    "roundLabel": "Choose a round"
   },
   "profileHome": {
     "eyebrow": "My profile",
@@ -875,7 +971,8 @@
         }
       },
       "cta": "Do this step",
-      "showAll": "See every step"
+      "showAll": "See every step",
+      "compact": "Profile {done} of {total} steps done · next: {next}"
     },
     "card": {
       "title": "Player card",
@@ -884,7 +981,8 @@
       "starterTitle": "STARTER CARD",
       "starterBody": "No Power Rating yet. Ratings come only from match results recorded and confirmed by organizers. Play your first tournament to start.",
       "build": "Build and share card",
-      "findTournament": "Find a tournament"
+      "findTournament": "Find a tournament",
+      "myRanking": "See my ranking"
     },
     "teams": {
       "title": "My teams",
@@ -1427,7 +1525,8 @@
       "nextOn": "Next session {date}",
       "emptyTitle": "Pick a training programme",
       "emptyText": "Short research-based sessions you can do at home. We plan your weeks.",
-      "emptyCta": "See programmes"
+      "emptyCta": "See programmes",
+      "progressNoStreak": "{done} of {total} sessions done"
     },
     "stop": "Stop this programme",
     "stopConfirm": "Stop this programme? Your training history stays.",

@@ -124,3 +124,20 @@ describe('an athlete\'s first verified match', () => {
     expect(response.status).toBe(503)
   })
 })
+
+describe('player goals against the team score', () => {
+  it('refuses more player goals than the team scored, before reading anything', async () => {
+    const response = await send('preview', [
+      { playerRankId: 'rank-1', teamId: TEAM_A, goals: 2 },
+      { playerRankId: `new:${FRESH}`, teamId: TEAM_A, goals: 1 },
+    ])
+    expect(response.status).toBe(400)
+    expect(await response.json()).toMatchObject({ code: 'playerGoalsOverScore' })
+    expect(db.rpc).not.toHaveBeenCalled()
+  })
+
+  it('accepts fewer player goals than the score (own goals, goals not credited)', async () => {
+    const response = await send('preview', [{ playerRankId: 'rank-1', teamId: TEAM_A, goals: 1 }])
+    expect(response.status).toBe(200)
+  })
+})

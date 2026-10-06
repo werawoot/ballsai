@@ -30,9 +30,10 @@ export default function SessionRunner({ programId, enrollmentId, userId, today, 
   const [error, setError] = useState('')
   // Set once "Done" saves here; the refreshed page then also reports today as done.
   const [finishedNow, setFinishedNow] = useState(false)
-  const firstButton = useRef<HTMLButtonElement>(null)
+  // Focus goes to the sheet, never to an answer: the pain question must not steer anyone to "no pain".
+  const gateSheet = useRef<HTMLDivElement>(null)
 
-  useEffect(() => { if (stage === 'gate') firstButton.current?.focus() }, [stage])
+  useEffect(() => { if (stage === 'gate') gateSheet.current?.focus() }, [stage])
   useEffect(() => {
     if (!timer || timer.left <= 0) return
     const id = setTimeout(() => setTimer(current => current && { ...current, left: current.left - 1 }), 1000)
@@ -103,11 +104,11 @@ export default function SessionRunner({ programId, enrollmentId, userId, today, 
     </div></div>
 
     {stage === 'gate' && <div aria-labelledby="tr-gate-title" aria-modal="true" className="tr-gate" role="dialog">
-      <div className="tr-gate-sheet">
+      <div className="tr-gate-sheet" ref={gateSheet} tabIndex={-1}>
         <h2 id="tr-gate-title">{t('session.gateTitle')}</h2>
         <p>{t('session.gateText')}</p>
         <div className="tr-gate-actions">
-          <button className="ui-btn ui-btn-primary" onClick={() => setStage('run')} ref={firstButton} type="button">{t('session.noPain')}</button>
+          <button className="ui-btn ui-btn-ghost" onClick={() => setStage('run')} type="button">{t('session.noPain')}</button>
           <button className="ui-btn ui-btn-ghost" onClick={() => setStage('pain')} type="button">{t('session.pain')}</button>
         </div>
         <p>{t('painStop')}</p>

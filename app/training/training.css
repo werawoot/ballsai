@@ -96,6 +96,7 @@ body:has(.bds-nav) .tr-dock { bottom: calc(70px + env(safe-area-inset-bottom)); 
 .tr-timer { background: none; border: 0; color: var(--ui-red); cursor: pointer; display: block; font: 800 13px var(--font-oswald), sans-serif; margin-top: 2px; min-height: 30px; padding: 0; }
 .tr-gate { align-items: flex-end; background: rgba(11,15,22,.55); display: flex; inset: 0; position: fixed; z-index: 120; }
 .tr-gate-sheet { background: #fff; border-radius: 24px 24px 0 0; margin: 0 auto; max-width: 560px; padding: 24px 18px calc(24px + env(safe-area-inset-bottom)); width: 100%; }
+.tr-gate-sheet:focus { outline: none; }
 .tr-gate-sheet h2 { font: 800 22px/1.3 var(--font-sarabun), sans-serif; margin: 0; }
 .tr-gate-sheet p { color: var(--ui-mute); font-size: 14px; line-height: 1.5; margin: 6px 0 0; }
 .tr-gate-actions { display: grid; gap: 8px; margin-top: 16px; }

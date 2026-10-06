@@ -2,15 +2,22 @@
    numbers never do and line up (tabular figures). */
 
 .fx-board { display: grid; gap: 14px; }
+/* Grid items default to min-width:auto and grow to their widest child (a 7-column table
+   at 320px pushed the page to 364px). Let them shrink so each table scrolls inside itself. */
+.fx-board > *, .fx-split > *, .fx-main > *, .fx-aside > * { min-width: 0; }
 
 .fx-tabs { background: #fff; border-bottom: 1px solid var(--ui-line); display: flex; gap: 4px; margin: 0 -16px; overflow-x: auto; padding: 4px 12px 0; position: sticky; top: 0; z-index: 2; }
 .fx-tab { border-bottom: 3px solid transparent; color: var(--ui-mute); flex: 1 0 auto; font-size: 15px; font-weight: 700; min-height: 48px; padding: 12px 10px; text-align: center; text-decoration: none; white-space: nowrap; }
 .fx-tab.is-on { border-color: var(--ui-red); color: var(--ui-text); }
 
 .fx-filters { display: flex; gap: 8px; margin: 0 -16px; overflow-x: auto; padding: 2px 16px 4px; }
-.fx-filter { align-items: center; background: #fff; border: 1.5px solid var(--ui-line); border-radius: 99px; color: var(--ui-text); display: inline-flex; flex: none; font-size: 14px; font-weight: 700; min-height: 40px; padding: 0 16px; text-decoration: none; }
+.fx-filter { align-items: center; background: #fff; border: 1.5px solid var(--ui-line); border-radius: 99px; color: var(--ui-text); display: inline-flex; flex: none; font-size: 14px; font-weight: 700; min-height: 44px; padding: 0 16px; text-decoration: none; white-space: nowrap; }
 .fx-filter.is-on { background: var(--ui-text); border-color: var(--ui-text); color: #fff; }
 
+.fx-pager { align-items: center; display: grid; gap: 8px; grid-template-columns: 1fr auto 1fr; }
+.fx-pager b { font-size: 15px; }
+.fx-pager-link { align-items: center; color: var(--ui-red); display: inline-flex; font-size: 14px; font-weight: 700; min-height: 44px; text-decoration: none; }
+.fx-pager-link:last-child { justify-content: flex-end; }
 .fx-provenance { align-items: center; color: var(--ui-mute); display: flex; flex-wrap: wrap; font-size: 13px; gap: 8px; margin: 0; }
 
 .fx-split, .fx-main { display: grid; gap: 14px; }

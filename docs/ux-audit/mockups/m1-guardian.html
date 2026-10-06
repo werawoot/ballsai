@@ -1,0 +1,71 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mockup 1 — ผู้ปกครองรับรู้</title>
+<link rel="stylesheet" href="base.css"><style>
+body{background:var(--ui-ink)}
+.sample{position:fixed;top:8px;right:8px;background:#fff3db;color:#8a5a00;font:700 11px var(--font-sarabun);padding:4px 8px;border-radius:99px;z-index:9}
+.frames{max-width:1240px;margin:0 auto;padding:18px 14px 40px;display:grid;gap:26px}
+@media(min-width:900px){.frames{grid-template-columns:repeat(3,1fr);align-items:start;padding-top:40px}}
+.cap{color:#fff;font:800 13px var(--font-sarabun);margin:0 0 8px;display:flex;gap:8px;align-items:center}
+.cap span{background:var(--ui-red);border-radius:99px;padding:3px 9px;font-size:11px}
+.scr{background:var(--ui-paper);border-radius:22px;overflow:hidden;border:1px solid rgba(255,255,255,.14)}
+.hd{background:var(--ui-ink-2);color:#fff;padding:16px 16px 18px}
+.hd h2{margin:6px 0 0}.hd p{color:var(--ui-mute-d);margin:6px 0 0;font-size:13px;line-height:1.5}
+.body{padding:14px;display:grid;gap:12px}
+.next{background:#fff;border:2px solid var(--ui-red);border-radius:var(--ui-r-lg);padding:16px}
+.next h3{font:800 20px/1.3 var(--font-sarabun);margin:6px 0 4px}.next p{margin:0 0 12px;color:var(--ui-mute);font-size:14px;line-height:1.55}
+.why{font-size:13px;color:var(--ui-text);background:var(--ui-paper);border-radius:12px;padding:10px 12px;line-height:1.55;margin:0 0 12px}
+.list{background:#fff;border:1px solid var(--ui-line);border-radius:var(--ui-r-lg);padding:6px 14px}
+.it{display:flex;gap:10px;align-items:center;min-height:52px;border-top:1px solid var(--ui-line);font-weight:700;font-size:15px}
+.it:first-child{border-top:0}.dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--ui-line);flex:none;display:grid;place-items:center;font-size:13px;color:#fff}
+.dot.ok{background:var(--ui-green);border-color:var(--ui-green)}.dot.wait{border-color:var(--ui-gold);background:#fff3db;color:#8a5a00}.dot.now{border-color:var(--ui-red)}
+.it small{display:block;font-weight:600;color:var(--ui-mute);font-size:12px}.it .r{margin-left:auto}
+.steps2{display:flex;gap:6px;align-items:center;margin:2px 0 10px}.steps2 b{font:700 12px var(--font-sarabun);color:var(--ui-mute)}
+.acc{display:grid;gap:8px}.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ghost{min-height:48px;border-radius:14px;border:1.5px solid var(--ui-line);background:#fff;font:800 15px var(--font-sarabun)}
+.ok{background:var(--ui-green)!important;color:#fff}
+.note{font-size:12px;color:var(--ui-mute);line-height:1.5;margin:0}
+.legal{border:1.5px dashed #b9b2a6;border-radius:12px;padding:10px 12px;font-size:12.5px;color:var(--ui-mute);background:#faf8f4}
+</style></head><body>
+<div class="sample">ตัวอย่างแบบ · local mock</div>
+<div class="frames">
+
+<section><p class="cap"><span>A</span>นักกีฬา อายุต่ำกว่า 20 · ยังไม่ได้เชิญผู้ปกครอง (/profile)</p>
+<div class="scr"><div class="hd ui-dark"><p class="ui-eyebrow" style="margin:0">ก่อนเปิดโปรไฟล์สาธารณะ</p><h2 class="ui-h1">เหลืออีก 1 อย่างที่ต้องรอผู้ใหญ่</h2><p>ผู้ปกครองใช้เวลาตอบหลายวัน เชิญตอนนี้ แล้วทำข้ออื่นระหว่างรอได้</p></div>
+<div class="body">
+ <div class="next"><span class="ui-chip is-red">ขั้นต่อไป · เริ่มก่อน</span><h3>เชิญผู้ปกครองของคุณ</h3>
+  <p>ส่งลิงก์ให้ผู้ปกครองทาง LINE หรือข้อความ ท่านเข้ามากดรับรู้ได้ในไม่กี่นาที</p>
+  <p class="why">ทำไมต้องมีขั้นนี้: โปรไฟล์ของนักกีฬาอายุต่ำกว่า 20 จะเปิดสาธารณะได้หลังผู้ปกครองรับรู้เท่านั้น</p>
+  <button class="ui-btn ui-btn-primary">➤ ส่งลิงก์ให้ผู้ปกครอง</button><p class="note" style="margin-top:8px">อีเมลบัญชีของคุณจะแนบไปในข้อความ เพื่อให้ท่านกรอกได้ถูก</p></div>
+ <div class="list">
+  <div class="it"><i class="dot ok">✓</i>ชื่อและวันเกิด</div>
+  <div class="it"><i class="dot now"></i><div>ผู้ปกครองรับรู้<small>ต้องรอผู้ปกครอง · เชิญตอนนี้</small></div></div>
+  <div class="it"><i class="dot"></i><div>รูปนักกีฬา<small>ทำได้ระหว่างรอ</small></div></div>
+  <div class="it"><i class="dot"></i><div>ตำแหน่งและทีม<small>ทำได้ระหว่างรอ</small></div></div>
+  <div class="it"><i class="dot"></i><div>ไฮไลต์แรก<small>ทำได้ระหว่างรอ</small></div></div>
+ </div></div></div></section>
+
+<section><p class="cap"><span>B</span>เชิญแล้ว · กำลังรอ (/profile)</p>
+<div class="scr"><div class="hd ui-dark"><p class="ui-eyebrow" style="margin:0">ก่อนเปิดโปรไฟล์สาธารณะ</p><h2 class="ui-h1">รอผู้ปกครองอยู่ ทำอย่างอื่นต่อได้</h2><p>เราจะแจ้งเตือนในแอปทันทีที่มีคำตอบ</p></div>
+<div class="body">
+ <div class="next" style="border-color:var(--ui-gold)"><span class="ui-chip is-warn">⏳ รอผู้ปกครอง</span><h3>ส่งลิงก์แล้ว</h3>
+  <p>ถ้าผู้ปกครองกรอกอีเมลของคุณแล้ว คำขอจะขึ้นที่หน้า "ผู้ปกครอง" ให้คุณกดรับ</p>
+  <button class="ui-btn ui-btn-primary">เพิ่มรูปนักกีฬา →</button>
+  <button class="ghost" style="width:100%;margin-top:8px">ส่งลิงก์ให้ท่านอีกครั้ง</button></div>
+ <div class="list">
+  <div class="it"><i class="dot ok">✓</i>ชื่อและวันเกิด</div>
+  <div class="it"><i class="dot wait">⏳</i><div>ผู้ปกครองรับรู้<small>รอผู้ปกครอง</small></div></div>
+  <div class="it"><i class="dot now"></i><div>รูปนักกีฬา<small>ขั้นต่อไปที่ทำได้</small></div></div>
+  <div class="it"><i class="dot"></i>ตำแหน่งและทีม</div>
+  <div class="it"><i class="dot"></i>ไฮไลต์แรก</div>
+ </div></div></div></section>
+
+<section><p class="cap"><span>C</span>นักกีฬากดรับคำขอจากผู้ปกครอง (/guardian)</p>
+<div class="scr"><div class="hd ui-dark"><p class="ui-eyebrow" style="margin:0">ผู้ปกครอง</p><h2 class="ui-h1">มีคำขอรอคุณตอบ</h2></div>
+<div class="body">
+ <div class="next" style="border-color:var(--ui-line)"><span class="ui-chip is-warn">รอคุณตอบ</span><h3>ผู้ปกครองขอเชื่อมบัญชี</h3>
+  <p>ส่งมาเมื่อวันนี้ · ตรวจว่าเป็นคนที่คุณรู้จัก ก่อนกดรับ</p>
+  <p class="why"><b>ถ้ากดรับ:</b> ผู้ปกครองดูความก้าวหน้าของคุณได้ และคุณเปิดโปรไฟล์สาธารณะได้<br><b>ถ้ากดปฏิเสธ:</b> ไม่มีอะไรเปลี่ยน โปรไฟล์ยังเป็นส่วนตัว</p>
+  <div class="btnrow"><button class="ui-btn ui-btn-primary ok" style="box-shadow:none;background:var(--ui-green)">✓ รับคำขอ</button><button class="ghost">ไม่ใช่คนที่รู้จัก</button></div></div>
+ <div class="legal">ข้อความยินยอมที่ผู้ปกครองเห็น: <b>[รอข้อความจากนักแปลกฎหมาย]</b> — mockup นี้ออกแบบเฉพาะตำแหน่งและปุ่ม ไม่ได้เขียนถ้อยคำทางกฎหมาย</div>
+ <p class="note">ปุ่มหลักมีปุ่มเดียวต่อจอ: ในจอนี้คือ "รับคำขอ" ส่วนปฏิเสธเป็นปุ่มรอง ไม่เป็นสีแดงเตือน</p>
+</div></div></section>
+</div></body></html>

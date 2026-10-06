@@ -92,3 +92,12 @@ describe('/dashboard/results works one tournament at a time', () => {
     expect(html).toContain('Zebras')
   })
 })
+
+describe('/dashboard/results for an account that is not an organizer yet', () => {
+  it('explains instead of sending them to the home page', async () => {
+    db.tables = { ...tables(), profiles: [{ id: 'org-1', role: 'user' }] }; db.user = 'org-1'
+    const html = await render({})
+    expect(html).toContain('This account is not an organizer yet')
+    expect(html).not.toContain('My Cup')
+  })
+})

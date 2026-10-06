@@ -246,3 +246,7 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf-link small { display:block; }
 .pf-link:hover { border-color:#cfc8bd; transform:none; }
 @media (max-width:959px) { .pf-aside { margin-bottom:16px; } }
+
+/* The checklist of an athlete who is already public: one quiet line, not a card with a red button. */
+.pf-ready-line { align-items: center; color: inherit; display: flex; font-weight: 700; gap: 10px; justify-content: space-between; min-height: 56px; padding: 0 16px; text-decoration: none; }
+.pf-ready-line span { min-width: 0; overflow-wrap: anywhere; }

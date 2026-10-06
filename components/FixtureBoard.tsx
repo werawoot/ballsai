@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Trophy } from 'lucide-react'
 import { drawTables, type DrawTable, type StoredDraw, type StoredFixture } from '@/lib/fixture-draw'
@@ -9,17 +8,21 @@ import './fixture-board.css'
 // A draw as a reader sees it. With `nav` (the public page) it is three views -- fixtures,
 // tables, knockout bracket -- with a group filter, and on a wide screen the tables sit
 // beside the fixtures. Without it (the organizer's page) everything is on one page and
-// `renderExtra` adds the penalty controls. Not async, like Pagination, so server and
+// `renderExtra` adds the penalty controls; `renderAction` adds an action on a fixture not played yet. Not async, like Pagination, so server and
 // client pages can both render it.
 
 export type BoardView = 'fixtures' | 'tables' | 'bracket'
-export type BoardNav = { view: BoardView; filter: string; href: (view: BoardView, filter?: string) => string }
+export type BoardNav = { view: BoardView; filter: string; round?: string; href: (view: BoardView, filter?: string, round?: string) => string }
+
+// More fixtures than this on one screen and the page shows one round at a time: a 64-team
+// league is 2,016 matches (3 MB of HTML on a phone); one matchday of it is 32.
+export const ROUND_PAGE_LIMIT = 48
 
 export function boardViews(draw: StoredDraw): BoardView[] {
   return ['fixtures', ...(drawTables(draw).length ? ['tables' as const] : []), ...(hasKnockout(draw) ? ['bracket' as const] : [])]
 }
 
-export default function FixtureBoard({ draw, renderExtra, nav }: { draw: StoredDraw; renderExtra?: (fixture: StoredFixture) => ReactNode; nav?: BoardNav }) {
+export default function FixtureBoard({ draw, renderExtra, renderAction, nav }: { draw: StoredDraw; renderExtra?: (fixture: StoredFixture) => ReactNode; renderAction?: (fixture: StoredFixture) => ReactNode; nav?: BoardNav }) {
   const t = useTranslations('fixtures')
   const totalRounds = knockoutRounds(draw)
   const roundLabel = (round: number) => {
@@ -69,6 +72,7 @@ export default function FixtureBoard({ draw, renderExtra, nav }: { draw: StoredD
             : <span className={`fx-status is-${view.status === 'pending' ? 'wait' : 'done'}`}>{view.status === 'penalties' ? t('penaltiesPending') : status}</span>}
         </span>
         {view.status === 'penalties' && !fixture.winner_team_id && renderExtra?.(fixture)}
+        {view.status === 'pending' && renderAction?.(fixture)}
       </li>
     )
   }
@@ -152,20 +156,40 @@ export default function FixtureBoard({ draw, renderExtra, nav }: { draw: StoredD
   const groups = groupLabels(draw)
   const filters = [...(groups.length ? groups : []), ...(groups.length && hasKnockout(draw) ? ['knockout'] : [])]
   const filter = filters.includes(nav.filter) ? nav.filter : 'all'
-  const shown = filter === 'all' ? draw.fixtures : filter === 'knockout' ? draw.fixtures.filter(fixture => fixture.stage === 'knockout') : draw.fixtures.filter(fixture => fixture.group_label === filter)
+  const filtered = filter === 'all' ? draw.fixtures : filter === 'knockout' ? draw.fixtures.filter(fixture => fixture.stage === 'knockout') : draw.fixtures.filter(fixture => fixture.group_label === filter)
+  // A big draw pages by round: the round asked for, else the first one not finished.
+  const roundKey = (fixture: StoredFixture) => `${fixture.stage === 'knockout' ? 'k' : 'm'}${fixture.round}`
+  const roundKeys = [...new Set(filtered.map(roundKey))]
+  const paged = filtered.length > ROUND_PAGE_LIMIT && roundKeys.length > 1
+  const round = !paged ? null : roundKeys.includes(nav.round ?? '') ? nav.round!
+    : roundKey(filtered.find(fixture => viewFixture(draw, fixture).status === 'pending') ?? filtered[filtered.length - 1])
+  const shown = round ? filtered.filter(fixture => roundKey(fixture) === round) : filtered
+  const roundName = (key: string) => key.startsWith('k') ? roundLabel(Number(key.slice(1))) : t('matchday', { round: key.slice(1) })
 
   return (
     <div className="fx-board">
       <nav className="fx-tabs" aria-label={t('viewsLabel')}>
-        {views.map(item => <Link key={item} href={nav.href(item)} className={`fx-tab${item === view ? ' is-on' : ''}`} aria-current={item === view ? 'page' : undefined} scroll={false}>{t(`tab.${item}`)}</Link>)}
+        {views.map(item => <a key={item} href={nav.href(item)} className={`fx-tab${item === view ? ' is-on' : ''}`} aria-current={item === view ? 'page' : undefined}>{t(`tab.${item}`)}</a>)}
       </nav>
       {view === 'fixtures' && <div className={`fx-split${tables.length ? ' has-aside' : ''}`}>
         <div className="fx-main">
           {filters.length > 0 && <div className="fx-filters" role="group" aria-label={t('filterLabel')}>
-            {['all', ...filters].map(item => <Link key={item} href={nav.href('fixtures', item)} className={`fx-filter${item === filter ? ' is-on' : ''}`} aria-current={item === filter ? 'true' : undefined} scroll={false}>
+            {['all', ...filters].map(item => <a key={item} href={nav.href('fixtures', item)} className={`fx-filter${item === filter ? ' is-on' : ''}`} aria-current={item === filter ? 'true' : undefined}>
               {item === 'all' ? t('filterAll') : item === 'knockout' ? t('stageKnockout') : t('stageGroup', { group: item })}
-            </Link>)}
+            </a>)}
           </div>}
+          {round && <div className="fx-filters fx-rounds" role="group" aria-label={t('roundLabel')}>
+            {roundKeys.map(key => <a key={key} href={nav.href('fixtures', filter, key)} className={`fx-filter${key === round ? ' is-on' : ''}`} aria-current={key === round ? 'true' : undefined}>{roundName(key)}</a>)}
+          </div>}
+          {round && (() => {
+            const at = roundKeys.indexOf(round)
+            const previous = roundKeys[at - 1], next = roundKeys[at + 1]
+            return <div className="fx-pager">
+              {previous ? <a href={nav.href('fixtures', filter, previous)} className="fx-pager-link">‹ {roundName(previous)}</a> : <span />}
+              <b>{roundName(round)}</b>
+              {next ? <a href={nav.href('fixtures', filter, next)} className="fx-pager-link">{roundName(next)} ›</a> : <span />}
+            </div>
+          })()}
           <p className="fx-provenance"><span className="ui-chip is-performance">{t('verifiedChip')}</span>{t('verifiedNote')}</p>
           {sections(shown)}
         </div>

@@ -4,13 +4,16 @@ import { useLoading } from "@/hooks/useLoading";
 import { CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
+// One tap confirms the payment and the team together (confirm_payment_safely).
 export default function ConfirmPaymentButton({ paymentId }: { paymentId: string }) {
+  const t = useTranslations("approval");
   const [message, setMessage] = useState("");
   const { loading, execute, LoadingModal } = useLoading({
     showLoadingModal: true,
-    loadingMessage: "กำลังยืนยันการชำระเงิน",
-    loadingSubMessage: "กรุณารอสักครู่ อาจใช้เวลา 2-3 วินาที",
+    loadingMessage: t("confirmingTitle"),
+    loadingSubMessage: t("confirmingSub"),
   });
   const router = useRouter();
 
@@ -24,7 +27,7 @@ export default function ConfirmPaymentButton({ paymentId }: { paymentId: string 
 
       if (!response.ok) {
         const data = (await response.json().catch(() => null)) as { error?: string } | null;
-        setMessage(data?.error ?? "ยืนยันการชำระเงินไม่สำเร็จ");
+        setMessage(data?.error ?? t("paymentFailed"));
         return;
       }
 
@@ -34,29 +37,8 @@ export default function ConfirmPaymentButton({ paymentId }: { paymentId: string 
 
   return (
     <div>
-      <button
-        onClick={handleConfirm}
-        disabled={loading}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 6,
-          padding: "10px",
-          borderRadius: 10,
-          border: "none",
-          background: "#16a34a",
-          color: "white",
-          fontSize: 13,
-          fontWeight: 800,
-          cursor: loading ? "default" : "pointer",
-          fontFamily: "var(--font-oswald)",
-          letterSpacing: 0.5,
-          opacity: loading ? 0.6 : 1,
-        }}
-      >
-        <CheckCircle size={16} /> {loading ? "กำลังดำเนินการ..." : "ยืนยันการชำระเงิน"}
+      <button className="ui-btn ui-btn-primary" onClick={handleConfirm} disabled={loading} type="button">
+        <CheckCircle size={18} aria-hidden="true" /> {loading ? t("working") : t("confirmTeamAndPayment")}
       </button>
       {message ? (
         <p style={{ marginTop: 6, fontSize: 11, color: "#CC0001", textAlign: "center" }}>{message}</p>

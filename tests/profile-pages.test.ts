@@ -18,7 +18,7 @@ function fakeClient() {
   const from = (table: string) => {
     let head = false
     const builder: Record<string, unknown> = {}
-    for (const name of ['eq', 'order', 'limit', 'in']) builder[name] = () => builder
+    for (const name of ['eq', 'order', 'limit', 'in', 'gte']) builder[name] = () => builder
     builder.select = (_columns: string, options?: { head?: boolean }) => { head = Boolean(options?.head); return builder }
     builder.maybeSingle = async () => ({ data: db.tables[table] ?? null, error: null })
     builder.single = builder.maybeSingle
@@ -137,6 +137,65 @@ describe('/profile', () => {
     expect(beforeDeletion).toContain('Before your profile goes public')
     expect(beforeDeletion).toContain('14 yrs')
     expect(beforeDeletion).not.toMatch(/[ก-ฺเ-๛]/)
+  })
+})
+
+describe('/profile for an athlete who comes back to train (UX mockup v5-A)', () => {
+  const daysAgo = (days: number) => new Date(Date.now() + 7 * 3600_000 - days * 86_400_000).toISOString().slice(0, 10)
+  const returning = (checkins: { enrollment_id: string; session_date: string }[] = []) => {
+    db.tables = {
+      profiles: { full_name: 'Niran', role: 'player', onboarding_persona: 'athlete' },
+      athlete_profiles: { ...minor, display_name: 'Niran', is_public: true, verification_level: 'performance_verified' },
+      player_ranks: { id: 'rank-9', player_name: 'Niran', position: 'MF', ovr: 71, pts: 1520 },
+      athlete_progress: { xp_total: 900, current_level: 4 },
+      training_enrollments: [{ id: 'e1', program_id: 'u10-foundation-01', weekdays: [0, 1, 2, 3, 4, 5, 6], start_date: daysAgo(3), status: 'active' }],
+      training_checkins: checkins,
+    }
+    db.counts = {}
+    db.private = { birth_date: '2012-03-04', guardian_consent_at: '2026-01-01T00:00:00Z' }
+  }
+
+  it('puts today\'s training before the profile checklist', async () => {
+    returning()
+    const html = await render(ProfilePage as never)
+    expect(html.indexOf('tr-today')).toBeGreaterThan(-1)
+    expect(html.indexOf('pf-ready-line')).toBeGreaterThan(-1)
+    expect(html.indexOf('tr-today')).toBeLessThan(html.indexOf('pf-ready-line'))
+  })
+
+  it('puts today\'s training before the full checklist too', async () => {
+    returning()
+    ;(db.tables.athlete_profiles as { is_public: boolean }).is_public = false
+    const html = await render(ProfilePage as never)
+    expect(html.indexOf('tr-today')).toBeLessThan(html.indexOf('pf-next-card'))
+  })
+
+  it('shrinks the checklist of an athlete who is already public to one quiet line, not a red button', async () => {
+    returning()
+    const html = await render(ProfilePage as never)
+    expect(html).not.toContain('ก่อนเปิดโปรไฟล์สาธารณะ')
+    expect(html).not.toContain('pf-btn-block')
+    expect(text(html)).toMatch(/4 จาก 6 ขั้น/)
+  })
+
+  it('still guides an athlete who is not public yet with the full checklist', async () => {
+    returning()
+    ;(db.tables.athlete_profiles as { is_public: boolean }).is_public = false
+    const html = await render(ProfilePage as never)
+    expect(html).toContain('ก่อนเปิดโปรไฟล์สาธารณะ')
+  })
+
+  it('links the rating to the ranking page, without counting a position here', async () => {
+    returning()
+    const html = await render(ProfilePage as never)
+    expect(html).toContain('href="/ranking"')
+    expect(text(html)).toContain('ดูอันดับของฉัน')
+    expect(text(html)).toContain('1,520')
+  })
+
+  it('does not show a streak of zero weeks to someone who has just started', async () => {
+    returning()
+    expect(text(await render(ProfilePage as never))).not.toContain('ต่อเนื่อง 0 สัปดาห์')
   })
 })
 

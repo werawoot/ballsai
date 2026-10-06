@@ -34,7 +34,7 @@ export default function TrainingCard({ training, today }: { training: MyTraining
       <div>
         <small className="tr-eyebrow">{t(eyebrow, { week: progress.week, weeks: program.weeks })}</small>
         <b className="tr-today-title" id="tr-today-title">{say(program.title, locale)}</b>
-        <p>{t('card.progress', { done: progress.done, total: progress.total, streak: progress.streakWeeks })}</p>
+        <p>{progress.streakWeeks > 0 ? t('card.progress', { done: progress.done, total: progress.total, streak: progress.streakWeeks }) : t('card.progressNoStreak', { done: progress.done, total: progress.total })}</p>
       </div>
     </div>
     <ol className="tr-week" aria-hidden="true">

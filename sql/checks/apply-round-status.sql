@@ -95,6 +95,11 @@ select step, migration, present, marker from (values
        to_regprocedure('public.training_today()') is not null
          and not has_function_privilege('anon', 'public.training_today()', 'EXECUTE')
          and not has_function_privilege('anon', 'public.training_self_start_programs()', 'EXECUTE'),
-       'anon cannot execute training functions')
+       'anon cannot execute training functions'),
+  (24, '65 match result void, null-safe permission check',
+       coalesce((select p.prosrc like '%v_role is null%'
+                 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                 where n.nspname = 'public' and p.proname = 'void_match_result_safely'), false),
+       'void_match_result_safely refuses a caller without a profile')
 ) as status(step, migration, present, marker)
 order by step;

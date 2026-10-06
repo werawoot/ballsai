@@ -42,7 +42,8 @@ body:has(.card-page) { background: #07090d; }
 .pc-chip.is-performance { background: rgba(20,160,90,.92); border-color: transparent; }
 .pc-chip.is-coach { background: rgba(40,110,220,.9); border-color: transparent; }
 .pc-chip svg { height: 3.4cqw; width: 3.4cqw; }
-.pc-name { font: 800 11.7cqw/1.02 var(--font-oswald), var(--font-sarabun), sans-serif; letter-spacing: .1cqw; margin: 2.2cqw 0 0; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.pc-name { -webkit-box-orient: vertical; -webkit-line-clamp: 2; display: -webkit-box; font: 800 11.7cqw/1.1 var(--font-oswald), var(--font-sarabun), sans-serif; letter-spacing: .1cqw; margin: 2.2cqw 0 0; overflow: hidden; overflow-wrap: anywhere; text-transform: uppercase; }
+.pc-name.is-long { font-size: 8.4cqw; }
 .pc-meta { font-size: 3.6cqw; margin: 1cqw 0 0; opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pc-stats { border-top: 1px solid rgba(255,255,255,.25); display: grid; grid-template-columns: repeat(5, 1fr); margin-top: 3cqw; padding-top: 2.2cqw; text-align: center; }
 .pc-stats b { display: block; font: 800 6.9cqw/1.05 var(--font-oswald), sans-serif; }

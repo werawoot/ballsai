@@ -1,0 +1,20 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>V3 โค้ชและนักกีฬาที่ถูกเชิญ</title><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="v2.css"><style>
+.stp{display:flex;gap:6px;margin:0 0 14px}.stp div{flex:1;font:800 12px var(--font-sarabun);color:var(--ui-mute)}.stp i{display:block;height:5px;border-radius:9px;background:var(--ui-line);margin-bottom:5px}.stp .done i{background:var(--ui-green)}.stp .now i{background:var(--ui-red)}.stp .now{color:var(--ui-text)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ghost{min-height:52px;border-radius:14px;border:1.5px solid var(--ui-line);background:#fff;font:800 16px var(--font-sarabun);color:var(--ui-text)}
+</style></head><body><div class="sample">ตัวอย่างแบบ v3 · local mock</div>
+<div class="frames c3">
+<section><p class="cap"><b>A</b> โค้ช · ขั้น 2 ของ 3 ต่อจากหน้าตั้งชื่อทีม (/team-members?team=…)</p><div class="scr pp"><div class="in">
+<div class="stp" role="progressbar" aria-valuenow="2" aria-valuemin="1" aria-valuemax="3" aria-label="ขั้น 2 จาก 3"><div class="done"><i></i>สร้างทีม</div><div class="now"><i></i>เชิญสมาชิก</div><div><i></i>ส่งสมัคร & ชำระ</div></div>
+<p class="ui-eyebrow" style="letter-spacing:0;text-transform:none;font-size:13px">ขอนแก่น ยูไนเต็ด U13</p><h1>เชิญนักกีฬาคนแรก</h1><p class="sub">กรอกอีเมลที่นักกีฬาใช้สมัคร</p>
+<div style="margin-top:20px;border-bottom:1.5px solid var(--ui-line);padding:10px 0;font:600 18px var(--font-sarabun);opacity:.45">nong.a@example.com</div>
+<p class="sub" style="font-size:12.5px;margin-top:12px">เชิญได้ทีละคน เด็กแต่ละคนกดรับเองในแอป · ส่งสมัครได้เมื่อมีคนตอบรับ 1 คนขึ้นไป · ไม่ต้องรอครบทีม (เชิญหลายอีเมลรอเจ้าของเลือกวิธีตอบ ก./ข.)</p></div>
+<div class="ft"><button class="ui-btn ui-btn-primary">ส่งคำเชิญ</button><p class="hint">ตอบรับแล้ว 0 · รอตอบ 0</p></div></div></section>
+
+<section><p class="cap"><b>B</b> โค้ชที่ยังไม่มีทีม · เปิด /team-members (เดิมเห็นแต่ "คำเชิญของฉัน")</p><div class="scr pp"><div class="in"><p class="ui-eyebrow" style="letter-spacing:0;text-transform:none;font-size:13px">ทีมของฉัน</p><h1>ยังไม่มีทีม</h1><p class="sub">เริ่มจากเลือกรายการที่เปิดรับสมัคร แล้วตั้งชื่อทีม</p>
+<div class="row" style="margin-top:26px"><span>ศึกชิงถ้วยพระราชทาน U15<small>เปิดรับสมัคร · 10 พ.ย.</small></span><span class="go">›</span></div><div class="row"><span>Knockout Cup U13<small>เปิดรับสมัคร · 5 ธ.ค.</small></span><span class="go">›</span></div></div>
+<div class="ft"><button class="ui-btn ui-btn-primary">ดูรายการทั้งหมด</button><p class="hint">ถ้าคุณเป็นนักกีฬา โค้ชจะส่งคำเชิญมาที่นี่</p></div></div></section>
+
+<section><p class="cap"><b>C</b> นักกีฬาที่ถูกเชิญ · ปุ่มมีข้อความ ไม่ใช่ไอคอน ✓ ✗</p><div class="scr dk ui-dark"><div class="in"><p class="ui-eyebrow">คำเชิญเข้าทีม</p><h1>ขอนแก่น ยูไนเต็ด U13 ชวนคุณ</h1><p class="sub">สำหรับรายการ ศึกชิงถ้วยพระราชทาน U15</p>
+<p class="sub" style="margin-top:22px"><b style="opacity:1">ถ้าเข้าร่วม:</b> โค้ชเลือกคุณลงผลแข่งของทีมนี้ได้เมื่อทีมได้รับการยืนยัน และโค้ชจะเห็นชื่อในโปรไฟล์ของคุณ<br><b style="opacity:1">ถ้าไม่เข้าร่วม:</b> โค้ชจะเห็นว่าคุณไม่เข้าร่วม</p></div>
+<div class="ft"><button class="ui-btn ui-btn-primary">เข้าร่วมทีม</button><button class="gh">ไม่เข้าร่วม</button><p class="hint tap" style="opacity:1">1 แตะ</p></div></div></section>
+</div></body></html>
