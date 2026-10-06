@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import MatchResultForm from './MatchResultForm'
 import { pickInitialTeams } from '@/lib/fixture-record'
+import NotOrganizer from '@/components/NotOrganizer'
 import MatchResultHistory from './MatchResultHistory'
 import TournamentPicker from './TournamentPicker'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
@@ -39,7 +40,7 @@ export default async function MatchResultsPage(
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'organizer' && profile?.role !== 'admin') redirect('/')
+  if (profile?.role !== 'organizer' && profile?.role !== 'admin') return <NotOrganizer />
 
   // One tournament at a time: the picker pages (and searches) the tournaments this user
   // may record for, and only the chosen one's teams, rosters and history are loaded. An

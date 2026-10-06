@@ -8,6 +8,7 @@ import Image from 'next/image'
 import ConfirmTeamButton from './ConfirmTeamButton'
 import ConfirmPaymentButton from './ConfirmPaymentButton'
 import { approvalAction } from '@/lib/team-approval'
+import NotOrganizer from '@/components/NotOrganizer'
 import ToggleTournamentStatusButton from './ToggleTournamentStatusButton'
 import PageHeader from '@/components/PageHeader'
 import Pagination from '@/components/Pagination'
@@ -40,7 +41,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'organizer' && profile?.role !== 'admin') redirect('/')
+  if (profile?.role !== 'organizer' && profile?.role !== 'admin') return <NotOrganizer />
 
   // Tournaments and the approval queue are paged separately (?page= and ?pending=), so the
   // page stays the same size however many tournaments an organizer runs over the years.

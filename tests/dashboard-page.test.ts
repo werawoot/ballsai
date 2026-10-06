@@ -115,3 +115,23 @@ describe('/dashboard approval cards: one button per pending team', () => {
     expect(html).toContain('ปฏิเสธ')
   })
 })
+
+describe('/dashboard for an account that is not an organizer yet', () => {
+  it('explains instead of sending them back to the home page, and offers no contact button', async () => {
+    db.tables = { profiles: [{ id: 'org-1', role: 'user' }], tournaments: [], teams: [], payments: [] }
+    const html = await render({})
+    expect(html).toContain('This account is not an organizer yet')
+    expect(html).toContain('An admin turns on organizer access')
+    expect(hrefs(html)).toContain('/tournaments')
+    expect(html).not.toMatch(/line\.me|mailto:|tel:/)
+  })
+
+  it('still shows the dashboard to an organizer and to an admin', async () => {
+    for (const role of ['organizer', 'admin']) {
+      db.tables = { profiles: [{ id: 'org-1', role }], tournaments, teams: [], payments: [] }
+      const html = await render({})
+      expect(html).not.toContain('This account is not an organizer yet')
+      expect(html).toContain('Cup 1')
+    }
+  })
+})
