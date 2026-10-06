@@ -269,7 +269,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
     <div className="pc-brand" aria-hidden="true">B</div>
     <div className="pc-info">
       <span className={`pc-chip is-${provenance}`}>{provenance !== 'self' && <Check size={12} strokeWidth={3} />}{chip}</span>
-      <h2 className="pc-name">{displayName}</h2>
+      <h2 className={`pc-name${displayName.length > 14 ? ' is-long' : ''}`}>{displayName}</h2>
       {meta && <p className="pc-meta">{meta}</p>}
       {player.isRanked
         ? <div className="pc-stats">{stats.map(([key, value]) => <div key={key}><b>{skillText(value)}</b><span>{key}</span></div>)}</div>

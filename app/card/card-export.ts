@@ -1,3 +1,4 @@
+import { cardNameLines } from '@/lib/card-name'
 import { skillEntries, skillText } from '@/lib/skill-ratings'
 import type { PlayerCardStats } from '@/lib/player-card'
 
@@ -150,8 +151,17 @@ async function drawCard(ctx: CanvasRenderingContext2D, card: ExportCard, x: numb
   cursor -= 20 * s
   ctx.fillStyle = '#fff'
   const name = card.name.toUpperCase()
-  fitText(ctx, name, right - left, size => `800 ${size}px ${display}`, 42 * s, 20 * s)
-  ctx.fillText(name, left, cursor)
+  // One line while it fits at a readable size, else two balanced lines (never an ellipsis).
+  const nameFont = (size: number) => `800 ${size}px ${display}`
+  fitText(ctx, name, right - left, nameFont, 42 * s, 30 * s)
+  const lines = cardNameLines(name, ctx.measureText(name).width <= right - left)
+  // The same size on every line, so the name reads as one.
+  const nameSize = Math.min(...lines.map(line => fitText(ctx, line, right - left, nameFont, lines.length > 1 ? 36 * s : 42 * s, 20 * s)))
+  ctx.font = nameFont(nameSize)
+  for (let index = lines.length - 1; index >= 0; index--) {
+    ctx.fillText(lines[index], left, cursor)
+    if (index > 0) cursor -= 40 * s
+  }
   cursor -= 50 * s
 
   ctx.font = `700 ${11 * s}px ${body}`
