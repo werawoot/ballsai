@@ -8,7 +8,7 @@ import './fixture-board.css'
 // A draw as a reader sees it. With `nav` (the public page) it is three views -- fixtures,
 // tables, knockout bracket -- with a group filter, and on a wide screen the tables sit
 // beside the fixtures. Without it (the organizer's page) everything is on one page and
-// `renderExtra` adds the penalty controls. Not async, like Pagination, so server and
+// `renderExtra` adds the penalty controls; `renderAction` adds an action on a fixture not played yet. Not async, like Pagination, so server and
 // client pages can both render it.
 
 export type BoardView = 'fixtures' | 'tables' | 'bracket'
@@ -22,7 +22,7 @@ export function boardViews(draw: StoredDraw): BoardView[] {
   return ['fixtures', ...(drawTables(draw).length ? ['tables' as const] : []), ...(hasKnockout(draw) ? ['bracket' as const] : [])]
 }
 
-export default function FixtureBoard({ draw, renderExtra, nav }: { draw: StoredDraw; renderExtra?: (fixture: StoredFixture) => ReactNode; nav?: BoardNav }) {
+export default function FixtureBoard({ draw, renderExtra, renderAction, nav }: { draw: StoredDraw; renderExtra?: (fixture: StoredFixture) => ReactNode; renderAction?: (fixture: StoredFixture) => ReactNode; nav?: BoardNav }) {
   const t = useTranslations('fixtures')
   const totalRounds = knockoutRounds(draw)
   const roundLabel = (round: number) => {
@@ -72,6 +72,7 @@ export default function FixtureBoard({ draw, renderExtra, nav }: { draw: StoredD
             : <span className={`fx-status is-${view.status === 'pending' ? 'wait' : 'done'}`}>{view.status === 'penalties' ? t('penaltiesPending') : status}</span>}
         </span>
         {view.status === 'penalties' && !fixture.winner_team_id && renderExtra?.(fixture)}
+        {view.status === 'pending' && renderAction?.(fixture)}
       </li>
     )
   }

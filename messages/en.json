@@ -774,6 +774,9 @@
     "empty": "No teams here yet"
   },
   "fixtures": {
+    "record": "Record result",
+    "recreateConfirm": "Redrawing replaces the whole current draw",
+    "recreateCancel": "Keep the current draw",
     "open": "Fixtures",
     "eyebrow": "FIXTURES",
     "title": "Draw and fixtures",

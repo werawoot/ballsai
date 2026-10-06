@@ -1,9 +1,11 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import FixtureBoard from '@/components/FixtureBoard'
 import { fetchTournamentFixtures } from '@/lib/fixture-draw'
+import { recordableFixtureKeys, recordResultHref } from '@/lib/fixture-record'
 import FixtureDrawForm from './FixtureDrawForm'
 import PenaltyWinnerButtons from './PenaltyWinnerButtons'
 import PublishFixturesToggle from './PublishFixturesToggle'
@@ -29,9 +31,9 @@ export default async function TournamentFixturesPage(props: { params: Promise<{ 
   const page = (children: React.ReactNode) => (
     <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 40 }}>
       <PageHeader back={{ href: '/dashboard', label: header('back.dashboard') }} />
-      <div className="bds-hero" style={{ background: '#CC0001', padding: '20px 16px 30px' }}>
-        <p style={{ color: 'rgba(255,255,255,.75)', fontSize: 11, fontWeight: 800, letterSpacing: 1.2, margin: 0 }}>{t('eyebrow')}</p>
-        <h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(26px,7vw,40px)', color: 'white', margin: '6px 0 0', lineHeight: 1.05 }}>{tournament?.name ?? t('title')}</h1>
+      <div style={{ margin: '0 auto', maxWidth: 820, padding: '22px 16px 0' }}>
+        <p className="ui-eyebrow" style={{ letterSpacing: 0, textTransform: 'none', fontSize: 13 }}>{t('eyebrow')}</p>
+        <h1 className="ui-h1" style={{ margin: '4px 0 0', overflowWrap: 'anywhere' }}>{tournament?.name ?? t('title')}</h1>
       </div>
       <div style={{ padding: 16, display: 'grid', gap: 16, maxWidth: 820, margin: '0 auto' }}>{children}</div>
     </main>
@@ -48,6 +50,7 @@ export default async function TournamentFixturesPage(props: { params: Promise<{ 
   const canPublish = !publishing.error && stored.fixtures.length > 0
   const publishedAt = (publishing.data as { fixtures_published_at?: string | null } | null)?.fixtures_published_at ?? null
   const locked = stored.fixtures.some(fixture => fixture.match_result_id)
+  const recordable = recordableFixtureKeys(stored.fixtures)
 
   return page(<>
     <p style={{ margin: 0, fontSize: 13, color: '#555', fontWeight: 700 }}>{t('teamsReady', { count: confirmedCount ?? 0 })}</p>
@@ -57,7 +60,9 @@ export default async function TournamentFixturesPage(props: { params: Promise<{ 
     {stored.failed && <p role="alert" style={{ color: '#9b1d27', fontSize: 13, margin: 0 }}>{t('loadFailed')}</p>}
     {canPublish && <PublishFixturesToggle tournamentId={params.id} published={Boolean(publishedAt)} />}
     {!stored.migrationMissing && !stored.failed && stored.fixtures.length === 0 && <p style={{ color: '#888', fontSize: 13, margin: 0 }}>{t('none')}</p>}
-    <FixtureBoard draw={stored} renderExtra={fixture => fixture.home_team_id && fixture.away_team_id && (
+    <FixtureBoard draw={stored} renderAction={fixture => recordable.has(fixture.fixture_key) && (
+      <Link className="ui-btn ui-btn-ghost ui-btn-sm" href={recordResultHref(params.id, fixture)} style={{ gridColumn: '1 / -1' }}>{t('record')}</Link>
+    )} renderExtra={fixture => fixture.home_team_id && fixture.away_team_id && (
       <PenaltyWinnerButtons tournamentId={params.id} fixtureKey={fixture.fixture_key} teams={[
         { id: fixture.home_team_id, name: stored.teamNames[fixture.home_team_id] ?? '—' },
         { id: fixture.away_team_id, name: stored.teamNames[fixture.away_team_id] ?? '—' },

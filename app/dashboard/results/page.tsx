@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import MatchResultForm from './MatchResultForm'
+import { pickInitialTeams } from '@/lib/fixture-record'
 import MatchResultHistory from './MatchResultHistory'
 import TournamentPicker from './TournamentPicker'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
@@ -11,7 +12,7 @@ import { parsePage } from '@/lib/pagination'
 import { RESULT_HISTORY_LIMIT, fetchResultTournamentData, fetchResultTournamentsPage } from '@/lib/match-results-dashboard'
 
 export default async function MatchResultsPage(
-  props: { searchParams?: Promise<{ tournament?: string; page?: string; q?: string }> }
+  props: { searchParams?: Promise<{ tournament?: string; page?: string; q?: string; teamA?: string; teamB?: string }> }
 ) {
   const searchParams = (await props.searchParams) ?? {}
   const cookieStore = await cookies()
@@ -88,6 +89,7 @@ export default async function MatchResultsPage(
           tournaments={[data.tournament]}
           teams={data.confirmedTeams}
           players={data.rosterPlayers}
+          initialTeams={pickInitialTeams(searchParams.teamA, searchParams.teamB, data.confirmedTeams.map(team => team.id))}
         />
 
         <div style={{ padding: '0 16px' }}>

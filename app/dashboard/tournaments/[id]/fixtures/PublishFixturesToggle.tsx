@@ -39,7 +39,7 @@ export default function PublishFixturesToggle({ tournamentId, published }: { tou
       </div>
       <p style={{ margin: 0, fontSize: 12, color: '#666', lineHeight: 1.5 }}>{t('publishHelp')}</p>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button type="button" onClick={() => void toggle()} disabled={saving} style={{ flex: '1 1 160px', minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: published ? '1.5px solid #111827' : 0, borderRadius: 10, background: published ? 'white' : '#111827', color: published ? '#111827' : 'white', fontSize: 13, fontWeight: 800, fontFamily: 'var(--font-sarabun)', cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+        <button type="button" className={`ui-btn ${published ? 'ui-btn-ghost' : 'ui-btn-primary'}`} onClick={() => void toggle()} disabled={saving} style={{ flex: '1 1 160px' }}>
           {published ? <EyeOff size={15} aria-hidden="true" /> : <Eye size={15} aria-hidden="true" />}{published ? t('publishOff') : t('publishOn')}
         </button>
         {published && <Link href={`/tournaments/${tournamentId}/fixtures`} style={{ flex: '1 1 140px', minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, border: '1.5px solid #e5e5e5', color: '#CC0001', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>{t('viewPublic')}</Link>}

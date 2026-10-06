@@ -42,18 +42,22 @@ const SEARCH_FROM = 12
 // teams, tap who played and who scored, preview, confirm. The score is the sum of the
 // goals, so it cannot disagree with the scorers. The API, the rating and the one-record
 // guarantee (requestId, sql/60) are unchanged.
-export default function MatchResultForm({ tournaments, teams, players }: {
+export default function MatchResultForm({ tournaments, teams, players, initialTeams }: {
   tournaments: TournamentOption[]
   teams: TeamOption[]
   players: PlayerOption[]
+  // Two teams chosen by a link from the fixture board (lib/fixture-record.ts); blank otherwise.
+  initialTeams?: { teamAId: string; teamBId: string }
 }) {
   const t = useTranslations('matchEntry')
   const tApi = useTranslations('apiErrors')
   const router = useRouter()
   const tournamentId = tournaments[0]?.id ?? ''
   const tournamentTeams = useMemo(() => teams.filter(team => team.tournament_id === tournamentId), [teams, tournamentId])
-  // With exactly two teams there is nothing to choose.
-  const initial = () => tournamentTeams.length === 2 ? emptyEntry(tournamentTeams[0].id, tournamentTeams[1].id) : emptyEntry()
+  // With exactly two teams, or two chosen by the link, there is nothing to choose.
+  const initial = () => initialTeams?.teamAId && initialTeams.teamBId
+    ? emptyEntry(initialTeams.teamAId, initialTeams.teamBId)
+    : tournamentTeams.length === 2 ? emptyEntry(tournamentTeams[0].id, tournamentTeams[1].id) : emptyEntry()
 
   const [entry, setEntry] = useState<EntryState>(initial)
   const [step, setStep] = useState<Step>('entry')
