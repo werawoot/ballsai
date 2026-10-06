@@ -1,21 +1,17 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { CheckCircle, Eye, Plus, Save, Search, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { Eye, Save } from 'lucide-react'
+import {
+  addAssist, addGoal, addUnattributed, emptyEntry, entryOf, performances, previewBlocker,
+  teamScore, toggleCleanSheet, toggleMvp, togglePlayed, type EntryState, type Side,
+} from '@/lib/match-entry'
+import './results.css'
 
-type TournamentOption = {
-  id: string
-  name: string
-  organizer_id: string
-}
-
-type TeamOption = {
-  id: string
-  name: string
-  tournament_id: string
-  status: string
-}
-
+type TournamentOption = { id: string; name: string; organizer_id: string }
+type TeamOption = { id: string; name: string; tournament_id: string; status: string }
 type PlayerOption = {
   id: string
   player_id: string | null
@@ -25,17 +21,6 @@ type PlayerOption = {
   teamId: string
   isNew?: boolean
 }
-
-type PerformanceRow = {
-  id: string
-  teamId: string
-  playerRankId: string
-  goals: number
-  assists: number
-  cleanSheet: boolean
-  mvp: boolean
-}
-
 type PreviewItem = {
   playerRankId: string
   playerName: string
@@ -47,338 +32,206 @@ type PreviewItem = {
   performanceBonus: number
   confidence: string
 }
+type Step = 'entry' | 'preview' | 'done'
 
-function makeRow(teamId = ''): PerformanceRow {
-  return {
-    id: crypto.randomUUID(),
-    teamId,
-    playerRankId: '',
-    goals: 0,
-    assists: 0,
-    cleanSheet: false,
-    mvp: false,
-  }
-}
+// Few enough players that a search box would only be in the way.
+const SEARCH_FROM = 12
 
-export default function MatchResultForm({
-  tournaments,
-  teams,
-  players,
-}: {
+// Recording a match is a handful of taps (docs/ux-audit, mockup v2-3): choose the two
+// teams, tap who played and who scored, preview, confirm. The score is the sum of the
+// goals, so it cannot disagree with the scorers. The API, the rating and the one-record
+// guarantee (requestId, sql/60) are unchanged.
+export default function MatchResultForm({ tournaments, teams, players }: {
   tournaments: TournamentOption[]
   teams: TeamOption[]
   players: PlayerOption[]
 }) {
-  const [tournamentId, setTournamentId] = useState(tournaments[0]?.id ?? '')
-  const tournamentTeams = useMemo(
-    () => teams.filter(team => team.tournament_id === tournamentId),
-    [teams, tournamentId]
-  )
-  const [teamAId, setTeamAId] = useState('')
-  const [teamBId, setTeamBId] = useState('')
-  const [teamAScore, setTeamAScore] = useState(0)
-  const [teamBScore, setTeamBScore] = useState(0)
-  const [rows, setRows] = useState<PerformanceRow[]>([makeRow()])
-  const [playerQuery, setPlayerQuery] = useState('')
+  const t = useTranslations('matchEntry')
+  const router = useRouter()
+  const tournamentId = tournaments[0]?.id ?? ''
+  const tournamentTeams = useMemo(() => teams.filter(team => team.tournament_id === tournamentId), [teams, tournamentId])
+  // With exactly two teams there is nothing to choose.
+  const initial = () => tournamentTeams.length === 2 ? emptyEntry(tournamentTeams[0].id, tournamentTeams[1].id) : emptyEntry()
+
+  const [entry, setEntry] = useState<EntryState>(initial)
+  const [step, setStep] = useState<Step>('entry')
+  const [tab, setTab] = useState<Side>('A')
+  const [query, setQuery] = useState('')
+  const [openId, setOpenId] = useState('')
   const [preview, setPreview] = useState<PreviewItem[]>([])
-  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [confirmed, setConfirmed] = useState(false)
-  // One id per preview: every confirm of that preview, retried or double-clicked, is the
+  // One id per preview: every confirm of that preview, retried or double-tapped, is the
   // same submission and records the match once (sql/60). A new preview gets a new id.
   const [requestId, setRequestId] = useState('')
 
-  // Only athletes who accepted the selected tournament team's invitation appear.
-  const filteredPlayers = useMemo(() => {
-    const query = playerQuery.trim().toLowerCase()
-    if (!query) return players
-    return players.filter(player =>
-      `${player.player_name} ${player.position}`.toLowerCase().includes(query)
-    )
-  }, [players, playerQuery])
+  const teamName = (id: string) => tournamentTeams.find(team => team.id === id)?.name ?? ''
+  const blocker = previewBlocker(entry, players)
+  const scoreA = teamScore(entry, players, 'A')
+  const scoreB = teamScore(entry, players, 'B')
+  const bothChosen = Boolean(entry.teamAId && entry.teamBId)
 
-  // A selected athlete must stay in their own dropdown even when the current
-  // search no longer matches them, otherwise the row would silently look empty.
-  const optionsForRow = (playerRankId: string, teamId: string) => {
-    const roster = filteredPlayers.filter(player => !teamId || player.teamId === teamId)
-    if (!playerRankId || roster.some(player => player.id === playerRankId)) return roster
-    const selected = players.find(player => player.id === playerRankId)
-    return selected ? [selected, ...roster] : roster
+  const change = (next: EntryState) => { setEntry(next); setError('') }
+  const chooseTeam = (id: string) => {
+    if (!entry.teamAId) change({ ...entry, teamAId: id })
+    else if (id === entry.teamAId) change({ ...entry, teamAId: '' })
+    else change({ ...entry, teamBId: id })
   }
 
-  const inputStyle = {
-    width: '100%',
-    border: '1.5px solid #e5e5e5',
-    borderRadius: 10,
-    padding: '10px 12px',
-    fontSize: 14,
-    outline: 'none',
-    fontFamily: 'var(--font-sarabun)',
-    color: '#111',
-    background: '#fafafa',
-  }
-
-  const selectedTeamIds = [teamAId, teamBId].filter(Boolean)
-  const previewByPlayer = new Map(preview.map(item => [item.playerRankId, item]))
-
-  const updateRow = (id: string, patch: Partial<PerformanceRow>) => {
-    setRows(current => current.map(row => row.id === id ? { ...row, ...patch } : row))
-    setPreview([])
-    setConfirmed(false)
-  }
-
-  const submit = async (mode: 'preview' | 'confirm') => {
+  const send = async (mode: 'preview' | 'confirm') => {
     setLoading(true)
-    setMessage('')
-    setConfirmed(false)
-
-    const response = await fetch('/api/match-results', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mode,
-        requestId: mode === 'confirm' ? requestId : undefined,
-        tournamentId,
-        teamAId,
-        teamBId,
-        teamAScore,
-        teamBScore,
-        performances: rows
-          .filter(row => row.teamId && row.playerRankId)
-          .map(row => ({
-            playerRankId: row.playerRankId,
-            teamId: row.teamId,
-            goals: row.goals,
-            assists: row.assists,
-            cleanSheet: row.cleanSheet,
-            mvp: row.mvp,
-          })),
-      }),
-    })
-
-    const result = await response.json().catch(() => null) as
-      | { error?: string; preview?: PreviewItem[]; matchResultId?: string }
-      | null
-
-    if (!response.ok) {
-      setMessage(result?.error ?? 'บันทึกผลไม่สำเร็จ')
-    } else {
-      setPreview(result?.preview ?? [])
-      if (mode === 'preview') setRequestId(crypto.randomUUID())
-      if (mode === 'confirm') {
-        setConfirmed(true)
-        setMessage(`บันทึกผลเรียบร้อย ${result?.matchResultId ? `#${result.matchResultId.slice(0, 8)}` : ''}`)
+    setError('')
+    try {
+      const response = await fetch('/api/match-results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode,
+          requestId: mode === 'confirm' ? requestId : undefined,
+          tournamentId,
+          teamAId: entry.teamAId,
+          teamBId: entry.teamBId,
+          teamAScore: scoreA,
+          teamBScore: scoreB,
+          performances: performances(entry, players),
+        }),
+      })
+      const result = await response.json().catch(() => null) as { error?: string; preview?: PreviewItem[] } | null
+      if (!response.ok) { setError(result?.error ?? t('failed')); return }
+      if (mode === 'preview') {
+        setPreview(result?.preview ?? [])
+        setRequestId(crypto.randomUUID())
+        setStep('preview')
+      } else {
+        setStep('done')
+        router.refresh()
       }
+    } catch {
+      setError(t('network'))
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
-  return (
-    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-        <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#CC0001', textTransform: 'uppercase', marginBottom: 14 }}>
-          Match Result
-        </div>
+  const reset = () => {
+    setEntry(initial())
+    setStep('entry'); setTab('A'); setQuery(''); setOpenId(''); setPreview([]); setRequestId(''); setError('')
+  }
 
-        <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#aaa', marginBottom: 5, textTransform: 'uppercase' }}>รายการแข่งขัน</label>
-        <select value={tournamentId} onChange={event => {
-          setTournamentId(event.target.value)
-          setTeamAId('')
-          setTeamBId('')
-          setRows([makeRow()])
-          setPreview([])
-        }} style={{ ...inputStyle, marginBottom: 12 }}>
-          <option value="">เลือกรายการแข่ง</option>
-          {tournaments.map(tournament => (
-            <option key={tournament.id} value={tournament.id}>{tournament.name}</option>
-          ))}
-        </select>
+  const sideTeamId = tab === 'A' ? entry.teamAId : entry.teamBId
+  const roster = players.filter(player => player.teamId === sideTeamId)
+  const needle = query.trim().toLowerCase()
+  const shown = needle ? roster.filter(player => `${player.player_name} ${player.position}`.toLowerCase().includes(needle)) : roster
+  const blockText = blocker === 'teams' ? t('blockTeams') : blocker === 'sameTeam' ? t('blockSameTeam') : blocker === 'noPlayers' ? t('blockNoPlayers') : ''
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 72px', gap: 10, marginBottom: 10 }}>
-          <select value={teamAId} onChange={event => {
-            setTeamAId(event.target.value)
-            setPreview([])
-          }} style={inputStyle}>
-            <option value="">Team A</option>
-            {tournamentTeams.map(team => (
-              <option key={team.id} value={team.id}>{team.name}</option>
-            ))}
-          </select>
-          <input type="number" min={0} value={teamAScore} onChange={event => {
-            setTeamAScore(parseInt(event.target.value) || 0)
-            setPreview([])
-          }} style={{ ...inputStyle, textAlign: 'center', fontFamily: 'var(--font-oswald)', fontSize: 18, fontWeight: 700 }} />
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 72px', gap: 10 }}>
-          <select value={teamBId} onChange={event => {
-            setTeamBId(event.target.value)
-            setPreview([])
-          }} style={inputStyle}>
-            <option value="">Team B</option>
-            {tournamentTeams.map(team => (
-              <option key={team.id} value={team.id}>{team.name}</option>
-            ))}
-          </select>
-          <input type="number" min={0} value={teamBScore} onChange={event => {
-            setTeamBScore(parseInt(event.target.value) || 0)
-            setPreview([])
-          }} style={{ ...inputStyle, textAlign: 'center', fontFamily: 'var(--font-oswald)', fontSize: 18, fontWeight: 700 }} />
-        </div>
-      </div>
-
-      <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#CC0001', textTransform: 'uppercase' }}>
-            Player Performance
-          </div>
-          <button onClick={() => setRows(current => [...current, makeRow(teamAId)])} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#CC0001', color: 'white', border: 'none', borderRadius: 20, padding: '6px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>
-            <Plus size={14} /> เพิ่ม
-          </button>
-        </div>
-
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ position: 'relative' }}>
-            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }} />
-            <input
-              value={playerQuery}
-              onChange={event => setPlayerQuery(event.target.value)}
-              placeholder="ค้นหานักกีฬาใน roster: ชื่อ หรือตำแหน่ง"
-              style={{ ...inputStyle, paddingLeft: 34 }}
-            />
-          </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8, alignItems: 'center' }}>
-            {selectedTeamIds.map(teamId => {
-              const team = teams.find(item => item.id === teamId)
-              if (!team) return null
-              return (
-                <button key={team.id} onClick={() => setPlayerQuery(team.name)} style={{ background: 'white', color: '#555', border: '1.5px solid #e5e5e5', borderRadius: 20, padding: '5px 11px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
-                  กรอง: {team.name}
-                </button>
-              )
-            })}
-            {playerQuery && (
-              <button onClick={() => setPlayerQuery('')} style={{ background: 'white', color: '#CC0001', border: '1.5px solid #f2d0d0', borderRadius: 20, padding: '5px 11px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
-                ล้างคำค้นหา
-              </button>
-            )}
-            <span style={{ fontSize: 11, color: '#888', fontWeight: 600 }}>
-              พบ {filteredPlayers.length} จาก {players.length} คน
-            </span>
-          </div>
-          {filteredPlayers.length === 0 && (
-            <p style={{ fontSize: 11, color: '#a16207', lineHeight: 1.6, marginTop: 8 }}>
-              ไม่พบนักกีฬาที่ตรงกับคำค้นหา นักกีฬาจะขึ้นในรายการนี้เมื่อแอดมินสร้าง Ranking ให้บัญชีนั้นแล้ว
-            </p>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {rows.map((row, index) => {
-            const itemPreview = previewByPlayer.get(row.playerRankId)
-            return (
-              <div key={row.id} style={{ border: '1.5px solid #eee', borderRadius: 12, padding: 12, background: '#fafafa' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: '#555' }}>Player #{index + 1}</span>
-                  {rows.length > 1 && (
-                    <button onClick={() => {
-                      setRows(current => current.filter(item => item.id !== row.id))
-                      setPreview([])
-                    }} style={{ background: 'white', color: '#CC0001', border: '1.5px solid #f2d0d0', borderRadius: 8, padding: 6, cursor: 'pointer' }}>
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-                  <select value={row.teamId} onChange={event => updateRow(row.id, { teamId: event.target.value, playerRankId: '' })} style={inputStyle}>
-                    <option value="">ทีม</option>
-                    {selectedTeamIds.map(teamId => {
-                      const team = teams.find(item => item.id === teamId)
-                      return team ? <option key={team.id} value={team.id}>{team.name}</option> : null
-                    })}
-                  </select>
-                  <select value={row.playerRankId} onChange={event => updateRow(row.id, { playerRankId: event.target.value })} style={inputStyle}>
-                    <option value="">นักกีฬา</option>
-                    {optionsForRow(row.playerRankId, row.teamId).map(player => (
-                      <option key={player.id} value={player.id}>{player.player_name}{player.position ? ` · ${player.position}` : ''} · {player.isNew ? 'ใหม่ · Ranking เริ่มเมื่อยืนยันผลนี้' : player.pts}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-                  <input type="number" min={0} value={row.goals} onChange={event => updateRow(row.id, { goals: parseInt(event.target.value) || 0 })} placeholder="Goals" style={inputStyle} />
-                  <input type="number" min={0} value={row.assists} onChange={event => updateRow(row.id, { assists: parseInt(event.target.value) || 0 })} placeholder="Assists" style={inputStyle} />
-                </div>
-
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#555' }}>
-                    <input type="checkbox" checked={row.cleanSheet} onChange={event => updateRow(row.id, { cleanSheet: event.target.checked })} />
-                    Clean Sheet
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#555' }}>
-                    <input type="checkbox" checked={row.mvp} onChange={event => updateRow(row.id, { mvp: event.target.checked })} />
-                    MVP
-                  </label>
-                </div>
-
-                {itemPreview && (
-                  <div style={{ marginTop: 10, background: 'white', borderRadius: 10, padding: '10px 12px', border: '1.5px solid #e5e5e5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: '#111' }}>{itemPreview.playerName}</div>
-                      <div style={{ fontSize: 11, color: '#888' }}>{itemPreview.ratingBefore} → {itemPreview.ratingAfter}</div>
-                    </div>
-                    <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 18, fontWeight: 800, color: itemPreview.ratingChange >= 0 ? '#16a34a' : '#CC0001' }}>
-                      {itemPreview.ratingChange >= 0 ? '+' : ''}{itemPreview.ratingChange}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {preview.length > 0 && (
-        <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#CC0001', textTransform: 'uppercase', marginBottom: 12 }}>
-            Preview Rating Change
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {preview.map(item => (
-              <div key={item.playerRankId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', paddingBottom: 8 }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: '#111' }}>{item.playerName}</div>
-                  <div style={{ fontSize: 11, color: '#888' }}>Match {item.matchChange >= 0 ? '+' : ''}{item.matchChange} · Perf +{item.performanceBonus} · {item.confidence}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 18, fontWeight: 800, color: item.ratingChange >= 0 ? '#16a34a' : '#CC0001' }}>
-                    {item.ratingChange >= 0 ? '+' : ''}{item.ratingChange}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#888' }}>{item.ratingBefore} → {item.ratingAfter}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {message && (
-        <div style={{ background: confirmed ? '#dcfce7' : '#fee2e2', color: confirmed ? '#166534' : '#991b1b', borderRadius: 12, padding: '12px 14px', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-          {confirmed && <CheckCircle size={16} />}
-          {message}
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <button onClick={() => submit('preview')} disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'white', color: '#CC0001', border: '1.5px solid #CC0001', borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 800, cursor: loading ? 'default' : 'pointer' }}>
-          <Eye size={16} /> Preview
-        </button>
-        <button onClick={() => submit('confirm')} disabled={loading || confirmed || preview.length === 0 || !requestId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: loading || confirmed || preview.length === 0 || !requestId ? '#eee' : '#CC0001', color: loading || confirmed || preview.length === 0 || !requestId ? '#aaa' : 'white', border: 'none', borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 800, cursor: loading || confirmed || preview.length === 0 || !requestId ? 'default' : 'pointer' }}>
-          <Save size={16} /> Confirm Result
-        </button>
-      </div>
+  const stepper = (label: string, aria: string, value: number, onLess: () => void, onMore: () => void) => (
+    <div className="mr-stepper">
+      <span>{label}</span>
+      <button type="button" className="mr-chip" aria-label={`${aria}: ${t('less')}`} onClick={onLess}>−</button>
+      <b>{value}</b>
+      <button type="button" className="mr-chip" aria-label={`${aria}: ${t('moreCount')}`} onClick={onMore}>+</button>
     </div>
   )
+
+  if (step === 'done') {
+    return <div className="mr-body">
+      <p className="mr-done" role="status">{t('done')} · {teamName(entry.teamAId)} {scoreA} – {scoreB} {teamName(entry.teamBId)}</p>
+      <div className="mr-dock"><div className="mr-dock-in"><button type="button" className="ui-btn ui-btn-primary" onClick={reset}>{t('next')}</button></div></div>
+    </div>
+  }
+
+  if (step === 'preview') {
+    return <div className="mr-body">
+      <p className="mr-eyebrow">{t('previewEyebrow')}</p>
+      <h2 className="mr-title">{teamName(entry.teamAId)} {scoreA} – {scoreB} {teamName(entry.teamBId)}</h2>
+      <p className="mr-sub">{t('previewSub')}</p>
+      <div style={{ marginTop: 14 }}>
+        {preview.map(item => <div className="mr-result" key={item.playerRankId}>
+          <div>
+            <strong>{item.playerName}</strong>
+            <small>{t('ratingLine', { match: `${item.matchChange >= 0 ? '+' : ''}${item.matchChange}`, bonus: item.performanceBonus })}</small>
+          </div>
+          <div className={`mr-delta ${item.ratingChange >= 0 ? 'is-up' : 'is-down'}`}>
+            {item.ratingChange >= 0 ? '+' : ''}{item.ratingChange}
+            <small>{item.ratingBefore} → {item.ratingAfter}</small>
+          </div>
+        </div>)}
+      </div>
+      {error && <p className="mr-error" role="alert">{error}</p>}
+      <div className="mr-dock"><div className="mr-dock-in">
+        <p className="mr-dock-note">{t('once')}</p>
+        <button type="button" className="ui-btn ui-btn-primary" disabled={loading || !requestId} onClick={() => send('confirm')}><Save size={18} aria-hidden="true" /> {loading ? t('confirming') : t('confirm')}</button>
+        <button type="button" className="mr-ghost" disabled={loading} onClick={() => { setStep('entry'); setPreview([]); setRequestId(''); setError('') }}>{t('back')}</button>
+      </div></div>
+    </div>
+  }
+
+  // Step 1a: which two teams.
+  if (!bothChosen || entry.teamAId === entry.teamBId) {
+    return <div className="mr-body">
+      <p className="mr-eyebrow">{t('eyebrow')}</p>
+      <h2 className="mr-title">{t('teamsTitle')}</h2>
+      <p className="mr-sub">{t('teamsHint')}</p>
+      {tournamentTeams.length === 0
+        ? <p className="mr-empty">{t('noTeams')}</p>
+        : <ul className="mr-teams">{tournamentTeams.map(team => {
+          const role = team.id === entry.teamAId ? t('home') : team.id === entry.teamBId ? t('away') : ''
+          return <li key={team.id}><button type="button" className="mr-team" aria-pressed={Boolean(role)} onClick={() => chooseTeam(team.id)}>
+            <span>{team.name}</span>{role && <span className="ui-chip is-red">{role}</span>}
+          </button></li>
+        })}</ul>}
+    </div>
+  }
+
+  // Step 1b: score and who played.
+  return <div className="mr-body">
+    <p className="mr-eyebrow">{t('eyebrow')}</p>
+    <div className="mr-board" aria-live="polite">
+      <div><div className="mr-score">{scoreA}</div><div className="mr-board-name">{teamName(entry.teamAId)}</div></div>
+      <span className="mr-board-dash" aria-hidden="true">–</span>
+      <div><div className="mr-score">{scoreB}</div><div className="mr-board-name">{teamName(entry.teamBId)}</div></div>
+    </div>
+    <button type="button" className="mr-link" onClick={() => change(emptyEntry())}>{t('changeTeams')}</button>
+    <p className="mr-sub" style={{ textAlign: 'center', fontSize: 13 }}>{t('scoreHint')}</p>
+
+    <div className="mr-tabs" role="group">
+      {(['A', 'B'] as const).map(side => <button key={side} type="button" className="mr-tab" aria-pressed={tab === side} onClick={() => { setTab(side); setQuery(''); setOpenId('') }}>
+        {teamName(side === 'A' ? entry.teamAId : entry.teamBId)}
+      </button>)}
+    </div>
+
+    {roster.length > SEARCH_FROM && <input className="mr-search" type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={t('searchPlaceholder')} aria-label={t('searchPlaceholder')} />}
+    {roster.length === 0 && <p className="mr-empty">{t('noPlayers')}</p>}
+
+    {shown.map(player => {
+      const state = entryOf(entry, player.id)
+      return <div className="mr-player" key={player.id}>
+        <div className="mr-line">
+          <button type="button" className="mr-name" aria-pressed={state.played} aria-label={t('played', { name: player.player_name })} onClick={() => change(togglePlayed(entry, player.id))}>
+            <span>{player.player_name}</span>
+            <small>{[player.position, player.isNew ? t('newPlayer') : ''].filter(Boolean).join(' · ')}</small>
+          </button>
+          <button type="button" className="mr-chip" aria-pressed={state.goals > 0} aria-label={t('goal', { name: player.player_name })} onClick={() => change(addGoal(entry, player.id, 1))}>⚽{state.goals > 0 && ` ${state.goals}`}</button>
+          <button type="button" className="mr-chip is-mvp" aria-pressed={state.mvp} aria-label={t('mvp', { name: player.player_name })} onClick={() => change(toggleMvp(entry, player.id))}>★</button>
+          <button type="button" className="mr-chip is-quiet" aria-expanded={openId === player.id} aria-label={t('more', { name: player.player_name })} onClick={() => setOpenId(openId === player.id ? '' : player.id)}>⋯</button>
+        </div>
+        {openId === player.id && <div className="mr-details">
+          {stepper('⚽', t('goalWord'), state.goals, () => change(addGoal(entry, player.id, -1)), () => change(addGoal(entry, player.id, 1)))}
+          {stepper(t('assists'), t('assists'), state.assists, () => change(addAssist(entry, player.id, -1)), () => change(addAssist(entry, player.id, 1)))}
+          <button type="button" className="mr-chip" aria-pressed={state.cleanSheet} onClick={() => change(toggleCleanSheet(entry, player.id))}>{t('cleanSheet')}</button>
+        </div>}
+      </div>
+    })}
+
+    <div className="mr-free">
+      <span>{t('unattributed')}</span>
+      {stepper('', t('unattributed'), entry.unattributed[tab], () => change(addUnattributed(entry, tab, -1)), () => change(addUnattributed(entry, tab, 1)))}
+    </div>
+
+    {error && <p className="mr-error" role="alert">{error}</p>}
+    <div className="mr-dock"><div className="mr-dock-in">
+      {blockText && <p className="mr-dock-note">{blockText}</p>}
+      <button type="button" className="ui-btn ui-btn-primary" disabled={loading || Boolean(blocker)} onClick={() => send('preview')}><Eye size={18} aria-hidden="true" /> {loading ? t('previewing') : t('preview')}</button>
+    </div></div>
+  </div>
 }
