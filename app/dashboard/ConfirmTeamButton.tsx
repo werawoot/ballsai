@@ -33,30 +33,9 @@ export default function ConfirmTeamButton({ teamId, action }: { teamId: string, 
   const isConfirm = action === 'confirmed'
 
   return (
-    <div style={{ flex: 1 }}>
-      <button
-        onClick={handleClick}
-        disabled={loading}
-        style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 6,
-          padding: '10px',
-          borderRadius: 10,
-          border: 'none',
-          cursor: loading ? 'default' : 'pointer',
-          background: isConfirm ? '#CC0001' : '#f8f8f8',
-          color: isConfirm ? 'white' : '#888',
-          fontSize: 13,
-          fontWeight: 800,
-          fontFamily: 'var(--font-oswald)',
-          letterSpacing: 0.5,
-          opacity: loading ? 0.6 : 1,
-        }}
-      >
-        {isConfirm ? <CheckCircle size={16} /> : <XCircle size={16} />}
+    <div>
+      <button className={`ui-btn ${isConfirm ? 'ui-btn-primary' : 'ui-btn-ghost'}`} onClick={handleClick} disabled={loading} type="button">
+        {isConfirm ? <CheckCircle size={18} aria-hidden="true" /> : <XCircle size={18} aria-hidden="true" />}
         {loading ? '...' : isConfirm ? 'ยืนยัน' : 'ปฏิเสธ'}
       </button>
       {message ? (

@@ -19,7 +19,7 @@ export type DashboardPendingTeam = Record<string, unknown> & {
   name: string
   members: string | null
   tournament_id: string
-  tournaments: { name: string } | null
+  tournaments: { name: string; fee?: number | null } | null
 }
 export type DashboardPayment = Record<string, unknown> & { id: string; team_id: string; amount: number | null; status: string; slip_url: string | null }
 
@@ -31,7 +31,7 @@ export async function fetchOrganizerDashboard(client: SupabaseClient, { organize
   // Teams are the organizer's through their tournament; the inner join filters in the
   // database instead of shipping a list of every tournament id.
   const organizerTeams = (columns: string, options?: { count: 'exact'; head: true }) =>
-    client.from('teams').select(`${columns}, tournaments!inner(name, organizer_id)`, options).eq('tournaments.organizer_id', organizerId)
+    client.from('teams').select(`${columns}, tournaments!inner(name, organizer_id, fee)`, options).eq('tournaments.organizer_id', organizerId)
 
   const [tournamentCount, pendingCount, confirmedCount, tournamentRows, pendingRows] = await Promise.all([
     client.from('tournaments').select('id', { count: 'exact', head: true }).eq('organizer_id', organizerId),

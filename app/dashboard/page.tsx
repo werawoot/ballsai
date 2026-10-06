@@ -7,6 +7,7 @@ import { getTranslations } from 'next-intl/server'
 import Image from 'next/image'
 import ConfirmTeamButton from './ConfirmTeamButton'
 import ConfirmPaymentButton from './ConfirmPaymentButton'
+import { approvalAction } from '@/lib/team-approval'
 import ToggleTournamentStatusButton from './ToggleTournamentStatusButton'
 import PageHeader from '@/components/PageHeader'
 import Pagination from '@/components/Pagination'
@@ -182,6 +183,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {pendingTeams.map(team => {
                 const payment = paymentsByTeam[team.id]
+                const action = approvalAction(team.tournaments?.fee, payment ?? null)
                 return (
                   <div key={team.id} style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                     <div style={{ height: 4, background: '#f59e0b' }} />
@@ -218,18 +220,13 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
 
                           {payment.slip_url && (
                             <a href={`/api/payments/${payment.id}/slip`} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', border: '1.5px solid #e5e5e5' }}>
-                              <Image src={`/api/payments/${payment.id}/slip`} alt="slip" width={640} height={900} unoptimized style={{ width: '100%', maxHeight: 200, height: 'auto', objectFit: 'contain', display: 'block', background: '#f8f8f8' }} />
+                              <Image src={`/api/payments/${payment.id}/slip`} alt="slip" width={640} height={900} unoptimized style={{ width: '100%', maxHeight: 140, height: 'auto', objectFit: 'contain', display: 'block', background: '#f8f8f8' }} />
                               <div style={{ background: '#f8f8f8', padding: '6px', textAlign: 'center', fontSize: 11, color: '#888', fontWeight: 600 }}>
                                 แตะเพื่อดูรูปขนาดเต็ม
                               </div>
                             </a>
                           )}
 
-                          {payment.status === 'pending' && (
-                            <div style={{ marginTop: 10 }}>
-                              <ConfirmPaymentButton paymentId={payment.id} />
-                            </div>
-                          )}
                         </div>
                       ) : (
                         <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '12px', marginBottom: 12, textAlign: 'center' }}>
@@ -237,8 +234,9 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
                         </div>
                       )}
 
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <ConfirmTeamButton teamId={team.id} action="confirmed" />
+                      <div style={{ display: 'grid', gap: 8 }}>
+                        {action === 'confirmPayment' && payment && <ConfirmPaymentButton paymentId={payment.id} />}
+                        {action === 'confirmTeam' && <ConfirmTeamButton teamId={team.id} action="confirmed" />}
                         <ConfirmTeamButton teamId={team.id} action="rejected" />
                       </div>
                     </div>
