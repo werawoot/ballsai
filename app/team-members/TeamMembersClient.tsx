@@ -74,15 +74,15 @@ export default function TeamMembersClient({ teams, invites }: { teams: Team[]; i
       {selected && <p style={{ color: '#888', fontSize: 12, marginTop: 10 }}>รายการ: {selectedTournamentName ?? '—'} · สถานะ: {selected.status === 'draft' ? 'กำลังจัด roster' : selected.status === 'pending' ? 'รอตรวจสอบ' : selected.status === 'confirmed' ? 'ยืนยันแล้ว' : 'ไม่ผ่าน'}</p>}
     </section>}
 
-    <section style={{ background: 'white', borderRadius: 16, padding: 18, border: '1px solid #e5e7eb' }}>
+    {inviteState.length > 0 && <section style={{ background: 'white', borderRadius: 16, padding: 18, border: '1px solid #e5e7eb' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, marginBottom: 12 }}><Users size={18} color="#CC0001" /> คำเชิญของฉัน</div>
-      {inviteState.length === 0 ? <div><p style={{ color: '#888', fontSize: 14, lineHeight: 1.55 }}>ยังไม่มีคำเชิญเข้าทีม ดูรายการที่สนใจ แล้วให้โค้ชหรือผู้จัดสร้างทีมและเชิญด้วยอีเมลบัญชีนี้</p><Link href="/tournaments" style={{ display: 'inline-block', marginTop: 4, color: '#CC0001', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>ค้นหารายการแข่ง →</Link></div> : <div style={{ display: 'grid', gap: 10 }}>
+      <div style={{ display: 'grid', gap: 10 }}>
         {inviteState.map(invite => <div key={invite.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, border: '1px solid #eee', borderRadius: 12, padding: 12 }}>
           <div><strong>{invite.teams?.name ?? 'ทีมของคุณ'}</strong><div style={{ color: '#888', fontSize: 12 }}>{invite.status === 'pending' ? 'รอการตอบรับ' : invite.status === 'accepted' ? 'เข้าร่วมแล้ว' : 'ปฏิเสธแล้ว'}</div></div>
           {invite.status === 'pending' && <div style={{ display: 'flex', gap: 6 }}><button onClick={() => respond(invite.id, 'accepted')} aria-label="ยอมรับคำเชิญ" style={{ border: 0, background: '#dcfce7', color: '#166534', borderRadius: 8, padding: 8 }}><Check size={16} /></button><button onClick={() => respond(invite.id, 'declined')} aria-label="ปฏิเสธคำเชิญ" style={{ border: 0, background: '#fee2e2', color: '#991b1b', borderRadius: 8, padding: 8 }}><X size={16} /></button></div>}
         </div>)}
-      </div>}
+      </div>
       {inviteMessage && <div style={{ marginTop: 12, background: inviteMessage.includes('ไม่สำเร็จ') ? '#fef2f2' : '#f0fdf4', color: inviteMessage.includes('ไม่สำเร็จ') ? '#b91c1c' : '#166534', borderRadius: 10, padding: '10px 12px', fontSize: 13, lineHeight: 1.5 }}>{inviteMessage}{inviteMessage.startsWith('รับคำเชิญแล้ว') && <Link href="/career" style={{ display: 'block', marginTop: 5, color: 'inherit', fontWeight: 800 }}>ดู Athlete Passport →</Link>}</div>}
-    </section>
+    </section>}
   </div>
 }

@@ -710,6 +710,13 @@
     "next": "Next",
     "current": "Page {page}"
   },
+  "teamMembersEmpty": {
+    "eyebrow": "My teams",
+    "title": "No team yet",
+    "text": "Start by choosing a tournament that is open for registration, then name your team.",
+    "cta": "See all tournaments",
+    "athleteHint": "If you are an athlete, your coach's invitation will appear here."
+  },
   "matchEntry": {
     "eyebrow": "This match",
     "teamsTitle": "Which two teams played?",
