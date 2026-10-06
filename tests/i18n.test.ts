@@ -103,8 +103,10 @@ describe('the two message files', () => {
       const errors: string[] = []
       const t = createTranslator({ locale: locale as Locale, messages, onError: error => errors.push(error.message) }) as unknown as
         (key: string, values?: Record<string, string | number>) => string
-      for (const key of Object.keys(flatten(messages))) {
-        const values = Object.fromEntries(placeholders(flatten(messages)[key]).map(name => [name, name === 'count' ? 3 : 'X']))
+      // Flattened once: flattening per key made this loop quadratic and it timed out.
+      const flat = flatten(messages)
+      for (const key of Object.keys(flat)) {
+        const values = Object.fromEntries(placeholders(flat[key]).map(name => [name, name === 'count' ? 3 : 'X']))
         expect(t(key, values), `${locale}: ${key}`).not.toBe(key)
       }
       expect(errors).toEqual([])
