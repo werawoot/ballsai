@@ -1,0 +1,56 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mockup 2 — บันทึกผลแข่ง</title>
+<link rel="stylesheet" href="base.css"><style>
+.top{background:var(--ui-ink);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px}
+.top b{font:700 16px var(--font-sarabun)}.crumb{font-size:13px;color:var(--ui-mute-d)}
+.wrap{max-width:1080px;margin:0 auto;padding:16px 16px 120px}
+.ctx{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 14px}
+.ctx .t{font:800 15px/1.3 var(--font-sarabun)}
+.steps{display:flex;gap:6px;margin:10px 0 16px}.steps i{flex:1;height:5px;border-radius:9px;background:var(--ui-line)}.steps i.on{background:var(--ui-red)}
+.grid{display:grid;gap:14px}
+@media(min-width:900px){.grid{grid-template-columns:1.05fr 1fr;align-items:start}.wrap{padding-bottom:60px}.bar{position:static!important;max-width:1048px;margin:14px auto 0!important;box-shadow:none!important;border:1px solid var(--ui-line);border-radius:var(--ui-r-lg);margin-top:14px}}
+.score{padding:16px}.score h2{margin:0 0 12px}
+.team{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:12px 0;border-top:1px solid var(--ui-line)}
+.team:first-of-type{border-top:0}
+.team .n{font:800 17px/1.25 var(--font-sarabun)}.team .s{font-size:12px;color:var(--ui-mute)}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:52px;height:52px;border-radius:14px;border:1.5px solid var(--ui-line);background:#fff;font:700 26px var(--font-oswald);color:var(--ui-text)}
+.step b{min-width:46px;text-align:center;font:800 40px var(--font-oswald)}
+.vs{font:700 12px var(--font-barlow);letter-spacing:2px;color:var(--ui-mute);text-align:center;margin:0}
+.card{background:var(--ui-card);border:1px solid var(--ui-line);border-radius:var(--ui-r-lg)}
+.pl{padding:16px}.tabs{display:flex;gap:6px;margin:10px 0}.tabs button{flex:1;min-height:44px;border-radius:12px;border:1.5px solid var(--ui-line);background:#fff;font:800 14px var(--font-sarabun)}.tabs .on{background:var(--ui-ink);color:#fff;border-color:var(--ui-ink)}
+.row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--ui-line);min-height:56px}
+.row .nm{font:700 15px var(--font-sarabun)}.row small{display:block;color:var(--ui-mute);font-size:12px;font-weight:600}
+.g{min-width:76px;min-height:44px;border-radius:12px;border:1.5px solid var(--ui-line);background:#fff;font:700 14px var(--font-sarabun)}
+.g.on{background:var(--ui-red-soft);border-color:var(--ui-red);color:var(--ui-red)}
+.m{min-width:56px}.m.on{background:#fff3db;border-color:var(--ui-gold);color:#8a5a00}
+.hint{font-size:13px;color:var(--ui-mute);margin:8px 0 0;line-height:1.5}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--ui-line);padding:10px 16px 14px;box-shadow:0 -8px 24px rgba(0,0,0,.08)}
+.bar p{margin:0 0 8px;font-size:13px;color:var(--ui-mute);display:flex;gap:6px;align-items:center}
+.sample{position:fixed;top:8px;right:8px;background:#fff3db;color:#8a5a00;font:700 11px var(--font-sarabun);padding:4px 8px;border-radius:99px;z-index:9}
+</style></head><body>
+<div class="sample">ตัวอย่างแบบ · local mock</div>
+<div class="top"><span style="font-size:20px">←</span><div><b>บันทึกผลแข่ง</b><div class="crumb">แดชบอร์ดผู้จัด</div></div></div>
+<div class="wrap">
+ <div class="ctx"><span class="ui-chip is-self">รายการ</span><span class="t">ศึกฟุตบอลเยาวชนชิงถ้วยพระราชทาน รุ่นไม่เกิน 15 ปี</span><a style="color:var(--ui-red);font-weight:800;font-size:13px">เปลี่ยนรายการ</a></div>
+ <div class="steps" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3" aria-label="ขั้น 1 จาก 3"><i class="on"></i><i></i><i></i></div>
+ <p class="ui-eyebrow">ขั้น 1 จาก 3 · สกอร์</p>
+ <h1 class="ui-h1" style="margin:4px 0 14px">นัดนี้ใครเจอใคร</h1>
+ <div class="grid">
+  <section class="card score">
+   <div class="team"><div><div class="n">บุรีรัมย์ ยูไนเต็ด อะคาเดมี่</div><div class="s">ทีมเหย้า · แตะชื่อเพื่อเปลี่ยนทีม</div></div><div class="step"><button aria-label="ลด">−</button><b>2</b><button aria-label="เพิ่ม">+</button></div></div>
+   <p class="vs">VS</p>
+   <div class="team"><div><div class="n">อุดรธานี จูเนียร์</div><div class="s">ทีมเยือน · แตะชื่อเพื่อเปลี่ยนทีม</div></div><div class="step"><button aria-label="ลด">−</button><b>1</b><button aria-label="เพิ่ม">+</button></div></div>
+  </section>
+  <section class="card pl">
+   <h2 class="ui-h2">ใครทำผลงานบ้าง <span style="font-weight:600;font-size:13px;color:var(--ui-mute)">(ไม่บังคับ)</span></h2>
+   <div class="tabs"><button class="on">บุรีรัมย์ ฯ</button><button>อุดรธานี ฯ</button></div>
+   <div class="row"><div><span class="nm">น้อง ก. (ตัวอย่าง)</span><small>กองกลาง</small></div><button class="g on">⚽ ประตู 2</button><button class="g m on">★ MVP</button></div>
+   <div class="row"><div><span class="nm">น้อง ข. (ตัวอย่าง)</span><small>กองหน้า</small></div><button class="g">⚽ ประตู 0</button><button class="g m">★ MVP</button></div>
+   <div class="row"><div><span class="nm">น้อง ค. (ตัวอย่าง)</span><small>ผู้รักษาประตู</small></div><button class="g">🧤 คลีนชีต</button><button class="g m">★ MVP</button></div>
+   <p class="hint">แตะปุ่มประตูเพื่อเพิ่มทีละ 1 · แตะอีกครั้งที่ 0 เพื่อล้าง · ค้นหาชื่อได้เมื่อทีมมีเกิน 12 คน</p>
+   <p class="hint" style="background:#fff3db;color:#8a5a00;border-radius:10px;padding:8px 10px">มี 1 คนในทีมที่ยังบันทึกผลไม่ได้ เพราะยังไม่เปิดโปรไฟล์สาธารณะ <a style="color:#8a5a00;font-weight:800;text-decoration:underline">ดูเหตุผล</a></p>
+  </section>
+ </div>
+</div>
+<div class="bar"><p>ต่อไป: ดูตัวอย่างว่าผลนี้เปลี่ยน Rating ใครบ้าง ยังไม่มีอะไรถูกบันทึก</p><button class="ui-btn ui-btn-primary" style="width:100%;min-height:54px">ดูตัวอย่างผล →</button></div>
+</body></html>

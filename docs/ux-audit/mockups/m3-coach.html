@@ -1,0 +1,40 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mockup 3 — โค้ชเชิญนักกีฬา</title>
+<link rel="stylesheet" href="base.css"><style>
+.sample{position:fixed;top:8px;right:8px;background:#fff3db;color:#8a5a00;font:700 11px var(--font-sarabun);padding:4px 8px;border-radius:99px;z-index:9}
+.top{background:var(--ui-ink);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px}.top b{font:700 16px var(--font-sarabun)}
+.wrap{max-width:1040px;margin:0 auto;padding:16px 16px 130px}
+.grid{display:grid;gap:14px}@media(min-width:900px){.grid{grid-template-columns:1.15fr 1fr;align-items:start}.wrap{padding-bottom:50px}.bar{position:static!important;max-width:1008px;margin:14px auto 0!important;box-shadow:none!important;border:1px solid var(--ui-line);border-radius:var(--ui-r-lg)}}
+.stp{display:flex;gap:6px;margin:8px 0 6px}.stp div{flex:1;font:800 12px var(--font-sarabun);color:var(--ui-mute)}.stp div i{display:block;height:5px;border-radius:9px;background:var(--ui-line);margin-bottom:5px}.stp .done i{background:var(--ui-green)}.stp .now i{background:var(--ui-red)}.stp .now{color:var(--ui-text)}
+.card{background:#fff;border:1px solid var(--ui-line);border-radius:var(--ui-r-lg);padding:16px}
+textarea{width:100%;min-height:128px;border:1.5px solid var(--ui-line);border-radius:14px;padding:12px;font:600 15px/1.6 var(--font-sarabun);background:#fff;resize:vertical}
+.res{display:grid;gap:0;margin-top:10px}.r{display:flex;gap:8px;align-items:center;min-height:48px;border-top:1px solid var(--ui-line);font-size:14px;font-weight:700}.r:first-child{border-top:0}.r small{font-weight:600;color:var(--ui-mute)}.r .ui-chip{margin-left:auto}
+.cnt{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.cnt div{background:var(--ui-paper);border-radius:12px;padding:10px;text-align:center}.cnt b{display:block;font:800 26px var(--font-oswald)}.cnt span{font-size:12px;color:var(--ui-mute);font-weight:700}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--ui-line);padding:10px 16px 14px;box-shadow:0 -8px 24px rgba(0,0,0,.08)}.bar p{margin:0 0 8px;font-size:13px;color:var(--ui-mute)}
+.ghost{min-height:44px;border-radius:12px;border:1.5px solid var(--ui-line);background:#fff;font:800 14px var(--font-sarabun);padding:0 14px}
+.note{font-size:12.5px;color:var(--ui-mute);line-height:1.55;margin:8px 0 0}
+</style></head><body><div class="sample">ตัวอย่างแบบ · local mock</div>
+<div class="top"><span style="font-size:20px">←</span><b>ทีมของฉัน</b></div>
+<div class="wrap">
+<p class="ui-eyebrow">ทีมสมัครแข่ง</p>
+<h1 class="ui-h1" style="margin:4px 0 2px">ขอนแก่น ยูไนเต็ด U13</h1>
+<p style="margin:0;color:var(--ui-mute);font-size:14px">สมัครเข้ารายการ: ศึกฟุตบอลเยาวชนชิงถ้วยพระราชทาน รุ่นไม่เกิน 15 ปี</p>
+<div class="stp" role="progressbar" aria-valuenow="2" aria-valuemin="1" aria-valuemax="3" aria-label="ขั้น 2 จาก 3"><div class="done"><i></i>1 สร้างทีม</div><div class="now"><i></i>2 เชิญนักกีฬา</div><div><i></i>3 ส่งสมัคร</div></div>
+<div class="grid">
+ <section class="card"><h2 class="ui-h2">เชิญนักกีฬา</h2>
+  <p class="note" style="margin:4px 0 10px">วางอีเมลบัญชีของนักกีฬาได้หลายคน คั่นด้วยการขึ้นบรรทัดใหม่ หรือเครื่องหมายจุลภาค</p>
+  <textarea aria-label="อีเมลนักกีฬา">nong.a@example.com
+nong.b@example.com
+nong.c@example.com
+nong.d@example.com</textarea>
+  <button class="ui-btn" style="margin-top:10px;background:var(--ui-ink);color:#fff;min-height:48px">ส่งคำเชิญ 4 คน</button>
+  <p class="note">ถ้าเด็กไม่เห็นคำเชิญ ให้เช็กว่าสมัครด้วยอีเมลเดียวกันแล้ว · ส่งซ้ำอีเมลเดิมได้ ระบบไม่ส่งซ้ำให้ · ระบบไม่บอกว่าอีเมลไหนมีบัญชีแล้ว เพื่อไม่ให้ใครใช้เดาตัวตนเด็ก</p>
+  <div class="res" aria-live="polite"><div class="r">nong.a@example.com<span class="ui-chip is-performance">ส่งแล้ว</span></div><div class="r">nong.b@example.com<span class="ui-chip is-performance">ส่งแล้ว</span></div><div class="r">nong.c@example.com<span class="ui-chip is-performance">ส่งแล้ว</span></div><div class="r">nong.d@example.com<span class="ui-chip is-self">เชิญไว้แล้ว</span></div></div>
+ </section>
+ <section class="card"><h2 class="ui-h2">รายชื่อในทีม</h2>
+  <div class="cnt"><div><b>1</b><span>ตอบรับแล้ว</span></div><div><b>2</b><span>รอตอบ</span></div><div><b>1</b><span>ปฏิเสธ</span></div></div>
+  <div class="res"><div class="r">น้องเอ (ตัวอย่าง)<span class="ui-chip is-performance">ตอบรับแล้ว</span></div><div class="r">น้องบี (ตัวอย่าง)<span class="ui-chip is-warn">รอตอบรับ</span></div><div class="r">นักกีฬา (ปฏิเสธ)<span class="ui-chip is-self">ปฏิเสธ</span></div></div>
+  <p class="note">แตะชื่อเพื่อ "นำออกจากทีม" หรือ "รับรองตำแหน่ง" — เก็บไว้ในหน้ารายละเอียดของแต่ละคน ไม่แสดงซ้ำทุกแถว</p>
+ </section>
+</div></div>
+<div class="bar"><p>ส่งสมัครได้เมื่อมีนักกีฬาตอบรับอย่างน้อย 1 คน (ตอนนี้ 1 คน)</p><button class="ui-btn ui-btn-primary" style="width:100%;min-height:54px">ส่งสมัครรายการ → ไปขั้นชำระเงิน</button></div>
+</body></html>
