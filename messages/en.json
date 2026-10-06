@@ -717,6 +717,12 @@
     "cta": "See all tournaments",
     "athleteHint": "If you are an athlete, your coach's invitation will appear here."
   },
+  "teamInvite": {
+    "join": "Join the team",
+    "decline": "Don't join",
+    "ifJoin": "If you join: the coach can pick you for this team's results once the team is confirmed, and the coach will see your name on your profile.",
+    "ifDecline": "If you don't join: the coach will see that you are not joining."
+  },
   "matchEntry": {
     "eyebrow": "This match",
     "teamsTitle": "Which two teams played?",

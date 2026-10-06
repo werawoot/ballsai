@@ -80,3 +80,22 @@ describe('/team-members when there is something to show', () => {
     expect(html).not.toContain('ยังไม่มีทีม')
   })
 })
+
+describe('an invitation says what each answer does, in words', () => {
+  const pendingInvite = { ...invite }
+  it('has labelled buttons and one sentence for each answer', async () => {
+    db.user = 'u1'; db.tables = { teams: [], team_members: [pendingInvite], coach_attestations: [] }
+    const html = await render()
+    expect(html).toMatch(/<button[^>]*>[^<]*เข้าร่วมทีม/)
+    expect(html).toMatch(/<button[^>]*>[^<]*ไม่เข้าร่วม/)
+    expect(html).toContain('โค้ชเลือกคุณลงผลแข่งของทีมนี้ได้เมื่อทีมได้รับการยืนยัน และโค้ชจะเห็นชื่อในโปรไฟล์ของคุณ')
+    expect(html).toContain('โค้ชจะเห็นว่าคุณไม่เข้าร่วม')
+  })
+
+  it('shows no answer buttons once answered', async () => {
+    db.user = 'u1'; db.tables = { teams: [], team_members: [{ ...invite, status: 'accepted' }], coach_attestations: [] }
+    const html = await render()
+    expect(html).toContain('เข้าร่วมแล้ว')
+    expect(html).not.toContain('ไม่เข้าร่วม')
+  })
+})
