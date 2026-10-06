@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Eye, Save } from 'lucide-react'
+import { apiErrorText } from '@/lib/api-error-text'
 import {
   addAssist, addGoal, addUnattributed, emptyEntry, entryOf, performances, previewBlocker,
   teamScore, toggleCleanSheet, toggleMvp, togglePlayed, type EntryState, type Side,
@@ -47,6 +48,7 @@ export default function MatchResultForm({ tournaments, teams, players }: {
   players: PlayerOption[]
 }) {
   const t = useTranslations('matchEntry')
+  const tApi = useTranslations('apiErrors')
   const router = useRouter()
   const tournamentId = tournaments[0]?.id ?? ''
   const tournamentTeams = useMemo(() => teams.filter(team => team.tournament_id === tournamentId), [teams, tournamentId])
@@ -96,8 +98,11 @@ export default function MatchResultForm({ tournaments, teams, players }: {
           performances: performances(entry, players),
         }),
       })
-      const result = await response.json().catch(() => null) as { error?: string; preview?: PreviewItem[] } | null
-      if (!response.ok) { setError(result?.error ?? t('failed')); return }
+      const result = await response.json().catch(() => null) as { error?: string; code?: string; preview?: PreviewItem[] } | null
+      if (!response.ok) {
+        setError(apiErrorText(result, code => (tApi.has(code as never) ? tApi(code as never) : null), t('failed')))
+        return
+      }
       if (mode === 'preview') {
         setPreview(result?.preview ?? [])
         setRequestId(crypto.randomUUID())
