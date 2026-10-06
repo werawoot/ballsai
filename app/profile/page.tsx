@@ -119,6 +119,7 @@ export default async function ProfilePage() {
     pendingGuardianRequests: pendingGuardian,
   }, thaiDate(new Date())) : null
 
+  const hasProgram = Boolean(training?.available && training.enrollments.length > 0)
   const name = athlete?.display_name?.trim() || profile?.full_name?.trim() || t('noName')
   const publicPath = `/players/${rank?.id || user.id}`
   const persona = profile?.onboarding_persona
@@ -181,7 +182,13 @@ export default async function ProfilePage() {
             <Link href="/profile/edit" className="pf-btn pf-btn-primary"><Camera size={17} aria-hidden="true" />{t('noAthlete.cta')}</Link>
           </section>}
 
-          {readiness && (readiness.next || !athlete?.is_public ? <section className="pf-card pf-next-card" aria-labelledby="pf-readiness">
+          {/* Someone who trains here opens the page to today's session, so it comes first (UX mockup v5-A). */}
+          {hasProgram && training && <TrainingCard training={training} today={thaiDate(new Date())} />}
+
+          {readiness && (athlete?.is_public && readiness.next ? <Link href={readiness.next.href} className="pf-card pf-ready-line">
+            <span>{t('readiness.compact', { done: readiness.done, total: readiness.total, next: t(`readiness.items.${readiness.next.key}.title`) })}</span>
+            <ChevronRight size={17} aria-hidden="true" />
+          </Link> : readiness.next || !athlete?.is_public ? <section className="pf-card pf-next-card" aria-labelledby="pf-readiness">
             <div className="pf-card-head">
               <h2 id="pf-readiness" className="pf-card-title">{t('readiness.title')}</h2>
               <span className="pf-card-meta">{t('readiness.progress', { done: readiness.done, total: readiness.total })}</span>
@@ -220,7 +227,7 @@ export default async function ProfilePage() {
             <p className="pf-ready"><BadgeCheck size={20} aria-hidden="true" />{t('readiness.doneNote')}</p>
           </section>)}
 
-          {training && <TrainingCard training={training} today={thaiDate(new Date())} />}
+          {training && !hasProgram && <TrainingCard training={training} today={thaiDate(new Date())} />}
 
           {athlete?.is_public && <PublicProfileShare profilePath={publicPath} isPublic />}
 
@@ -242,6 +249,7 @@ export default async function ProfilePage() {
                   : <><div className="pf-power" style={{ fontSize: 22 }}>{t('card.starterTitle')}</div><p className="pf-note">{t('card.starterBody')}</p></>}
                 <div className="pf-row">
                   <Link href="/card" className="pf-btn pf-btn-line pf-btn-sm">{t('card.build')}</Link>
+                  {rank && <Link href="/ranking" className="pf-btn pf-btn-line pf-btn-sm">{t('card.myRanking')}</Link>}
                   {!rank && <Link href="/tournaments" className="pf-btn pf-btn-line pf-btn-sm"><Crown size={15} aria-hidden="true" />{t('card.findTournament')}</Link>}
                 </div>
               </div>

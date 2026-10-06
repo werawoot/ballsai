@@ -943,7 +943,8 @@
         }
       },
       "cta": "Do this step",
-      "showAll": "See every step"
+      "showAll": "See every step",
+      "compact": "Profile {done} of {total} steps done · next: {next}"
     },
     "card": {
       "title": "Player card",
@@ -952,7 +953,8 @@
       "starterTitle": "STARTER CARD",
       "starterBody": "No Power Rating yet. Ratings come only from match results recorded and confirmed by organizers. Play your first tournament to start.",
       "build": "Build and share card",
-      "findTournament": "Find a tournament"
+      "findTournament": "Find a tournament",
+      "myRanking": "See my ranking"
     },
     "teams": {
       "title": "My teams",
@@ -1495,7 +1497,8 @@
       "nextOn": "Next session {date}",
       "emptyTitle": "Pick a training programme",
       "emptyText": "Short research-based sessions you can do at home. We plan your weeks.",
-      "emptyCta": "See programmes"
+      "emptyCta": "See programmes",
+      "progressNoStreak": "{done} of {total} sessions done"
     },
     "stop": "Stop this programme",
     "stopConfirm": "Stop this programme? Your training history stays.",
