@@ -8,6 +8,7 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { parseRequestId, recordMatchResult } from '@/lib/match-result-record'
 import { FIRST_MATCH_RATING, parsePlayerKey, profilePosition, toRecordedPerformance } from '@/lib/first-match-rank'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
+import { apiError } from '@/lib/api-error'
 
 type PerformanceInput = {
   playerRankId?: string
@@ -146,6 +147,16 @@ export async function POST(request: Request) {
 
   if (performances.length === 0) {
     return NextResponse.json({ error: 'กรุณาเพิ่ม performance นักกีฬาอย่างน้อย 1 คน' }, { status: 400 })
+  }
+
+  // The tap entry derives the score from the goals, but a crafted or older client could
+  // send more player goals than its team scored. Fewer is fine: own goals and goals not
+  // credited to a player count toward the score only.
+  const goalsFor = (teamId: string) => performances
+    .filter(item => item.teamId === teamId)
+    .reduce((sum, item) => sum + Math.max(0, toNumber(item.goals)), 0)
+  if (goalsFor(body.teamAId) > teamAScore || goalsFor(body.teamBId) > teamBScore) {
+    return apiError('playerGoalsOverScore', 400)
   }
 
   const { data: tournament, error: tournamentError } = await supabase

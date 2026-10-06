@@ -491,6 +491,7 @@
     }
   },
   "apiErrors": {
+    "playerGoalsOverScore": "Players' goals add up to more than the team's score. Check the score or each player's goals.",
     "signInFirst": "Please sign in first.",
     "signInAgain": "Please sign in again.",
     "venueFieldsRequired": "Fill in the venue name, province, address and contact.",
