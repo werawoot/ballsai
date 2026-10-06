@@ -1,0 +1,23 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>V5 นักกีฬาที่กลับมา</title><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="v2.css"><style>
+.top{display:flex;gap:14px;align-items:center;margin-top:6px}.av{width:56px;height:56px;border-radius:16px;background:#1f2b3d;display:grid;place-items:center;font:800 22px var(--font-sarabun)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.card2{background:#fff;color:var(--ui-text);border-radius:var(--ui-r-lg);padding:18px;margin-top:18px}
+.wk{display:flex;gap:6px;margin:14px 0}.wk i{flex:1;height:38px;border-radius:10px;border:1.5px dashed var(--ui-line);display:grid;place-items:center;font:700 12.5px var(--font-sarabun);font-style:normal;color:var(--ui-mute)}.wk i.on{background:var(--ui-red);border:0;color:#fff}.wk i.done{background:#e3f6ec;border:0;color:#0c7a45}
+.line{display:flex;align-items:center;gap:10px;min-height:56px;border-bottom:1px solid var(--ui-line-d);font:700 15px var(--font-sarabun)}.line .r{margin-left:auto;opacity:.6}
+.pair{display:grid;gap:10px;margin-top:22px}.eq{min-height:56px;border-radius:16px;border:1.5px solid rgba(255,255,255,.3);background:transparent;color:#fff;font:800 16px var(--font-sarabun)}
+.pp .eq{border-color:var(--ui-line);color:var(--ui-text);background:#fff}
+</style></head><body><div class="sample">ตัวอย่างแบบ v5 · local mock</div>
+<div class="frames c3">
+<section><p class="cap"><b>A</b> นักกีฬาที่กลับมา · /profile เปิดมาเจอ "วันนี้" ก่อน</p><div class="scr dk ui-dark"><div class="in">
+<div class="top"><div class="av">นฟ</div><div><b style="font:800 20px var(--font-sarabun)">น้องกลับมา ฟุตบอล</b><div class="chips"><span class="ui-chip is-self">MF</span><span class="ui-chip is-performance">ยืนยันจากผลแข่ง</span></div></div></div>
+<div class="card2"><p class="ui-eyebrow" style="letter-spacing:0;text-transform:none;font-size:13px">วันนี้ · อังคาร</p><h2 class="ui-h2" style="margin:2px 0 0;font-size:20px">ซ้อมวันนี้ 15 นาที</h2><p class="sub" style="font-size:13.5px;margin-top:4px">วอร์มอัพป้องกันบาดเจ็บ · ซ้อมแล้ว 2 จาก 24 ครั้ง</p>
+<div class="wk"><i class="done">จ</i><i class="on">อ</i><i>พ</i><i>พฤ</i><i>ศ</i><i>ส</i><i>อา</i></div><button class="ui-btn ui-btn-primary">เริ่มซ้อมวันนี้</button></div>
+<div style="margin-top:8px"><div class="line">อันดับในประเทศ<span class="r">#— · ดูอันดับ ›</span></div><div class="line">โปรไฟล์ครบ 4 จาก 6 · ถัดไป: รูปนักกีฬา<span class="r">›</span></div><div class="line">การ์ดนักกีฬา<span class="r">แชร์ ›</span></div></div>
+<p class="sub" style="font-size:12px;margin-top:10px">"#—" คือโครง ค่าจริงมาจาก player_ranks ตอนนี้ยังต้องให้หัวหน้าตรวจต้นทุนคิวรีอันดับ · ปุ่มหลักเหลือปุ่มเดียว · ไม่มีตัวนับ "ต่อเนื่อง 0 สัปดาห์"</p></div></div></section>
+
+<section><p class="cap"><b>B</b> คำถามความปลอดภัยก่อนซ้อม · สองคำตอบน้ำหนักเท่ากัน ไม่ชี้นำ</p><div class="scr dk ui-dark"><div class="in" style="justify-content:center"><p class="ui-eyebrow" style="letter-spacing:0;text-transform:none;font-size:13px">ก่อนเริ่มซ้อม</p><h1>ตอนนี้มีอาการเจ็บไหม?</h1><p class="sub">ตอบตามจริงเพื่อความปลอดภัยของคุณ คำตอบนี้ไม่ถูกเก็บไว้</p>
+<div class="pair"><button class="eq">ไม่เจ็บ · เริ่มซ้อม</button><button class="eq">เจ็บ · ไม่ซ้อมวันนี้</button></div><p class="sub" style="font-size:13px;margin-top:16px">ถ้าเจ็บระหว่างซ้อม ให้หยุดและบอกผู้ปกครองหรือโค้ช</p></div></div></section>
+
+<section><p class="cap"><b>C</b> การ์ดที่แชร์ · ชื่อยาวขึ้นสองบรรทัด ไม่ตัดด้วย "…"</p><div class="scr dk ui-dark"><div class="in" style="align-items:center"><div style="margin-top:20px;width:230px;height:320px;border-radius:20px;background:linear-gradient(160deg,#7d0001,#1a0505);padding:20px;display:flex;flex-direction:column;justify-content:flex-end"><span class="ui-eyebrow" style="color:#fff;opacity:.85">MF · POWER —</span><b style="font:800 26px/1.2 var(--font-sarabun);margin-top:6px">น้องกลับมา<br>ฟุตบอล</b><span style="font-size:12px;opacity:.7;margin-top:6px">ขอนแก่น ยูไนเต็ด U13 · ขอนแก่น</span></div>
+<p class="sub" style="margin-top:18px;text-align:center;font-size:13px">ตัวเลขบนการ์ดแสดง "—" ในภาพนี้เพราะเป็นโครง ค่าจริงมาจากข้อมูลผลแข่ง</p></div><div class="ft"><button class="ui-btn ui-btn-primary">แชร์การ์ด</button></div></div></section>
+</div></body></html>
