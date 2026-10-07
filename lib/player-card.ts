@@ -26,3 +26,12 @@ export function cardProvenance({ matches, verificationLevel }: { matches: number
 
 // The back of the card: this season's verified results, all from player_ratings.
 export type CardSeason = { matches: number; goals: number; assists: number; mvps: number; power: number | null }
+
+// The position on a card: the first one on record (rank row, athlete profile, account), or
+// empty when the athlete has not chosen one. Never a default: an empty position shows as a
+// dash and is saved as nothing.
+export function cardPosition(...sources: (string | null | undefined)[]): string {
+  return sources.find(source => source?.trim())?.trim() ?? ''
+}
+
+export const positionLabel = (position: string) => position || '—'

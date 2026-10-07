@@ -85,12 +85,13 @@ body:has(.card-page) { background: #07090d; }
 .pc-text-button { align-items: center; background: none; border: 0; color: var(--pc-mute); cursor: pointer; display: inline-flex; font: 600 13px var(--font-sarabun), sans-serif; gap: 6px; margin-top: 10px; padding: 6px 0; }
 .pc-tip { background: rgba(255,255,255,.04); border-radius: 13px; color: var(--pc-mute); font-size: 12.5px; line-height: 1.55; margin: 12px 0 0; padding: 11px 13px; }
 .pc-tip b { color: #fff; }
-.pc-fields { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
-.pc-field { background: rgba(255,255,255,.05); border: 1px solid var(--pc-line); border-radius: 13px; display: flex; flex-direction: column; padding: 8px 12px; }
+.pc-fields { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pc-field, .pc-field input { scroll-margin-bottom: 240px; }
+.pc-field { min-width: 0; background: rgba(255,255,255,.05); border: 1px solid var(--pc-line); border-radius: 13px; display: flex; flex-direction: column; padding: 8px 12px; }
 .pc-field:focus-within { border-color: rgba(255,255,255,.55); }
 .pc-field.is-wide { grid-column: 1 / -1; }
 .pc-field span { color: var(--pc-mute); font-size: 11px; font-weight: 700; }
-.pc-field input { background: transparent; border: 0; color: #fff; font: 700 15px var(--font-sarabun), sans-serif; min-width: 0; outline: none; padding: 2px 0 0; }
+.pc-field input { background: transparent; border: 0; color: #fff; font: 700 15px var(--font-sarabun), sans-serif; min-width: 0; width: 100%; outline: none; padding: 2px 0 0; }
 .pc-field input::placeholder { color: rgba(255,255,255,.3); font-weight: 500; }
 .pc-positions { display: grid; gap: 8px; grid-template-columns: repeat(4, 1fr); }
 .pc-positions button, .pc-theme, .pc-formats button { background: rgba(255,255,255,.05); border: 2px solid transparent; border-radius: 13px; color: #fff; cursor: pointer; font: 700 13px var(--font-sarabun), sans-serif; }
@@ -114,7 +115,7 @@ body:has(.card-page) { background: #07090d; }
 .pc-saved { align-items: center; color: #5fd49a; display: inline-flex; gap: 5px; }
 .pc-spin { animation: pc-spin 1s linear infinite; }
 @keyframes pc-spin { to { transform: rotate(360deg); } }
-.pc-cta { background: var(--pc-panel); bottom: calc(70px + env(safe-area-inset-bottom)); display: flex; gap: 10px; margin: auto -16px 0; padding: 10px 16px 14px; position: sticky; z-index: 5; }
+.pc-cta { flex-wrap: wrap; background: var(--pc-panel); bottom: calc(70px + env(safe-area-inset-bottom)); display: flex; gap: 10px; margin: auto -16px 0; padding: 10px 16px 14px; position: sticky; z-index: 5; }
 .pc-primary { align-items: center; background: var(--pc-red); border: 0; border-radius: 16px; box-shadow: 0 10px 24px rgba(204,0,1,.35); color: #fff; cursor: pointer; display: flex; flex: 1; font: 800 17px var(--font-sarabun), sans-serif; gap: 9px; justify-content: center; min-height: 56px; transition: transform .15s, background .2s; }
 .pc-primary:hover { background: #e00001; }
 .pc-primary:active { transform: scale(.98); }
@@ -173,3 +174,8 @@ body:has(.card-page) { background: #07090d; }
   .pc-flipper { transition: none; }
   .pc-sheet { animation: none; }
 }
+
+/* "Add your name": under the preview of a card that has none. */
+.pc-name-cta { align-items: center; background: rgba(244,185,66,.12); border: 1.5px solid rgba(244,185,66,.55); border-radius: 14px; color: #f4d38a; cursor: pointer; display: flex; font: 800 15px var(--font-sarabun), sans-serif; gap: 8px; justify-content: center; margin: 12px auto 0; min-height: 48px; padding: 0 20px; }
+.pc-name-cta:focus-visible { outline: 3px solid var(--ui-gold); outline-offset: 2px; }
+.pc-cta .pc-savebar.is-dirty { flex: 1 1 100%; margin-top: 0; }

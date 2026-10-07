@@ -251,7 +251,8 @@
     "copyLink": "Copy link",
     "publicLinkMissing": "No link yet — make your profile public first",
     "close": "Close",
-    "lineOpened": "LINE share opened"
+    "lineOpened": "LINE share opened",
+    "enterName": "Add your name"
   },
   "profileShare": {
     "needPublic": "Turn on “Public profile” and save first to get a share link",
@@ -1533,5 +1534,11 @@
     "stop": "Stop this programme",
     "stopConfirm": "Stop this programme? Your training history stays.",
     "stopped": "Programme stopped"
+  },
+  "guardianSteps": {
+    "title": "Link with your child in 3 steps",
+    "step1": "Your child signs up and sets up their profile first",
+    "step2": "You enter the email your child signs in with, to ask for the link",
+    "step3": "Your child accepts in their own account"
   }
 }

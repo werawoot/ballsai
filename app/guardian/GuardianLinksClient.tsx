@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { Check, HeartHandshake, Link2, ShieldCheck, X } from 'lucide-react'
+import GuardianSteps from '@/components/GuardianSteps'
+import { needsGuardianSteps } from '@/lib/guardian-steps'
 
 export type GuardianLink = {
   id: string
@@ -61,6 +63,7 @@ export default function GuardianLinksClient({ isGuardian, links, incoming }: { i
   }
 
   return <div style={{ display: 'grid', gap: 16 }}>
+    {isGuardian && needsGuardianSteps(myLinks) && <GuardianSteps />}
     {isGuardian && <section style={{ background: '#101827', color: 'white', borderRadius: 16, padding: 18 }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><HeartHandshake size={20} color="#f5c518" /><b>เชื่อมกับนักกีฬา</b></div><p style={{ color: 'rgba(255,255,255,.72)', fontSize: 13, lineHeight: 1.55 }}>ใช้เฉพาะอีเมลที่นักกีฬาใช้เข้าสู่ BallDoenSai ผู้ปกครองต้องยืนยันความยินยอมก่อนส่งคำขอ และนักกีฬาจะเป็นผู้ตอบรับ</p><input value={email} onChange={event => setEmail(event.target.value)} type="email" placeholder="อีเมลบัญชีนักกีฬา" style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px', border: '1px solid rgba(255,255,255,.25)', background: 'rgba(255,255,255,.08)', color: 'white', borderRadius: 9 }} /><label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', margin: '12px 0', fontSize: 12, lineHeight: 1.45, color: 'rgba(255,255,255,.82)' }}><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} />ฉันเป็นผู้ปกครองหรือผู้มีอำนาจดูแล และยินยอมให้ BallDoenSai แสดงข้อมูลความก้าวหน้าของนักกีฬาบัญชีนี้แก่ฉัน</label><button disabled={busy || !email || !consent} onClick={requestLink} style={{ width: '100%', border: 0, borderRadius: 9, padding: 11, background: '#f5c518', color: '#101827', fontWeight: 900 }}>{busy ? 'กำลังส่ง...' : 'ส่งคำขอเชื่อมบัญชี'}</button></section>}
     {isGuardian && <section><h2 style={{ fontSize: 17, marginBottom: 10 }}><Link2 size={18} /> นักกีฬาที่เชื่อมแล้ว</h2><div style={{ display: 'grid', gap: 10 }}>{myLinks.length ? myLinks.map(link => card(link)) : <p style={{ color: '#888', fontSize: 13 }}>ยังไม่มีนักกีฬาที่เชื่อมบัญชี</p>}</div></section>}
     {requests.length > 0 && <section><h2 style={{ fontSize: 17, marginBottom: 10 }}><ShieldCheck size={18} /> คำขอผู้ปกครองที่รอการตอบรับ</h2><div style={{ display: 'grid', gap: 10 }}>{requests.map(link => card(link, true))}</div></section>}
