@@ -11,7 +11,7 @@ import { ACTIVE_SPORT } from '@/lib/season'
 import { skillEntries, skillText } from '@/lib/skill-ratings'
 import { AVATAR_BUCKET, avatarPath } from '@/lib/athlete-avatar'
 import { saveAthleteProfile } from '@/lib/athlete-private'
-import type { CardProvenance, CardSeason, PlayerCardStats } from '@/lib/player-card'
+import { positionLabel, type CardProvenance, type CardSeason, type PlayerCardStats } from '@/lib/player-card'
 import { renderCardImage, type CardFormat, type CardTheme } from './card-export'
 
 type Player = {
@@ -145,7 +145,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
     // A plain insert or update (lib/athlete-private.ts): SQL58 withholds the birth date,
     // which an upsert would need to read back.
     const [{ error: profileError }, { error: athleteError }] = await Promise.all([
-      supabase.from('profiles').upsert({ id: userId, full_name: clean.name, province: clean.province, team: clean.team, position: clean.position }),
+      supabase.from('profiles').upsert({ id: userId, full_name: clean.name, province: clean.province, team: clean.team, position: clean.position || null }),
       saveAthleteProfile(supabase, {
         user_id: userId,
         display_name: clean.name,
@@ -178,7 +178,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
   }
 
   const makeImage = (exportFormat: CardFormat = format) => renderCardImage({
-    theme, format: exportFormat, name: displayName, position: fields.position, meta, imageUrl, stats: player.stats,
+    theme, format: exportFormat, name: displayName, position: positionLabel(fields.position), meta, imageUrl, stats: player.stats,
     isRanked: player.isRanked, power: player.season?.power ?? null, chip, chipTone: provenance === 'performance' ? 'ok' : provenance === 'coach' ? 'coach' : 'self',
     unlock, starterLabel: t('starterLabel'), season: seasonLabel,
   })
@@ -265,7 +265,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
     <div className="pc-photo" style={imageUrl ? { backgroundImage: `url("${imageUrl}")` } : undefined}>
       {!imageUrl && <label htmlFor="pc-photo-library" className="pc-add" onClick={event => event.stopPropagation()}><ImagePlus size={30} strokeWidth={1.6} /><span>{t('addPhoto')}</span></label>}
     </div>
-    <div className={`pc-ovr${player.stats.ovr === null ? ' is-empty' : ''}`}><b>{skillText(player.stats.ovr)}</b><span>{fields.position}</span><small>{player.isRanked && player.season?.power != null ? `POWER ${player.season.power.toLocaleString('en-US')}` : t('starterLabel')}</small></div>
+    <div className={`pc-ovr${player.stats.ovr === null ? ' is-empty' : ''}`}><b>{skillText(player.stats.ovr)}</b><span>{positionLabel(fields.position)}</span><small>{player.isRanked && player.season?.power != null ? `POWER ${player.season.power.toLocaleString('en-US')}` : t('starterLabel')}</small></div>
     <div className="pc-brand" aria-hidden="true">B</div>
     <div className="pc-info">
       <span className={`pc-chip is-${provenance}`}>{provenance !== 'self' && <Check size={12} strokeWidth={3} />}{chip}</span>

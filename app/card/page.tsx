@@ -7,7 +7,7 @@ import PlayerCardBuilder from './PlayerCardBuilder'
 import BrandMark from '@/components/BrandMark'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import { signAvatarUrls } from '@/lib/athlete-avatar'
-import { cardProvenance, playerCardStats, type CardSeason } from '@/lib/player-card'
+import { cardPosition, cardProvenance, playerCardStats, type CardSeason } from '@/lib/player-card'
 import './card.css'
 
 type Profile = { full_name?: string | null; province?: string | null; team?: string | null; position?: string | null }
@@ -62,7 +62,7 @@ export default async function PlayerCardPage() {
         seasonLabel={ACTIVE_SEASON}
         player={{
           name,
-          position: playerRank?.position || athleteProfile.position || p.position || 'MF',
+          position: cardPosition(playerRank?.position, athleteProfile.position, p.position),
           team: athleteProfile.current_team || p.team || '',
           province: athleteProfile.province || p.province || '',
           imageUrl,
