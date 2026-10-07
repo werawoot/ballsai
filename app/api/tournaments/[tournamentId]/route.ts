@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
+import { apiError } from '@/lib/api-error'
+import { promptpayIssue } from '@/lib/promptpay'
 
 type UpdateTournamentBody = {
   name?: string
@@ -17,6 +19,8 @@ type UpdateTournamentBody = {
 
 type TournamentOwner = {
   organizer_id: string
+  fee: number | null
+  promptpay: string | null
 }
 
 export async function PATCH(request: Request, props: { params: Promise<{ tournamentId: string }> }) {
@@ -42,7 +46,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ tournam
 
   const { data: tournament, error: tournamentError } = await supabase
     .from('tournaments')
-    .select('organizer_id')
+    .select('organizer_id, fee, promptpay')
     .eq('id', params.tournamentId)
     .single()
 
@@ -95,6 +99,14 @@ export async function PATCH(request: Request, props: { params: Promise<{ tournam
   }
 
   if (body.promptpay !== undefined) update.promptpay = body.promptpay.trim()
+
+  // The fee and the PromptPay number are checked together, as they will be after the update.
+  if (update.fee !== undefined || update.promptpay !== undefined) {
+    const fee = (update.fee as number | undefined) ?? Number(typedTournament.fee ?? 0)
+    const promptpay = (update.promptpay as string | undefined) ?? typedTournament.promptpay ?? ''
+    const promptpayProblem = promptpayIssue(fee, promptpay)
+    if (promptpayProblem) return apiError(promptpayProblem, 400)
+  }
 
   if (body.maxTeams !== undefined) {
     const maxTeams = Number(body.maxTeams)

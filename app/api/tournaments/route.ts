@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { apiError } from '@/lib/api-error'
+import { promptpayIssue } from '@/lib/promptpay'
 
 type CreateTournamentBody = {
   name?: string
@@ -49,6 +51,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'จำนวนทีมสูงสุดต้องไม่น้อยกว่า 2 ทีม' }, { status: 400 })
   }
 
+  const promptpay = body.promptpay?.trim() ?? ''
+  const promptpayProblem = promptpayIssue(fee, promptpay)
+  if (promptpayProblem) return apiError(promptpayProblem, 400)
+
   const { error } = await supabase.from('tournaments').insert({
     name,
     description: body.description?.trim() ?? '',
@@ -56,7 +62,7 @@ export async function POST(request: Request) {
     start_date: startDate,
     end_date: endDate,
     fee,
-    promptpay: body.promptpay?.trim() ?? '',
+    promptpay,
     max_teams: Math.floor(maxTeams),
     organizer_id: user.id,
     status: 'open',

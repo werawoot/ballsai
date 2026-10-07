@@ -108,4 +108,4 @@
 | 21 | | |
 | 22 | 3 ต.ค. 2026 ✅ — postcheck ผ่านทุกข้อ; ทดสอบบนเว็บ (Preview ที่ต่อ Staging) ผ่านครบ: ช่วงอายุตามวันเกิด, โปรแกรม E ล็อก, กันเลือกครบ 7 วัน, ตอบ "เจ็บ" แล้วเริ่มไม่ได้, ซ้อมเสร็จแล้วรีเฟรชยังนับ 1, โปรแกรมที่ 4 ถูกปฏิเสธ, การ์ดบน `/profile` ถูก, ออกจากระบบแล้วไม่เห็นข้อมูลเดิม | 4 ต.ค. 2026 — 4 ช่วงรันสำเร็จ; fingerprint ตรง 8/9 ค่า ต่างที่ `execute_rights` (anon เรียก 2 ฟังก์ชันได้) → แก้ด้วยขั้น 23; หลังขั้น 23 fingerprint ตรง Staging ครบ 9 ค่า, postcheck ผ่าน, `/training` โหลดได้ ✅ |
 | 23 | ไม่ต้องรัน (Staging มี SQL50 แล้ว anon ไม่มีสิทธิ์อยู่แล้ว) | 4 ต.ค. 2026 ✅ — precheck `true, true, false, true, true` → Success → postcheck `false, false, false, true, true` |
-| 24 | | |
+| 24 | 6 ต.ค. 2026 — ผ่าน: ก่อนรันเป็นฉบับเดิมที่มีช่องโหว่ (fp 0de68ddf…); หลังรัน fp cbc46e5b…, anon/service_role ไม่มีสิทธิ์, authenticated มีสิทธิ์ | 6 ต.ค. 2026 — ผ่าน: ก่อนรันยังไม่มีฟังก์ชัน (has_void=false) จึงไม่เคยมีฉบับที่มีช่องโหว่บน Production; หลังรัน fp cbc46e5b…, anon/service_role ไม่มีสิทธิ์, authenticated มีสิทธิ์ |

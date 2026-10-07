@@ -491,6 +491,8 @@
     }
   },
   "apiErrors": {
+    "promptpayRequired": "A tournament with a fee needs a PromptPay number, so teams know where to pay.",
+    "promptpayInvalid": "The PromptPay number must be a 10-digit phone number or a 13-digit ID.",
     "playerGoalsOverScore": "Players' goals add up to more than the team's score. Check the score or each player's goals.",
     "signInFirst": "Please sign in first.",
     "signInAgain": "Please sign in again.",
