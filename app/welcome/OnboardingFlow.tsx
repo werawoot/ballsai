@@ -8,6 +8,8 @@ import { ArrowRight, Building2, Check, ChevronLeft, Compass, Handshake, IdCard, 
 import { createClient } from "@/lib/supabase";
 import LanguageSwitch from "@/components/LanguageSwitch";
 import BrandMark from "@/components/BrandMark";
+import GuardianSteps from "@/components/GuardianSteps";
+import { guardianStepsApply } from "@/lib/guardian-steps";
 import { ACTIVE_SPORT } from "@/lib/season";
 import "./welcome.css";
 
@@ -173,6 +175,8 @@ export default function OnboardingFlow({ email, nextPath, userId }: { email: str
                 </button>;
               })}
             </div>
+            {/* The goal that sends a parent to /guardian: say what they will need first. */}
+            {guardianStepsApply(persona, goal) && <div style={{ marginTop: 16 }}><GuardianSteps tone="dark" /></div>}
           </>}
 
           {error && <p className="wb-error" role="alert">{error}</p>}
