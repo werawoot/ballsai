@@ -251,7 +251,8 @@
     "copyLink": "Copy link",
     "publicLinkMissing": "No link yet — make your profile public first",
     "close": "Close",
-    "lineOpened": "LINE share opened"
+    "lineOpened": "LINE share opened",
+    "enterName": "Add your name"
   },
   "profileShare": {
     "needPublic": "Turn on “Public profile” and save first to get a share link",

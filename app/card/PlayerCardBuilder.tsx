@@ -4,7 +4,7 @@ import { type ChangeEvent, type PointerEvent, useEffect, useRef, useState } from
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { Camera, Check, Copy, Download, ImagePlus, Loader2, RotateCw, Share2, Trash2, X } from 'lucide-react'
+import { Camera, Check, Copy, Download, ImagePlus, Loader2, PencilLine, RotateCw, Share2, Trash2, X } from 'lucide-react'
 import { track } from '@vercel/analytics'
 import { createClient } from '@/lib/supabase'
 import { ACTIVE_SPORT } from '@/lib/season'
@@ -58,6 +58,8 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
   const [localImage, setLocalImage] = useState<string | null>(null)
   const [removePhoto, setRemovePhoto] = useState(false)
   const stageRef = useRef<HTMLDivElement>(null)
+  const nameInput = useRef<HTMLInputElement>(null)
+  const focusNameNext = useRef(false)
   const reduceMotion = useRef(false)
 
   const imageUrl = localImage || (removePhoto ? null : player.imageUrl)
@@ -73,6 +75,17 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
   const shareUrl = () => publicProfilePath ? `${window.location.origin}${publicProfilePath}` : null
   const cardFilename = `balldoensai-${displayName.toLowerCase().replace(/\s+/g, '-')}-card.png`
 
+  // "Add your name" opens the info tab; the field exists only after that render, so focus waits for it.
+  const focusNameField = () => {
+    const field = nameInput.current
+    if (!field) return
+    // Centre it: the sticky save and share bars and the bottom nav cover the foot of the screen.
+    field.focus({ preventScroll: true })
+    field.scrollIntoView({ block: 'center', behavior: reduceMotion.current ? 'auto' : 'smooth' })
+  }
+  useEffect(() => {
+    if (focusNameNext.current && tab === 'info') { focusNameNext.current = false; focusNameField() }
+  }, [tab])
   useEffect(() => { reduceMotion.current = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false }, [])
   useEffect(() => () => { if (localImage) URL.revokeObjectURL(localImage) }, [localImage])
   useEffect(() => {
@@ -101,6 +114,12 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
     const stage = stageRef.current
     if (!stage) return
     stage.style.removeProperty('--rx'); stage.style.removeProperty('--ry'); stage.style.removeProperty('--sheen')
+  }
+
+  const startNaming = () => {
+    if (tab === 'info') { focusNameField(); return }
+    focusNameNext.current = true
+    setTab('info')
   }
 
   const choosePhoto = (event: ChangeEvent<HTMLInputElement>) => {
@@ -307,6 +326,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
         <div className="pc-flipper">{front}{back}</div>
       </div>
       <button type="button" className="pc-flip-button" onClick={() => setFlipped(value => !value)} aria-pressed={flipped}><RotateCw size={15} />{flipped ? t('flipBackHint') : t('flipHint')}</button>
+      {!fields.name.trim() && <button type="button" className="pc-name-cta" onClick={startNaming}><PencilLine size={17} aria-hidden="true" />{t('enterName')}</button>}
     </div>
 
     <div className="pc-panel">
@@ -330,7 +350,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
 
         {tab === 'info' && <div role="tabpanel" id="pc-panel-info" aria-labelledby="pc-tab-info" aria-label={t('fieldsLabel')}>
           <div className="pc-fields">
-            <label className="pc-field is-wide"><span>{t('name')}</span><input value={fields.name} maxLength={60} placeholder={t('namePlaceholder')} onChange={event => setFields(current => ({ ...current, name: event.target.value }))} /></label>
+            <label className="pc-field is-wide"><span>{t('name')}</span><input ref={nameInput} value={fields.name} maxLength={60} placeholder={t('namePlaceholder')} onChange={event => setFields(current => ({ ...current, name: event.target.value }))} /></label>
             <label className="pc-field"><span>{t('team')}</span><input value={fields.team} maxLength={80} placeholder={t('teamPlaceholder')} onChange={event => setFields(current => ({ ...current, team: event.target.value }))} /></label>
             <label className="pc-field"><span>{t('province')}</span><input value={fields.province} maxLength={60} placeholder={t('provincePlaceholder')} onChange={event => setFields(current => ({ ...current, province: event.target.value }))} /></label>
           </div>
@@ -349,13 +369,11 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
         </div>}
       </div>
 
-      <div className={`pc-savebar${dirty ? ' is-dirty' : ''}`} aria-live="polite">
-        {dirty
-          ? <><span>{t('unsaved')}</span><button type="button" onClick={save} disabled={busy}>{busy ? <Loader2 size={15} className="pc-spin" /> : <Check size={15} />}{busy ? t('savingShort') : t('saveChanges')}</button></>
-          : hasProfile ? <span className="pc-saved"><Check size={14} />{t('savedChip')}</span> : null}
-      </div>
+      {!dirty && hasProfile && <div className="pc-savebar" aria-live="polite"><span className="pc-saved"><Check size={14} />{t('savedChip')}</span></div>}
 
       <div className="pc-cta">
+        {/* With the share button in the sticky bar, so saving is in view the moment something changes. */}
+        {dirty && <div className="pc-savebar is-dirty" role="status"><span>{t('unsaved')}</span><button type="button" onClick={save} disabled={busy}>{busy ? <Loader2 size={15} className="pc-spin" /> : <Check size={15} />}{busy ? t('savingShort') : t('saveChanges')}</button></div>}
         <button type="button" className="pc-primary" onClick={() => setShareOpen(true)}><Share2 size={19} />{t('share')}</button>
         <button type="button" className="pc-secondary" onClick={saveImage} aria-label={t('saveImage')} title={t('saveImage')}><Download size={20} /></button>
       </div>
