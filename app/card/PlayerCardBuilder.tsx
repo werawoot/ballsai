@@ -42,6 +42,8 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
   const t = useTranslations('card')
   const locale = useLocale()
   const [tab, setTab] = useState<Tab>(player.imageUrl ? 'style' : 'photo')
+  // Until there is a name the page has one thing to do, so the tabs and the share bar wait for it.
+  const [naming, setNaming] = useState(false)
   const [theme, setTheme] = useState<CardTheme>('red')
   const [format, setFormat] = useState<CardFormat>('story')
   const [flipped, setFlipped] = useState(false)
@@ -64,7 +66,9 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
 
   const imageUrl = localImage || (removePhoto ? null : player.imageUrl)
   const dirty = Boolean(photoFile) || removePhoto || (Object.keys(fields) as (keyof typeof fields)[]).some(key => fields[key].trim() !== saved[key].trim())
-  const displayName = fields.name.trim() || 'YOUR NAME'
+  const named = Boolean(fields.name.trim())
+  const minimal = !named && !naming
+  const displayName = fields.name.trim() || t('yourName')
   const meta = [fields.team.trim(), fields.province.trim()].filter(Boolean).join(' · ')
   const provenance = player.provenance ?? (player.isRanked ? 'performance' : 'self')
   const matches = player.season?.matches ?? 0
@@ -73,7 +77,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
     : t(`provenance.${provenance}`)
   const unlock = `${t('unlockBefore')}${t('unlockRating')}${t('unlockAfter')}`
   const shareUrl = () => publicProfilePath ? `${window.location.origin}${publicProfilePath}` : null
-  const cardFilename = `balldoensai-${displayName.toLowerCase().replace(/\s+/g, '-')}-card.png`
+  const cardFilename = `balldoensai-${(fields.name.trim() || 'card').toLowerCase().replace(/\s+/g, '-')}-card.png`
 
   // "Add your name" opens the info tab; the field exists only after that render, so focus waits for it.
   const focusNameField = () => {
@@ -84,8 +88,8 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
     field.scrollIntoView({ block: 'center', behavior: reduceMotion.current ? 'auto' : 'smooth' })
   }
   useEffect(() => {
-    if (focusNameNext.current && tab === 'info') { focusNameNext.current = false; focusNameField() }
-  }, [tab])
+    if (focusNameNext.current && tab === 'info' && nameInput.current) { focusNameNext.current = false; focusNameField() }
+  }, [tab, naming])
   useEffect(() => { reduceMotion.current = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false }, [])
   useEffect(() => () => { if (localImage) URL.revokeObjectURL(localImage) }, [localImage])
   useEffect(() => {
@@ -117,8 +121,8 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
   }
 
   const startNaming = () => {
-    if (tab === 'info') { focusNameField(); return }
     focusNameNext.current = true
+    setNaming(true)
     setTab('info')
   }
 
@@ -318,6 +322,10 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
   </div>
 
   return <section className="pc">
+    <div className="pc-intro">
+      <h1>{t('pageTitle')}</h1>
+      <p>{named ? t('pageLead') : t('pageLeadStart')}</p>
+    </div>
     <input id="pc-photo-camera" className="pc-sr" type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={choosePhoto} />
     <input id="pc-photo-library" className="pc-sr" type="file" accept="image/jpeg,image/png,image/webp" onChange={choosePhoto} />
 
@@ -326,14 +334,13 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
         <div className="pc-flipper">{front}{back}</div>
       </div>
       <button type="button" className="pc-flip-button" onClick={() => setFlipped(value => !value)} aria-pressed={flipped}><RotateCw size={15} />{flipped ? t('flipBackHint') : t('flipHint')}</button>
-      {!fields.name.trim() && <button type="button" className="pc-name-cta" onClick={startNaming}><PencilLine size={17} aria-hidden="true" />{t('enterName')}</button>}
+      {minimal && <>
+        <button type="button" className="pc-name-cta" onClick={startNaming}><PencilLine size={18} aria-hidden="true" />{t('enterName')}</button>
+        <p className="pc-start-hint">{t('startHint')}</p>
+      </>}
     </div>
 
-    <div className="pc-panel">
-      <div className="pc-panel-head">
-        <h1>{t('pageTitle')}</h1>
-        <p>{t('pageLead')}</p>
-      </div>
+    {!minimal && <div className="pc-panel">
       <div className="pc-tabs" role="tablist" aria-label={t('tabs.label')}>
         {(['photo', 'info', 'style'] as Tab[]).map(item => <button key={item} type="button" role="tab" id={`pc-tab-${item}`} aria-controls={`pc-panel-${item}`} aria-selected={tab === item} className={tab === item ? 'is-on' : ''} onClick={() => setTab(item)}>{t(`tabs.${item}`)}</button>)}
       </div>
@@ -371,13 +378,15 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
 
       {!dirty && hasProfile && <div className="pc-savebar" aria-live="polite"><span className="pc-saved"><Check size={14} />{t('savedChip')}</span></div>}
 
-      <div className="pc-cta">
+      {(named || dirty) && <div className="pc-cta">
         {/* With the share button in the sticky bar, so saving is in view the moment something changes. */}
         {dirty && <div className="pc-savebar is-dirty" role="status"><span>{t('unsaved')}</span><button type="button" onClick={save} disabled={busy}>{busy ? <Loader2 size={15} className="pc-spin" /> : <Check size={15} />}{busy ? t('savingShort') : t('saveChanges')}</button></div>}
-        <button type="button" className="pc-primary" onClick={() => setShareOpen(true)}><Share2 size={19} />{t('share')}</button>
-        <button type="button" className="pc-secondary" onClick={saveImage} aria-label={t('saveImage')} title={t('saveImage')}><Download size={20} /></button>
-      </div>
-    </div>
+        {named && <>
+          <button type="button" className="pc-primary" onClick={() => setShareOpen(true)}><Share2 size={19} />{t('share')}</button>
+          <button type="button" className="pc-secondary" onClick={saveImage} aria-label={t('saveImage')} title={t('saveImage')}><Download size={20} /></button>
+        </>}
+      </div>}
+    </div>}
 
     {status && <p className="pc-toast" role="status">{status}</p>}
 

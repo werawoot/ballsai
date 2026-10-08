@@ -179,7 +179,7 @@
     "editProfile": "Edit profile",
     "photoReady": "Photo added to your card — press “Save” to keep it on your profile",
     "lineNeedsPublic": "LINE needs your public profile link — turn it on in your profile first, or save the image and send it in LINE",
-    "pageTitle": "YOUR PLAYER CARD",
+    "pageTitle": "Your player card",
     "pageLead": "Your card updates itself every time an organizer verifies a result",
     "back": "Back",
     "tabs": {
@@ -232,7 +232,11 @@
     "publicLinkMissing": "No link yet — make your profile public first",
     "close": "Close",
     "lineOpened": "LINE share opened",
-    "enterName": "Add your name"
+    "enterName": "Add your name",
+    "pageLeadStart": "Add your name, then share it with friends",
+    "yourName": "Add your name",
+    "startHint": "You can add a photo later · no photo needed to use your card",
+    "myHistory": "My playing history"
   },
   "profileShare": {
     "needPublic": "Turn on “Public profile” and save first to get a share link",
