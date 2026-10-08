@@ -105,3 +105,19 @@ describe('legal and consent wording is left as written', () => {
     expect(TH['impact.safety.consent.copy']).toBeTruthy()
   })
 })
+
+// Owner decision "คำ ก", 8 Oct 2026: no decorative or game English left in Thai messages.
+describe('Thai: decision ก leaves no English game words', () => {
+  const retired: Array<[string, RegExp]> = [
+    ['SEASON is ฤดูกาล', /SEASON/],
+    ['POWER is คะแนนฝีมือ', /POWER/],
+    ['MVP is นักกีฬายอดเยี่ยม or ยอดเยี่ยม', /\bMVP\b/],
+    ['Badge is เหรียญ', /\bBadges?\b/],
+    ['TRAINING is การซ้อม', /TRAINING/],
+    ['Story / Feed / Bio / Preview are สตอรี่ / โพสต์ / ไบโอ / ภาพตัวอย่าง', /\b(Story|Feed|Bio|Preview)\b/],
+    ['Athlete Profile and Digital Sports Identity are Thai', /Athlete Profile|Digital Sports Identity/],
+  ]
+  it.each(retired)('%s', (_name, pattern) => {
+    expect(hits(TH, pattern)).toEqual([])
+  })
+})

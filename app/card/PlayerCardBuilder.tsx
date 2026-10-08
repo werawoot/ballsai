@@ -397,7 +397,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
           <button type="button" className="pc-close" onClick={() => setShareOpen(false)} aria-label={t('close')}><X size={18} /></button>
         </div>
         <div className="pc-apps">
-          <button type="button" onClick={shareInstagram}><i className="is-ig">IG</i>IG Story</button>
+          <button type="button" onClick={shareInstagram}><i className="is-ig">IG</i>{t('shareInstagramStory')}</button>
           <button type="button" onClick={shareTikTok}><i className="is-tt">TT</i>TikTok</button>
           <button type="button" onClick={shareLine}><i className="is-line">LINE</i>LINE</button>
           <button type="button" onClick={shareFacebook}><i className="is-fb">f</i>Facebook</button>

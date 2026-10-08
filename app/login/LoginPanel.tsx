@@ -240,7 +240,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
           {step === "admin" && adminEntry && (
             <>
               <Link className="lg-back" href="/login"><ArrowLeft size={18} /> กลับหน้าเข้าสู่ระบบ</Link>
-              <p className="ui-eyebrow">PRIVATE ACCESS</p>
+              <p className="ui-eyebrow">{tp("adminEyebrow")}</p>
               <h2 className="ui-h1 lg-title">เข้าสู่ระบบผู้ดูแล</h2>
               <label className="ui-field" htmlFor="admin-email"><span>อีเมลผู้ดูแล</span><input autoComplete="email" id="admin-email" onChange={(event) => setEmail(event.target.value)} type="email" value={email} /></label>
               <label className="ui-field" htmlFor="admin-password"><span>รหัสผ่าน</span><input autoComplete="current-password" id="admin-password" onChange={(event) => setPassword(event.target.value)} type="password" value={password} /></label>

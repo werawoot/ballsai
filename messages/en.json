@@ -236,7 +236,8 @@
     "pageLeadStart": "Add your name, then share it with friends",
     "yourName": "Add your name",
     "startHint": "You can add a photo later · no photo needed to use your card",
-    "myHistory": "My playing history"
+    "myHistory": "My playing history",
+    "shareInstagramStory": "IG Story"
   },
   "profileShare": {
     "needPublic": "Turn on “Public profile” and save first to get a share link",
@@ -1665,7 +1666,8 @@
     "facebook": "Continue with Facebook",
     "facebookLoading": "Taking you to Facebook...",
     "next": "Next: answer two quick questions, then make your first player card",
-    "lead": "Results the organizer confirms become your player card, your Power Rating and your rank across Thailand"
+    "lead": "Results the organizer confirms become your player card, your Power Rating and your rank across Thailand",
+    "adminEyebrow": "Admins only"
   },
   "guardianPage": {
     "title": "Link to your child’s account",
@@ -1675,6 +1677,149 @@
     "notGuardian": {
       "body": "This page is for a parent linking to their child’s account. If you are a parent, change your role first.",
       "changeRole": "Change role"
+    },
+    "level": "Level",
+    "xp": "XP",
+    "badges": "Badges"
+  },
+  "careerPage": {
+    "trending": "Trending",
+    "cardLink": "Player card",
+    "eyebrow": "Playing history · Season {season}",
+    "titleLead": "The playing history of",
+    "intro": "Every pitch, every result and every achievement, in one place",
+    "ratingLabel": "Power Rating",
+    "ratingMatches": "{matches} matches · {confidence}",
+    "noRating": "No match results yet",
+    "confidence": {
+      "provisional": "just started",
+      "active": "building up",
+      "full": "established"
+    },
+    "level": "Level",
+    "levelTitle": "Every result takes you a step further",
+    "levelProgress": "{xp} XP · {remaining} XP to level {next}",
+    "levelNote": "XP from match results confirmed by the organizer",
+    "badgesEyebrow": "Unlocked on the pitch",
+    "badgesTitle": "My badges",
+    "badgesCount": "{unlocked}/{total} unlocked",
+    "badgeXp": "+{xp} XP · {state}",
+    "badgeVerified": "Confirmed",
+    "badgeUnlocked": "Unlocked",
+    "badgeLocked": "Locked",
+    "storyEyebrow": "Your story, from real data",
+    "storyTitle": "My story",
+    "addAchievement": "Add an achievement",
+    "eventStart": "Started a playing history",
+    "eventWelcome": "Welcome, {name}",
+    "eventJoined": "Joined {tournament}",
+    "eventJoinedFallback": "a tournament",
+    "eventTeam": "Team {team} confirmed",
+    "eventTeamFallback": "yours",
+    "eventRating": "Power Rating {change}",
+    "result": {
+      "win": "Win",
+      "draw": "Draw",
+      "loss": "Loss"
+    },
+    "eventGoals": "{count} goals",
+    "eventAssists": "{count} assists",
+    "eventMvp": "Player of the match",
+    "eventRecorded": "Match result recorded",
+    "eventAchievement": "Confirmed achievement",
+    "emptyTitle": "No story on the pitch yet",
+    "emptyBody": "Create your profile, join a tournament and record results to start your playing history",
+    "emptyAction": "Create my profile",
+    "highlightsEyebrow": "Play it back",
+    "highlightsTitle": "Highlights",
+    "addHighlight": "Add a highlight",
+    "uploadedVideo": "Uploaded video",
+    "uploadedPhoto": "Uploaded photo",
+    "videoType": {
+      "highlight": "Highlight",
+      "match": "Match",
+      "training": "Training"
+    },
+    "openHighlight": "Open highlight",
+    "highlightsEmptyTitle": "Keep every moment you are proud of",
+    "highlightsEmptyBody": "Upload a photo or video, or paste a YouTube or TikTok link, to keep your best moments",
+    "nameFallback": "BallDoenSai athlete",
+    "badges": {
+      "rookie": {
+        "name": "Rookie",
+        "description": "Create your own athlete profile"
+      },
+      "first_match": {
+        "name": "First kick",
+        "description": "Your first match result in the system"
+      },
+      "first_win": {
+        "name": "Winner",
+        "description": "Win your first match"
+      },
+      "goal_hunter": {
+        "name": "Goal hunter",
+        "description": "Score your first goal"
+      },
+      "playmaker": {
+        "name": "Playmaker",
+        "description": "Make your first assist"
+      },
+      "clean_sheet": {
+        "name": "The wall",
+        "description": "Keep your first clean sheet"
+      },
+      "match_mvp": {
+        "name": "Match MVP",
+        "description": "Be chosen player of the match"
+      },
+      "road_warrior": {
+        "name": "Road warrior",
+        "description": "Play 10 matches"
+      },
+      "rising_star": {
+        "name": "Rising star",
+        "description": "Reach a Power Rating of 1,500"
+      }
     }
+  },
+  "hallPage": {
+    "rankingLink": "Live ranking",
+    "eyebrow": "The record that stays",
+    "title": "Hall of",
+    "titleEm": "Fame",
+    "intro": "Achievements that stay on record, even when today's ranking changes",
+    "season": "Season",
+    "filtersLabel": "Hall of Fame filters",
+    "all": "All",
+    "allAges": "All ages",
+    "open": "Open",
+    "category": {
+      "champion": "Champion",
+      "mvp": "MVP",
+      "golden_boot": "Golden Boot",
+      "province_leader": "Province leader",
+      "rising_star": "Rising star",
+      "fair_play": "Fair play"
+    },
+    "honour": "Official BallDoenSai honour",
+    "emptyTitle": "Waiting for the first name in the Hall",
+    "emptyBody": "The Hall of Fame shows only achievements an organizer or admin has confirmed and announced",
+    "emptyAction": "See the live ranking meanwhile"
+  },
+  "athletesPage": {
+    "eyebrow": "Find athletes",
+    "heroEyebrow": "Football · Thailand",
+    "title": "Find youth athletes",
+    "intro": "Profiles, results and data that say clearly how each fact is confirmed",
+    "found": "Athletes found",
+    "count": "{count} profiles",
+    "empty": "No athlete matches these filters yet",
+    "verified": "Confirmed",
+    "noTeam": "No team yet",
+    "noProvince": "No province",
+    "age": "{age} years",
+    "power": "Power Rating",
+    "noPower": "Not rated yet"
   }
 }
