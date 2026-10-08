@@ -13,6 +13,7 @@ type Team = { id: string; name: string; tournament_id: string; status: string; t
 type Member = { id: string; team_id: string; athlete_id: string; status: string; invited_at: string; teams?: { name: string | null } | null }
 
 export default function TeamMembersClient({ teams, invites, counts }: { teams: Team[]; invites: Member[]; counts: Record<string, { accepted: number; pending: number }> | null }) {
+  const tl = useTranslations('labels')
   const tInvite = useTranslations('teamInvite')
   const t = useTranslations('teamRoster')
   const [selectedTeam, setSelectedTeam] = useState(teams[0]?.id ?? '')
@@ -102,7 +103,7 @@ export default function TeamMembersClient({ teams, invites, counts }: { teams: T
           </div>}
         </div>)}
       </div>
-      {inviteMessage && <div style={{ marginTop: 12, background: inviteMessage.includes('ไม่สำเร็จ') ? '#fef2f2' : '#f0fdf4', color: inviteMessage.includes('ไม่สำเร็จ') ? '#b91c1c' : '#166534', borderRadius: 10, padding: '10px 12px', fontSize: 13, lineHeight: 1.5 }}>{inviteMessage}{inviteMessage.startsWith('รับคำเชิญแล้ว') && <Link href="/career" style={{ display: 'block', marginTop: 5, color: 'inherit', fontWeight: 800 }}>ดู Athlete Passport →</Link>}</div>}
+      {inviteMessage && <div style={{ marginTop: 12, background: inviteMessage.includes('ไม่สำเร็จ') ? '#fef2f2' : '#f0fdf4', color: inviteMessage.includes('ไม่สำเร็จ') ? '#b91c1c' : '#166534', borderRadius: 10, padding: '10px 12px', fontSize: 13, lineHeight: 1.5 }}>{inviteMessage}{inviteMessage.startsWith('รับคำเชิญแล้ว') && <Link href="/career" style={{ display: 'block', marginTop: 5, color: 'inherit', fontWeight: 800 }}>{tl('teamMembersLabels.passport')}</Link>}</div>}
     </section>}
   </div>
 }
