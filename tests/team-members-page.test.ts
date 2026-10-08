@@ -109,7 +109,7 @@ describe('/team-members: the second of the three steps (UX mockup v3-A)', () => 
     const html = await render()
     expect(html).toContain('สร้างทีม')
     expect(html).toContain('เชิญสมาชิก')
-    expect(html).toContain('ส่งสมัคร &amp; ชำระ')
+    expect(html).toContain('ส่งสมัครและชำระเงิน')
     expect(html).toContain('aria-current="step"')
     expect(html).toContain('เชิญนักกีฬาคนแรก')
     expect(html.match(/type="email"/g)).toHaveLength(1)

@@ -78,7 +78,10 @@ describe('/profile', () => {
     expect(page).toContain('Somchai Jaidee')
     expect(page).toContain('Chiang Mai FC U15 · Chiang Mai')
     expect(page).toContain('14 ปี')
-    expect(page).toContain('ข้อมูลที่กรอกเอง')
+    expect(page).toContain('ฉันกรอกเอง')
+    // The audience chip follows is_public: this athlete is private, so it never says everyone can see.
+    expect(page).toContain('เห็นแค่ฉัน')
+    expect(page).not.toContain('ทุกคนเห็น')
     expect(page).toContain('ก่อนเปิดโปรไฟล์สาธารณะ')
     expect(page).toContain('ผู้ปกครองยินยอม')
     expect(page).toContain('มีคำขอจากผู้ปกครองรอคุณตอบรับ 1 รายการ')
@@ -86,9 +89,10 @@ describe('/profile', () => {
     // Publishing is locked until the guardian step is done.
     expect(html).toMatch(/pf-step is-blocked[\s\S]*?เปิดโปรไฟล์สาธารณะ/)
     expect(html).toContain('href="/profile/edit"')
-    // AGENTS rule 8: no rank row means a STARTER card that says so, never a made-up rating.
-    expect(page).toContain('STARTER CARD')
-    expect(page).not.toMatch(/\d[\d,]* Power Rating/)
+    // AGENTS rule 8: no rank row means a starter card that says so, never a made-up rating.
+    expect(page).toContain('การ์ดเริ่มต้น')
+    expect(page).toContain('ยังไม่มีคะแนนฝีมือ')
+    expect(page).not.toMatch(/\d[\d,]* คะแนนฝีมือ/)
     // T50: the page shows an age, never the birth date itself.
     expect(html).not.toContain('2012-03-04')
     expect(html).not.toContain('04/03/2012')
@@ -109,8 +113,11 @@ describe('/profile', () => {
     const html = await render(ProfilePage as never)
     const page = text(html)
     expect(page).toContain('1,520')
-    expect(page).toContain('Power Rating')
+    expect(page).toContain('คะแนนฝีมือ')
     expect(page).toContain('คำนวณจากผลแข่งที่ผู้จัดบันทึกและยืนยันแล้ว')
+    // The audience chip follows is_public: this athlete is public.
+    expect(page).toContain('ทุกคนเห็น')
+    expect(page).not.toContain('เห็นแค่ฉัน')
     expect(html).toContain('href="/players/rank-9"')
     expect(page).toContain('โค้ชยืนยันแล้ว')
     expect(page).toContain('โปรไฟล์ของคุณพร้อมแล้ว')

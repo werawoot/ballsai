@@ -24,14 +24,14 @@
     "unread": "{count} unread",
     "items": {
       "home": "Home",
-      "discover": "Discover",
+      "discover": "Athletes",
       "tournaments": "Events",
       "notifications": "Alerts",
       "profile": "Profile"
     }
   },
   "tournaments": {
-    "intro": "Youth football tournaments. Results the organizer verifies go onto every player's Player Card.",
+    "intro": "Youth football tournaments. Results the organizer verifies go onto every player's player card.",
     "empty": {
       "upcoming": "No upcoming tournaments yet",
       "open": "No tournament is taking entries right now",
@@ -119,7 +119,7 @@
     },
     "goals": {
       "player_card": {
-        "title": "Make a Player Card",
+        "title": "Make my player card",
         "description": "Create my player card"
       },
       "find_competitions": {
@@ -147,7 +147,7 @@
     "helloNoName": "Welcome 👋",
     "recommended": "Recommended",
     "destinations": {
-      "player_card": "Opens Player Card",
+      "player_card": "Opens your player card",
       "find_competitions": "Opens tournaments",
       "follow_athlete": "Opens athlete search",
       "follow_athlete_guardian": "Opens the guardian page",
@@ -160,7 +160,7 @@
     "chooseImage": "Please choose a JPG, PNG or WEBP image",
     "imageTooLarge": "The photo must be 8MB or smaller",
     "nameRequired": "Add the name for your card before saving",
-    "saving": "Saving your Player Card…",
+    "saving": "Saving your player card…",
     "noBucket": "Photo storage is not set up yet — apply SQL Athlete Profile V2 first",
     "uploadFailed": "Could not upload the photo: {message}",
     "profileNotReady": "Athlete Profile is not fully set up yet — apply SQL Athlete Profile V2 first",
@@ -172,7 +172,7 @@
     "needPublicProfile": "Turn on “Public profile” on your profile page before sharing your athlete link",
     "copyFailed": "Could not copy the link. Try the share button on your phone instead",
     "preparingShare": "Preparing your card for sharing…",
-    "shareText": "This is my Player Card from BallDoenSai.com ⚽",
+    "shareText": "This is my player card from BallDoenSai.com ⚽",
     "shareOpened": "Share menu opened — choose Instagram, Facebook or TikTok",
     "shareDownloaded": "Image downloaded — open the app you want and pick this image to post",
     "shareFailed": "Could not share yet. Try downloading it and posting from the app",
@@ -186,7 +186,7 @@
     "facebookNeedsPublic": "Facebook needs your public profile link — turn it on in your profile and save first",
     "facebookOpened": "Facebook Share is open — it will show a preview of your card automatically",
     "linkCopied": "Athlete Profile link copied",
-    "fieldsLabel": "Player Card details",
+    "fieldsLabel": "Player card details",
     "name": "Player name",
     "namePlaceholder": "The name you want on the card",
     "team": "Team / club",
@@ -225,14 +225,14 @@
     "saveChanges": "Save",
     "savedChip": "Saved",
     "provenance": {
-      "performance": "Verified results · {count} matches",
-      "performanceNoCount": "Verified results",
-      "coach": "Checked by a coach",
-      "self": "Self-entered · no results yet"
+      "performance": "Confirmed by match results · {count} matches",
+      "performanceNoCount": "Confirmed by match results",
+      "coach": "Confirmed by coach",
+      "self": "Entered by me · no match results yet"
     },
-    "starterLabel": "STARTER CARD",
+    "starterLabel": "Starter card",
     "unlockBefore": "Play your first organizer-verified match to unlock your ",
-    "unlockRating": "Rating",
+    "unlockRating": "Power Rating",
     "unlockAfter": " and stats",
     "backTitle": "CAREER · SEASON {season}",
     "backMatches": "Verified matches",
@@ -256,14 +256,14 @@
   },
   "profileShare": {
     "needPublic": "Turn on “Public profile” and save first to get a share link",
-    "shareText": "This is my football journey on BallDoenSai.com ⚽",
+    "shareText": "This is my athlete profile on BallDoenSai.com ⚽",
     "shareOpened": "Share menu opened",
     "copied": "Link copied",
     "shareFailed": "Could not share yet. Try copying the link instead",
     "copyFailed": "Could not copy. Try sharing from your phone",
     "title": "Your player profile is ready to share",
     "publicNote": "When you share it to a Story or Facebook, a preview of your card appears automatically",
-    "privateNote": "Your profile is still private, to keep your information safe",
+    "privateNote": "Your profile is still visible only to you, to keep your information safe",
     "share": "Share profile",
     "cannotShare": "Not shareable yet",
     "copy": "Copy link"
@@ -565,7 +565,7 @@
     },
     "heroTags": {
       "verified": "Verified by real matches",
-      "rating": "Power Rating · Player Card"
+      "rating": "Power Rating · Player card"
     },
     "roles": {
       "eyebrow": "Who it is for",
@@ -573,10 +573,10 @@
       "body": "Pick your role and see where to start.",
       "athlete": {
         "title": "Athletes",
-        "a": "Your own Player Card",
+        "a": "Your own player card",
         "b": "Power Rating from verified matches",
         "c": "Training programmes for your age",
-        "link": "Make a Player Card"
+        "link": "Make a player card"
       },
       "guardian": {
         "title": "Parents",
@@ -662,7 +662,7 @@
       "title": "Start with what works right now",
       "new": "New",
       "card": {
-        "title": "Player Card",
+        "title": "Player card",
         "copy": "Your own athlete card, shareable, with a source for every value"
       },
       "training": {
@@ -687,7 +687,7 @@
       },
       "rating": {
         "q": "Where does Power Rating come from?",
-        "a": "Only from results confirmed by the tournament organizer. A player without results gets a STARTER card, which says plainly that nothing is verified yet."
+        "a": "Only from results confirmed by the tournament organizer. A player without results gets a starter card, which says plainly that nothing is verified yet."
       },
       "training": {
         "q": "How reliable are the training programmes?",
@@ -915,13 +915,13 @@
     "noName": "BallDoenSai athlete",
     "age": "{age} yrs",
     "verification": {
-      "self": "Self-reported",
-      "coach_verified": "Coach verified",
-      "performance_verified": "Verified by results"
+      "self": "Entered by me",
+      "coach_verified": "Confirmed by coach",
+      "performance_verified": "Confirmed by match results"
     },
     "visibility": {
-      "public": "Public",
-      "private": "Private"
+      "public": "Everyone can see",
+      "private": "Only me"
     },
     "level": "Level {level}",
     "xpToNext": "{xp} XP · {remaining} XP to Level {next}",
@@ -934,8 +934,8 @@
     },
     "actions": {
       "edit": "Edit profile",
-      "viewPublic": "View public page",
-      "passport": "Career Passport"
+      "viewPublic": "View the profile everyone can see",
+      "passport": "My playing history"
     },
     "readiness": {
       "title": "Before your profile goes public",
@@ -981,8 +981,8 @@
       "title": "Player card",
       "power": "Power Rating",
       "source": "Calculated from match results recorded and confirmed by organizers",
-      "starterTitle": "STARTER CARD",
-      "starterBody": "No Power Rating yet. Ratings come only from match results recorded and confirmed by organizers. Play your first tournament to start.",
+      "starterTitle": "Starter card",
+      "starterBody": "No Power Rating yet. It comes only from match results recorded and confirmed by organizers. Play your first tournament to start.",
       "build": "Build and share card",
       "findTournament": "Find a tournament",
       "myRanking": "See my ranking"
@@ -1032,7 +1032,7 @@
           "hint": "Team invitations and my rosters"
         },
         "career": {
-          "label": "Career Passport",
+          "label": "My playing history",
           "hint": "Your verified path and results"
         }
       }
@@ -1104,8 +1104,8 @@
       "minorOk": "Guardian consent recorded",
       "goGuardian": "Go to Guardian page",
       "verified": {
-        "coach_verified": "Details verified by a coach",
-        "performance_verified": "Details verified by match results"
+        "coach_verified": "Confirmed by coach",
+        "performance_verified": "Confirmed by match results"
       }
     },
     "save": {
@@ -1231,11 +1231,11 @@
     "steps": {
       "team": "Create team",
       "invite": "Invite players",
-      "pay": "Submit & pay"
+      "pay": "Submit and pay"
     },
     "stepsLabel": "Step {step} of 3",
     "teamTitle": "Name your team",
-    "teamIntro": "This name appears in the fixtures and on the Career Timeline of every player in the team.",
+    "teamIntro": "This name appears in the fixtures and in the playing history of every player in the team.",
     "teamName": "Team name",
     "teamPlaceholder": "e.g. Ayutthaya FC U16",
     "teamNext": "Next: invite players by email. Each one accepts, then you submit the entry and attach the slip.",
@@ -1273,10 +1273,10 @@
     "age": "{age} yrs",
     "verification": {
       "self": "Self-reported",
-      "coach_verified": "Coach verified",
-      "performance_verified": "Verified results"
+      "coach_verified": "Confirmed by coach",
+      "performance_verified": "Confirmed by match results"
     },
-    "starterChip": "STARTER CARD",
+    "starterChip": "Starter card",
     "level": "Level {level}",
     "share": "Share profile",
     "shareText": "See {name}'s athlete profile on BallDoenSai.com",
@@ -1318,7 +1318,7 @@
       "notAssessed": "Not assessed yet",
       "self": "Self-reported",
       "coach_verified": "Coach assessed",
-      "performance_verified": "From verified results"
+      "performance_verified": "Confirmed by match results"
     },
     "skillDash": "“—” means not assessed yet, not zero.",
     "identity": "Digital Sports Identity",
@@ -1375,7 +1375,7 @@
     "goToPage": "Go to page {page}",
     "podiumLabel": "Top 3",
     "restTitle": "Ranks {from}–{to}",
-    "power": "Power",
+    "power": "Power Rating",
     "mvpLine": "MVP {mvps} · goals {goals}",
     "change": {
       "up": "Up {count}",
