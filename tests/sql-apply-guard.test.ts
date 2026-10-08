@@ -41,3 +41,11 @@ describe('planSqlApply', () => {
     expect(planSqlApply({ file: 'sql/60-match-result-request-id-v1.sql', target: 'staging', dbUrl: '', confirm: '', exists })).toMatchObject({ ok: false, reason: 'missing_db_url' })
   })
 })
+
+describe('data fixes already applied by hand on Production', () => {
+  it('never runs again through the workflow', () => {
+    for (const file of ['sql/66-production-sample-data-cleanup-v1.sql', 'sql/67-production-test-data-cleanup-v1.sql']) {
+      expect(planSqlApply({ file, target: 'production', dbUrl: PRODUCTION_URL, confirm: file.slice(4), exists: () => true })).toMatchObject({ ok: false, reason: 'not_a_migration' })
+    }
+  })
+})
