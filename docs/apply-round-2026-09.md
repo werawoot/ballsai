@@ -99,8 +99,8 @@
 | 12 | | |
 | 13 | | |
 | 14 | มีแล้ว (fingerprint 329fbca1… ตรงกับ repo) | 8 ต.ค. 2026 ผ่าน: precheck true/true, Success, postcheck true/false/false, fingerprint 329fbca1… |
-| 15 | | |
-| 16 | | |
+| 15 | มีแล้ว (fingerprint save_tournament_fixtures_safely 453f32e9 ตรงกับ repo, anon เรียกไม่ได้) | 8 ต.ค. 2026 ผ่าน: precheck true/true/true, Success, postcheck true/true/false/false/true/false |
+| 16 | มีแล้ว (fingerprint 5 ฟังก์ชันตรงกับ repo, anon เรียกไม่ได้) | 8 ต.ค. 2026 ผ่าน: precheck true/true/false, Success, postcheck true/true/true/false |
 | 17 | | |
 | 18 | | |
 | 19 | | |
