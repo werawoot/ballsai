@@ -84,28 +84,28 @@
 
 | ขั้น | Staging: วันที่ / ผล | Production: วันที่ / ผล |
 | --- | --- | --- |
-| 0 | | |
-| 1 | | |
-| 2 | | |
-| 3 | | |
-| 4 | | |
-| 5 | | |
-| 6 | | |
-| 7 | | |
-| 8 | | |
-| 9 | | |
-| 10 | | |
-| 11 | | |
-| 12 | | |
-| 13 | | |
+| 0 |  | 8 ต.ค. 2026: รัน status check แล้ว ขั้น 1–9, 14–16, 20, 22–24 มีอยู่แล้ว |
+| 1 |  | มีแล้ว (status check 8 ต.ค. 2026) |
+| 2 |  | มีแล้ว; fingerprint notify_venue_booking_requested b6f8e200 ตรงกับ repo |
+| 3 |  | มีแล้ว (status check 8 ต.ค. 2026) |
+| 4 |  | มีแล้ว (status check 8 ต.ค. 2026) |
+| 5 |  | มีแล้ว; fingerprint coordinate_venue_booking_beta fdafa06f ตรงกับ repo |
+| 6 |  | มีแล้ว; fingerprint manage_coach_beta 99c697e3 ตรงกับ repo |
+| 7 |  | มีแล้ว; fingerprint notify_venue_booking_responded 56c17d2c ตรงกับ repo |
+| 8 |  | มีแล้ว (ฉบับ SQL65 ขั้น 24) |
+| 9 |  | มีแล้ว (status check 8 ต.ค. 2026) |
+| 10 |  | 8 ต.ค. 2026 ผ่าน: Success, index ทั้งสองตัว valid |
+| 11 |  | 8 ต.ค. 2026 ผ่าน: Success, view security_invoker, anon อ่านได้ เขียนไม่ได้ |
+| 12 |  | 8 ต.ค. 2026 ผ่าน: Success, index valid |
+| 13 |  | 8 ต.ค. 2026 ผ่าน: Success, view มีอยู่ anon อ่านได้ |
 | 14 | มีแล้ว (fingerprint 329fbca1… ตรงกับ repo) | 8 ต.ค. 2026 ผ่าน: precheck true/true, Success, postcheck true/false/false, fingerprint 329fbca1… |
 | 15 | มีแล้ว (fingerprint save_tournament_fixtures_safely 453f32e9 ตรงกับ repo, anon เรียกไม่ได้) | 8 ต.ค. 2026 ผ่าน: precheck true/true/true, Success, postcheck true/true/false/false/true/false |
 | 16 | มีแล้ว (fingerprint 5 ฟังก์ชันตรงกับ repo, anon เรียกไม่ได้) | 8 ต.ค. 2026 ผ่าน: precheck true/true/false, Success, postcheck true/true/true/false |
-| 17 | | |
-| 18 | | |
-| 19 | | |
+| 17 |  | 8 ต.ค. 2026 ผ่าน: precheck ถอน 41 ฟังก์ชัน ไม่มี RLS ที่พึ่งฟังก์ชันนอก allowlist, Success, anon เหลือ 5 ฟังก์ชัน allowlist, หน้าสาธารณะเปิดได้ |
+| 18 |  | 8 ต.ค. 2026 ผ่าน: Success, anon อ่านได้ เผยแพร่ไม่ได้ |
+| 19 |  | 8 ต.ค. 2026 ผ่าน: Success, anon/authenticated อ่านวันเกิดไม่ได้, anon เรียก public_athlete_age ได้ |
 | 20 | มีแล้ว (fingerprint 2692ffe2… ตรงกับ repo) | 8 ต.ค. 2026 ผ่าน: precheck true/true/true, Success, postcheck true/true/false/0, fingerprint 2692ffe2… |
-| 21 | | |
+| 21 |  | 8 ต.ค. 2026 ผ่าน: Success, bucket ส่วนตัว, policy เก่าถูกลบ, policy ลงชื่อมีอยู่ |
 | 22 | 3 ต.ค. 2026 ✅ — postcheck ผ่านทุกข้อ; ทดสอบบนเว็บ (Preview ที่ต่อ Staging) ผ่านครบ: ช่วงอายุตามวันเกิด, โปรแกรม E ล็อก, กันเลือกครบ 7 วัน, ตอบ "เจ็บ" แล้วเริ่มไม่ได้, ซ้อมเสร็จแล้วรีเฟรชยังนับ 1, โปรแกรมที่ 4 ถูกปฏิเสธ, การ์ดบน `/profile` ถูก, ออกจากระบบแล้วไม่เห็นข้อมูลเดิม | 4 ต.ค. 2026 — 4 ช่วงรันสำเร็จ; fingerprint ตรง 8/9 ค่า ต่างที่ `execute_rights` (anon เรียก 2 ฟังก์ชันได้) → แก้ด้วยขั้น 23; หลังขั้น 23 fingerprint ตรง Staging ครบ 9 ค่า, postcheck ผ่าน, `/training` โหลดได้ ✅ |
 | 23 | ไม่ต้องรัน (Staging มี SQL50 แล้ว anon ไม่มีสิทธิ์อยู่แล้ว) | 4 ต.ค. 2026 ✅ — precheck `true, true, false, true, true` → Success → postcheck `false, false, false, true, true` |
 | 24 | 6 ต.ค. 2026 — ผ่าน: ก่อนรันเป็นฉบับเดิมที่มีช่องโหว่ (fp 0de68ddf…); หลังรัน fp cbc46e5b…, anon/service_role ไม่มีสิทธิ์, authenticated มีสิทธิ์ | 6 ต.ค. 2026 — ผ่าน: ก่อนรันยังไม่มีฟังก์ชัน (has_void=false) จึงไม่เคยมีฉบับที่มีช่องโหว่บน Production; หลังรัน fp cbc46e5b…, anon/service_role ไม่มีสิทธิ์, authenticated มีสิทธิ์ |
