@@ -296,7 +296,7 @@ export default async function ProfilePage() {
           {memberships.length > 0 && <section className="pf-card" aria-labelledby="pf-teams">
             <div className="pf-card-head">
               <h2 id="pf-teams" className="pf-card-title">{t('teams.title')}</h2>
-              <Link href="/team-members" className="pf-card-meta" style={{ textDecoration: 'none' }}>{t('teams.viewAll')}</Link>
+              <Link href="/team-members" className="pf-card-meta tap-44" style={{ textDecoration: 'none' }}>{t('teams.viewAll')}</Link>
             </div>
             <ul className="pf-list">
               {memberships.map((membership, index) => {

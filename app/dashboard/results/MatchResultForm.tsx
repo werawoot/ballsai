@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Eye, Save } from 'lucide-react'
@@ -182,7 +183,7 @@ export default function MatchResultForm({ tournaments, teams, players, initialTe
       <h2 className="mr-title">{t('teamsTitle')}</h2>
       <p className="mr-sub">{t('teamsHint')}</p>
       {tournamentTeams.length === 0
-        ? <p className="mr-empty">{t('noTeams')}</p>
+        ? <div className="mr-empty"><p style={{ margin: '0 0 12px' }}>{t('noTeams')}</p><Link href="/dashboard" className="ui-btn ui-btn-primary">{t('confirmTeams')}</Link></div>
         : <ul className="mr-teams">{tournamentTeams.map(team => {
           const role = team.id === entry.teamAId ? t('home') : team.id === entry.teamBId ? t('away') : ''
           return <li key={team.id}><button type="button" className="mr-team" aria-pressed={Boolean(role)} onClick={() => chooseTeam(team.id)}>

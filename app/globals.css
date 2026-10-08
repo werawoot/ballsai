@@ -397,3 +397,6 @@ body:has(.card-page) { background: #070d18; }
 .home-rail-actions button { background-clip:padding-box; border:2.5px solid transparent; height:44px; width:44px; }
 .home-carousel-dots { bottom:9.5px; gap:0; }
 .home-carousel-dots button,.home-carousel-dots button.is-active { background-clip:content-box; box-sizing:content-box; padding:19.5px 3px; }
+/* A text link that must be easy to tap: its tap area is at least 44px tall, and padding
+   cancelled by a negative margin keeps the text where it was (Chrome test, 8 Oct 2026). */
+.tap-44 { box-sizing:border-box; display:inline-block; margin-block:-12px; min-height:44px; padding-block:12px; }
