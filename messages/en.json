@@ -70,90 +70,70 @@
     "skip": "Skip for now",
     "progress": "Step {step} of {total}",
     "back": "Back",
-    "next": "Next",
     "starting": "Getting started...",
-    "finish": "Start my journey",
+    "finish": {
+      "athlete": "Make my card",
+      "guardian": "Link my child",
+      "coach": "Find a tournament",
+      "organizer": "Go to my page",
+      "venue_owner": "Manage my venue",
+      "sponsor_brand": "Go to the sponsor page"
+    },
     "saveSettingsFailed": "Could not save your settings: {message}",
     "saveAthleteFailed": "Could not save your athlete profile: {message}",
     "persona": {
-      "titleTop": "Who are you",
-      "titleBottom": "joining as?",
-      "intro": "Choose one and we will take you to the best place to start"
+      "titleTop": "Who are",
+      "titleBottom": "you?",
+      "intro": "Pick one and we will take you to the right place.",
+      "hint": "Tap an option and go straight on · You can skip for now"
     },
     "sport": {
-      "titleTop": "Which sport",
-      "titleBottom": "do you play?",
-      "intro": "Start with the sport you love; you can add more results later"
-    },
-    "goal": {
-      "titleTop": "What would you",
-      "titleBottom": "like to do first?",
-      "intro": "We will take you straight there"
+      "titleFor": {
+        "athlete": "Which sport do you play?",
+        "guardian": "Which sport does your child play?",
+        "other": "Which sport is this about?"
+      },
+      "intro": "Start with the sport you pick. You can add more later."
     },
     "personas": {
       "athlete": {
         "title": "Athlete",
-        "description": "Build my identity and keep every result"
+        "description": "Make my card and keep my results"
       },
       "guardian": {
-        "title": "Parent / Guardian",
-        "description": "Follow and support your child's journey"
+        "title": "Guardian",
+        "description": "Look after and follow my child"
       },
-      "coach_organizer": {
-        "title": "Coach / Organizer",
-        "description": "Find, develop and run competitions"
+      "coach": {
+        "title": "Coach",
+        "description": "Build a team, invite athletes, register for tournaments"
+      },
+      "organizer": {
+        "title": "Organizer",
+        "description": "Run tournaments, check teams, record results · an administrator has to switch this on"
       },
       "venue_owner": {
         "title": "Venue owner",
-        "description": "List your venue and take booking requests"
+        "description": "Rent out a venue and take bookings"
       },
       "sponsor_brand": {
-        "title": "Sponsor / Brand",
-        "description": "Create support opportunities for athletes, responsibly"
+        "title": "Sponsor",
+        "description": "Support young athletes responsibly"
       }
     },
     "sports": {
       "football": "Football",
       "futsal": "Futsal",
-      "other": "Other sports"
+      "other": "Other sports",
+      "soon": "Coming soon"
     },
-    "goals": {
-      "player_card": {
-        "title": "Make my player card",
-        "description": "Create my player card"
-      },
-      "find_competitions": {
-        "title": "Find a tournament",
-        "description": "See which competitions are waiting for you"
-      },
-      "follow_athlete": {
-        "title": "Follow an athlete",
-        "description": "See their journey and results"
-      },
-      "discover_talent": {
-        "title": "Discover athletes",
-        "description": "Spot rising talent"
-      },
-      "manage_venue": {
-        "title": "Manage a venue",
-        "description": "Set up your venue and open time slots"
-      },
-      "support_athletes": {
-        "title": "Support athletes",
-        "description": "Offer opportunities that young athletes choose to take up"
-      }
-    },
-    "hello": "Hi {name} 👋",
-    "helloNoName": "Welcome 👋",
-    "recommended": "Recommended",
-    "destinations": {
-      "player_card": "Opens your player card",
-      "find_competitions": "Opens tournaments",
-      "follow_athlete": "Opens athlete search",
-      "follow_athlete_guardian": "Opens the guardian page",
-      "discover_talent": "Opens athlete search",
-      "manage_venue": "Opens venue manager",
-      "support_athletes": "Opens the sponsor page"
+    "nextNote": {
+      "athlete": "Next: add your name and your first card is ready",
+      "guardian": "Next: enter the email your child signed up with, then wait for them to accept",
+      "coach": "Next: pick a tournament that is open",
+      "organizer": "Next: see what your account can do",
+      "venue_owner": "Next: add a venue and open free times",
+      "sponsor_brand": "Next: create a sponsorship"
     }
   },
   "card": {
@@ -1668,5 +1648,16 @@
       "title": "We could not load your work",
       "text": "Try loading this page again."
     }
+  },
+  "loginPage": {
+    "title": "Sign in or sign up",
+    "sub": "Use your Google account or your email. No password needed.",
+    "google": "Continue with Google",
+    "googleLoading": "Taking you to Google...",
+    "email": "Email me a code",
+    "facebook": "Continue with Facebook",
+    "facebookLoading": "Taking you to Facebook...",
+    "next": "Next: answer two quick questions, then make your first player card",
+    "lead": "Results the organizer confirms become your player card, your Power Rating and your rank across Thailand"
   }
 }

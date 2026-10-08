@@ -21,3 +21,7 @@ body:has(.wb) { background: var(--ui-ink); }
 .wb-footer { background: linear-gradient(180deg, rgba(11,15,22,0), var(--ui-ink) 30%); bottom: 0; padding: 18px 20px calc(20px + env(safe-area-inset-bottom)); position: sticky; }
 @media (max-width: 360px) { .wb-brand-text { display: none; } }
 @media (min-width: 900px) { .wb-shell { justify-content: center; } .wb-body { flex: none; } }
+
+/* Two screens: tapping a role goes on, so the hint says so; the last button names where it leads. */
+.wb-hint { color: var(--ui-mute-d); font-size: 13px; line-height: 1.5; margin: 6px 0 0; text-align: center; }
+.wb-next-note { color: var(--ui-mute-d); font-size: 13px; line-height: 1.5; margin: 10px 0 0; text-align: center; }
