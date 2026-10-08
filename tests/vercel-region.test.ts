@@ -11,13 +11,3 @@ describe('vercel.json', () => {
     expect(config.regions).toEqual(['sin1'])
   })
 })
-
-// The hero loads three photos as CSS backgrounds. Phones get a portrait crop sized for a phone
-// screen instead of the 2200px desktop photo; the crop is the same centre a phone already shows.
-describe('home hero photos on a phone', () => {
-  it('are portrait crops no wider than 900px under 650px', () => {
-    const css = readFileSync('app/globals.css', 'utf8')
-    const mobile = css.match(/@media \(max-width: 650px\) \{ \.home-hero-slide:nth-child\(1\)[^\n]*/)?.[0] ?? ''
-    for (const n of [1, 2, 3]) expect(mobile).toMatch(new RegExp(`\\.home-hero-slide:nth-child\\(${n}\\) \\{ --slide-photo:url\\('https://images\\.unsplash\\.com/[^']*w=900&h=1300`))
-  })
-})

@@ -400,7 +400,3 @@ body:has(.card-page) { background: #070d18; }
 /* A text link that must be easy to tap: its tap area is at least 44px tall, and padding
    cancelled by a negative margin keeps the text where it was (Chrome test, 8 Oct 2026). */
 .tap-44 { box-sizing:border-box; display:inline-block; margin-block:-12px; min-height:44px; padding-block:12px; }
-/* Phones: the hero photos as portrait crops sized for a phone (900x1300) instead of the 2200px
-   desktop photo. background-size:cover already shows the centre of the photo on a phone, so the
-   picture looks the same; only the download is smaller (Chrome test, 8 Oct 2026: home took 5.4 s). */
-@media (max-width: 650px) { .home-hero-slide:nth-child(1) { --slide-photo:url('https://images.unsplash.com/photo-1748112437268-3f47ac09b855?auto=format&fit=crop&w=900&h=1300&q=80'); }.home-hero-slide:nth-child(2) { --slide-photo:url('https://images.unsplash.com/photo-1751394215141-30fc819f0018?auto=format&fit=crop&w=900&h=1300&q=80'); }.home-hero-slide:nth-child(3) { --slide-photo:url('https://images.unsplash.com/photo-1748112202471-8aab237fc7f7?auto=format&fit=crop&w=900&h=1300&q=80'); } }
