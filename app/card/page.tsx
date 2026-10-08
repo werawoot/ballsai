@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import PlayerCardBuilder from './PlayerCardBuilder'
 import BrandMark from '@/components/BrandMark'
+import CardGuide from '@/components/CardGuide'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import { signAvatarUrls } from '@/lib/athlete-avatar'
 import { cardPosition, cardProvenance, playerCardStats, type CardSeason } from '@/lib/player-card'
@@ -76,6 +77,7 @@ export default async function PlayerCardPage() {
           season,
         }}
       />
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '0 16px 32px' }}><CardGuide tone="dark" /></div>
     </main>
   )
 }

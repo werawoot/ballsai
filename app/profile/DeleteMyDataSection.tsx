@@ -36,7 +36,7 @@ export default function DeleteMyDataSection() {
     setOpen(false)
     setMessage({
       kind: 'success',
-      text: `ลบข้อมูลนักกีฬาของคุณแล้ว · ลบ Highlight ${payload?.removedHighlights ?? 0} รายการ · ทีมดูแลจะปิดบัญชีให้ในขั้นตอนสุดท้าย`,
+      text: `ลบข้อมูลนักกีฬาของคุณแล้ว · ลบไฮไลต์ ${payload?.removedHighlights ?? 0} รายการ · ทีมดูแลจะปิดบัญชีให้ในขั้นตอนสุดท้าย`,
     })
     router.refresh()
   }
@@ -54,7 +54,7 @@ export default function DeleteMyDataSection() {
       </div>
 
       <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 12, color: '#555', lineHeight: 1.8 }}>
-        <li><b>ลบทันที:</b> โปรไฟล์นักกีฬา, รูป, วิดีโอและ Highlight ที่อัปโหลด, ผลงาน, XP, Level และ Badge ทั้งหมด</li>
+        <li><b>ลบทันที:</b> โปรไฟล์นักกีฬา, รูป, วิดีโอและไฮไลต์ที่อัปโหลด, ผลงาน, แต้ม, ระดับ และเหรียญทั้งหมด</li>
         <li><b>เก็บไว้แต่ลบชื่อออก:</b> ประวัติผลการแข่งขันของรายการที่คุณลงเล่น เพราะเป็นคะแนนที่ทีมอื่นถูกวัดด้วย ระบบจะตัดชื่อและการเชื่อมโยงกับบัญชีของคุณออก</li>
         <li><b>ขั้นตอนสุดท้าย:</b> ทีมดูแลจะปิดบัญชีและอีเมลของคุณออกจากระบบให้ หลังได้รับคำขอนี้</li>
       </ul>

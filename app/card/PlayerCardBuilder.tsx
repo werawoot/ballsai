@@ -34,7 +34,6 @@ type Player = {
 type Tab = 'photo' | 'info' | 'style'
 const POSITIONS = ['FW', 'MF', 'DF', 'GK']
 const THEMES: CardTheme[] = ['red', 'gold', 'ice']
-const THEME_NAMES: Record<CardTheme, string> = { red: 'Red', gold: 'Gold', ice: 'Ice' }
 const MAX_PHOTO = 8 * 1024 * 1024
 
 export default function PlayerCardBuilder({ player, publicProfilePath, userId, seasonLabel = '' }: { player: Player; publicProfilePath: string | null; userId: string; seasonLabel?: string }) {
@@ -367,7 +366,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
 
         {tab === 'style' && <div role="tabpanel" id="pc-panel-style" aria-labelledby="pc-tab-style">
           <p className="pc-label">{t('theme')}</p>
-          <div className="pc-themes">{THEMES.map(item => <button key={item} type="button" aria-pressed={theme === item} className={`pc-theme is-${item}${theme === item ? ' is-on' : ''}`} onClick={() => setTheme(item)}><i />{THEME_NAMES[item]}</button>)}</div>
+          <div className="pc-themes">{THEMES.map(item => <button key={item} type="button" aria-pressed={theme === item} className={`pc-theme is-${item}${theme === item ? ' is-on' : ''}`} onClick={() => setTheme(item)}><i />{t(`themes.${item}`)}</button>)}</div>
           <p className="pc-label">{t('size')}</p>
           <div className="pc-formats">
             <button type="button" aria-pressed={format === 'story'} className={format === 'story' ? 'is-on' : ''} onClick={() => setFormat('story')}><i className="is-story" />{t('formatStory')}</button>

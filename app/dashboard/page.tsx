@@ -56,14 +56,14 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
     <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* TOPBAR */}
-      <PageHeader eyebrow="ORGANIZER" />
+      <PageHeader eyebrow={tl('dashboardLabels.eyebrow')} />
 
       {/* HERO */}
       <div className="bds-hero" style={{ background: '#CC0001', padding: '20px 16px 36px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg,transparent,transparent 20px,rgba(255,255,255,0.03) 20px,rgba(255,255,255,0.03) 21px)' }} />
         <div style={{ position: 'relative' }}>
           <h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(28px,8vw,48px)', fontWeight: 700, color: 'white', lineHeight: 0.9, textTransform: 'uppercase' }}>
-            ORGANIZER<br />
+            {tl('dashboardLabels.heroTop')}<br />
             <span style={{ WebkitTextStroke: '2px rgba(255,255,255,0.4)', color: 'transparent' }}>{tl('dashboardLabels.eyebrow')}</span>
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10 }}>จัดการรายการแข่งขันของคุณ</p>

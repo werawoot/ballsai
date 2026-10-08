@@ -49,8 +49,8 @@ describe('one top bar for content pages', () => {
 
 describe('back navigation', () => {
   const backs = CONTENT.flatMap(path =>
-    // A label is a literal or, once the page is translated, a message: label: t('key').
-    [...read(path).matchAll(/<PageHeader back=\{\{ href: '([^']+)', label: (?:'([^']+)'|t\('([^']+)'\)) \}\}/g)]
+    // A label is a literal or, once the page is translated, a message: label: t('key') or tl('key').
+    [...read(path).matchAll(/<PageHeader back=\{\{ href: '([^']+)', label: (?:'([^']+)'|tl?\('([^']+)'\)) \}\}/g)]
       .map(match => ({ path, href: match[1], label: match[2] ?? `t:${match[3]}` })),
   )
 

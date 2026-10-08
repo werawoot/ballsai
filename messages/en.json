@@ -237,7 +237,12 @@
     "yourName": "Add your name",
     "startHint": "You can add a photo later · no photo needed to use your card",
     "myHistory": "My playing history",
-    "shareInstagramStory": "IG Story"
+    "shareInstagramStory": "IG Story",
+    "themes": {
+      "red": "Red",
+      "gold": "Gold",
+      "ice": "Ice"
+    }
   },
   "profileShare": {
     "needPublic": "Turn on “Public profile” and save first to get a share link",
@@ -322,7 +327,8 @@
     "viewPhoto": "View {alt}",
     "loadingPhotos": "Loading photos of {name}",
     "photosBroken": "Could not load venue photos",
-    "noPhotos": "No venue photos yet"
+    "noPhotos": "No venue photos yet",
+    "eyebrow": "PLAY WHERE IT MATTERS"
   },
   "venueOwner": {
     "page": {
@@ -1919,7 +1925,36 @@
       "eyebrow": "Organizer dashboard",
       "freeNoSlip": "Free tournament: no slip needed. Check the roster, then confirm the team",
       "noPendingTitle": "No team waiting",
-      "noPendingText": "Teams that coaches submit appear here for you to check and confirm"
+      "noPendingText": "Teams that coaches submit appear here for you to check and confirm",
+      "back": "Dashboard",
+      "heroTop": "ORGANIZER"
+    }
+  },
+  "cardGuide": {
+    "summary": "What do the card and the numbers mean?",
+    "starter": {
+      "title": "Starter card",
+      "text": "No numbers yet, because no match result has been confirmed by an organizer. The system never fills in made-up numbers. Play your first match and the card starts to fill"
+    },
+    "power": {
+      "title": "Power Rating",
+      "text": "Your Power Rating starts at 1,000 when an organizer records your first match. Beating a stronger team earns more, losing to a weaker team costs more, and goals and assists add a little. It stays between 0 and 3,000"
+    },
+    "xp": {
+      "title": "XP and level",
+      "text": "Earned from every confirmed match: playing 30, a win 20 more, each goal 10, each assist 8, a clean sheet 15, player of the match 35. Level 2 at 100 XP, level 3 at 400 XP. Training you log yourself gives no XP"
+    },
+    "badges": {
+      "title": "Badges",
+      "text": "Given automatically the first time you do something: first match, first win, first goal, first clean sheet, 10 matches played, or a Power Rating of 1,500"
+    },
+    "skills": {
+      "title": "Five skills",
+      "text": "Pace, shooting, passing, dribbling and defending show as — until a coach or an admin assesses them. The system never guesses"
+    },
+    "source": {
+      "title": "Where the data comes from",
+      "text": "The label on the card says where: entered by me, confirmed by a coach, or confirmed by match results. Results confirmed by an organizer are the most trusted"
     }
   }
 }

@@ -35,7 +35,7 @@ export default async function MatchPlanPage(
 
   return (
     <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 56 }}>
-      <PageHeader back={{ href: '/dashboard', label: 'Dashboard' }} />
+      <PageHeader back={{ href: '/dashboard', label: tl('dashboardLabels.back') }} />
 
       <section style={{ background: 'linear-gradient(118deg,#101827 0%,#203047 60%,#8d1014 140%)', color: 'white', padding: '34px 18px 41px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, opacity: .15, backgroundImage: 'repeating-linear-gradient(135deg, transparent 0 20px, white 20px 21px)' }} />
