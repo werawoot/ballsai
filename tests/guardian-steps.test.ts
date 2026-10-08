@@ -64,3 +64,20 @@ describe('/guardian for a parent with no linked child', () => {
     expect(html).toContain('Your child accepts in their own account')
   })
 })
+
+// UX report 8, mockup 5: the button is the primary colour and says what happens next. The
+// words of the consent and its checkbox stay exactly where and what they were (checked above).
+describe('/guardian: the request button', () => {
+  const html = render({ isGuardian: true, links: [], incoming: [] })
+  it('is the primary red, not yellow', () => {
+    expect(html).toMatch(/<button[^>]*background:#CC0001[^>]*>ส่งคำขอเชื่อมบัญชี<\/button>/)
+    expect(html).not.toMatch(/<button[^>]*background:#f5c518/)
+  })
+  it('says what happens next, right under it', () => {
+    const button = html.indexOf('ส่งคำขอเชื่อมบัญชี</button>')
+    expect(html.indexOf('ต่อไป: รอลูกกดยอมรับในบัญชีของลูก')).toBeGreaterThan(button)
+  })
+  it('says it in English too', () => {
+    expect(render({ isGuardian: true, links: [], incoming: [] }, en as typeof th, 'en')).toContain('Next: wait for your child to accept')
+  })
+})

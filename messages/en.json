@@ -11,7 +11,7 @@
     "home": "BallDoenSai.com home",
     "backTo": "Back to {label}",
     "back": {
-      "profile": "Profile",
+      "profile": "My page",
       "myRequests": "My requests",
       "myOrganization": "My organization",
       "dashboard": "Dashboard"
@@ -24,14 +24,14 @@
     "unread": "{count} unread",
     "items": {
       "home": "Home",
-      "discover": "Discover",
+      "discover": "Athletes",
       "tournaments": "Events",
       "notifications": "Alerts",
-      "profile": "Profile"
+      "profile": "Me"
     }
   },
   "tournaments": {
-    "intro": "Youth football tournaments. Results the organizer verifies go onto every player's Player Card.",
+    "intro": "Youth football tournaments. Results the organizer verifies go onto every player's player card.",
     "empty": {
       "upcoming": "No upcoming tournaments yet",
       "open": "No tournament is taking entries right now",
@@ -70,97 +70,77 @@
     "skip": "Skip for now",
     "progress": "Step {step} of {total}",
     "back": "Back",
-    "next": "Next",
     "starting": "Getting started...",
-    "finish": "Start my journey",
+    "finish": {
+      "athlete": "Make my card",
+      "guardian": "Link my child",
+      "coach": "Find a tournament",
+      "organizer": "Go to my page",
+      "venue_owner": "Manage my venue",
+      "sponsor_brand": "Go to the sponsor page"
+    },
     "saveSettingsFailed": "Could not save your settings: {message}",
     "saveAthleteFailed": "Could not save your athlete profile: {message}",
     "persona": {
-      "titleTop": "Who are you",
-      "titleBottom": "joining as?",
-      "intro": "Choose one and we will take you to the best place to start"
+      "titleTop": "Who are",
+      "titleBottom": "you?",
+      "intro": "Pick one and we will take you to the right place.",
+      "hint": "Tap an option and go straight on · You can skip for now"
     },
     "sport": {
-      "titleTop": "Which sport",
-      "titleBottom": "do you play?",
-      "intro": "Start with the sport you love; you can add more results later"
-    },
-    "goal": {
-      "titleTop": "What would you",
-      "titleBottom": "like to do first?",
-      "intro": "We will take you straight there"
+      "titleFor": {
+        "athlete": "Which sport do you play?",
+        "guardian": "Which sport does your child play?",
+        "other": "Which sport is this about?"
+      },
+      "intro": "Start with the sport you pick. You can add more later."
     },
     "personas": {
       "athlete": {
         "title": "Athlete",
-        "description": "Build my identity and keep every result"
+        "description": "Make my card and keep my results"
       },
       "guardian": {
-        "title": "Parent / Guardian",
-        "description": "Follow and support your child's journey"
+        "title": "Guardian",
+        "description": "Look after and follow my child"
       },
-      "coach_organizer": {
-        "title": "Coach / Organizer",
-        "description": "Find, develop and run competitions"
+      "coach": {
+        "title": "Coach",
+        "description": "Build a team, invite athletes, register for tournaments"
+      },
+      "organizer": {
+        "title": "Organizer",
+        "description": "Run tournaments, check teams, record results · an administrator has to switch this on"
       },
       "venue_owner": {
         "title": "Venue owner",
-        "description": "List your venue and take booking requests"
+        "description": "Rent out a venue and take bookings"
       },
       "sponsor_brand": {
-        "title": "Sponsor / Brand",
-        "description": "Create support opportunities for athletes, responsibly"
+        "title": "Sponsor",
+        "description": "Support young athletes responsibly"
       }
     },
     "sports": {
       "football": "Football",
       "futsal": "Futsal",
-      "other": "Other sports"
+      "other": "Other sports",
+      "soon": "Coming soon"
     },
-    "goals": {
-      "player_card": {
-        "title": "Make a Player Card",
-        "description": "Create my player card"
-      },
-      "find_competitions": {
-        "title": "Find a tournament",
-        "description": "See which competitions are waiting for you"
-      },
-      "follow_athlete": {
-        "title": "Follow an athlete",
-        "description": "See their journey and results"
-      },
-      "discover_talent": {
-        "title": "Discover athletes",
-        "description": "Spot rising talent"
-      },
-      "manage_venue": {
-        "title": "Manage a venue",
-        "description": "Set up your venue and open time slots"
-      },
-      "support_athletes": {
-        "title": "Support athletes",
-        "description": "Offer opportunities that young athletes choose to take up"
-      }
-    },
-    "hello": "Hi {name} 👋",
-    "helloNoName": "Welcome 👋",
-    "recommended": "Recommended",
-    "destinations": {
-      "player_card": "Opens Player Card",
-      "find_competitions": "Opens tournaments",
-      "follow_athlete": "Opens athlete search",
-      "follow_athlete_guardian": "Opens the guardian page",
-      "discover_talent": "Opens athlete search",
-      "manage_venue": "Opens venue manager",
-      "support_athletes": "Opens the sponsor page"
+    "nextNote": {
+      "athlete": "Next: add your name and your first card is ready",
+      "guardian": "Next: enter the email your child signed up with, then wait for them to accept",
+      "coach": "Next: pick a tournament that is open",
+      "organizer": "Next: see what your account can do",
+      "venue_owner": "Next: add a venue and open free times",
+      "sponsor_brand": "Next: create a sponsorship"
     }
   },
   "card": {
     "chooseImage": "Please choose a JPG, PNG or WEBP image",
     "imageTooLarge": "The photo must be 8MB or smaller",
     "nameRequired": "Add the name for your card before saving",
-    "saving": "Saving your Player Card…",
+    "saving": "Saving your player card…",
     "noBucket": "Photo storage is not set up yet — apply SQL Athlete Profile V2 first",
     "uploadFailed": "Could not upload the photo: {message}",
     "profileNotReady": "Athlete Profile is not fully set up yet — apply SQL Athlete Profile V2 first",
@@ -172,7 +152,7 @@
     "needPublicProfile": "Turn on “Public profile” on your profile page before sharing your athlete link",
     "copyFailed": "Could not copy the link. Try the share button on your phone instead",
     "preparingShare": "Preparing your card for sharing…",
-    "shareText": "This is my Player Card from BallDoenSai.com ⚽",
+    "shareText": "This is my player card from BallDoenSai.com ⚽",
     "shareOpened": "Share menu opened — choose Instagram, Facebook or TikTok",
     "shareDownloaded": "Image downloaded — open the app you want and pick this image to post",
     "shareFailed": "Could not share yet. Try downloading it and posting from the app",
@@ -186,7 +166,7 @@
     "facebookNeedsPublic": "Facebook needs your public profile link — turn it on in your profile and save first",
     "facebookOpened": "Facebook Share is open — it will show a preview of your card automatically",
     "linkCopied": "Athlete Profile link copied",
-    "fieldsLabel": "Player Card details",
+    "fieldsLabel": "Player card details",
     "name": "Player name",
     "namePlaceholder": "The name you want on the card",
     "team": "Team / club",
@@ -199,7 +179,7 @@
     "editProfile": "Edit profile",
     "photoReady": "Photo added to your card — press “Save” to keep it on your profile",
     "lineNeedsPublic": "LINE needs your public profile link — turn it on in your profile first, or save the image and send it in LINE",
-    "pageTitle": "YOUR PLAYER CARD",
+    "pageTitle": "Your player card",
     "pageLead": "Your card updates itself every time an organizer verifies a result",
     "back": "Back",
     "tabs": {
@@ -225,14 +205,14 @@
     "saveChanges": "Save",
     "savedChip": "Saved",
     "provenance": {
-      "performance": "Verified results · {count} matches",
-      "performanceNoCount": "Verified results",
-      "coach": "Checked by a coach",
-      "self": "Self-entered · no results yet"
+      "performance": "Confirmed by match results · {count} matches",
+      "performanceNoCount": "Confirmed by match results",
+      "coach": "Confirmed by coach",
+      "self": "Entered by me · no match results yet"
     },
-    "starterLabel": "STARTER CARD",
+    "starterLabel": "Starter card",
     "unlockBefore": "Play your first organizer-verified match to unlock your ",
-    "unlockRating": "Rating",
+    "unlockRating": "Power Rating",
     "unlockAfter": " and stats",
     "backTitle": "CAREER · SEASON {season}",
     "backMatches": "Verified matches",
@@ -252,18 +232,22 @@
     "publicLinkMissing": "No link yet — make your profile public first",
     "close": "Close",
     "lineOpened": "LINE share opened",
-    "enterName": "Add your name"
+    "enterName": "Add your name",
+    "pageLeadStart": "Add your name, then share it with friends",
+    "yourName": "Add your name",
+    "startHint": "You can add a photo later · no photo needed to use your card",
+    "myHistory": "My playing history"
   },
   "profileShare": {
     "needPublic": "Turn on “Public profile” and save first to get a share link",
-    "shareText": "This is my football journey on BallDoenSai.com ⚽",
+    "shareText": "This is my athlete profile on BallDoenSai.com ⚽",
     "shareOpened": "Share menu opened",
     "copied": "Link copied",
     "shareFailed": "Could not share yet. Try copying the link instead",
     "copyFailed": "Could not copy. Try sharing from your phone",
     "title": "Your player profile is ready to share",
     "publicNote": "When you share it to a Story or Facebook, a preview of your card appears automatically",
-    "privateNote": "Your profile is still private, to keep your information safe",
+    "privateNote": "Your profile is still visible only to you, to keep your information safe",
     "share": "Share profile",
     "cannotShare": "Not shareable yet",
     "copy": "Copy link"
@@ -565,7 +549,7 @@
     },
     "heroTags": {
       "verified": "Verified by real matches",
-      "rating": "Power Rating · Player Card"
+      "rating": "Power Rating · Player card"
     },
     "roles": {
       "eyebrow": "Who it is for",
@@ -573,10 +557,10 @@
       "body": "Pick your role and see where to start.",
       "athlete": {
         "title": "Athletes",
-        "a": "Your own Player Card",
+        "a": "Your own player card",
         "b": "Power Rating from verified matches",
         "c": "Training programmes for your age",
-        "link": "Make a Player Card"
+        "link": "Make a player card"
       },
       "guardian": {
         "title": "Parents",
@@ -662,7 +646,7 @@
       "title": "Start with what works right now",
       "new": "New",
       "card": {
-        "title": "Player Card",
+        "title": "Player card",
         "copy": "Your own athlete card, shareable, with a source for every value"
       },
       "training": {
@@ -687,7 +671,7 @@
       },
       "rating": {
         "q": "Where does Power Rating come from?",
-        "a": "Only from results confirmed by the tournament organizer. A player without results gets a STARTER card, which says plainly that nothing is verified yet."
+        "a": "Only from results confirmed by the tournament organizer. A player without results gets a starter card, which says plainly that nothing is verified yet."
       },
       "training": {
         "q": "How reliable are the training programmes?",
@@ -911,17 +895,17 @@
     "roundLabel": "Choose a round"
   },
   "profileHome": {
-    "eyebrow": "My profile",
+    "eyebrow": "Me",
     "noName": "BallDoenSai athlete",
     "age": "{age} yrs",
     "verification": {
-      "self": "Self-reported",
-      "coach_verified": "Coach verified",
-      "performance_verified": "Verified by results"
+      "self": "Entered by me",
+      "coach_verified": "Confirmed by coach",
+      "performance_verified": "Confirmed by match results"
     },
     "visibility": {
-      "public": "Public",
-      "private": "Private"
+      "public": "Everyone can see",
+      "private": "Only me"
     },
     "level": "Level {level}",
     "xpToNext": "{xp} XP · {remaining} XP to Level {next}",
@@ -934,8 +918,8 @@
     },
     "actions": {
       "edit": "Edit profile",
-      "viewPublic": "View public page",
-      "passport": "Career Passport"
+      "viewPublic": "View the profile everyone can see",
+      "passport": "My playing history"
     },
     "readiness": {
       "title": "Before your profile goes public",
@@ -981,8 +965,8 @@
       "title": "Player card",
       "power": "Power Rating",
       "source": "Calculated from match results recorded and confirmed by organizers",
-      "starterTitle": "STARTER CARD",
-      "starterBody": "No Power Rating yet. Ratings come only from match results recorded and confirmed by organizers. Play your first tournament to start.",
+      "starterTitle": "Starter card",
+      "starterBody": "No Power Rating yet. It comes only from match results recorded and confirmed by organizers. Play your first tournament to start.",
       "build": "Build and share card",
       "findTournament": "Find a tournament",
       "myRanking": "See my ranking"
@@ -1032,8 +1016,12 @@
           "hint": "Team invitations and my rosters"
         },
         "career": {
-          "label": "Career Passport",
+          "label": "My playing history",
           "hint": "Your verified path and results"
+        },
+        "card": {
+          "label": "My player card",
+          "hint": "See, edit and share my card"
         }
       }
     },
@@ -1053,7 +1041,8 @@
       "copied": "Link copied — send it to your guardian by LINE or message",
       "failed": "Could not share the link. Copy it from the guardian page instead",
       "how": "Your guardian signs up → chooses \"Guardian\" → enters your email, then you accept on the guardian page"
-    }
+    },
+    "levelLabel": "LEVEL"
   },
   "profileEdit": {
     "title": "Edit profile",
@@ -1104,8 +1093,8 @@
       "minorOk": "Guardian consent recorded",
       "goGuardian": "Go to Guardian page",
       "verified": {
-        "coach_verified": "Details verified by a coach",
-        "performance_verified": "Details verified by match results"
+        "coach_verified": "Confirmed by coach",
+        "performance_verified": "Confirmed by match results"
       }
     },
     "save": {
@@ -1231,11 +1220,11 @@
     "steps": {
       "team": "Create team",
       "invite": "Invite players",
-      "pay": "Submit & pay"
+      "pay": "Submit and pay"
     },
     "stepsLabel": "Step {step} of 3",
     "teamTitle": "Name your team",
-    "teamIntro": "This name appears in the fixtures and on the Career Timeline of every player in the team.",
+    "teamIntro": "This name appears in the fixtures and in the playing history of every player in the team.",
     "teamName": "Team name",
     "teamPlaceholder": "e.g. Ayutthaya FC U16",
     "teamNext": "Next: invite players by email. Each one accepts, then you submit the entry and attach the slip.",
@@ -1273,10 +1262,10 @@
     "age": "{age} yrs",
     "verification": {
       "self": "Self-reported",
-      "coach_verified": "Coach verified",
-      "performance_verified": "Verified results"
+      "coach_verified": "Confirmed by coach",
+      "performance_verified": "Confirmed by match results"
     },
-    "starterChip": "STARTER CARD",
+    "starterChip": "Starter card",
     "level": "Level {level}",
     "share": "Share profile",
     "shareText": "See {name}'s athlete profile on BallDoenSai.com",
@@ -1318,7 +1307,7 @@
       "notAssessed": "Not assessed yet",
       "self": "Self-reported",
       "coach_verified": "Coach assessed",
-      "performance_verified": "From verified results"
+      "performance_verified": "Confirmed by match results"
     },
     "skillDash": "“—” means not assessed yet, not zero.",
     "identity": "Digital Sports Identity",
@@ -1375,7 +1364,7 @@
     "goToPage": "Go to page {page}",
     "podiumLabel": "Top 3",
     "restTitle": "Ranks {from}–{to}",
-    "power": "Power",
+    "power": "Power Rating",
     "mvpLine": "MVP {mvps} · goals {goals}",
     "change": {
       "up": "Up {count}",
@@ -1529,7 +1518,9 @@
       "emptyTitle": "Pick a training programme",
       "emptyText": "Short research-based sessions you can do at home. We plan your weeks.",
       "emptyCta": "See programmes",
-      "progressNoStreak": "{done} of {total} sessions done"
+      "progressNoStreak": "{done} of {total} sessions done",
+      "recommended": "A good fit for age {age}: {title}",
+      "pickCta": "Choose a programme"
     },
     "stop": "Stop this programme",
     "stopConfirm": "Stop this programme? Your training history stays.",
@@ -1540,5 +1531,142 @@
     "step1": "Your child signs up and sets up their profile first",
     "step2": "You enter the email your child signs in with, to ask for the link",
     "step3": "Your child accepts in their own account"
+  },
+  "roleHome": {
+    "as": "As {role}",
+    "roles": {
+      "athlete": "Athlete",
+      "guardian": "Guardian",
+      "coach": "Coach",
+      "organizer": "Organizer",
+      "venue": "Venue owner",
+      "sponsor": "Sponsor"
+    },
+    "kinds": {
+      "guardian": "My children",
+      "coach": "My team",
+      "organizer": "My tournaments",
+      "venue": "My venue",
+      "sponsor": "Sponsorships"
+    },
+    "stats": {
+      "guardian": "{accepted} linked · {pending} waiting",
+      "coach": "{team} · {accepted} accepted · {pending} waiting"
+    },
+    "more": "Shortcuts",
+    "actions": {
+      "linkChild": {
+        "label": "Link my child",
+        "title": "Link to your child’s account",
+        "text": "Enter the email your child signed up with. Your child accepts in their own account, then you can see their progress."
+      },
+      "waitingChild": {
+        "label": "See waiting requests",
+        "title": "Waiting for your child",
+        "text": "Your child has to accept in their own account before you can see their progress."
+      },
+      "viewChildren": {
+        "label": "See my child’s progress",
+        "title": "My children",
+        "text": "See the progress of the children you are linked to."
+      },
+      "registerTeam": {
+        "label": "Register a team",
+        "title": "No team yet",
+        "text": "Pick a tournament that is open, name your team, then invite your athletes."
+      },
+      "inviteAthletes": {
+        "label": "Invite athletes",
+        "title": "Invite athletes to your team",
+        "text": "Enter the email each athlete signed up with. Each athlete accepts for themselves."
+      },
+      "submitTeam": {
+        "label": "Submit my team",
+        "title": "Submit your team",
+        "text": "An athlete has accepted, so you can submit now. The others can answer later."
+      },
+      "teamStatus": {
+        "label": "See team status",
+        "title": "Team submitted",
+        "text": "See whether the organizer has checked your team."
+      },
+      "reviewTeams": {
+        "label": "Review waiting teams ({count})",
+        "title": "{count, plural, one {# team is} other {# teams are}} waiting for you",
+        "text": "Check the slip and confirm the team. Confirmed teams go into the fixtures."
+      },
+      "recordResults": {
+        "label": "Record match results",
+        "title": "Record match results",
+        "text": "Tap the players who played, then save the result."
+      },
+      "createTournament": {
+        "label": "Create a tournament",
+        "title": "No tournament yet",
+        "text": "Create your first one, then open registration for teams."
+      },
+      "myTournaments": {
+        "label": "All my tournaments"
+      },
+      "myTeams": {
+        "label": "My team",
+        "hint": "If you also bring a team"
+      },
+      "answerRequests": {
+        "label": "Answer requests ({count})",
+        "title": "{count, plural, one {# booking request is} other {# booking requests are}} waiting for you",
+        "text": "Accept or decline. The person who asked is notified."
+      },
+      "addVenue": {
+        "label": "Add my venue",
+        "title": "No venue yet",
+        "text": "Add a venue, then open free times so teams can send requests."
+      },
+      "openSlots": {
+        "label": "Open free times",
+        "title": "My venue",
+        "text": "Open more free times so teams can send booking requests."
+      },
+      "allVenues": {
+        "label": "See all venues"
+      },
+      "sponsorHome": {
+        "label": "Go to the sponsor page",
+        "title": "My sponsorships",
+        "text": "Create opportunities that athletes choose to show interest in."
+      },
+      "opportunities": {
+        "label": "Open sponsorships"
+      },
+      "findTournament": {
+        "label": "Find a tournament"
+      },
+      "findAthletes": {
+        "label": "Find athletes"
+      },
+      "matchPlan": {
+        "label": "Plan before the match"
+      }
+    },
+    "loadFailed": {
+      "title": "We could not load your work",
+      "text": "Try loading this page again."
+    }
+  },
+  "loginPage": {
+    "title": "Sign in or sign up",
+    "sub": "Use your Google account or your email. No password needed.",
+    "google": "Continue with Google",
+    "googleLoading": "Taking you to Google...",
+    "email": "Email me a code",
+    "facebook": "Continue with Facebook",
+    "facebookLoading": "Taking you to Facebook...",
+    "next": "Next: answer two quick questions, then make your first player card",
+    "lead": "Results the organizer confirms become your player card, your Power Rating and your rank across Thailand"
+  },
+  "guardianPage": {
+    "title": "Link to your child’s account",
+    "sub": "You can see your child’s progress once they accept",
+    "next": "Next: wait for your child to accept in their own account"
   }
 }

@@ -38,6 +38,7 @@ jobs:
           node --check scripts/verify-production-config.mjs
           node --check scripts/smoke-public-pages.mjs
           node --check scripts/concurrency-checks.mjs
+          node --check scripts/sql-apply-guard.mjs
           node --check scripts/concurrency-plan.mjs
           node --check scripts/audit-gate.mjs
           node --check scripts/load-test.mjs

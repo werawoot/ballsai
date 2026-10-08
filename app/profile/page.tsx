@@ -4,14 +4,15 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import {
-  BadgeCheck, Building2, Camera, Check, ChevronRight, Crown, Eye, EyeOff, Handshake, LayoutDashboard, Lock, LogOut,
-  MapPin, PencilLine, Route, Shield, ShieldCheck, Star, UsersRound, Zap, type LucideIcon,
+  BadgeCheck, Building2, Camera, Check, ChevronRight, Compass, Crown, Eye, EyeOff, Handshake, LayoutDashboard, Lock, LogOut,
+  IdCard, MapPin, PencilLine, Route, Shield, ShieldCheck, Star, Trophy, UsersRound, Zap, type LucideIcon,
 } from 'lucide-react'
 import PublicProfileShare from './PublicProfileShare'
 import DeleteMyDataSection from './DeleteMyDataSection'
 import GuardianInviteButton from './GuardianInviteButton'
 import TrainingCard from './TrainingCard'
 import PageHeader from '@/components/PageHeader'
+import RoleHomeCard, { RoleLoadFailed } from '@/components/RoleHomeCard'
 import { calculateLevel, identityTierKey, levelProgress } from '@/lib/digital-identity'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import { PROFILE_MENU } from '@/lib/site-nav'
@@ -19,12 +20,16 @@ import { PUBLIC_PROFILE_COLUMNS, fetchMyAthletePrivate, thaiDate } from '@/lib/a
 import { profileReadiness, type ReadinessItem } from '@/lib/profile-readiness'
 import { signAvatarUrls } from '@/lib/athlete-avatar'
 import { fetchMyTraining } from '@/lib/training/data'
+import { trainingHasPrimary, trainingHome } from '@/lib/training/home'
+import { homeKind, type HomeKind } from '@/lib/role-home'
+import { loadRoleHome } from '@/lib/role-home-data'
 import type messagesTh from '@/messages/th.json'
 import './profile.css'
 
-// /profile is the athlete's own space: who they are, what is left before their profile
-// can go public, their card, their teams, and the way to everything else. Editing lives
-// on /profile/edit, so this page reads at a glance.
+// /profile is "ของฉัน": it opens on the person's own work for their role (lib/role-home.ts)
+// with one primary button. For an athlete that is training first, then what is left before
+// their profile can go public, their card and their teams; for a guardian, coach, organizer or
+// venue owner it is their own list. Editing lives on /profile/edit, so this page reads at a glance.
 
 type Profile = { full_name?: string | null; role?: string | null; onboarding_persona?: string | null }
 type AthleteProfile = {
@@ -58,6 +63,7 @@ function PositionMark({ position, size }: { position: string; size: number }) {
   return <Star size={size} strokeWidth={1.5} />
 }
 
+const KIND_ICONS: Record<HomeKind, LucideIcon> = { athlete: IdCard, guardian: UsersRound, coach: Compass, organizer: Trophy, venue: Building2, sponsor: Handshake }
 const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map(part => [...part][0] ?? '').join('').toUpperCase() || '?'
 const count = async (query: PromiseLike<{ count: number | null; error: unknown }>) => {
   const { count: value, error } = await query
@@ -76,8 +82,13 @@ export default async function ProfilePage() {
   if (!user) redirect('/login')
 
   const t = await getTranslations('profileHome')
-  const [{ data: profileRow }, { data: athleteRow }, { data: rankRow }, { data: membershipRows }, { data: progressRow }, highlightCount, videoCount, pendingGuardian] = await Promise.all([
-    supabase.from('profiles').select('full_name, role, onboarding_persona').eq('id', user.id).maybeSingle(),
+  const { data: profileRow } = await supabase.from('profiles').select('full_name, role, onboarding_persona').eq('id', user.id).maybeSingle()
+  const profile = profileRow as Profile | null
+  const today = thaiDate(new Date())
+  const kind = homeKind({ persona: profile?.onboarding_persona, role: profile?.role })
+  const athleteHome = kind === 'athlete'
+  // A guardian, coach, organizer or venue owner is not shown, or charged for, the athlete's queries.
+  const [athleteResult, rankResult, membershipResult, progressResult, highlightCount, videoCount, pendingGuardian] = athleteHome ? await Promise.all([
     supabase.from('athlete_profiles').select(PUBLIC_PROFILE_COLUMNS).eq('user_id', user.id).maybeSingle(),
     supabase.from('player_ranks').select('id, player_name, position, ovr, pts').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).maybeSingle(),
     supabase.from('team_members').select('status, teams(id, name, status, tournaments(name, location))').eq('athlete_id', user.id).order('created_at', { ascending: false }).limit(5),
@@ -85,8 +96,17 @@ export default async function ProfilePage() {
     count(supabase.from('athlete_highlights').select('id', { count: 'exact', head: true }).eq('athlete_id', user.id)),
     count(supabase.from('athlete_videos').select('id', { count: 'exact', head: true }).eq('athlete_id', user.id)),
     count(supabase.from('guardian_links').select('id', { count: 'exact', head: true }).eq('athlete_id', user.id).eq('status', 'pending')),
-  ])
-  const profile = profileRow as Profile | null
+  ]) : [null, null, null, null, 0, 0, 0] as const
+  const athleteRow = athleteResult?.data ?? null
+  const rankRow = rankResult?.data ?? null
+  const membershipRows = membershipResult?.data ?? null
+  const progressRow = progressResult?.data ?? null
+  const roleKind = athleteHome ? null : kind
+  const [loaded, hasAthleteProfile] = roleKind ? await Promise.all([
+    loadRoleHome(supabase, roleKind, user.id),
+    // Someone who coaches or runs a venue may also play: their card stays one tap away.
+    count(supabase.from('athlete_profiles').select('user_id', { count: 'exact', head: true }).eq('user_id', user.id)),
+  ]) : [null, 0] as const
   const athlete = athleteRow as AthleteProfile | null
   const rank = rankRow as PlayerRank | null
   const memberships = (membershipRows ?? []) as unknown as Membership[]
@@ -117,17 +137,22 @@ export default async function ProfilePage() {
     mediaCount: highlightCount + videoCount,
     isPublic: athlete.is_public,
     pendingGuardianRequests: pendingGuardian,
-  }, thaiDate(new Date())) : null
+  }, today) : null
 
-  const hasProgram = Boolean(training?.available && training.enrollments.length > 0)
-  const name = athlete?.display_name?.trim() || profile?.full_name?.trim() || t('noName')
+  const age = readiness?.age ?? null
+  // What the training card asks for, and so whether it holds this page's one primary button.
+  const trainingCard = trainingHome(training ?? { available: false, enrollments: [], checkins: {} }, today, age)
+  const trainingPrimary = trainingHasPrimary(trainingCard)
+  const name = athlete?.display_name?.trim() || profile?.full_name?.trim() || (athleteHome ? t('noName') : user.email ?? t('noName'))
   const publicPath = `/players/${rank?.id || user.id}`
-  const persona = profile?.onboarding_persona
+  const rt = await getTranslations('roleHome')
+  // The organizer dashboard is for whoever an admin made an organizer, and only them: a coach
+  // is never offered a page that tells them they have no access.
+  const organizes = profile?.role === 'organizer' || profile?.role === 'admin'
   const roleShortcuts: Shortcut[] = [
     ...(profile?.role === 'admin' ? [{ key: 'admin' as const, href: '/admin', icon: ShieldCheck }] : []),
-    ...(profile?.role === 'organizer' || profile?.role === 'admin' || persona === 'coach_organizer' ? [{ key: 'dashboard' as const, href: '/dashboard', icon: LayoutDashboard }] : []),
-    ...(persona === 'venue_owner' ? [{ key: 'venue' as const, href: '/venue', icon: Building2 }] : []),
-    ...(persona === 'guardian' ? [{ key: 'guardian' as const, href: '/guardian', icon: UsersRound }] : []),
+    ...(organizes && kind !== 'organizer' ? [{ key: 'dashboard' as const, href: '/dashboard', icon: LayoutDashboard }] : []),
+    ...(roleKind && hasAthleteProfile > 0 ? [{ key: 'card' as const, href: '/card', icon: IdCard }] : []),
   ]
   const shortcuts: Shortcut[] = [...roleShortcuts, ...PROFILE_MENU.map(item => ({ ...MENU_KEYS[item.href], href: item.href }))]
 
@@ -139,7 +164,16 @@ export default async function ProfilePage() {
       <PageHeader eyebrow={t('eyebrow')} />
       <div className="pf-shell">
         <aside className="pf-aside">
-          <section className="pf-hero" aria-labelledby="pf-name">
+          {!athleteHome ? <section className="pf-hero" aria-labelledby="pf-name">
+            <div className="pf-id">
+              {/* An icon, not the first letter: a Thai name can start with a vowel mark that is no one's initial. */}
+              <div className="pf-avatar" aria-hidden="true">{(() => { const Icon = KIND_ICONS[kind]; return <Icon size={30} /> })()}</div>
+              <div style={{ minWidth: 0 }}>
+                <h1 id="pf-name" className="pf-name">{name}</h1>
+                <div className="pf-sub">{rt('as', { role: rt(`roles.${kind}`) })}</div>
+              </div>
+            </div>
+          </section> : <section className="pf-hero" aria-labelledby="pf-name">
             <div className="pf-id">
               <div className="pf-avatar" style={avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : undefined} aria-hidden="true">
                 {!avatarUrl && initials(name)}
@@ -157,8 +191,9 @@ export default async function ProfilePage() {
               </span>
               <span className="pf-chip">{athlete.is_public ? <Eye size={13} aria-hidden="true" /> : <EyeOff size={13} aria-hidden="true" />}{t(athlete.is_public ? 'visibility.public' : 'visibility.private')}</span>
             </div>}
-            {athlete && <div className="pf-level">
-              <div className="pf-level-num"><small>LEVEL</small><b>{String(level).padStart(2, '0')}</b></div>
+            {/* Level and points mean nothing before the first point, so they stay out of sight until then. */}
+            {athlete && xp > 0 && <div className="pf-level">
+              <div className="pf-level-num"><small>{t('levelLabel')}</small><b>{String(level).padStart(2, '0')}</b></div>
               <div className="pf-level-body">
                 <strong>{t(`tiers.${identityTierKey(level)}`)}</strong>
                 <div className="pf-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(levelInfo.percentage)} aria-label={t('level', { level })}><i style={{ width: `${levelInfo.percentage}%` }} /></div>
@@ -166,24 +201,26 @@ export default async function ProfilePage() {
               </div>
             </div>}
             <div className="pf-actions">
-              {athlete
-                ? <Link href="/profile/edit" className="pf-btn pf-btn-primary"><PencilLine size={17} aria-hidden="true" />{t('actions.edit')}</Link>
-                : <Link href="/profile/edit" className="pf-btn pf-btn-primary"><PencilLine size={17} aria-hidden="true" />{t('noAthlete.cta')}</Link>}
+              {/* Editing is secondary: the one primary button on this page is the next thing to do. */}
+              <Link href="/profile/edit" className="pf-btn pf-btn-ghost"><PencilLine size={17} aria-hidden="true" />{athlete ? t('actions.edit') : t('noAthlete.cta')}</Link>
               {athlete?.is_public
                 ? <Link href={publicPath} className="pf-btn pf-btn-ghost"><Eye size={17} aria-hidden="true" />{t('actions.viewPublic')}</Link>
                 : athlete && <Link href="/career" className="pf-btn pf-btn-ghost"><Route size={17} aria-hidden="true" />{t('actions.passport')}</Link>}
             </div>
-          </section>
+          </section>}
         </aside>
 
         <div className="pf-main">
+          {roleKind && (loaded ? <RoleHomeCard kind={roleKind} home={loaded.home} stats={loaded.stats} /> : <RoleLoadFailed />)}
+
+          {athleteHome && <>
           {!athlete && <section className="pf-card">
             <div className="pf-card-head"><div><h2 className="pf-card-title">{t('noAthlete.title')}</h2><p className="pf-card-desc">{t('noAthlete.body')}</p></div></div>
             <Link href="/profile/edit" className="pf-btn pf-btn-primary"><Camera size={17} aria-hidden="true" />{t('noAthlete.cta')}</Link>
           </section>}
 
-          {/* Someone who trains here opens the page to today's session, so it comes first (UX mockup v5-A). */}
-          {hasProgram && training && <TrainingCard training={training} today={thaiDate(new Date())} />}
+          {/* Training comes first (owner, report 9): today's session, or the programme to pick for their age. */}
+          <TrainingCard home={trainingCard} age={age} />
 
           {readiness && (athlete?.is_public && readiness.next ? <Link href={readiness.next.href} className="pf-card pf-ready-line">
             <span>{t('readiness.compact', { done: readiness.done, total: readiness.total, next: t(`readiness.items.${readiness.next.key}.title`) })}</span>
@@ -202,7 +239,7 @@ export default async function ProfilePage() {
               {readiness.next.pending ? <p className="pf-step-pending">{t('readiness.pending', { count: readiness.next.pending })}</p> : null}
               {readiness.next.key === 'guardian' && !readiness.next.pending
                 ? <GuardianInviteButton email={user.email ?? ''} />
-                : <Link href={readiness.next.href} className="pf-btn pf-btn-primary pf-btn-block">{t('readiness.cta')}<ChevronRight size={17} aria-hidden="true" /></Link>}
+                : <Link href={readiness.next.href} className={`pf-btn pf-btn-block ${trainingPrimary ? 'pf-btn-line' : 'pf-btn-primary'}`}>{t('readiness.cta')}<ChevronRight size={17} aria-hidden="true" /></Link>}
             </div>}
             <details className="pf-all-steps" open={!readiness.next}>
               <summary>{t('readiness.showAll')}</summary>
@@ -226,8 +263,6 @@ export default async function ProfilePage() {
             <div className="pf-card-head"><h2 id="pf-readiness" className="pf-card-title">{t('readiness.titleDone')}</h2></div>
             <p className="pf-ready"><BadgeCheck size={20} aria-hidden="true" />{t('readiness.doneNote')}</p>
           </section>)}
-
-          {training && !hasProgram && <TrainingCard training={training} today={thaiDate(new Date())} />}
 
           {athlete?.is_public && <PublicProfileShare profilePath={publicPath} isPublic />}
 
@@ -279,6 +314,8 @@ export default async function ProfilePage() {
               })}
             </ul>
           </section>}
+
+          </>}
 
           <section aria-labelledby="pf-shortcuts">
             <h2 id="pf-shortcuts" className="pf-card-title" style={{ marginBottom: 14 }}>{t('shortcuts.title')}</h2>

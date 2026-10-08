@@ -22,6 +22,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const t = useTranslations("loginOtp");
+  const tp = useTranslations("loginPage");
   const locale = useLocale();
   // T19: with a Turnstile site key set, each request that sends a code or checks a password
   // carries a fresh single-use token; the widget is reset after every such request.
@@ -167,24 +168,19 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
       <div className="lg-shell">
         <section className="lg-hero">
           <Link className="ui-brand" href="/" aria-label="BallDoenSai.com"><BrandMark size={26} />BallDoenSai.com</Link>
+          {/* The slogan is for the wide layout; on a phone the page opens on what it is and what to press.
+              No example card: it carried numbers that belong to no one (AGENTS.md rule 8). */}
           <div className="lg-hero-copy">
-            <p className="ui-eyebrow">YOUR GAME · YOUR STORY</p>
-            <h1 className="ui-hero">ทุกนัดที่เล่น<br />กลายเป็น<em>ตัวตน</em><br />ของคุณ</h1>
-            <p className="lg-lead">ผลแข่งที่ผู้จัดยืนยัน กลายเป็น Player Card, Power Rating และ Ranking ทั่วประเทศ</p>
-          </div>
-          {/* An example card, not a person: the numbers are marked as an example. */}
-          <div className="lg-sample" aria-hidden="true">
-            <b>74</b>
-            <small>FW · POWER 1,184</small>
-            <span className="ui-chip is-performance"><Check size={11} strokeWidth={3} /> ผลแข่งยืนยัน</span>
-            <em>ตัวอย่าง</em>
+            <p className="ui-hero">ทุกนัดที่เล่น<br />กลายเป็น<em>ตัวตน</em><br />ของคุณ</p>
+            <p className="lg-lead">{tp("lead")}</p>
           </div>
         </section>
 
         <section className="lg-panel">
           {step === "start" && (
             <>
-              <h2 className="ui-h1 lg-title">เริ่มเส้นทางของคุณ</h2>
+              <h1 className="ui-h1 lg-title">{tp("title")}</h1>
+              <p className="lg-sub">{tp("sub")}</p>
               <label className={`lg-consent${acceptedTerms ? " is-checked" : ""}`}>
                 <input checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} type="checkbox" />
                 <i aria-hidden="true">{acceptedTerms && <Check size={14} strokeWidth={3.5} />}</i>
@@ -192,15 +188,16 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
               </label>
               <button className="ui-btn ui-btn-white" disabled={loading} onClick={signInWithGoogle} type="button">
                 <span className="lg-google" aria-hidden="true" />
-                {loading ? "กำลังพาไป Google..." : "เข้าสู่ระบบด้วย Google"}
+                {loading ? tp("googleLoading") : tp("google")}
               </button>
               <p className="lg-or"><span>หรือ</span></p>
               <button className="ui-btn ui-btn-ghost-d" onClick={() => go("email")} type="button">
-                <Mail size={18} /> รับรหัสทางอีเมล
+                <Mail size={18} /> {tp("email")}
               </button>
               <button className="ui-btn ui-btn-ghost-d lg-quiet" disabled={loading} onClick={signInWithFacebook} type="button">
-                <Facebook size={16} fill="currentColor" /> {loading ? "กำลังพาไป Facebook..." : "Facebook"}
+                <Facebook size={16} fill="currentColor" /> {loading ? tp("facebookLoading") : tp("facebook")}
               </button>
+              <p className="lg-next">{tp("next")}</p>
               <p className="lg-trust"><Shield size={15} /> ข้อมูลเด็กเปิดเผยได้เมื่อผู้ปกครองยินยอมเท่านั้น · ไม่ต้องตั้งรหัสผ่าน</p>
             </>
           )}

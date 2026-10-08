@@ -131,8 +131,9 @@ body:has(.bds-nav) .tr-dock { bottom: calc(70px + env(safe-area-inset-bottom)); 
 .tr-week li.is-today { background: var(--ui-red); color: #fff; border: 0; }
 .tr-week li.is-today.is-done { background: var(--ui-green); }
 .tr-today .ui-btn { min-height: 48px; }
-.tr-today-empty { align-items: center; display: flex; gap: 12px; }
+.tr-today-empty { align-items: center; display: flex; gap: 12px; margin-bottom: 12px; }
 .tr-today-empty div { flex: 1; }
+.tr-today p.tr-reco { color: #fff; font-weight: 700; margin-top: 6px; }
 
 @media (min-width: 760px) {
   .tr-wrap { padding: 26px 24px 8px; }

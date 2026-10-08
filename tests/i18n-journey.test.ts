@@ -74,7 +74,7 @@ describe('the first screens after sign-in, in English', () => {
 
   it('says a Starter card is a Starter card, in both languages (AGENTS.md rule 8)', () => {
     for (const locale of ['th', 'en'] as const) {
-      expect(render(locale, PlayerCardBuilder as ComponentType<never>, { player, publicProfilePath: null, userId: 'u1' })).toContain('STARTER CARD')
+      expect(render(locale, PlayerCardBuilder as ComponentType<never>, { player, publicProfilePath: null, userId: 'u1' })).toContain(locale === 'th' ? 'การ์ดเริ่มต้น' : 'Starter card')
     }
   })
 })

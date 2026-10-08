@@ -2,31 +2,34 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
 import { ChevronRight, Dumbbell } from 'lucide-react'
-import { drillImage, getProgram, say } from '@/lib/training/content'
-import type { MyTraining } from '@/lib/training/data'
-import { trainingProgress } from '@/lib/training/schedule'
+import { drillImage, say } from '@/lib/training/content'
+import type { TrainingHome } from '@/lib/training/home'
 import { tournamentDateRange } from '@/lib/tournament-dates'
 import '@/app/training/training.css'
 
 // The entry to /training on /profile (docs/training-flow-v1.md): today's session for the
 // athlete's most recent programme, the week at a glance, and one button. Without a
-// programme it invites them to pick one. Hidden until SQL63 is applied.
-export default function TrainingCard({ training, today }: { training: MyTraining; today: string }) {
+// programme it asks them to pick one, naming the one that fits their age. What the card shows
+// is decided in lib/training/home.ts, which also says whether it carries the page's primary
+// button. Hidden until SQL63 is applied.
+export default function TrainingCard({ home, age }: { home: TrainingHome; age: number | null }) {
   const t = useTranslations('training')
   const locale = useLocale()
-  if (!training.available) return null
-  const enrollment = training.enrollments.find(item => getProgram(item.program_id))
-  const program = enrollment ? getProgram(enrollment.program_id) : null
+  if (home.state === 'hidden') return null
 
-  if (!enrollment || !program) return <Link className="tr-today" href="/training">
+  if (home.state === 'pick') return <section className="tr-today" aria-labelledby="tr-today-title">
     <div className="tr-today-empty">
       <Dumbbell size={28} aria-hidden="true" />
-      <div><b className="tr-today-title">{t('card.emptyTitle')}</b><p>{t('card.emptyText')}</p></div>
-      <ChevronRight size={20} aria-hidden="true" />
+      <div>
+        <b className="tr-today-title" id="tr-today-title">{t('card.emptyTitle')}</b>
+        <p>{t('card.emptyText')}</p>
+        {home.recommended && age !== null && <p className="tr-reco">{t('card.recommended', { age, title: say(home.recommended.title, locale) })}</p>}
+      </div>
     </div>
-  </Link>
+    <Link className="ui-btn ui-btn-primary" href="/training">{t('card.pickCta')}<ChevronRight size={18} aria-hidden="true" /></Link>
+  </section>
 
-  const progress = trainingProgress({ start: enrollment.start_date, weekdays: enrollment.weekdays, weeks: program.weeks, checkins: training.checkins[enrollment.id] ?? [], today })
+  const { program, progress } = home
   const eyebrow = progress.doneToday ? 'card.eyebrowDone' : progress.today ? 'card.eyebrow' : 'card.eyebrowRest'
   return <section className="tr-today" aria-labelledby="tr-today-title">
     <div className="tr-today-top">
