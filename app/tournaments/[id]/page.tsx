@@ -67,17 +67,17 @@ export default async function TournamentPage(props: { params: Promise<{ id: stri
 
   if (searchParams.teamId) {
     // RLS lets the team's creator, the organizer and admins read it; anyone else sees no name.
-    const { data: team } = await supabase.from('teams').select('name').eq('id', searchParams.teamId).maybeSingle()
+    const { data: team } = await supabase.from('teams').select('name, status').eq('id', searchParams.teamId).maybeSingle()
     return <main className="bds-page tn-page tn-detail">
       <PageHeader back={self} />
-      <PaymentStep fee={fee} promptpay={tournament.promptpay?.trim() || null} summary={summary} teamId={searchParams.teamId} teamName={team?.name ?? null} tournamentId={tournament.id} />
+      <PaymentStep fee={fee} promptpay={tournament.promptpay?.trim() || null} summary={summary} teamId={searchParams.teamId} teamName={team?.name ?? null} teamStatus={team?.status ?? null} tournamentId={tournament.id} />
     </main>
   }
 
   if (searchParams.step === 'team' && open) {
     return <main className="bds-page tn-page tn-detail">
       <PageHeader back={self} />
-      <TeamStep summary={summary} tournamentId={tournament.id} />
+      <TeamStep free={!fee} summary={summary} tournamentId={tournament.id} />
     </main>
   }
 
@@ -123,7 +123,7 @@ export default async function TournamentPage(props: { params: Promise<{ id: stri
         {!finished && <section className="tn-section">
           <h2>{t('howTitle')}</h2>
           <ol className="ui-card tn-steps">
-            {(['team', 'invite', 'submit'] as const).map((step, index) => <li key={step}><i>{index + 1}</i><div><b>{t(`how.${step}.title`)}</b><small>{t(`how.${step}.text`)}</small></div></li>)}
+            {(['team', 'invite', fee ? 'submit' : 'submitFree'] as const).map((step, index) => <li key={step}><i>{index + 1}</i><div><b>{t(`how.${step}.title`)}</b><small>{t(`how.${step}.text`)}</small></div></li>)}
           </ol>
         </section>}
       </div>

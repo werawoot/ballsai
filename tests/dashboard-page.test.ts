@@ -107,6 +107,20 @@ describe('/dashboard approval cards: one button per pending team', () => {
     expect(html).not.toContain('Confirm team and payment')
   })
 
+  it('says a free tournament needs no slip instead of "no slip uploaded yet"', async () => {
+    db.tables = { ...base, teams: [team('e', 0)], payments: [] }
+    const html = await render({})
+    expect(html).toContain(messages.labels.dashboardLabels.freeNoSlip)
+    expect(html).not.toContain('ยังไม่ได้อัปโหลดสลิป')
+  })
+
+  it('tells the organizer where submitted teams will appear while none is waiting', async () => {
+    db.tables = { ...base, teams: [], payments: [] }
+    const html = await render({})
+    expect(html).toContain(messages.labels.dashboardLabels.noPendingTitle)
+    expect(html).toContain(messages.labels.dashboardLabels.noPendingText)
+  })
+
   it('waits for the slip of a paid tournament: no confirm button, a way to reject', async () => {
     db.tables = { ...base, teams: [team('d', 500)], payments: [] }
     const html = await render({})

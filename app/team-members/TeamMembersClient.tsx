@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl'
 import { RegisterSteps } from '@/app/tournaments/[id]/RegisterSteps'
 import '@/app/tournaments/tournaments.css'
 
-type TournamentRelation = { name: string | null } | { name: string | null }[] | null
+type TournamentRelation = { name: string | null; fee?: number | null } | { name: string | null; fee?: number | null }[] | null
 type Team = { id: string; name: string; tournament_id: string; status: string; tournaments?: TournamentRelation }
 type Member = { id: string; team_id: string; athlete_id: string; status: string; invited_at: string; teams?: { name: string | null } | null }
 
@@ -65,13 +65,14 @@ export default function TeamMembersClient({ teams, invites, counts }: { teams: T
 
   const selected = teams.find(team => team.id === selectedTeam)
   const selectedTournament = selected?.tournaments
-  const selectedTournamentName = Array.isArray(selectedTournament)
-    ? selectedTournament[0]?.name
-    : selectedTournament?.name
+  const selectedTournamentRow = Array.isArray(selectedTournament) ? selectedTournament[0] : selectedTournament
+  const selectedTournamentName = selectedTournamentRow?.name
+  // Same rule as tournamentFee(): no fee above zero means a free entry with no slip step.
+  const selectedFree = !(Number(selectedTournamentRow?.fee) > 0)
 
   return <div style={{ display: 'grid', gap: 16 }}>
     {teams.length > 0 && <section aria-label={t('invite')} style={{ display: 'grid', gap: 12 }}>
-      {selected?.status === 'draft' && <RegisterSteps current={2} />}
+      {selected?.status === 'draft' && <RegisterSteps current={2} free={selectedFree} />}
       <p className="ui-eyebrow" style={{ letterSpacing: 0, textTransform: 'none', fontSize: 13, margin: 0 }}>{selected?.name}{selectedTournamentName ? ` · ${selectedTournamentName}` : ''}</p>
       <h2 className="ui-h1" style={{ margin: 0 }}>{(counts?.[selectedTeam]?.accepted ?? 0) + (counts?.[selectedTeam]?.pending ?? 0) === 0 ? t('inviteFirst') : t('invite')}</h2>
       {teams.length > 1 && <select aria-label={t('team')} value={selectedTeam} onChange={e => setSelectedTeam(e.target.value)} style={{ width: '100%', padding: 11, borderRadius: 10, border: '1px solid #ddd' }}>
@@ -87,7 +88,7 @@ export default function TeamMembersClient({ teams, invites, counts }: { teams: T
       {counts && selected && <p style={{ margin: 0, color: 'var(--ui-mute)', fontSize: 13, fontWeight: 700 }}>{t('counts', { accepted: counts[selected.id]?.accepted ?? 0, pending: counts[selected.id]?.pending ?? 0 })}</p>}
       {selected?.status === 'draft' && <div className="tn-dock"><div className="tn-dock-inner">
         {counts && (counts[selected.id]?.accepted ?? 0) < 1 && <p style={{ margin: '0 0 8px', textAlign: 'center', color: 'var(--ui-mute)', fontSize: 13 }}>{t('needAccepted', { count: counts[selected.id]?.accepted ?? 0 })}</p>}
-        <button className="ui-btn ui-btn-primary" disabled={busy || Boolean(counts && (counts[selected.id]?.accepted ?? 0) < 1)} onClick={submitTeam} type="button">{busy ? t('submitting') : t('submit')}</button>
+        <button className="ui-btn ui-btn-primary" disabled={busy || Boolean(counts && (counts[selected.id]?.accepted ?? 0) < 1)} onClick={submitTeam} type="button">{busy ? t('submitting') : t(selectedFree ? 'submitFree' : 'submit')}</button>
       </div></div>}
     </section>}
 

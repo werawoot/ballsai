@@ -11,10 +11,14 @@ import { RegisterSteps, TournamentSummary, type TournamentSummaryProps } from '.
 // Step 3: pay and attach the slip. The slip goes to /api/teams/[id]/payment, which keeps
 // it in the private `slips` bucket as an object path; nothing here makes a public URL
 // (AGENTS.md rule 6). The preview is a local blob of the file the person chose.
-export default function PaymentStep({ tournamentId, teamId, teamName, fee, promptpay, summary }: {
+// A free tournament (fee null) has nothing to pay: a submitted team is only waiting for the
+// organizer (approvalAction offers "confirm team" with no payment), a draft one still has to
+// be submitted from /team-members.
+export default function PaymentStep({ tournamentId, teamId, teamName, teamStatus, fee, promptpay, summary }: {
   tournamentId: string
   teamId: string
   teamName: string | null
+  teamStatus: string | null
   fee: string | null
   promptpay: string | null
   summary: TournamentSummaryProps
@@ -64,6 +68,22 @@ export default function PaymentStep({ tournamentId, teamId, teamName, fee, promp
       return
     }
     setDone(true)
+  }
+
+  if (!fee) {
+    const submitted = teamStatus !== null && teamStatus !== 'draft'
+    return <div className="tn-detail-body">
+      <RegisterSteps current={3} free />
+      <TournamentSummary {...summary} />
+      <div className="tn-done" role="status">
+        {submitted && <CheckCircle2 size={64} strokeWidth={1.6} aria-hidden="true" />}
+        <h1 className="ui-h1">{submitted ? t('freeDoneTitle') : t('freeDraftTitle')}</h1>
+        <p>{submitted ? t('freeDoneText') : t('freeDraftText')}</p>
+        {submitted
+          ? <Link className="ui-btn ui-btn-primary" href={`/tournaments/${tournamentId}`}>{t('doneBack')}</Link>
+          : <Link className="ui-btn ui-btn-primary" href="/team-members">{t('freeDraftCta')}</Link>}
+      </div>
+    </div>
   }
 
   if (done) {

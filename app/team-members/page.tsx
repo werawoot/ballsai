@@ -23,7 +23,7 @@ export default async function TeamMembersPage() {
   if (!user) redirect('/login?next=/team-members')
   const t = await getTranslations('teamRoster')
   const [{ data: teams, error: teamsError }, { data: invites, error: invitesError }] = await Promise.all([
-    supabase.from('teams').select('id, name, tournament_id, status, tournaments(name)').eq('created_by', user.id).order('created_at', { ascending: false }),
+    supabase.from('teams').select('id, name, tournament_id, status, tournaments(name, fee)').eq('created_by', user.id).order('created_at', { ascending: false }),
     supabase.from('team_members').select('id, team_id, athlete_id, status, invited_at, teams(name)').eq('athlete_id', user.id).order('created_at', { ascending: false }),
   ])
   // The roster of the teams this account created, which is a different question from

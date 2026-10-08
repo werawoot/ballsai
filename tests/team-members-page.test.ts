@@ -41,7 +41,7 @@ const render = async () =>
     await (TeamMembersPage as () => Promise<ReactElement>)()))
 const hrefs = (html: string) => [...html.matchAll(/href="([^"]+)"/g)].map(match => match[1])
 
-const team = { id: 'tm1', name: 'ขอนแก่น U13', tournament_id: 't1', status: 'draft', created_by: 'u1', created_at: '2026-10-01', tournaments: { name: 'ศึกชิงถ้วย' } }
+const team = { id: 'tm1', name: 'ขอนแก่น U13', tournament_id: 't1', status: 'draft', created_by: 'u1', created_at: '2026-10-01', tournaments: { name: 'ศึกชิงถ้วย', fee: 1500 } }
 const invite = { id: 'm1', team_id: 'tm9', athlete_id: 'u1', status: 'pending', invited_at: '2026-10-01', created_at: '2026-10-01', teams: { name: 'ทีมที่เชิญ' } }
 
 describe('/team-members for someone with no team and no invitation', () => {
@@ -114,6 +114,14 @@ describe('/team-members: the second of the three steps (UX mockup v3-A)', () => 
     expect(html).toContain('เชิญนักกีฬาคนแรก')
     expect(html.match(/type="email"/g)).toHaveLength(1)
     expect(html).not.toContain('<textarea')
+  })
+
+  it('a free tournament\'s steps and button say submit, not pay', async () => {
+    coach([], [{ ...team, tournaments: { name: 'ศึกชิงถ้วย', fee: 0 } }])
+    const html = await render()
+    expect(html).toContain('>ส่งสมัคร<')
+    expect(html).not.toContain('ส่งสมัครและชำระเงิน')
+    expect(html).not.toContain('ไปขั้นชำระเงิน')
   })
 
   it('puts the invitation form before the roster overview', async () => {
