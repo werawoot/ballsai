@@ -11,7 +11,7 @@
     "home": "BallDoenSai.com home",
     "backTo": "Back to {label}",
     "back": {
-      "profile": "Profile",
+      "profile": "My page",
       "myRequests": "My requests",
       "myOrganization": "My organization",
       "dashboard": "Dashboard"
@@ -1663,5 +1663,10 @@
     "facebookLoading": "Taking you to Facebook...",
     "next": "Next: answer two quick questions, then make your first player card",
     "lead": "Results the organizer confirms become your player card, your Power Rating and your rank across Thailand"
+  },
+  "guardianPage": {
+    "title": "Link to your child’s account",
+    "sub": "You can see your child’s progress once they accept",
+    "next": "Next: wait for your child to accept in their own account"
   }
 }
