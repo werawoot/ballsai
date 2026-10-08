@@ -27,7 +27,7 @@
       "discover": "Athletes",
       "tournaments": "Events",
       "notifications": "Alerts",
-      "profile": "Profile"
+      "profile": "Me"
     }
   },
   "tournaments": {
@@ -911,7 +911,7 @@
     "roundLabel": "Choose a round"
   },
   "profileHome": {
-    "eyebrow": "My profile",
+    "eyebrow": "Me",
     "noName": "BallDoenSai athlete",
     "age": "{age} yrs",
     "verification": {
@@ -1034,6 +1034,10 @@
         "career": {
           "label": "My playing history",
           "hint": "Your verified path and results"
+        },
+        "card": {
+          "label": "My player card",
+          "hint": "See, edit and share my card"
         }
       }
     },
@@ -1053,7 +1057,8 @@
       "copied": "Link copied — send it to your guardian by LINE or message",
       "failed": "Could not share the link. Copy it from the guardian page instead",
       "how": "Your guardian signs up → chooses \"Guardian\" → enters your email, then you accept on the guardian page"
-    }
+    },
+    "levelLabel": "LEVEL"
   },
   "profileEdit": {
     "title": "Edit profile",
@@ -1529,7 +1534,9 @@
       "emptyTitle": "Pick a training programme",
       "emptyText": "Short research-based sessions you can do at home. We plan your weeks.",
       "emptyCta": "See programmes",
-      "progressNoStreak": "{done} of {total} sessions done"
+      "progressNoStreak": "{done} of {total} sessions done",
+      "recommended": "A good fit for age {age}: {title}",
+      "pickCta": "Choose a programme"
     },
     "stop": "Stop this programme",
     "stopConfirm": "Stop this programme? Your training history stays.",
@@ -1540,5 +1547,126 @@
     "step1": "Your child signs up and sets up their profile first",
     "step2": "You enter the email your child signs in with, to ask for the link",
     "step3": "Your child accepts in their own account"
+  },
+  "roleHome": {
+    "as": "As {role}",
+    "roles": {
+      "athlete": "Athlete",
+      "guardian": "Guardian",
+      "coach": "Coach",
+      "organizer": "Organizer",
+      "venue": "Venue owner",
+      "sponsor": "Sponsor"
+    },
+    "kinds": {
+      "guardian": "My children",
+      "coach": "My team",
+      "organizer": "My tournaments",
+      "venue": "My venue",
+      "sponsor": "Sponsorships"
+    },
+    "stats": {
+      "guardian": "{accepted} linked · {pending} waiting",
+      "coach": "{team} · {accepted} accepted · {pending} waiting"
+    },
+    "more": "Shortcuts",
+    "actions": {
+      "linkChild": {
+        "label": "Link my child",
+        "title": "Link to your child’s account",
+        "text": "Enter the email your child signed up with. Your child accepts in their own account, then you can see their progress."
+      },
+      "waitingChild": {
+        "label": "See waiting requests",
+        "title": "Waiting for your child",
+        "text": "Your child has to accept in their own account before you can see their progress."
+      },
+      "viewChildren": {
+        "label": "See my child’s progress",
+        "title": "My children",
+        "text": "See the progress of the children you are linked to."
+      },
+      "registerTeam": {
+        "label": "Register a team",
+        "title": "No team yet",
+        "text": "Pick a tournament that is open, name your team, then invite your athletes."
+      },
+      "inviteAthletes": {
+        "label": "Invite athletes",
+        "title": "Invite athletes to your team",
+        "text": "Enter the email each athlete signed up with. Each athlete accepts for themselves."
+      },
+      "submitTeam": {
+        "label": "Submit my team",
+        "title": "Submit your team",
+        "text": "An athlete has accepted, so you can submit now. The others can answer later."
+      },
+      "teamStatus": {
+        "label": "See team status",
+        "title": "Team submitted",
+        "text": "See whether the organizer has checked your team."
+      },
+      "reviewTeams": {
+        "label": "Review waiting teams ({count})",
+        "title": "{count, plural, one {# team is} other {# teams are}} waiting for you",
+        "text": "Check the slip and confirm the team. Confirmed teams go into the fixtures."
+      },
+      "recordResults": {
+        "label": "Record match results",
+        "title": "Record match results",
+        "text": "Tap the players who played, then save the result."
+      },
+      "createTournament": {
+        "label": "Create a tournament",
+        "title": "No tournament yet",
+        "text": "Create your first one, then open registration for teams."
+      },
+      "myTournaments": {
+        "label": "All my tournaments"
+      },
+      "myTeams": {
+        "label": "My team",
+        "hint": "If you also bring a team"
+      },
+      "answerRequests": {
+        "label": "Answer requests ({count})",
+        "title": "{count, plural, one {# booking request is} other {# booking requests are}} waiting for you",
+        "text": "Accept or decline. The person who asked is notified."
+      },
+      "addVenue": {
+        "label": "Add my venue",
+        "title": "No venue yet",
+        "text": "Add a venue, then open free times so teams can send requests."
+      },
+      "openSlots": {
+        "label": "Open free times",
+        "title": "My venue",
+        "text": "Open more free times so teams can send booking requests."
+      },
+      "allVenues": {
+        "label": "See all venues"
+      },
+      "sponsorHome": {
+        "label": "Go to the sponsor page",
+        "title": "My sponsorships",
+        "text": "Create opportunities that athletes choose to show interest in."
+      },
+      "opportunities": {
+        "label": "Open sponsorships"
+      },
+      "findTournament": {
+        "label": "Find a tournament"
+      },
+      "findAthletes": {
+        "label": "Find athletes"
+      },
+      "matchPlan": {
+        "label": "Plan before the match"
+      }
+    },
+    "loadFailed": {
+      "title": "We could not load your work",
+      "text": "Try loading this page again."
+    }
   }
 }

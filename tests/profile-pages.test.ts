@@ -13,6 +13,7 @@ const db = vi.hoisted(() => ({
   tables: {} as Record<string, unknown>,
   counts: {} as Record<string, number>,
   private: null as null | { birth_date: string | null; guardian_consent_at: string | null },
+  failing: [] as string[],
 }))
 function fakeClient() {
   const from = (table: string) => {
@@ -22,9 +23,11 @@ function fakeClient() {
     builder.select = (_columns: string, options?: { head?: boolean }) => { head = Boolean(options?.head); return builder }
     builder.maybeSingle = async () => ({ data: db.tables[table] ?? null, error: null })
     builder.single = builder.maybeSingle
-    builder.then = (resolve: (value: unknown) => unknown) => Promise.resolve(head
-      ? { data: null, count: db.counts[table] ?? 0, error: null }
-      : { data: db.tables[table] ?? [], error: null }).then(resolve)
+    builder.then = (resolve: (value: unknown) => unknown) => Promise.resolve(db.failing.includes(table)
+      ? { data: null, count: null, error: { code: 'XX000', message: 'boom' } }
+      : head
+        ? { data: null, count: db.counts[table] ?? 0, error: null }
+        : { data: db.tables[table] ?? [], error: null }).then(resolve)
     return builder
   }
   return {
@@ -58,6 +61,9 @@ const render = async (page: () => Promise<ReactElement>, locale: Locale = 'th') 
 }
 // The language switch names the other language on purpose ("ไทย" on an English page).
 const withoutSwitch = (html: string) => html.replace(/<button[^>]*class="bds-lang-switch"[\s\S]*?<\/button>/g, '')
+// The opening tag of the first link to an address, to read the classes on it.
+const anchor = (html: string, href: string) => html.match(new RegExp(`<a [^>]*href="${href.replace(/\//g, '\\/')}"[^>]*>`))?.[0] ?? ''
+const primaries = (html: string) => (html.match(/class="[^"]*\b(?:pf-btn-primary|ui-btn-primary)\b[^"]*"/g) ?? []).length
 const text = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/&#x27;/g, "'").replace(/\s+/g, ' ')
 
 const minor = {
@@ -102,7 +108,7 @@ describe('/profile', () => {
 
   it('shows a public athlete their rating, where it comes from, and their public page', async () => {
     db.tables = {
-      profiles: { full_name: 'Niran', role: 'organizer', onboarding_persona: 'coach_organizer' },
+      profiles: { full_name: 'Niran', role: 'organizer', onboarding_persona: 'athlete' },
       athlete_profiles: { ...minor, display_name: 'Niran', is_public: true, profile_image_url: 'https://cdn.example/n.jpg', verification_level: 'coach_verified' },
       player_ranks: { id: 'rank-9', player_name: 'Niran', position: 'FW', ovr: 71, pts: 1520 },
       athlete_progress: { xp_total: 900, current_level: 4 },
@@ -127,13 +133,12 @@ describe('/profile', () => {
     expect(html).toContain('href="/dashboard"')
   })
 
-  it('offers to create an athlete profile to someone without one', async () => {
-    db.tables = { profiles: { full_name: 'Venue Owner', role: 'player', onboarding_persona: 'venue_owner' } }
+  it('offers to create an athlete profile to an athlete who has none yet', async () => {
+    db.tables = { profiles: { full_name: 'Newcomer', role: 'user', onboarding_persona: 'athlete' } }
     db.counts = {}
     db.private = null
     const html = await render(ProfilePage as never)
     expect(text(html)).toContain('ยังไม่มีโปรไฟล์นักกีฬา')
-    expect(html).toContain('href="/venue"')
     expect(text(html)).not.toContain('ก่อนเปิดโปรไฟล์สาธารณะ')
   })
 
@@ -203,6 +208,158 @@ describe('/profile for an athlete who comes back to train (UX mockup v5-A)', () 
   it('does not show a streak of zero weeks to someone who has just started', async () => {
     returning()
     expect(text(await render(ProfilePage as never))).not.toContain('ต่อเนื่อง 0 สัปดาห์')
+  })
+})
+
+describe('/profile is "ของฉัน": it opens on the work of each role (UX report 9)', () => {
+  const as = (persona: string | null, role = 'user') => {
+    db.tables = { profiles: { full_name: 'Somsak', role, onboarding_persona: persona } }
+    db.counts = {}
+    db.private = null
+    db.failing = []
+  }
+
+  it('shows a coach their team and one primary button, never the organizer dashboard', async () => {
+    as('coach_organizer')
+    db.tables.teams = [{ id: 't1', name: 'Lions U13', status: 'draft' }]
+    db.counts = { team_members: 2 }
+    const html = await render(ProfilePage as never)
+    const page = text(html)
+    expect(page).toContain('ทีมของฉัน')
+    expect(page).toContain('ส่งสมัครทีม')
+    expect(page).toContain('Lions U13 · ตอบรับ 2 · รอตอบ 2')
+    expect(html).toContain('href="/team-members"')
+    expect(html).not.toMatch(/href="\/dashboard/)
+    // Not an athlete's page: no card builder prompt, no level, no athlete checklist.
+    expect(page).not.toContain('ยังไม่มีโปรไฟล์นักกีฬา')
+    expect(page).not.toContain('ก่อนเปิดโปรไฟล์สาธารณะ')
+    expect(primaries(html)).toBe(1)
+  })
+
+  it('sends a coach with no team to register one', async () => {
+    as('coach_organizer')
+    const html = await render(ProfilePage as never)
+    expect(text(html)).toContain('สมัครทีมเข้ารายการ')
+    expect(anchor(html, '/tournaments')).toContain('pf-btn-primary')
+  })
+
+  it('shows a guardian their children', async () => {
+    as('guardian')
+    db.counts = { guardian_links: 1 }
+    const html = await render(ProfilePage as never)
+    expect(text(html)).toContain('ลูกของฉัน')
+    expect(text(html)).toContain('ดูความก้าวหน้าของลูก')
+    expect(anchor(html, '/guardian')).toContain('pf-btn-primary')
+    expect(text(html)).not.toContain('ยังไม่มีโปรไฟล์นักกีฬา')
+    expect(primaries(html)).toBe(1)
+  })
+
+  it('shows an organizer the teams waiting for them', async () => {
+    as('coach_organizer', 'organizer')
+    db.counts = { tournaments: 2, teams: 3 }
+    const html = await render(ProfilePage as never)
+    expect(text(html)).toContain('รายการของฉัน')
+    expect(text(html)).toContain('ตรวจทีมที่รอ (3)')
+    expect(anchor(html, '/dashboard')).toContain('pf-btn-primary')
+    expect(primaries(html)).toBe(1)
+  })
+
+  it('shows a venue owner the booking requests waiting for an answer', async () => {
+    as('venue_owner')
+    db.counts = { venue_profiles: 1, venue_booking_requests: 2 }
+    const html = await render(ProfilePage as never)
+    expect(text(html)).toContain('สนามของฉัน')
+    expect(text(html)).toContain('ตอบคำขอจอง (2)')
+    expect(anchor(html, '/venue')).toContain('pf-btn-primary')
+    expect(text(html)).not.toContain('ยังไม่มีโปรไฟล์นักกีฬา')
+  })
+
+  it('keeps the card of a coach who also plays one tap away', async () => {
+    as('coach_organizer')
+    db.counts = { athlete_profiles: 1 }
+    const html = await render(ProfilePage as never)
+    expect(html).toContain('href="/card"')
+    expect(text(html)).toContain('การ์ดนักกีฬาของฉัน')
+  })
+
+  it('says so when the work could not be read, instead of offering to create what may already exist', async () => {
+    as('coach_organizer', 'organizer')
+    db.failing = ['tournaments']
+    const html = await render(ProfilePage as never)
+    expect(html).toContain('role="alert"')
+    expect(text(html)).toContain('โหลดงานของคุณไม่สำเร็จ')
+    expect(text(html)).not.toContain('สร้างรายการแข่ง')
+  })
+
+  it('names the role under the name', async () => {
+    as('guardian')
+    expect(text(await render(ProfilePage as never))).toContain('ในฐานะ ผู้ปกครอง')
+  })
+
+  it('speaks English without Thai on a coach home', async () => {
+    as('coach_organizer')
+    const html = await render(ProfilePage as never, 'en')
+    const beforeDeletion = text(withoutSwitch(html.slice(0, html.indexOf('ลบข้อมูลของฉัน'))))
+    expect(beforeDeletion).toContain('Register a team')
+    expect(beforeDeletion).not.toMatch(/[ก-ฺเ-๛]/)
+  })
+})
+
+describe('/profile for an athlete: training first, then the card (owner, report 9)', () => {
+  const athlete = (enrollments: unknown[], isPublic = false) => {
+    db.tables = {
+      profiles: { full_name: 'Niran', role: 'user', onboarding_persona: 'athlete' },
+      athlete_profiles: { ...minor, display_name: 'Niran', is_public: isPublic },
+      training_enrollments: enrollments,
+    }
+    db.counts = {}
+    db.failing = []
+    db.private = { birth_date: '2013-06-01', guardian_consent_at: '2026-01-01T00:00:00Z' }
+  }
+
+  it('asks an athlete without a programme to choose one, and names the one for their age', async () => {
+    athlete([])
+    const html = await render(ProfilePage as never)
+    expect(text(html)).toContain('เลือกโปรแกรมซ้อม')
+    expect(text(html)).toMatch(/เหมาะกับอายุ \d+ ปี: /)
+    expect(anchor(html, '/training')).toContain('ui-btn-primary')
+    // Before the card and before the checklist.
+    expect(html.indexOf('tr-today')).toBeLessThan(html.indexOf('pf-next-card'))
+    expect(html.indexOf('tr-today')).toBeLessThan(html.indexOf('id="pf-card"'))
+  })
+
+  it('has one primary button: the checklist step steps back while training holds it', async () => {
+    athlete([])
+    expect(primaries(await render(ProfilePage as never))).toBe(1)
+  })
+
+  it('gives the primary back to the checklist when there is nothing to train today', async () => {
+    athlete([{ id: 'e1', program_id: 'u10-foundation-01', weekdays: [], start_date: '2026-01-05', status: 'active' }])
+    const html = await render(ProfilePage as never)
+    expect(primaries(html)).toBe(1)
+    expect(html).toMatch(/pf-btn pf-btn-block pf-btn-primary/)
+  })
+
+  it('keeps editing as a quiet button in the header, not a second red one', async () => {
+    athlete([])
+    const html = await render(ProfilePage as never)
+    expect(anchor(html, '/profile/edit')).toContain('pf-btn-ghost')
+    expect(anchor(html, '/profile/edit')).not.toContain('pf-btn-primary')
+  })
+
+  it('keeps the card as a secondary shortcut', async () => {
+    athlete([])
+    const html = await render(ProfilePage as never)
+    expect(anchor(html, '/card')).toContain('pf-btn-line')
+  })
+
+  it('hides level and points until the first point', async () => {
+    athlete([])
+    expect(await render(ProfilePage as never)).not.toContain('class="pf-level"')
+    ;(db.tables as Record<string, unknown>).athlete_progress = { xp_total: 40, current_level: 1 }
+    const html = await render(ProfilePage as never)
+    expect(html).toContain('class="pf-level"')
+    expect(text(html)).toContain('40 แต้ม')
   })
 })
 

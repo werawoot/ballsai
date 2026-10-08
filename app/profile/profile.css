@@ -250,3 +250,19 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 /* The checklist of an athlete who is already public: one quiet line, not a card with a red button. */
 .pf-ready-line { align-items: center; color: inherit; display: flex; font-weight: 700; gap: 10px; justify-content: space-between; min-height: 56px; padding: 0 16px; text-decoration: none; }
 .pf-ready-line span { min-width: 0; overflow-wrap: anywhere; }
+
+/* "ของฉัน" for guardian, coach, organizer, venue owner and sponsor (UX report 9): what this role
+   is looking at, one primary button, at most three shortcuts. */
+.rh { display:flex; flex-direction:column; gap:6px; }
+.rh-eyebrow { color:var(--pf-muted); font-size:13px; font-weight:700; margin:0; }
+.rh-title { font:800 23px/1.3 var(--font-sarabun),sans-serif; margin:0; overflow-wrap:anywhere; }
+.rh-text { color:var(--pf-muted); font-size:14.5px; line-height:1.6; margin:0 0 6px; }
+.rh-stats { background:#f4f2ec; border-radius:12px; color:var(--pf-ink); font-size:13.5px; font-weight:700; margin:0 0 8px; overflow-wrap:anywhere; padding:9px 12px; }
+.rh .pf-btn-block { min-height:54px; }
+.rh-rows { padding:2px 16px; }
+.rh-list { list-style:none; margin:0; padding:0; }
+.rh-list li + li { border-top:1px solid #efebe3; }
+.rh-row { align-items:center; color:var(--pf-ink); display:flex; gap:12px; justify-content:space-between; min-height:56px; text-decoration:none; }
+.rh-row span { display:block; min-width:0; }
+.rh-row b { display:block; font-size:15.5px; }
+.rh-row small { color:var(--pf-muted); display:block; font-size:12.5px; margin-top:2px; }

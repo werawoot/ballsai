@@ -61,9 +61,12 @@ describe('Thai: the same idea has the same word everywhere', () => {
     expect(TH['card.provenance.self']).toMatch(/ยังไม่มีผลแข่ง/)
   })
 
-  it('names the bottom tab after what it opens', () => {
+  it('names the bottom tabs after what they open', () => {
     expect(TH['nav.items.discover']).toBe('นักกีฬา')
     expect(EN['nav.items.discover']).toBe('Athletes')
+    // The fifth tab opens the person's own work, whoever they are (report 9, D1).
+    expect(TH['nav.items.profile']).toBe('ของฉัน')
+    expect(EN['nav.items.profile']).toBe('Me')
   })
 })
 

@@ -52,14 +52,14 @@ export const PROFILE_MENU = [
   { href: '/venues', label: 'จองสนาม', hint: 'หาสนามและดูคำขอจองของทีม' },
   { href: '/sponsorships', label: 'โอกาสสนับสนุน', hint: 'ทุนและโอกาสจากแบรนด์ที่เปิดรับ' },
   { href: '/team-members', label: 'สมาชิกทีม', hint: 'คำเชิญเข้าทีมและรายชื่อทีมของฉัน' },
-  { href: '/career', label: 'Career Passport', hint: 'เส้นทางและผลงานที่ยืนยันแล้ว' },
+  { href: '/career', label: 'ประวัติการเล่นของฉัน', hint: 'เส้นทางและผลงานที่ยืนยันแล้ว' },
 ] as const
 
 /** The three views that used to be separate tabs, now one tab with a switch inside. */
 export const DISCOVER_TABS = [
   { href: '/athletes', label: 'นักกีฬา' },
-  { href: '/ranking', label: 'Ranking' },
-  { href: '/hall-of-fame', label: 'Hall of Fame' },
+  { href: '/ranking', label: 'อันดับ' },
+  { href: '/hall-of-fame', label: 'หอเกียรติยศ' },
 ] as const
 
 /**
