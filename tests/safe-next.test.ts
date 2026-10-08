@@ -19,4 +19,11 @@ describe('where someone lands after signing in', () => {
     expect(safeNextPath('https://evil.example')).toBe('/profile')
     expect(safeNextPath('javascript:alert(1)')).toBe('/profile')
   })
+  it('never leaves this site through a backslash or a control character', () => {
+    // Browsers read "/\\host" as "//host": a redirect there goes to another site.
+    expect(safeNextPath('/\\evil.example')).toBe('/profile')
+    expect(safeNextPath('/\\/evil.example')).toBe('/profile')
+    expect(safeNextPath('/\tevil.example')).toBe('/profile')
+    expect(safeNextPath('/ok\nSet-Cookie:x')).toBe('/profile')
+  })
 })
