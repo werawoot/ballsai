@@ -1,0 +1,97 @@
+name: Apply SQL
+
+# Applies one numbered migration from sql/ to Staging or Production, with its precheck before
+# and its postcheck after, and writes every output to the run summary. Started by hand only
+# (Actions tab, "Run workflow"). The connection string lives in a GitHub environment secret,
+# never in the repo or a chat. Production runs only after the owner approves the run in
+# GitHub (the "production-db" environment has a required reviewer). See docs/apply-sql-action.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      file:
+        description: 'Migration, e.g. sql/60-match-result-request-id-v1.sql'
+        required: true
+        type: string
+      target:
+        description: 'Where to apply it (Staging first, always)'
+        required: true
+        type: choice
+        options: [staging, production]
+      confirm:
+        description: 'Production only: type the file name again, e.g. 60-match-result-request-id-v1.sql'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+# One apply at a time per project: two runs never race on the same database.
+concurrency:
+  group: apply-sql-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    name: Apply ${{ inputs.file }} to ${{ inputs.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.target == 'production' && 'production-db' || 'staging-db' }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Check the file, the project and the confirmation
+        id: plan
+        env:
+          SQL_FILE: ${{ inputs.file }}
+          SQL_TARGET: ${{ inputs.target }}
+          SQL_CONFIRM: ${{ inputs.confirm }}
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/sql-apply-guard.mjs
+
+      - name: Install psql
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client > /dev/null
+
+      - name: Precheck (read-only)
+        if: steps.plan.outputs.precheck != ''
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          FILE: ${{ steps.plan.outputs.precheck }}
+        run: |
+          set -o pipefail
+          {
+            echo "## Precheck: \`$FILE\`"; echo '```'
+            psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f "$FILE" 2>&1
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Apply the migration
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          FILE: ${{ steps.plan.outputs.migration }}
+        run: |
+          set -o pipefail
+          {
+            echo "## Apply: \`$FILE\` → ${{ inputs.target }}"; echo '```'
+            psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f "$FILE" 2>&1
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Postcheck (read-only)
+        if: steps.plan.outputs.postcheck != ''
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          FILE: ${{ steps.plan.outputs.postcheck }}
+        run: |
+          set -o pipefail
+          {
+            echo "## Postcheck: \`$FILE\`"; echo '```'
+            psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f "$FILE" 2>&1
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
