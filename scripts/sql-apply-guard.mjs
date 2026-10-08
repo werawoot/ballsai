@@ -10,6 +10,7 @@ const NEVER = new Set([
   'sql/supabase-rls-private-slips.sql',
   'sql/sample-data.sql',
   'sql/66-production-sample-data-cleanup-v1.sql',
+  'sql/67-production-test-data-cleanup-v1.sql',
 ])
 
 // Only numbered migrations, by their plain path: no checks, bundles or unnumbered files.
