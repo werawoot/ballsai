@@ -142,6 +142,9 @@
 .pf-label { color:#374151; font-size:13px; font-weight:700; }
 .pf-help { color:var(--pf-muted); font-size:12px; line-height:1.45; }
 .pf-input { background:#fff; border:1.5px solid #d9d3c7; border-radius:6px; color:var(--pf-ink); font:500 15px/1.4 var(--font-sarabun),sans-serif; min-height:48px; padding:11px 13px; width:100%; }
+/* Chrome test, 8 Oct 2026: the sticky save bar (and the nav under it) covered the field being
+   typed in. A focused field now scrolls clear of the bar at the bottom and the tabs at the top. */
+.pf-input { scroll-margin:72px 0 calc(var(--pf-nav) + 96px); }
 .pf-input:focus { border-color:var(--pf-ink); box-shadow:0 0 0 3px rgba(244,185,66,.45); outline:none; }
 .pf-input::placeholder { color:#9aa1ab; }
 textarea.pf-input { min-height:110px; resize:vertical; }

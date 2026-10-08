@@ -101,3 +101,13 @@ describe('/dashboard/results for an account that is not an organizer yet', () =>
     expect(html).not.toContain('My Cup')
   })
 })
+
+// Chrome test, 8 Oct 2026: "confirm teams on the dashboard first" with nothing to press.
+describe('/dashboard/results for a tournament with no confirmed team', () => {
+  it('gives a button to the dashboard where teams are confirmed', async () => {
+    db.tables = tables(); db.user = 'org-1'
+    const html = await render({ tournament: 'mine-2' })
+    expect(html).toContain(en.matchEntry.noTeams)
+    expect(html).toMatch(/<a[^>]*href="\/dashboard"[^>]*>[^<]*Confirm teams/)
+  })
+})

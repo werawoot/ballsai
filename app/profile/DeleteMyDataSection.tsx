@@ -60,7 +60,7 @@ export default function DeleteMyDataSection() {
       </ul>
 
       <p style={{ fontSize: 11, color: '#888', margin: '0 0 12px', lineHeight: 1.6 }}>
-        อ่านรายละเอียดได้ที่ <Link href="/privacy" style={{ color: '#CC0001', fontWeight: 700 }}>นโยบายความเป็นส่วนตัว</Link> · ถ้าเป็นผู้เยาว์ ควรให้ผู้ปกครองอยู่ด้วยตอนทำรายการนี้
+        อ่านรายละเอียดได้ที่ <Link href="/privacy" className="tap-44" style={{ color: '#CC0001', fontWeight: 700 }}>นโยบายความเป็นส่วนตัว</Link> · ถ้าเป็นผู้เยาว์ ควรให้ผู้ปกครองอยู่ด้วยตอนทำรายการนี้
       </p>
 
       {message && (

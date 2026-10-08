@@ -106,3 +106,13 @@ export function provinceName(stored: string, locale: Locale): string {
   const key = stored.trim()
   return PROVINCE_NAMES_EN[ALIASES[key] ?? key] ?? stored
 }
+
+/** The 77 provinces as they are stored, in Thai alphabetical order: the choices on /profile/edit. */
+export const THAI_PROVINCES: readonly string[] = Object.keys(PROVINCE_NAMES_EN)
+
+/** The stored form of a province, Bangkok aliases included; null when it is not a province. */
+export function canonicalProvince(stored: string): string | null {
+  const key = stored.trim()
+  const canonical = ALIASES[key] ?? key
+  return canonical in PROVINCE_NAMES_EN ? canonical : null
+}

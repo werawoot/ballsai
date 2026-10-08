@@ -9,6 +9,8 @@ import {
   getProvincesWithRegion,
 } from "@/lib/db/thailand-queries";
 
+const LIST_SIZE = 50;
+
 export default async function InfrastructurePage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -46,26 +48,28 @@ export default async function InfrastructurePage() {
     regions,
     provinces,
     provincesWithRegion,
-    sportsData,
     venuesData,
     allProfiles,
   ] = await Promise.all([
     getAllRegions(),
     getAllProvinces(),
     getProvincesWithRegion(),
-    supabase.from("sports").select("*").order("id", { ascending: true }),
-    supabase.from("venues").select("*").order("id", { ascending: true }),
+    // Venues live in venue_profiles (sql/23). The old `venues` and `sports` tables are not used
+    // by any other page, so they are not counted here.
+    supabase
+      .from("venue_profiles")
+      .select("id, name, province, address, is_published", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(0, LIST_SIZE - 1),
+    // Every profile is counted; only the newest LIST_SIZE are listed, and the page says so.
     supabase
       .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false }),
+      .select("id, full_name, role, team", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(0, LIST_SIZE - 1),
   ]);
-
-  // Log data for debugging
-  console.log("Sports count:", sportsData.data?.length || 0);
-  console.log("Venues count:", venuesData.data?.length || 0);
-  console.log("Sample sport:", sportsData.data?.[0]);
-  console.log("Sample venue:", venuesData.data?.[0]);
+  const venueCount = venuesData.count ?? venuesData.data?.length ?? 0;
+  const profileCount = allProfiles.count ?? allProfiles.data?.length ?? 0;
 
   return (
     <main
@@ -185,7 +189,7 @@ export default async function InfrastructurePage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(5, 1fr)",
+            gridTemplateColumns: "repeat(4, 1fr)",
             gap: 8,
             marginBottom: 20,
           }}
@@ -202,19 +206,14 @@ export default async function InfrastructurePage() {
               value: regions.length,
             },
             {
-              icon: <Trophy size={18} color="#10b981" />,
-              label: "Sports",
-              value: sportsData?.data?.length ?? 0,
-            },
-            {
               icon: <Database size={18} color="#f59e0b" />,
               label: "Venues",
-              value: venuesData?.data?.length ?? 0,
+              value: venueCount,
             },
             {
               icon: <Users size={18} color="#8b5cf6" />,
               label: "Profiles",
-              value: allProfiles.data?.length ?? 0,
+              value: profileCount,
             },
           ].map((stat, i) => (
             <div
@@ -446,93 +445,6 @@ export default async function InfrastructurePage() {
           </div>
         </div>
 
-        {/* SPORTS SECTION */}
-        <div style={{ marginBottom: 20 }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 12,
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "var(--font-oswald)",
-                fontSize: 16,
-                fontWeight: 700,
-                textTransform: "uppercase",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <div
-                style={{
-                  width: 4,
-                  height: 18,
-                  background: "#10b981",
-                  borderRadius: 2,
-                }}
-              />
-              กีฬา (Sports)
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: "white",
-              borderRadius: 12,
-              border: "1.5px solid #e5e5e5",
-              overflow: "hidden",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-            }}
-          >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "40px 1fr",
-                padding: "10px 12px",
-                background: "#fafafa",
-                borderBottom: "1px solid #e5e5e5",
-                fontSize: 10,
-                fontWeight: 800,
-                color: "#666",
-                textTransform: "uppercase",
-              }}
-            >
-              <div>ID</div>
-              <div>Sport Name</div>
-            </div>
-            {(sportsData?.data || []).map((sport) => (
-              <div
-                key={sport.id}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "40px 1fr",
-                  padding: "10px 12px",
-                  borderBottom: "1px solid #f0f0f0",
-                  fontSize: 13,
-                  alignItems: "center",
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: "var(--font-oswald)",
-                    fontWeight: 700,
-                    color: "#666",
-                  }}
-                >
-                  {sport.id}
-                </div>
-                <div style={{ color: "#111", fontWeight: 600 }}>
-                  {sport.name}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* VENUES SECTION */}
         <div style={{ marginBottom: 20 }}>
           <div
@@ -591,9 +503,9 @@ export default async function InfrastructurePage() {
               <div>ID</div>
               <div>Name</div>
               <div>Location</div>
-              <div>Capacity</div>
+              <div>Status</div>
             </div>
-            {(venuesData?.data || []).slice(0, 20).map((venue) => (
+            {(venuesData.data || []).map((venue) => (
               <div
                 key={venue.id}
                 style={{
@@ -612,13 +524,13 @@ export default async function InfrastructurePage() {
                     color: "#666",
                   }}
                 >
-                  {venue.id}
+                  {venue.id.slice(0, 6)}
                 </div>
                 <div style={{ color: "#111", fontWeight: 600 }}>
                   {venue.name}
                 </div>
                 <div style={{ color: "#555", fontSize: 12 }}>
-                  <div>{venue.city}</div>
+                  <div>{venue.address}</div>
                   <div style={{ fontSize: 11, color: "#888" }}>
                     {venue.province}
                   </div>
@@ -631,11 +543,11 @@ export default async function InfrastructurePage() {
                     fontSize: 12,
                   }}
                 >
-                  {venue.capacity ? venue.capacity.toLocaleString() : "-"}
+                  {venue.is_published ? "Live" : "Hidden"}
                 </div>
               </div>
             ))}
-            {(venuesData?.data?.length ?? 0) > 20 && (
+            {venueCount > LIST_SIZE && (
               <div
                 style={{
                   padding: "12px",
@@ -645,7 +557,7 @@ export default async function InfrastructurePage() {
                   fontWeight: 600,
                 }}
               >
-                ...and {(venuesData?.data?.length ?? 0) - 20} more venues
+                ...and {venueCount - LIST_SIZE} more venues
               </div>
             )}
           </div>
@@ -763,6 +675,19 @@ export default async function InfrastructurePage() {
                 </div>
               </div>
             ))}
+            {profileCount > LIST_SIZE && (
+              <div
+                style={{
+                  padding: "12px",
+                  textAlign: "center",
+                  fontSize: 12,
+                  color: "#888",
+                  fontWeight: 600,
+                }}
+              >
+                ...and {profileCount - LIST_SIZE} more profiles
+              </div>
+            )}
           </div>
         </div>
       </div>

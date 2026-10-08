@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Award, BadgeCheck, Camera, CheckCircle2, ImageIcon, Link2, Loader2, Plus, ShieldAlert, Trash2, Upload, Video as VideoIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { ACTIVE_SPORT } from '@/lib/season'
 import { ageOn, birthDateIssue, saveAthleteProfile, thaiDate } from '@/lib/athlete-private'
 import { MINOR_UNDER } from '@/lib/profile-readiness'
+import { THAI_PROVINCES, canonicalProvince, provinceName } from '@/lib/thai-provinces'
+import type { Locale } from '@/i18n/config'
 import { AVATAR_BUCKET, avatarPath } from '@/lib/athlete-avatar'
 import type messagesTh from '@/messages/th.json'
 
@@ -94,11 +96,13 @@ export default function EditProfileForm({
   avatarUrl?: string | null
 }) {
   const t = useTranslations('profileEdit')
+  const locale = useLocale() as Locale
   const router = useRouter()
   const initial = useMemo(() => ({
     displayName: athleteProfile?.display_name || profile?.full_name || '',
     birthDate: athleteProfile?.birth_date ?? '',
-    province: athleteProfile?.province || profile?.province || '',
+    // Only one of the 77 provinces is kept; anything else typed in the past asks for a choice.
+    province: canonicalProvince(athleteProfile?.province || profile?.province || '') ?? '',
     team: athleteProfile?.current_team || profile?.team || '',
     position: athleteProfile?.position || profile?.position || '',
     height: athleteProfile?.height_cm?.toString() ?? '',
@@ -303,7 +307,7 @@ export default function EditProfileForm({
     setHighlights(current => current.filter(item => item.id !== highlight.id))
   }
 
-  const input = (id: string, label: string, key: 'displayName' | 'province' | 'team', placeholder: string, help?: string) => (
+  const input = (id: string, label: string, key: 'displayName' | 'team', placeholder: string, help?: string) => (
     <div className="pf-field">
       <label className="pf-label" htmlFor={id}>{label}</label>
       <input id={id} className="pf-input" value={fields[key]} onChange={event => set(key)(event.target.value)} placeholder={placeholder} />
@@ -354,7 +358,13 @@ export default function EditProfileForm({
 
               <div className="pf-grid pf-grid-2">
                 {input('pf-team', t('details.team'), 'team', t('details.teamPlaceholder'))}
-                {input('pf-province', t('details.province'), 'province', t('details.provincePlaceholder'))}
+                <div className="pf-field">
+                  <label className="pf-label" htmlFor="pf-province">{t('details.province')}</label>
+                  <select id="pf-province" className="pf-input" value={fields.province} onChange={event => set('province')(event.target.value)}>
+                    <option value="">{t('details.provinceChoose')}</option>
+                    {THAI_PROVINCES.map(province => <option key={province} value={province}>{provinceName(province, locale)}</option>)}
+                  </select>
+                </div>
               </div>
 
               <div className="pf-grid pf-grid-2">

@@ -86,7 +86,7 @@ export default async function ProgramPage(props: { params: Promise<{ programId: 
             {program.sources.map(key => TRAINING_SOURCES[key]).filter(Boolean).map(source => <div className="tr-source" key={source.url}>
               <b>{source.title}</b>
               <small>{source.author} · {source.license}</small>
-              <a href={source.url} rel="noreferrer" target="_blank">{t('drill.open')} ↗</a>
+              <a className="tap-44" href={source.url} rel="noreferrer" target="_blank">{t('drill.open')} ↗</a>
             </div>)}
           </div>
           <p className="tr-official">{t('notOfficial')}</p>

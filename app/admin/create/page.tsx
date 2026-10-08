@@ -93,7 +93,7 @@ export default function CreatePlayerPage() {
         <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
           <Trophy size={22} strokeWidth={2.5} /> BallDoenSai.com
         </Link>
-        <Link href="/admin" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+        <Link href="/admin" className="tap-44" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
           <ArrowLeft size={16} /> กลับ
         </Link>
       </header>
