@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { getLocale, getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { CheckCircle2, MapPin, Shield, Star, User, Users, Zap } from 'lucide-react'
 import AthleteFilters from './AthleteFilters'
@@ -10,7 +11,8 @@ import PageHeader from '@/components/PageHeader'
 import Pagination from '@/components/Pagination'
 import { parsePage } from '@/lib/pagination'
 import { fetchPublicAthletesPage, type PublicAthlete as AthleteProfile, type PublicAthleteRank as PlayerRank } from '@/lib/public-athletes'
-import { PROVINCE_NAMES_EN } from '@/lib/thai-provinces'
+import { PROVINCE_NAMES_EN, provinceName } from '@/lib/thai-provinces'
+import type { Locale } from '@/i18n/config'
 import { withAvatarUrls } from '@/lib/athlete-avatar'
 type DirectoryAthlete = AthleteProfile & { sampleRank?: (typeof samplePlayerRanks)[number] }
 
@@ -34,6 +36,7 @@ export default async function AthletesPage(
   props: { searchParams: Promise<{ search?: string; province?: string; position?: string; age?: string; page?: string }> }
 ) {
   const searchParams = await props.searchParams
+  const [t, locale] = await Promise.all([getTranslations('athletesPage'), getLocale() as Promise<Locale>])
   const cookieStore = await cookies()
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {
@@ -78,10 +81,10 @@ export default async function AthletesPage(
 
   return (
     <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5' }}>
-      <PageHeader eyebrow="ATHLETE DATABASE" />
+      <PageHeader eyebrow={t('eyebrow')} />
 
       <section className="bds-hero" style={{ background: '#111', color: 'white', padding: '25px 16px 22px' }}>
-        <div style={{ maxWidth: 920, margin: '0 auto' }}><span style={{ fontSize: 10, fontWeight: 800, color: '#ff7373' }}>FOOTBALL · THAILAND</span><h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(30px,8vw,48px)', lineHeight: 1, marginTop: 5 }}>ค้นหานักกีฬาเยาวชน</h1><p style={{ fontSize: 12, color: '#aaa', marginTop: 8 }}>โปรไฟล์ ผลงาน และข้อมูลที่ระบุระดับการยืนยันอย่างชัดเจน</p></div>
+        <div style={{ maxWidth: 920, margin: '0 auto' }}><span style={{ fontSize: 10, fontWeight: 800, color: '#ff7373' }}>{t('heroEyebrow')}</span><h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(30px,8vw,48px)', lineHeight: 1, marginTop: 5 }}>{t('title')}</h1><p style={{ fontSize: 12, color: '#aaa', marginTop: 8 }}>{t('intro')}</p></div>
       </section>
 
       <DiscoverTabs current="/athletes" />
@@ -89,8 +92,8 @@ export default async function AthletesPage(
       <AthleteFilters provinces={provinces} currentSearch={search} currentProvince={province} currentPosition={position} currentAge={ageGroup} />
 
       <section className="bds-content" style={{ maxWidth: 920, margin: '0 auto', padding: '18px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}><h2 className="bds-section-title" style={{ fontFamily: 'var(--font-oswald)', fontSize: 17 }}>นักกีฬาที่พบ</h2><span style={{ fontSize: 11, color: '#888' }}>{visibleProfiles.length} โปรไฟล์</span></div>
-        {visibleProfiles.length === 0 ? <div style={{ padding: '50px 20px', textAlign: 'center', borderTop: '1px solid #ddd', color: '#888' }}><User size={34} strokeWidth={1.3} /><p style={{ marginTop: 10, fontSize: 13 }}>ยังไม่มีนักกีฬาที่ตรงกับตัวกรอง</p></div> : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(155px,1fr))', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}><h2 className="bds-section-title" style={{ fontFamily: 'var(--font-oswald)', fontSize: 17 }}>{t('found')}</h2><span style={{ fontSize: 11, color: '#888' }}>{t('count', { count: visibleProfiles.length })}</span></div>
+        {visibleProfiles.length === 0 ? <div style={{ padding: '50px 20px', textAlign: 'center', borderTop: '1px solid #ddd', color: '#888' }}><User size={34} strokeWidth={1.3} /><p style={{ marginTop: 10, fontSize: 13 }}>{t('empty')}</p></div> : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(155px,1fr))', gap: 10 }}>
           {visibleProfiles.map(profile => {
             const sampleRank = profile.sampleRank
             const rank = rankByAthlete.get(profile.user_id) || sampleRank
@@ -99,15 +102,15 @@ export default async function AthletesPage(
             const verified = profile.verification_level !== 'self'
             return <Link className="bds-card" key={profile.user_id} href={`/players/${routeId}`} style={{ background: 'white', border: '1px solid #dededb', borderRadius: 7, overflow: 'hidden', textDecoration: 'none', color: '#111', minWidth: 0 }}>
               <div style={{ height: 144, position: 'relative', background: profile.profile_image_url ? `url(${profile.profile_image_url}) center top/cover` : '#ececea', display: 'grid', placeItems: 'center', color: '#CC0001' }}>
-                {!profile.profile_image_url && <PositionMark position={profile.position || 'FW'} />}
-                <span style={{ position: 'absolute', left: 8, top: 8, background: '#111', color: 'white', borderRadius: 4, padding: '3px 7px', fontFamily: 'var(--font-barlow)', fontSize: 10, fontWeight: 800 }}>{profile.position || 'N/A'}</span>
-                {verified && <span title="Verified" style={{ position: 'absolute', right: 8, top: 8, width: 24, height: 24, borderRadius: '50%', background: '#15803d', color: 'white', display: 'grid', placeItems: 'center' }}><CheckCircle2 size={15} /></span>}
+                {!profile.profile_image_url && <PositionMark position={profile.position || ''} />}
+                <span style={{ position: 'absolute', left: 8, top: 8, background: '#111', color: 'white', borderRadius: 4, padding: '3px 7px', fontFamily: 'var(--font-barlow)', fontSize: 10, fontWeight: 800 }}>{profile.position || '—'}</span>
+                {verified && <span title={t('verified')} style={{ position: 'absolute', right: 8, top: 8, width: 24, height: 24, borderRadius: '50%', background: '#15803d', color: 'white', display: 'grid', placeItems: 'center' }}><CheckCircle2 size={15} /></span>}
               </div>
               <div style={{ padding: 11 }}>
                 <div style={{ fontSize: 14, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile.display_name}</div>
-                <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', gap: 4, color: '#777', fontSize: 10 }}><Users size={11} /> <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile.current_team || 'ยังไม่ระบุทีม'}</span></div>
-                <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 4, color: '#777', fontSize: 10 }}><MapPin size={11} />{profile.province || 'ไม่ระบุ'}{athleteAge !== null && ` · ${athleteAge} ปี`}</div>
-                <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid #eee', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}><span style={{ fontSize: 9, color: '#999' }}>POWER</span><b style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, color: rank ? '#CC0001' : '#999' }}>{rank ? rank.pts.toLocaleString() : 'UNRATED'}</b></div>
+                <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', gap: 4, color: '#777', fontSize: 10 }}><Users size={11} /> <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile.current_team || t('noTeam')}</span></div>
+                <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 4, color: '#777', fontSize: 10 }}><MapPin size={11} />{profile.province ? provinceName(profile.province, locale) : t('noProvince')}{athleteAge !== null && ` · ${t('age', { age: athleteAge })}`}</div>
+                <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid #eee', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}><span style={{ fontSize: 9, color: '#999' }}>{t('power')}</span><b style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, color: rank ? '#CC0001' : '#999' }}>{rank ? rank.pts.toLocaleString() : t('noPower')}</b></div>
               </div>
             </Link>
           })}
