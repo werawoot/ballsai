@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { ageOn, thaiDate } from '@/lib/athlete-private'
+import { ageOn, shownAge, thaiDate } from '@/lib/athlete-private'
 
 export const ATHLETES_PAGE_SIZE = 24
 
@@ -87,7 +87,7 @@ export async function fetchPublicAthletesPage(client: SupabaseClient, options: O
   }
   if (error) throw error
   const rows = (data ?? []) as PublicAthlete[]
-  const athletes = rows.slice(0, ATHLETES_PAGE_SIZE)
+  const athletes = rows.slice(0, ATHLETES_PAGE_SIZE).map(athlete => ({ ...athlete, age: shownAge(athlete.age ?? null) }))
   const ids = athletes.map(athlete => athlete.user_id)
   let ranks: PublicAthleteRank[] = []
   if (ids.length) {

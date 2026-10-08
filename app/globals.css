@@ -388,3 +388,12 @@ body:has(.card-page) { background: #070d18; }
 .bds-pagination-link { align-items:center; background:#fff; border:1px solid #d9dde2; border-radius:10px; box-sizing:border-box; color:#172033; display:inline-flex; font:800 13px/1.2 var(--font-sarabun),sans-serif; gap:2px; min-height:44px; min-width:44px; padding:0 10px; text-decoration:none; white-space:nowrap; }
 .bds-pagination-link:hover { border-color:#CC0001; color:#CC0001; }
 .bds-pagination-current { color:#667085; flex:1 1 auto; font:700 12px/1.2 var(--font-sarabun),sans-serif; min-width:0; overflow:hidden; text-align:center; text-overflow:ellipsis; white-space:nowrap; }
+/* Chrome test, 8 Oct 2026: home links and arrows were 5-39px tall, hard to tap on a phone. Each
+   tap area grows to 44px; padding is cancelled by an equal negative margin, a transparent border
+   or a clipped background, so nothing on screen moves or changes look. */
+.home-text-link { margin:-14px 0 -9px; padding:14px 0; }
+.home-match-centre-head > a { margin:-14px 0 -10px; padding:14px 0; }
+.home-rail-actions { gap:2px; margin:-2.5px; }
+.home-rail-actions button { background-clip:padding-box; border:2.5px solid transparent; height:44px; width:44px; }
+.home-carousel-dots { bottom:9.5px; gap:0; }
+.home-carousel-dots button,.home-carousel-dots button.is-active { background-clip:content-box; box-sizing:content-box; padding:19.5px 3px; }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { execSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
-import { PUBLIC_PROFILE_COLUMNS, ageOn, fetchAthleteAge, fetchMyAthletePrivate, saveAthleteProfile } from '@/lib/athlete-private'
+import { PUBLIC_PROFILE_COLUMNS, ageOn, birthDateIssue, fetchAthleteAge, fetchMyAthletePrivate, saveAthleteProfile } from '@/lib/athlete-private'
 
 type Answer = { data: unknown; error: { code?: string; message: string } | null }
 
@@ -133,5 +133,38 @@ describe('reads of athlete_profiles across the app', () => {
   it('reads the birth date or consent time only on the paths kept until SQL58 is applied', () => {
     const private_ = reads.filter(read => /birth_date|guardian_consent_at|LEGACY_COLUMNS/.test(read.columns)).map(read => read.file).sort()
     expect(private_).toEqual(['lib/athlete-private.ts', 'lib/athlete-private.ts', 'lib/public-athletes.ts', 'lib/public-identity-ranking.ts'])
+  })
+})
+
+// Chrome test, 8 Oct 2026: a birth date of this year was accepted and the profile said "อายุ 0 ปี".
+// Who can be an athlete here: 5 to 80 years old on the day the form is saved.
+describe('birthDateIssue', () => {
+  const today = '2026-10-08'
+  it('accepts a 5-year-old and an 80-year-old', () => {
+    expect(birthDateIssue('2021-10-08', today)).toBeNull()
+    expect(birthDateIssue('1946-10-08', today)).toBeNull()
+    expect(birthDateIssue('2014-03-15', today)).toBeNull()
+  })
+  it('refuses a birth date that gives an age under 5, including today', () => {
+    expect(birthDateIssue('2026-10-08', today)).toBe('tooYoung')
+    expect(birthDateIssue('2021-10-09', today)).toBe('tooYoung')
+  })
+  it('refuses a date after today', () => {
+    expect(birthDateIssue('2026-10-09', today)).toBe('future')
+  })
+  it('refuses an age over 80, which is almost always a typed-in year', () => {
+    expect(birthDateIssue('1945-10-08', today)).toBe('tooOld')
+    expect(birthDateIssue('1900-01-01', today)).toBe('tooOld')
+  })
+  it('refuses anything that is not a whole date', () => {
+    expect(birthDateIssue('2014-3-15', today)).toBe('invalid')
+    expect(birthDateIssue('', today)).toBe('invalid')
+  })
+})
+
+describe('an age outside 5-80 is never shown', () => {
+  it('fetchAthleteAge gives no age for 0, and the age for 12', async () => {
+    expect(await fetchAthleteAge(fakeClient({ rpc: { data: 0, error: null } }).client, 'u1')).toBeNull()
+    expect(await fetchAthleteAge(fakeClient({ rpc: { data: 12, error: null } }).client, 'u1')).toBe(12)
   })
 })

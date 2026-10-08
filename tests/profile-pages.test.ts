@@ -400,3 +400,13 @@ describe('/profile/edit', () => {
     expect(text(withoutSwitch(html))).not.toMatch(/[ก-ฺเ-๛]/)
   })
 })
+
+// Chrome test, 8 Oct 2026: a birth date in this year made /profile say "อายุ 0 ปี".
+describe('/profile with a birth date that cannot be right', () => {
+  it('shows no age rather than 0', async () => {
+    setMinor()
+    db.private = { birth_date: `${new Date().getFullYear()}-01-01`, guardian_consent_at: null }
+    const page = text(await render(ProfilePage as never))
+    expect(page).not.toMatch(/(^|\D)0 ปี/)
+  })
+})

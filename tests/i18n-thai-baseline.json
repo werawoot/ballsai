@@ -66,7 +66,6 @@
   "app/dashboard/tournaments/[id]/edit/page.tsx",
   "app/examples/LoadingModalExamples.tsx",
   "app/guardian/GuardianLinksClient.tsx",
-  "app/guardian/page.tsx",
   "app/hall-of-fame/page.tsx",
   "app/login/LoginPanel.tsx",
   "app/match-plan/MatchPlanClient.tsx",

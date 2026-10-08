@@ -26,11 +26,27 @@ export function ageOn(birthDate: string, today: string) {
   return year - birthYear - (month < birthMonth || (month === birthMonth && day < birthDay) ? 1 : 0)
 }
 
+// Who can hold an athlete profile: 5 to 80 years old. Outside that a birth date is a mistake
+// (a year left at today's, or a typo), so the form refuses it and no page shows that age.
+export const MIN_ATHLETE_AGE = 5
+export const MAX_ATHLETE_AGE = 80
+export type BirthDateIssue = 'invalid' | 'future' | 'tooYoung' | 'tooOld'
+
+export function birthDateIssue(birthDate: string, today: string): BirthDateIssue | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return 'invalid'
+  if (birthDate > today) return 'future'
+  const age = ageOn(birthDate, today)
+  if (age < MIN_ATHLETE_AGE) return 'tooYoung'
+  return age > MAX_ATHLETE_AGE ? 'tooOld' : null
+}
+
+export const shownAge = (age: number | null) => (age !== null && age >= MIN_ATHLETE_AGE && age <= MAX_ATHLETE_AGE ? age : null)
+
 // The age of a public athlete, or of the signed-in athlete's own profile; null when the
 // database gives none. A failed read shows no age rather than failing the page.
 export async function fetchAthleteAge(client: SupabaseClient, userId: string, now = new Date()): Promise<number | null> {
   const { data, error } = await client.rpc('public_athlete_age', { p_user_id: userId })
-  if (!error) return typeof data === 'number' ? data : null
+  if (!error) return typeof data === 'number' ? shownAge(data) : null
   if (!isMissingFunction(error)) {
     console.error(JSON.stringify({ level: 'error', event: 'athlete_age_failed', code: error.code ?? null }))
     return null
@@ -38,7 +54,7 @@ export async function fetchAthleteAge(client: SupabaseClient, userId: string, no
   // Before SQL58. Delete once it is applied on Production.
   const legacy = await client.from('athlete_profiles').select('birth_date').eq('user_id', userId).maybeSingle()
   const birthDate = (legacy.data as { birth_date?: string | null } | null)?.birth_date
-  return birthDate ? ageOn(birthDate, thaiDate(now)) : null
+  return birthDate ? shownAge(ageOn(birthDate, thaiDate(now))) : null
 }
 
 // The signed-in athlete's own birth date and consent time, for /profile.

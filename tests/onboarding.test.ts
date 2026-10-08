@@ -3,7 +3,7 @@ import { createElement, type ComponentType } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { NextIntlClientProvider } from 'next-intl'
 import { describe, expect, it, vi } from 'vitest'
-import { CHOICES, destinationFor, goalFor, personaOf, savedAnswers } from '@/lib/onboarding'
+import { CHANGE_ROLE_PATH, CHOICES, destinationFor, goalFor, personaOf, savedAnswers, welcomeIsDone } from '@/lib/onboarding'
 import { guardianStepsApply } from '@/lib/guardian-steps'
 import th from '@/messages/th.json'
 import en from '@/messages/en.json'
@@ -92,5 +92,16 @@ describe('the first /welcome screen', () => {
     const html = render('en').replace(/<button[^>]*class="bds-lang-switch"[\s\S]*?<\/button>/g, '')
     expect(text(html)).not.toMatch(/[ก-ฺเ-๛]/)
     expect(text(html)).toContain('Who are you?')
+  })
+})
+
+// /guardian sends someone who picked the wrong role to /welcome?again=1: there the role
+// screen opens again even though onboarding was finished once.
+describe('choosing a role again', () => {
+  it('opens /welcome for a finished account only when asked to choose again', () => {
+    expect(welcomeIsDone('2026-10-01T00:00:00Z', undefined)).toBe(true)
+    expect(welcomeIsDone('2026-10-01T00:00:00Z', '1')).toBe(false)
+    expect(welcomeIsDone(null, undefined)).toBe(false)
+    expect(CHANGE_ROLE_PATH).toBe('/welcome?again=1')
   })
 })

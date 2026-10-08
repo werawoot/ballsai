@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl'
 import { Award, BadgeCheck, Camera, CheckCircle2, ImageIcon, Link2, Loader2, Plus, ShieldAlert, Trash2, Upload, Video as VideoIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { ACTIVE_SPORT } from '@/lib/season'
-import { ageOn, saveAthleteProfile, thaiDate } from '@/lib/athlete-private'
+import { ageOn, birthDateIssue, saveAthleteProfile, thaiDate } from '@/lib/athlete-private'
 import { MINOR_UNDER } from '@/lib/profile-readiness'
 import { AVATAR_BUCKET, avatarPath } from '@/lib/athlete-avatar'
 import type messagesTh from '@/messages/th.json'
@@ -134,7 +134,9 @@ export default function EditProfileForm({
 
   useEffect(() => () => { if (imagePreviewUrl.startsWith('blob:')) URL.revokeObjectURL(imagePreviewUrl) }, [imagePreviewUrl])
 
-  const age = fields.birthDate && /^\d{4}-\d{2}-\d{2}$/.test(fields.birthDate) ? ageOn(fields.birthDate, thaiDate(new Date())) : null
+  const today = thaiDate(new Date())
+  const birthDateWrong = Boolean(fields.birthDate) && birthDateIssue(fields.birthDate, today) !== null
+  const age = fields.birthDate && !birthDateWrong ? ageOn(fields.birthDate, today) : null
   const isMinor = age !== null && age < MINOR_UNDER
   const canPublish = Boolean(fields.birthDate) && (!isMinor || hasGuardianConsent)
   const displayedImageUrl = imagePreviewUrl || (removeCurrentImage || !profileImageUrl ? '' : avatarUrl ?? '')
@@ -163,6 +165,7 @@ export default function EditProfileForm({
   const saveProfile = async () => {
     setDetailsStatus(null)
     if (!fields.displayName.trim() || !fields.birthDate) return setDetailsStatus({ kind: 'error', key: 'nameAndBirth' })
+    if (birthDateWrong) return setDetailsStatus({ kind: 'error', key: 'birthDateRange' })
     if (fields.isPublic && !canPublish) return setDetailsStatus({ kind: 'error', key: 'minorNeedsConsent' })
 
     const supabase = createClient()
@@ -337,8 +340,8 @@ export default function EditProfileForm({
                 {input('pf-display-name', t('details.displayName'), 'displayName', t('details.displayNamePlaceholder'))}
                 <div className="pf-field">
                   <label className="pf-label" htmlFor="pf-birth-date">{t('details.birthDate')}{age !== null && <span style={{ color: '#5b6472', fontWeight: 600 }}> · {t('details.ageNow', { age })}</span>}</label>
-                  <input id="pf-birth-date" className="pf-input" type="date" value={fields.birthDate} onChange={event => set('birthDate')(event.target.value)} max={thaiDate(new Date())} />
-                  <span className="pf-help">{t('details.birthDateHint')}</span>
+                  <input id="pf-birth-date" className="pf-input" type="date" value={fields.birthDate} onChange={event => set('birthDate')(event.target.value)} max={today} aria-invalid={birthDateWrong} aria-describedby="pf-birth-date-help" />
+                  <span id="pf-birth-date-help" className="pf-help" style={birthDateWrong ? { color: '#b91c1c', fontWeight: 700 } : undefined}>{birthDateWrong ? message('birthDateRange') : t('details.birthDateHint')}</span>
                 </div>
               </div>
 

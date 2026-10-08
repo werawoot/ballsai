@@ -16,7 +16,7 @@ import RoleHomeCard, { RoleLoadFailed } from '@/components/RoleHomeCard'
 import { calculateLevel, identityTierKey, levelProgress } from '@/lib/digital-identity'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import { PROFILE_MENU } from '@/lib/site-nav'
-import { PUBLIC_PROFILE_COLUMNS, fetchMyAthletePrivate, thaiDate } from '@/lib/athlete-private'
+import { PUBLIC_PROFILE_COLUMNS, fetchMyAthletePrivate, shownAge, thaiDate } from '@/lib/athlete-private'
 import { profileReadiness, type ReadinessItem } from '@/lib/profile-readiness'
 import { signAvatarUrls } from '@/lib/athlete-avatar'
 import { fetchMyTraining } from '@/lib/training/data'
@@ -139,7 +139,9 @@ export default async function ProfilePage() {
     pendingGuardianRequests: pendingGuardian,
   }, today) : null
 
-  const age = readiness?.age ?? null
+  // Shown and used for the training suggestion only when it can be right (5-80); the consent rule
+  // in readiness still uses the real value.
+  const age = shownAge(readiness?.age ?? null)
   // What the training card asks for, and so whether it holds this page's one primary button.
   const trainingCard = trainingHome(training ?? { available: false, enrollments: [], checkins: {} }, today, age)
   const trainingPrimary = trainingHasPrimary(trainingCard)
@@ -185,7 +187,7 @@ export default async function ProfilePage() {
             </div>
             {athlete && <div className="pf-chips">
               {athlete.position && <span className="pf-chip is-gold">{athlete.position}</span>}
-              {readiness?.age != null && <span className="pf-chip">{t('age', { age: readiness.age })}</span>}
+              {age !== null && <span className="pf-chip">{t('age', { age })}</span>}
               <span className={`pf-chip${athlete.verification_level !== 'self' ? ' is-green' : ''}`}>
                 {athlete.verification_level !== 'self' && <BadgeCheck size={13} aria-hidden="true" />}{t(`verification.${athlete.verification_level}`)}
               </span>
