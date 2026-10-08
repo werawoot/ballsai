@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import EditTournamentForm from './EditTournamentForm'
 import PageHeader from '@/components/PageHeader'
+import { getTranslations } from 'next-intl/server'
 
 type TournamentRecord = {
   id: string
@@ -20,6 +21,7 @@ type TournamentRecord = {
 
 export default async function EditTournamentPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params
+  const tl = await getTranslations('labels')
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -61,7 +63,7 @@ export default async function EditTournamentPage(props: { params: Promise<{ id: 
 
   return (
     <main style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden', paddingBottom: 40 }}>
-      <PageHeader back={{ href: '/dashboard', label: 'Dashboard' }} />
+      <PageHeader back={{ href: '/dashboard', label: tl('dashboardLabels.back') }} />
 
       <div style={{ background: '#CC0001', padding: '20px 16px 36px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(-45deg,transparent,transparent 20px,rgba(255,255,255,0.03) 20px,rgba(255,255,255,0.03) 21px)' }} />

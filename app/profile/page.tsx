@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import CardGuide from '@/components/CardGuide'
 import { getTranslations } from 'next-intl/server'
 import {
   BadgeCheck, Building2, Camera, Check, ChevronRight, Compass, Crown, Eye, EyeOff, Handshake, LayoutDashboard, Lock, LogOut,
@@ -202,6 +203,7 @@ export default async function ProfilePage() {
                 <small>{t('xpToNext', { xp: xp.toLocaleString(), remaining: levelInfo.remaining.toLocaleString(), next: level + 1 })}</small>
               </div>
             </div>}
+            {athlete && <CardGuide />}
             <div className="pf-actions">
               {/* Editing is secondary: the one primary button on this page is the next thing to do. */}
               <Link href="/profile/edit" className="pf-btn pf-btn-ghost"><PencilLine size={17} aria-hidden="true" />{athlete ? t('actions.edit') : t('noAthlete.cta')}</Link>

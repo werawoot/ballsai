@@ -49,6 +49,7 @@ export default async function MatchResultsPage(
   const page = parsePage(searchParams.page)
   const search = (searchParams.q ?? '').trim().slice(0, 80)
   const t = await getTranslations('matchResults')
+  const tl = await getTranslations('labels')
   const picker = await fetchResultTournamentsPage(supabase, { userId: user.id, isAdmin, page, search })
   // Without a choice, the newest tournament is selected, as the form always did.
   const selectedId = searchParams.tournament || picker.tournaments[0]?.id || ''
@@ -60,7 +61,7 @@ export default async function MatchResultsPage(
 
   return (
     <main className="bds-page mr-page">
-      <PageHeader back={{ href: '/dashboard', label: 'Dashboard' }} />
+      <PageHeader back={{ href: '/dashboard', label: tl('dashboardLabels.back') }} />
 
       <div className="mr-head">
         <p className="ui-eyebrow">{t('eyebrow')}</p>

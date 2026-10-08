@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trophy, MapPin, Calendar, Banknote, FileText, Phone, CheckCircle, Users } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
+import { useTranslations } from 'next-intl'
 
 type FieldProps = {
   icon: ReactNode
@@ -42,6 +43,7 @@ function Field({ icon, label, value, onChange, placeholder, type = 'text', requi
 }
 
 export default function CreateTournamentPage() {
+  const tl = useTranslations('labels')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
@@ -112,7 +114,7 @@ export default function CreateTournamentPage() {
     <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden', paddingBottom: 40 }}>
 
       {/* TOPBAR */}
-      <PageHeader back={{ href: '/dashboard', label: 'Dashboard' }} />
+      <PageHeader back={{ href: '/dashboard', label: tl('dashboardLabels.back') }} />
 
       {/* HERO */}
       <div className="bds-hero" style={{ background: '#CC0001', padding: '20px 16px 36px', position: 'relative', overflow: 'hidden' }}>
