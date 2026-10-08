@@ -46,3 +46,18 @@ v4-B → v4-C → v3-B → v3-C → v5-C → (v5-A, v5-B, v3-A ตามเง�
 - รายงาน: `report-9.md` · mockup `mockups/v9-*.html` · ภาพ `img/v9-*.png` (390 px) · local mock ยังไม่ได้แก้โค้ด
 - พบ: โค้ชกดทางลัดแดชบอร์ดแล้วเจอ "ยังไม่เปิดสิทธิ์ผู้จัด" (F2); persona มีค่าเดียวและ /welcome เข้าซ้ำไม่ได้ (F3)
 - รอตัดสิน D1-D6 ในรายงานข้อ 7 (D3-ข และ D4 ต้องเปลี่ยน DB)
+
+## ระยะ 1 — ลงโค้ดแล้ว (8 ต.ค. 2026) — branch `claude/funny-bohr-aoffz9` รอหัวหน้า review
+
+เจ้าของอนุมัติ report-8 ทั้ง 5 หน้า + ตารางคำ 22 แถว และ report-9 D1–D6 ตามที่แนะนำ
+
+| ข้อ | commit | อะไร |
+|---|---|---|
+| 1 | `c5bbffe` | คำทั้งเว็บ (messages th/en เท่านั้น) · `tests/vocabulary.test.ts` กันคำเก่ากลับมา · ไม่แตะถ้อยคำความยินยอม/PDPA/ชื่อสวิตช์ "โปรไฟล์สาธารณะ" |
+| 2 | `55ada25` | "ของฉัน" ตามบทบาท (`lib/role-home.ts`, `lib/role-home-data.ts`, `components/RoleHomeCard.tsx`) · นักกีฬา: การซ้อมก่อนการ์ด · แท็บ "ของฉัน" · หลังล็อกอินไป `/profile` (`lib/safe-next.ts`) |
+| 3 | `f136003` | `/login` (ตัดการ์ดตัวอย่างที่มีตัวเลข) + `/welcome` 3 → 2 จอ (`lib/onboarding.ts`) |
+| 4 | `2ab02fc` | `/card`: ปุ่มแดงปุ่มเดียวจนกว่ามีชื่อ |
+| 5 | `3f1ca16` | `/guardian`: หัวข้อ ปุ่มสี บรรทัด "ต่อไป" |
+
+- ไม่มีการแก้ SQL หรือ API · ทุกข้อเขียนเทสต์ก่อน · ตรวจ 320 และ 390 px ไม่มีเลื่อนซ้ายขวา · ภาพ `img/impl-r9-*`, `impl-s3-*`, `impl-s4-*`, `impl-s5-*`, `impl-w1-*` (local mock)
+- ยังไม่ได้ทำ (ไม่อยู่ในคำสั่ง): คำเก่าที่ฝังในโค้ดนอก messages เช่น หน้า `/career`, `/hall-of-fame`, `/scout`, `/players/[id]` ("STARTER"), ข้อความใน `MatchResultHistory`, `TeamMembersClient` ("Athlete Passport") · ป้ายอังกฤษบนการ์ด (`SEASON`, `CAREER · SEASON` ในภาพที่แชร์) · ปุ่มภาษา EN บน `/login` · หน้าแรก (ไม่แตะ)
