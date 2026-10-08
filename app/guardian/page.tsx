@@ -3,7 +3,9 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { createServerClient } from '@supabase/ssr'
 import GuardianLinksClient, { type GuardianLink } from './GuardianLinksClient'
+import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
+import { CHANGE_ROLE_PATH } from '@/lib/onboarding'
 
 type Profile = { onboarding_persona: string | null }
 type LinkRow = {
@@ -18,14 +20,14 @@ type LinkRow = {
   } | null
 }
 
-function mapLink(row: LinkRow): GuardianLink {
+function mapLink(row: LinkRow, fallbackName: string): GuardianLink {
   const athlete = row.athlete_profiles
   return {
     id: row.id,
     status: row.status,
     requested_at: row.requested_at,
     athlete: athlete ? {
-      display_name: athlete.display_name || 'นักกีฬา BallDoenSai',
+      display_name: athlete.display_name || fallbackName,
       is_public: athlete.is_public,
       progress: athlete.athlete_progress?.[0] ?? null,
       badge_count: athlete.athlete_badges?.length ?? 0,
@@ -49,14 +51,17 @@ export default async function GuardianPage() {
     supabase.from('guardian_links').select('id, status, requested_at').eq('athlete_id', user.id).eq('status', 'pending').order('requested_at', { ascending: false }),
   ])
   const isGuardian = (profile as Profile | null)?.onboarding_persona === 'guardian'
-  const links = ((guardianRows ?? []) as unknown as LinkRow[]).map(mapLink)
-  const incoming = ((incomingRows ?? []) as unknown as LinkRow[]).map(mapLink)
+  const links = ((guardianRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
+  const incoming = ((incomingRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
 
   return <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 48 }}>
     <PageHeader back={{ href: '/profile', label: t('back.profile') }} />
     <section style={{ background: '#101827', color: 'white', padding: '30px 18px 34px' }}><div style={{ maxWidth: 720, margin: '0 auto' }}><h1 style={{ fontSize: 'clamp(28px,7vw,40px)', lineHeight: 1.2, margin: '0 0 9px', fontWeight: 800 }}>{tp('title')}</h1><p style={{ maxWidth: 480, color: 'rgba(255,255,255,.7)', fontSize: 15, lineHeight: 1.55, margin: 0 }}>{tp('sub')}</p></div></section>
     <section style={{ maxWidth: 720, margin: '0 auto', padding: '20px 16px' }}>
-      {!isGuardian && incoming.length === 0 && <div style={{ background: '#fff8e6', border: '1px solid #f4d98b', borderRadius: 12, padding: 14, color: '#624a00', fontSize: 13, lineHeight: 1.55, marginBottom: 16 }}>หน้านี้สำหรับผู้ปกครอง หรือสำหรับนักกีฬาที่มีคำขอเชื่อมบัญชีรออยู่ หากเลือกบทบาทไม่ตรง ให้เริ่ม onboarding ใหม่ด้วยบัญชีผู้ปกครอง</div>}
+      {!isGuardian && incoming.length === 0 && <div style={{ background: '#fff8e6', border: '1px solid #f4d98b', borderRadius: 12, padding: 14, color: '#624a00', fontSize: 13, lineHeight: 1.55, marginBottom: 16 }}>
+        <p style={{ margin: '0 0 12px' }}>{tp('notGuardian.body')}</p>
+        <Link href={CHANGE_ROLE_PATH} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 18px', borderRadius: 12, background: '#CC0001', color: 'white', fontWeight: 800, fontSize: 15, textDecoration: 'none' }}>{tp('notGuardian.changeRole')}</Link>
+      </div>}
       <GuardianLinksClient isGuardian={isGuardian} links={links} incoming={incoming} />
     </section>
   </main>

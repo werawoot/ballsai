@@ -49,3 +49,20 @@ describe('/guardian heading', () => {
     expect(page).toContain('ของฉัน')
   })
 })
+
+// Chrome test, 8 Oct 2026: someone who chose another role landed here and was told to "เริ่ม
+// onboarding ใหม่" with nothing to press. They get one button that lets them choose again.
+describe('/guardian for someone who did not choose ผู้ปกครอง', () => {
+  it('says who the page is for and gives a button to change role, with no English', async () => {
+    db.persona = 'athlete'
+    const html = await render(GuardianPage as never)
+    db.persona = 'guardian'
+    expect(text(html)).toContain(th.guardianPage.notGuardian.body)
+    expect(html).toMatch(/<a[^>]*href="\/welcome\?again=1"[^>]*>[^<]*เปลี่ยนบทบาท/)
+    expect(text(html)).not.toMatch(/onboarding/i)
+  })
+  it('a guardian does not see it', async () => {
+    const html = await render(GuardianPage as never)
+    expect(html).not.toContain('/welcome?again=1')
+  })
+})

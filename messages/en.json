@@ -1146,6 +1146,7 @@
       "clipAdded": "Clip added",
       "achievementAdded": "Achievement added",
       "nameAndBirth": "Add your name and birth date before saving",
+      "birthDateRange": "Your birth date must give an age from 5 to 80. Check the year.",
       "minorNeedsConsent": "A minor's profile needs guardian consent before it can be public",
       "needsGuardianLink": "A minor's profile needs an accepted guardian link before it can be public",
       "needsBirthDate": "Add your birth date before making your profile public",
@@ -1667,6 +1668,11 @@
   "guardianPage": {
     "title": "Link to your child’s account",
     "sub": "You can see your child’s progress once they accept",
-    "next": "Next: wait for your child to accept in their own account"
+    "next": "Next: wait for your child to accept in their own account",
+    "athleteFallback": "BallDoenSai athlete",
+    "notGuardian": {
+      "body": "This page is for a parent linking to their child’s account. If you are a parent, change your role first.",
+      "changeRole": "Change role"
+    }
   }
 }

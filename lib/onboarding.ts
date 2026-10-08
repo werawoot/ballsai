@@ -41,3 +41,9 @@ export function savedAnswers(choice: Choice | null, sport: string, skipped: bool
   if (skipped || !choice) return { onboarding_persona: null, onboarding_sport: null, onboarding_goal: null }
   return { onboarding_persona: personaOf(choice), onboarding_sport: sport, onboarding_goal: goalFor(choice) }
 }
+
+/** Where /guardian sends someone who chose another role: the role screen, opened again. */
+export const CHANGE_ROLE_PATH = '/welcome?again=1'
+
+/** /welcome skips to the next page once onboarding is done, unless the person asked to choose again. */
+export const welcomeIsDone = (completedAt: string | null | undefined, again: string | undefined) => Boolean(completedAt) && again !== '1'

@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import OnboardingFlow from "./OnboardingFlow";
 import { safeNextPath } from "@/lib/safe-next";
+import { welcomeIsDone } from "@/lib/onboarding";
 
-export default async function WelcomePage(props: { searchParams: Promise<{ next?: string }> }) {
+export default async function WelcomePage(props: { searchParams: Promise<{ next?: string; again?: string }> }) {
   const searchParams = await props.searchParams;
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -16,7 +17,7 @@ export default async function WelcomePage(props: { searchParams: Promise<{ next?
     .maybeSingle();
 
   const nextPath = safeNextPath(searchParams.next);
-  if (profile?.onboarding_completed_at) redirect(nextPath);
+  if (welcomeIsDone(profile?.onboarding_completed_at, searchParams.again)) redirect(nextPath);
 
   return <OnboardingFlow email={user.email ?? ""} nextPath={nextPath} userId={user.id} />;
 }
