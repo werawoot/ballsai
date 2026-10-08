@@ -70,7 +70,6 @@
   "app/organization/OrganizationClient.tsx",
   "app/organization/invites/InviteClient.tsx",
   "app/organization/invites/page.tsx",
-  "app/organization/page.tsx",
   "app/page.tsx",
   "app/players/[id]/DisputeDataButton.tsx",
   "app/players/[id]/ReportHighlightButton.tsx",

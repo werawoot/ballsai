@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 // KEEP: the brand and its logo marks (B, BALLDOENSAI.COM), share-button icon letters (IG, TT, f),
 // OTP, position codes, age classes (U12...) and outside brand names.
 const BATCH_1 = ['app/career/page.tsx', 'app/hall-of-fame/page.tsx', 'app/athletes/page.tsx', 'app/players/[id]/page.tsx', 'app/card/PlayerCardBuilder.tsx', 'app/card/page.tsx', 'app/training/page.tsx', 'app/training/[programId]/page.tsx', 'app/tournaments/page.tsx', 'app/tournaments/[id]/page.tsx', 'app/ranking/page.tsx', 'app/welcome/OnboardingFlow.tsx']
-const KEEP = /^(BallDoenSai(\.com)?|BALLDOENSAI(\.COM)?|B|IG|TT|f|OTP|GK|DF|MF|FW|U\d+|YouTube|TikTok|Google|LINE|Facebook|Instagram)$/
+const KEEP = /^(BallDoenSai(\.com)?|BALLDOENSAI(\.COM)?|B|IG|TT|f|OTP|BDS|GK|DF|MF|FW|U\d+|YouTube|TikTok|Google|LINE|Facebook|Instagram)$/
 
 // English words in JSX text, brand names and codes in KEEP left out.
 const jsxWords = (source: string) => [...source.matchAll(/>([^<>{}\n]*[A-Za-z][^<>{}\n]*)</g)]
@@ -28,5 +28,18 @@ describe('batch 1 pages speak Thai from messages', () => {
     const source = readFileSync(file, 'utf8')
     expect(source.match(/[฀-๿]+/g) ?? []).toEqual([])
     expect(jsxWords(source)).toEqual([])
+  })
+})
+
+// Batch 2: coach, organizer, venue, sponsor and scout pages. These files still hold older Thai
+// text in code (they are on the Thai baseline); their English labels are now in messages.labels.
+const BATCH_2 = ['app/scout/page.tsx', 'app/scout/ScoutClient.tsx', 'app/match-plan/page.tsx', 'app/match-plan/MatchPlanClient.tsx',
+  'app/organization/page.tsx', 'app/organization/OrganizationClient.tsx', 'app/sponsor/page.tsx', 'app/sponsor/SponsorClient.tsx',
+  'app/sponsorships/page.tsx', 'app/venue/VenueOperations.tsx', 'app/venues/BookingRequestClient.tsx',
+  'app/bds-wallet/page.tsx', 'app/team-members/TeamMembersClient.tsx', 'app/dashboard/page.tsx']
+
+describe('batch 2 pages have no English labels in code', () => {
+  it.each(BATCH_2)('%s', file => {
+    expect(jsxWords(readFileSync(file, 'utf8'))).toEqual([])
   })
 })

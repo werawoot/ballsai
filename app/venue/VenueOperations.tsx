@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 import { useRef, useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
@@ -8,12 +9,14 @@ import { formatVenueBookingDateTime, formatVenueBookingTime } from '@/lib/venue-
 import styles from './operations.module.css'
 
 export function OfflinePaymentNotice() {
-  return <p className={styles.notice}>Closed Beta: ชำระเงินและมัดจำกับสนามนอกระบบ การยืนยันจองไม่ใช่หลักฐานชำระเงิน กรุณาตกลงยอดเงินและเงื่อนไขคืนเงินกับสนามก่อนโอน</p>
+  const tl = useTranslations('labels')
+  return <p className={styles.notice}>{tl('venueOps.paymentNote')}</p>
 }
 
 const local = (value: string) => new Date(new Date(value).valueOf() + 7 * 3600000).toISOString().slice(0,16)
 
 export default function VenueOperations({ venues, bookings }: { venues: OwnerVenue[]; bookings: OwnerBooking[] }) {
+  const tl = useTranslations('labels')
   const router = useRouter()
   const lock = useRef(false)
   const [busy, setBusy] = useState(false)
@@ -37,7 +40,7 @@ export default function VenueOperations({ venues, bookings }: { venues: OwnerVen
   }
   const save = <button disabled={busy} aria-busy={busy}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button>
   return <section className={styles.panel}>
-    <p className={styles.eyebrow}>VENUE DESK · เวลาประเทศไทย</p>
+    <p className={styles.eyebrow}>{tl('venueOps.eyebrow')}</p>
     <h2>ตารางสนามและการจัดการ</h2>
     <OfflinePaymentNotice />
     <p role="status" aria-live="polite">{feedback}</p>

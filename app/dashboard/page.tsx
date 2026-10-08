@@ -16,6 +16,7 @@ import { parsePage } from '@/lib/pagination'
 import { fetchOrganizerDashboard } from '@/lib/organizer-dashboard'
 
 export default async function DashboardPage(props: { searchParams?: Promise<{ page?: string; pending?: string }> }) {
+  const tl = await getTranslations('labels')
   const searchParams = (await props.searchParams) ?? {}
   const cookieStore = await cookies()
   const supabase = createServerClient(
@@ -63,7 +64,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
         <div style={{ position: 'relative' }}>
           <h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(28px,8vw,48px)', fontWeight: 700, color: 'white', lineHeight: 0.9, textTransform: 'uppercase' }}>
             ORGANIZER<br />
-            <span style={{ WebkitTextStroke: '2px rgba(255,255,255,0.4)', color: 'transparent' }}>DASHBOARD</span>
+            <span style={{ WebkitTextStroke: '2px rgba(255,255,255,0.4)', color: 'transparent' }}>{tl('dashboardLabels.eyebrow')}</span>
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10 }}>จัดการรายการแข่งขันของคุณ</p>
         </div>

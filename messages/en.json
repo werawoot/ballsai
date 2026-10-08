@@ -1821,5 +1821,88 @@
     "age": "{age} years",
     "power": "Power Rating",
     "noPower": "Not rated yet"
+  },
+  "labels": {
+    "scout": {
+      "directory": "See the athlete list",
+      "eyebrow": "For scouts · Thailand",
+      "titleLine1": "Find the",
+      "titleLine2": "next one."
+    },
+    "scoutBoard": {
+      "allPower": "Any Power Rating",
+      "eyebrow": "My private list",
+      "title": "Shortlist",
+      "privacy": "Only your account sees this; athletes do not know they are on your shortlist",
+      "powerNote": "Power Rating comes from confirmed match results, not from anything athletes enter themselves"
+    },
+    "matchPlanPage": {
+      "eyebrow": "For coaches · before the match",
+      "titleLine1": "Match",
+      "titleLine2": "plan.",
+      "intro": "Set starters, substitutes, positions and a message before the match. A plan is not a match result and does not change Power Rating, XP or badges"
+    },
+    "matchPlanBoard": {
+      "teamLabel": "Team / tournament",
+      "loading": "Loading the team list…",
+      "lineup": "Lineup board",
+      "formation": "Formation",
+      "roster": "Players who accepted",
+      "focus": "Match focus",
+      "talk": "Team talk"
+    },
+    "organizationPage": {
+      "eyebrow": "For organizations",
+      "titleLine1": "Build the",
+      "titleLine2": "next team.",
+      "intro": "Run an academy, club or school, kept apart from tournament teams"
+    },
+    "organizationForm": {
+      "academy": "Academy"
+    },
+    "sponsorPage": {
+      "eyebrow": "For sponsors · closed beta",
+      "titleLine1": "Back the",
+      "titleLine2": "next generation."
+    },
+    "sponsorDesk": {
+      "brand": "Brand identity",
+      "opportunity": "New opportunity",
+      "interest": "Interest from athletes"
+    },
+    "sponsorshipsPage": {
+      "forSponsors": "For sponsors",
+      "eyebrow": "Open opportunities",
+      "titleLine1": "Your game.",
+      "titleLine2": "Your next step."
+    },
+    "venueDesk": {
+      "setup": "Venue setup",
+      "mine": "My venues",
+      "slots": "Open slots",
+      "inbox": "Booking requests"
+    },
+    "venueOps": {
+      "paymentNote": "Closed beta: pay the venue and any deposit outside the system. A confirmed booking is not proof of payment; agree the amount and refund terms with the venue before you transfer",
+      "eyebrow": "For venue owners · Thailand time"
+    },
+    "bookingRequest": {
+      "paymentNote": "Closed beta: pay the venue or any deposit outside the system. A confirmed booking is not proof of payment; agree the terms before you transfer",
+      "eyebrow": "Request a slot"
+    },
+    "walletPage": {
+      "eyebrow": "Internal reward credits",
+      "titleLine1": "My BDS",
+      "titleLine2": "wallet.",
+      "balance": "Current balance",
+      "empty": "No BDS points yet. Rewards appear once there is an event that can be checked",
+      "note": "BDS v1: no crypto, no blockchain and no exchange"
+    },
+    "teamMembersLabels": {
+      "passport": "See playing history →"
+    },
+    "dashboardLabels": {
+      "eyebrow": "Organizer dashboard"
+    }
   }
 }
