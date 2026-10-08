@@ -174,6 +174,14 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
           )}
         </div>
 
+        {/* An empty queue still says where submitted teams will appear (Claude Desktop test, 8 Oct). */}
+        {stats.pending === 0 && pendingPage === 1 && (
+          <div role="status" style={{ background: 'white', borderRadius: 14, border: '1.5px dashed #e5e5e5', padding: '16px 14px', marginBottom: 20, textAlign: 'center' }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#111', marginBottom: 4 }}>{tl('dashboardLabels.noPendingTitle')}</div>
+            <p style={{ fontSize: 12, color: '#888', margin: 0, lineHeight: 1.6 }}>{tl('dashboardLabels.noPendingText')}</p>
+          </div>
+        )}
+
         {/* PENDING TEAMS */}
         {/* Shown by the total, not this page's rows: a page emptied by approvals keeps its way back. */}
         {(stats.pending > 0 || pendingPage > 1) && (
@@ -232,7 +240,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
                         </div>
                       ) : (
                         <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '12px', marginBottom: 12, textAlign: 'center' }}>
-                          <p style={{ fontSize: 12, color: '#aaa', fontWeight: 600 }}>⏳ ยังไม่ได้อัปโหลดสลิป</p>
+                          <p style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>{action === 'confirmTeam' ? tl('dashboardLabels.freeNoSlip') : '⏳ ยังไม่ได้อัปโหลดสลิป'}</p>
                         </div>
                       )}
 

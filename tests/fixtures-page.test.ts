@@ -89,10 +89,12 @@ describe('/dashboard/tournaments/[id]/fixtures', () => {
     expect(html).not.toContain('Make the draw')
   })
 
-  it('says so, and offers no draw, until SQL55 is applied', async () => {
+  it('says so in plain words, offers no draw and points to result entry, until SQL55 is applied', async () => {
     db.user = 'org-1'; db.missing = true; db.tables = tables()
     const html = await render()
-    expect(html).toContain('Fixtures are not switched on yet (SQL55 pending)')
+    expect(html).toContain('Fixtures are not switched on during the beta')
+    expect(html).not.toContain('SQL55')
+    expect(html).toContain('href="/dashboard/results?tournament=')
     expect(html).not.toContain('Make the draw')
   })
 

@@ -142,7 +142,9 @@ export default function EditProfileForm({
   const birthDateWrong = Boolean(fields.birthDate) && birthDateIssue(fields.birthDate, today) !== null
   const age = fields.birthDate && !birthDateWrong ? ageOn(fields.birthDate, today) : null
   const isMinor = age !== null && age < MINOR_UNDER
-  const canPublish = Boolean(fields.birthDate) && (!isMinor || hasGuardianConsent)
+  // A birth date that gives no believable age cannot say whether a guardian must consent,
+  // so the profile stays private until the date is fixed.
+  const canPublish = Boolean(fields.birthDate) && !birthDateWrong && (!isMinor || hasGuardianConsent)
   const displayedImageUrl = imagePreviewUrl || (removeCurrentImage || !profileImageUrl ? '' : avatarUrl ?? '')
   const dirty = selectedImage !== null || removeCurrentImage || (Object.keys(fields) as (keyof typeof fields)[]).some(key => fields[key] !== saved[key])
 
@@ -392,6 +394,7 @@ export default function EditProfileForm({
               <button type="button" role="switch" className="pf-switch" aria-labelledby="pf-public-label" aria-checked={fields.isPublic && canPublish} disabled={!canPublish} onClick={() => set('isPublic')(!fields.isPublic)} />
             </div>
             {!fields.birthDate && <div className="pf-callout is-warn"><ShieldAlert size={18} aria-hidden="true" style={{ flex: 'none' }} /><span>{t('privacy.needBirthDate')}</span></div>}
+            {birthDateWrong && <div className="pf-callout is-warn"><ShieldAlert size={18} aria-hidden="true" style={{ flex: 'none' }} /><span>{t('privacy.fixBirthDate')}</span></div>}
             {isMinor && (hasGuardianConsent
               ? <div className="pf-callout is-ok"><CheckCircle2 size={18} aria-hidden="true" style={{ flex: 'none' }} /><span>{t('privacy.minorOk')}</span></div>
               : <div className="pf-callout is-warn"><ShieldAlert size={18} aria-hidden="true" style={{ flex: 'none' }} /><span>{t('privacy.minorWaiting')} <Link href="/guardian">{t('privacy.goGuardian')}</Link></span></div>)}

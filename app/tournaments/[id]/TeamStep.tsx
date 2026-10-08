@@ -9,7 +9,7 @@ import { RegisterSteps, TournamentSummary, type TournamentSummaryProps } from '.
 // Step 1: name the team. The server decides who may (coach or organizer), whether the
 // tournament is still open and not full, and that one account has one team per
 // tournament (sql/production-hardening.sql); this screen shows its answer.
-export default function TeamStep({ tournamentId, summary }: { tournamentId: string; summary: TournamentSummaryProps }) {
+export default function TeamStep({ tournamentId, summary, free = false }: { tournamentId: string; summary: TournamentSummaryProps; free?: boolean }) {
   const t = useTranslations('tournament')
   const router = useRouter()
   const [name, setName] = useState('')
@@ -40,7 +40,7 @@ export default function TeamStep({ tournamentId, summary }: { tournamentId: stri
   }
 
   return <form className="tn-detail-body" onSubmit={submit}>
-    <RegisterSteps current={1} />
+    <RegisterSteps current={1} free={free} />
     <TournamentSummary {...summary} />
     <h1 className="ui-h1 tn-form-title">{t('teamTitle')}</h1>
     <p className="tn-form-intro">{t('teamIntro')}</p>
@@ -48,7 +48,7 @@ export default function TeamStep({ tournamentId, summary }: { tournamentId: stri
       <span>{t('teamName')}</span>
       <input autoComplete="off" maxLength={80} onChange={event => setName(event.target.value)} placeholder={t('teamPlaceholder')} required value={name} />
     </label>
-    <p className="tn-info">{t('teamNext')}</p>
+    <p className="tn-info">{t(free ? 'teamNextFree' : 'teamNext')}</p>
     {error && <p className="tn-error" role="alert">{error}</p>}
     <div className="tn-dock"><div className="tn-dock-inner">
       <button className="ui-btn ui-btn-primary" disabled={!name.trim() || saving} type="submit">{saving ? t('teamSaving') : t('teamSubmit')} <ArrowRight size={18} aria-hidden="true" /></button>

@@ -525,13 +525,13 @@
     "fixturesNotAllowed": "Only this tournament’s organizer or an admin can make the draw",
     "fixturesHaveResults": "Results are already recorded for this draw, so it cannot be redrawn",
     "fixturesTeamsChanged": "The confirmed teams just changed; please make the draw again",
-    "fixturesMigrationMissing": "Fixtures are not switched on yet (database step SQL55 pending)",
+    "fixturesMigrationMissing": "Fixtures are not switched on during the beta",
     "fixturesFailed": "The draw could not be saved; please try again",
     "fixturesRateLimited": "Too many draws in a short time; please wait a moment",
-    "fixtureResultsMigrationMissing": "Results in fixtures are not switched on yet (SQL56 pending)",
+    "fixtureResultsMigrationMissing": "Moving fixtures on from results is not switched on during the beta",
     "fixtureAlreadyAdvanced": "This result sent a team into a later match that already has a result; void that later match first",
     "fixtureWinnerInvalid": "A winner can only be chosen for a drawn knockout match, from its two teams",
-    "fixturesPublishMigrationMissing": "Publishing fixtures is not switched on yet (SQL57 pending)"
+    "fixturesPublishMigrationMissing": "Publishing fixtures is not switched on during the beta"
   },
   "impact": {
     "back": "Home",
@@ -734,7 +734,8 @@
     "submitting": "Sending…",
     "submitFailed": "Could not submit the team",
     "needAccepted": "You can submit once at least 1 athlete has accepted (now {count})",
-    "team": "Team"
+    "team": "Team",
+    "submitFree": "Submit team"
   },
   "approval": {
     "confirmTeamAndPayment": "Confirm team and payment",
@@ -833,7 +834,7 @@
     "saved": "Draw made: {count} matches",
     "none": "No draw yet",
     "locked": "Results are recorded, so this draw cannot be redrawn",
-    "migrationMissing": "Fixtures are not switched on yet (SQL55 pending)",
+    "migrationMissing": "Fixtures are not switched on during the beta. You can still record each match result",
     "loadFailed": "The fixtures could not be loaded",
     "stageKnockout": "Knockout",
     "stageLeague": "League",
@@ -894,7 +895,8 @@
     "progressLabel": "Tournament progress",
     "notPublishedHint": "Once the organizer makes the draw and publishes it, fixtures, results and tables appear here.",
     "emptyBack": "Back to the tournament",
-    "roundLabel": "Choose a round"
+    "roundLabel": "Choose a round",
+    "recordInstead": "Record match results"
   },
   "profileHome": {
     "eyebrow": "Me",
@@ -1098,7 +1100,8 @@
       "verified": {
         "coach_verified": "Confirmed by coach",
         "performance_verified": "Confirmed by match results"
-      }
+      },
+      "fixBirthDate": "Fix your birth date first to make the profile public"
     },
     "save": {
       "dirty": "Unsaved changes",
@@ -1213,6 +1216,10 @@
       "submit": {
         "title": "Submit and attach the slip",
         "text": "The organizer checks the slip and confirms the team"
+      },
+      "submitFree": {
+        "title": "Submit the team",
+        "text": "This tournament is free. The organizer checks the roster and confirms the team"
       }
     },
     "register": "Enter a team · {fee}",
@@ -1224,7 +1231,8 @@
     "steps": {
       "team": "Create team",
       "invite": "Invite players",
-      "pay": "Submit and pay"
+      "pay": "Submit and pay",
+      "submitFree": "Submit entry"
     },
     "stepsLabel": "Step {step} of 3",
     "teamTitle": "Name your team",
@@ -1253,7 +1261,13 @@
     "doneTitle": "Slip sent",
     "doneText": "The organizer will check the slip and confirm your team.",
     "doneBack": "Back to the tournament",
-    "live": "In progress"
+    "live": "In progress",
+    "teamNextFree": "Next: invite players by email, each accepts on their own account, then submit the team",
+    "freeDoneTitle": "Team submitted",
+    "freeDoneText": "This tournament is free. The organizer will check the roster and confirm your team",
+    "freeDraftTitle": "This team is not submitted yet",
+    "freeDraftText": "Submit it from the team members page once at least 1 player has accepted",
+    "freeDraftCta": "Go to team members"
   },
   "player": {
     "back": "Athletes",
@@ -1902,7 +1916,10 @@
       "passport": "See playing history →"
     },
     "dashboardLabels": {
-      "eyebrow": "Organizer dashboard"
+      "eyebrow": "Organizer dashboard",
+      "freeNoSlip": "Free tournament: no slip needed. Check the roster, then confirm the team",
+      "noPendingTitle": "No team waiting",
+      "noPendingText": "Teams that coaches submit appear here for you to check and confirm"
     }
   }
 }

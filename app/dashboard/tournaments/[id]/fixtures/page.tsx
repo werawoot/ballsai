@@ -55,7 +55,10 @@ export default async function TournamentFixturesPage(props: { params: Promise<{ 
   return page(<>
     <p style={{ margin: 0, fontSize: 13, color: '#555', fontWeight: 700 }}>{t('teamsReady', { count: confirmedCount ?? 0 })}</p>
     {stored.migrationMissing
-      ? <p role="status" style={{ background: '#fef9c3', color: '#854d0e', borderRadius: 10, padding: '12px 14px', fontSize: 13, margin: 0 }}>{t('migrationMissing')}</p>
+      ? <div role="status" style={{ display: 'grid', gap: 10, background: '#fef9c3', color: '#854d0e', borderRadius: 10, padding: '12px 14px', fontSize: 13 }}>
+          <p style={{ margin: 0 }}>{t('migrationMissing')}</p>
+          <Link className="ui-btn ui-btn-primary" href={`/dashboard/results?tournament=${encodeURIComponent(params.id)}`}>{t('recordInstead')}</Link>
+        </div>
       : <FixtureDrawForm tournamentId={params.id} hasDraw={stored.fixtures.length > 0} locked={locked} />}
     {stored.failed && <p role="alert" style={{ color: '#9b1d27', fontSize: 13, margin: 0 }}>{t('loadFailed')}</p>}
     {canPublish && <PublishFixturesToggle tournamentId={params.id} published={Boolean(publishedAt)} />}

@@ -1,16 +1,17 @@
 import { useTranslations } from 'next-intl'
 
 // The three steps of entering a team, shown at the top of the team and payment screens.
-// Step 2 (inviting players) happens on /team-members, between the two.
+// Step 2 (inviting players) happens on /team-members, between the two. A free tournament's
+// last step is only submitting the team, so it does not say "pay".
 const STEPS = ['team', 'invite', 'pay'] as const
 
 export type TournamentSummaryProps = { day: string; month: string; name: string; line: string }
 
-export function RegisterSteps({ current }: { current: 1 | 2 | 3 }) {
+export function RegisterSteps({ current, free = false }: { current: 1 | 2 | 3; free?: boolean }) {
   const t = useTranslations('tournament')
   return <ol className="tn-flow" aria-label={t('stepsLabel', { step: current })}>
     {STEPS.map((step, index) => <li aria-current={index + 1 === current ? 'step' : undefined} className={index + 1 < current ? 'is-done' : index + 1 === current ? 'is-now' : ''} key={step}>
-      <i /><span>{t(`steps.${step}`)}</span>
+      <i /><span>{t(`steps.${free && step === 'pay' ? 'submitFree' : step}`)}</span>
     </li>)}
   </ol>
 }
