@@ -29,7 +29,7 @@ export default function CoachRosterActions({
   const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
 
   if (!canManageRoster) {
-    return <p style={{ margin: '9px 0 0', fontSize: 11, color: '#697586' }}>ส่งรายชื่อแล้ว แก้รายชื่อไม่ได้จนกว่าผู้จัดรายการจะเปิดให้แก้</p>
+    return <p style={{ margin: '9px 0 0', fontSize: 11, color: 'var(--ui-mute)' }}>ส่งรายชื่อแล้ว แก้รายชื่อไม่ได้จนกว่าผู้จัดรายการจะเปิดให้แก้</p>
   }
 
   const call = async (key: string, url: string, body: unknown, done: string) => {
@@ -49,9 +49,9 @@ export default function CoachRosterActions({
   }
 
   return <div style={{ marginTop: 10, display: 'grid', gap: 9 }}>
-    {feedback && <p role="status" aria-live="polite" style={{ margin: 0, padding: '8px 10px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: feedback.tone === 'error' ? '#fff1f1' : '#ecfdf5', color: feedback.tone === 'error' ? '#b91c1c' : '#166534' }}>{feedback.text}</p>}
+    {feedback && <p role="status" aria-live="polite" style={{ margin: 0, padding: '8px 10px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: feedback.tone === 'error' ? 'var(--ui-sunk)' : 'var(--ui-card)', color: feedback.tone === 'error' ? '#b91c1c' : '#166534' }}>{feedback.text}</p>}
 
-    {attestationError && <p role="alert" style={{ margin: 0, padding: '8px 10px', borderRadius: 8, background: '#fff1f1', color: '#b91c1c', fontSize: 11, fontWeight: 700, lineHeight: 1.6 }}>
+    {attestationError && <p role="alert" style={{ margin: 0, padding: '8px 10px', borderRadius: 8, background: 'var(--ui-sunk)', color: '#b91c1c', fontSize: 11, fontWeight: 700, lineHeight: 1.6 }}>
       โหลดสถานะคำรับรองไม่สำเร็จ จึงยังส่งคำรับรองใหม่ไม่ได้ กรุณาโหลดหน้าใหม่
     </p>}
 
@@ -67,8 +67,8 @@ export default function CoachRosterActions({
         : attestationGate(member.status, attestations[attestationKey(teamId, member.athleteId, 'playing_position')])
       const needsConfirm = removeNeedsConfirmation(member.status)
       const askingConfirm = confirming === member.id
-      return <div key={member.id} style={{ border: '1px solid #eceff3', borderRadius: 10, padding: 10, display: 'grid', gap: 7 }}>
-        <b style={{ fontSize: 13, color: '#172033' }}>{member.name}</b>
+      return <div key={member.id} style={{ border: '1px solid var(--ui-line)', borderRadius: 10, padding: 10, display: 'grid', gap: 7 }}>
+        <b style={{ fontSize: 13, color: 'var(--ui-text)' }}>{member.name}</b>
 
         {gate.reason && <p style={{ margin: 0, fontSize: 11, color: gate.state === 'accepted' ? '#166534' : '#9a3412', fontWeight: 700 }}>{gate.reason}</p>}
 
@@ -89,7 +89,7 @@ export default function CoachRosterActions({
                 type="button"
                 aria-label={`ยกเลิกการนำ${member.name}ออกจากทีม`}
                 onClick={() => setConfirming(null)}
-                style={{ border: '1px solid #d9dde2', borderRadius: 8, background: '#fff', color: '#3f4855', fontSize: 11, fontWeight: 800, padding: '6px 9px', cursor: 'pointer' }}
+                style={{ border: '1px solid var(--ui-line)', borderRadius: 8, background: 'var(--ui-card)', color: 'var(--ui-text)', fontSize: 11, fontWeight: 800, padding: '6px 9px', cursor: 'pointer' }}
               >ยกเลิก</button>
             </div>
           : <button
@@ -100,7 +100,7 @@ export default function CoachRosterActions({
               onClick={() => needsConfirm
                 ? setConfirming(member.id)
                 : void call(`remove:${member.id}`, '/api/coach-management', { action: 'remove', id: teamId, data: { memberId: member.id } }, 'นำออกจากทีมแล้ว')}
-              style={{ justifySelf: 'start', border: '1px solid #fecaca', borderRadius: 8, background: '#fff', color: '#b91c1c', fontSize: 11, fontWeight: 800, padding: '6px 9px', cursor: remove.disabled ? 'not-allowed' : 'pointer' }}
+              style={{ justifySelf: 'start', border: '1px solid #fecaca', borderRadius: 8, background: 'var(--ui-card)', color: '#b91c1c', fontSize: 11, fontWeight: 800, padding: '6px 9px', cursor: remove.disabled ? 'not-allowed' : 'pointer' }}
             >{remove.label}</button>}
 
         {/* Offered only when the gate allows it: an accepted member with no pending or
@@ -115,14 +115,14 @@ export default function CoachRosterActions({
           }}
           style={{ display: 'grid', gap: 6 }}
         >
-          <label style={{ fontSize: 11, fontWeight: 800, color: '#546070' }}>
+          <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--ui-mute)' }}>
             {COACH_VERIFIED_FIELD_LABEL}ของ{member.name}
-            <select name="position" required defaultValue="" style={{ display: 'block', marginTop: 4, padding: '6px 8px', borderRadius: 8, border: '1px solid #d9dde2', fontSize: 12 }}>
+            <select name="position" required defaultValue="" style={{ display: 'block', marginTop: 4, padding: '6px 8px', borderRadius: 8, border: '1px solid var(--ui-line)', fontSize: 12 }}>
               <option value="" disabled>เลือกตำแหน่ง</option>
               {Object.entries(POSITION_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
           </label>
-          <p style={{ margin: 0, fontSize: 10, color: '#697586', lineHeight: 1.6 }}>
+          <p style={{ margin: 0, fontSize: 10, color: 'var(--ui-mute)', lineHeight: 1.6 }}>
             คำรับรองนี้ยืนยันเฉพาะ{COACH_VERIFIED_FIELD_LABEL} ไม่ได้ยืนยันตัวบุคคล คะแนน สถิติ หรือข้อมูลอื่นในโปรไฟล์ และจะมีผลเมื่อนักกีฬากดยอมรับเท่านั้น
           </p>
           <button

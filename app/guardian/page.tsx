@@ -54,11 +54,11 @@ export default async function GuardianPage() {
   const links = ((guardianRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
   const incoming = ((incomingRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
 
-  return <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 48 }}>
+  return <main className="bds-page ui-matchday" style={{ minHeight: '100vh', paddingBottom: 48 }}>
     <PageHeader back={{ href: '/profile', label: t('back.profile') }} />
     <section style={{ background: '#101827', color: 'white', padding: '30px 18px 34px' }}><div style={{ maxWidth: 720, margin: '0 auto' }}><h1 style={{ fontSize: 'clamp(28px,7vw,40px)', lineHeight: 1.2, margin: '0 0 9px', fontWeight: 800 }}>{tp('title')}</h1><p style={{ maxWidth: 480, color: 'rgba(255,255,255,.7)', fontSize: 15, lineHeight: 1.55, margin: 0 }}>{tp('sub')}</p></div></section>
     <section style={{ maxWidth: 720, margin: '0 auto', padding: '20px 16px' }}>
-      {!isGuardian && incoming.length === 0 && <div style={{ background: '#fff8e6', border: '1px solid #f4d98b', borderRadius: 12, padding: 14, color: '#624a00', fontSize: 13, lineHeight: 1.55, marginBottom: 16 }}>
+      {!isGuardian && incoming.length === 0 && <div style={{ background: 'var(--ui-card)', border: '1px solid #f4d98b', borderRadius: 12, padding: 14, color: '#624a00', fontSize: 13, lineHeight: 1.55, marginBottom: 16 }}>
         <p style={{ margin: '0 0 12px' }}>{tp('notGuardian.body')}</p>
         <Link href={CHANGE_ROLE_PATH} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 18px', borderRadius: 12, background: '#CC0001', color: 'white', fontWeight: 800, fontSize: 15, textDecoration: 'none' }}>{tp('notGuardian.changeRole')}</Link>
       </div>}

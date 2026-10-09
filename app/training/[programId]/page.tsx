@@ -39,7 +39,7 @@ export default async function ProgramPage(props: { params: Promise<{ programId: 
   </li>
 
   return (
-    <main className="bds-page tr">
+    <main className="bds-page tr ui-matchday">
       <PageHeader back={{ href: `/training?band=${program.band}`, label: t('back') }} />
       <div className="tr-hero ui-dark">
         <span className="tr-hero-img"><Image alt="" fill priority sizes="100vw" src={drillImage(program.cover)} unoptimized /></span>

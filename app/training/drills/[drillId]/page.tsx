@@ -15,7 +15,7 @@ export default async function DrillPage(props: { params: Promise<{ drillId: stri
   const [t, locale] = await Promise.all([getTranslations('training'), getLocale()])
 
   return (
-    <main className="bds-page tr">
+    <main className="bds-page tr ui-matchday">
       <PageHeader back={{ href: `/training/${program.id}`, label: say(program.title, locale) }} />
       <div className="tr-wrap tr-session">
         <div className="tr-drill-img">
