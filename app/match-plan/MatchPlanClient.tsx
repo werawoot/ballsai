@@ -2,14 +2,16 @@
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
-import { CheckCircle2, LoaderCircle, Plus, Save, ShieldAlert, UserPlus, X } from 'lucide-react'
-import { BOARD_FORMATIONS, DEFAULT_FORMATION, benchPlayer, boardFromRoster, boardToPlayers, changeFormation, formationSlots, placePlayer, removePlayer, type BoardPosition, type BoardState } from '@/lib/match-plan-board'
+import { CheckCircle2, LoaderCircle, Plus, Save, ShieldAlert, X } from 'lucide-react'
+import { BOARD_FORMATIONS, DEFAULT_FORMATION, DRAFT_NAME_MAX, DRAFT_PLAYERS_MAX, benchPlayer, draftKey, readDraft, writeDraft, boardFromRoster, boardToPlayers, changeFormation, formationSlots, placePlayer, removePlayer, type BoardPosition, type BoardState } from '@/lib/match-plan-board'
 import './match-plan.css'
 
 // The coach's pitch board (lib/match-plan-board). Pick a team, pick a shape, tap a circle on
 // the pitch and pick who plays there; everyone else can go on the bench. Only members who
-// accepted the team invite appear (get_match_plan_safely). A plan is preparation, never a
-// result: it changes no rating, XP or badge.
+// accepted the team invite can be saved (get_match_plan_safely). Before that -- no team yet,
+// or nobody has accepted -- the coach plans a draft with names typed in, kept only in this
+// browser (lib/match-plan-board readDraft). A plan is preparation, never a result: it
+// changes no rating, XP or badge.
 
 type Tournament = { name: string; start_date: string | null }
 type TournamentRelation = Tournament[] | null
@@ -21,13 +23,19 @@ type PlanPayload = { plan: Plan | null; roster: RosterMember[] }
 const emptyBoard = (formation = DEFAULT_FORMATION): BoardState => ({ formation, slots: Array(formationSlots(formation).length).fill(null), bench: [] })
 // A short name for a circle on the pitch: skip a title such as "ด.ช." and keep one word.
 const shortName = (name: string) => name.trim().split(/\s+/).find(part => !part.endsWith('.')) ?? name
+const storage = {
+  read: (key: string) => { try { return window.localStorage.getItem(key) } catch { return null } },
+  write: (key: string, value: string) => { try { window.localStorage.setItem(key, value); return true } catch { return false } },
+}
 
 export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
   const t = useTranslations('matchPlan')
   const tl = useTranslations('labels')
   const [teamId, setTeamId] = useState(teams[0]?.id ?? '')
   const [payload, setPayload] = useState<PlanPayload | null>(null)
-  const [loading, setLoading] = useState(Boolean(teams[0]?.id))
+  const [loading, setLoading] = useState(true)
+  const [draftPlayers, setDraftPlayers] = useState<RosterMember[]>([])
+  const [newName, setNewName] = useState('')
   const [saving, setSaving] = useState(false)
   const [board, setBoard] = useState<BoardState>(emptyBoard())
   const [matchFocus, setMatchFocus] = useState('')
@@ -37,20 +45,31 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
-    if (!teamId) return
     let active = true
-    fetch(`/api/match-plans?teamId=${encodeURIComponent(teamId)}`)
-      .then(async response => ({ ok: response.ok, body: await response.json().catch(() => null) }))
+    // No team yet: nothing to fetch, the draft board is the whole page.
+    const load = teamId
+      ? fetch(`/api/match-plans?teamId=${encodeURIComponent(teamId)}`).then(async response => ({ ok: response.ok, body: await response.json().catch(() => null) }))
+      : Promise.resolve({ ok: true, body: { data: { plan: null, roster: [] } } })
+    load
       .then(result => {
         if (!active) return
         if (!result.ok || !result.body?.data) { setPayload(null); setMessage({ tone: 'error', text: result.body?.error ?? t('loadFailed') }); return }
         const data = result.body.data as PlanPayload
-        const formation = data.plan?.formation && (BOARD_FORMATIONS as readonly string[]).includes(data.plan.formation) ? data.plan.formation : DEFAULT_FORMATION
         setPayload(data)
+        setDirty(false)
+        if (data.roster.length === 0) {
+          // Nobody to place yet: pick up this device's draft, if there is one.
+          const draft = readDraft(storage.read(draftKey(teamId)))
+          setDraftPlayers((draft?.players ?? []).map(player => ({ athlete_id: player.id, display_name: player.name, profile_position: null, lineup_role: null, position: null, slot_order: null })))
+          setBoard(draft?.board ?? emptyBoard())
+          setMatchFocus(draft?.focus ?? data.plan?.match_focus ?? '')
+          setTeamTalk(draft?.talk ?? data.plan?.team_talk ?? '')
+          return
+        }
+        const formation = data.plan?.formation && (BOARD_FORMATIONS as readonly string[]).includes(data.plan.formation) ? data.plan.formation : DEFAULT_FORMATION
         setBoard(boardFromRoster(data.roster, formation))
         setMatchFocus(data.plan?.match_focus ?? '')
         setTeamTalk(data.plan?.team_talk ?? '')
-        setDirty(false)
       })
       .catch(() => active && setMessage({ tone: 'error', text: t('networkFailed') }))
       .finally(() => active && setLoading(false))
@@ -64,7 +83,8 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
     return () => window.removeEventListener('keydown', close)
   }, [picking])
 
-  const roster = useMemo(() => payload?.roster ?? [], [payload])
+  const live = (payload?.roster.length ?? 0) > 0
+  const roster = useMemo(() => (payload?.roster.length ? payload.roster : draftPlayers), [payload, draftPlayers])
   const byId = useMemo(() => new Map(roster.map(member => [member.athlete_id, member])), [roster])
   const layout = formationSlots(board.formation)
   const onPitch = new Set(board.slots.filter(Boolean) as string[])
@@ -75,9 +95,23 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
 
   const update = (next: BoardState) => { setBoard(next); setDirty(true); setMessage(null) }
   const pick = (athleteId: string) => { if (picking !== null) update(placePlayer(board, picking, athleteId)); setPicking(null) }
+  // A draft name typed by the coach; placed straight into the open slot when there is one.
+  const addDraftPlayer = () => {
+    const typed = newName.trim().slice(0, DRAFT_NAME_MAX)
+    if (!typed || draftPlayers.length >= DRAFT_PLAYERS_MAX) return
+    const id = `draft-${Date.now().toString(36)}-${draftPlayers.length}`
+    setDraftPlayers(current => [...current, { athlete_id: id, display_name: typed, profile_position: null, lineup_role: null, position: null, slot_order: null }])
+    setNewName('')
+    if (picking !== null) { update(placePlayer(board, picking, id)); setPicking(null) } else setDirty(true)
+  }
 
   const save = async () => {
-    if (!teamId) return
+    if (!live) {
+      const stored = storage.write(draftKey(teamId), writeDraft({ board, players: draftPlayers.map(player => ({ id: player.athlete_id, name: player.display_name })), focus: matchFocus, talk: teamTalk }))
+      if (stored) setDirty(false)
+      setMessage(stored ? { tone: 'ok', text: t('draftSaved') } : { tone: 'error', text: t('draftSaveFailed') })
+      return
+    }
     setSaving(true); setMessage(null)
     const profilePositions = Object.fromEntries(roster.map(member => [member.athlete_id, member.profile_position]))
     const response = await fetch('/api/match-plans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
@@ -89,12 +123,6 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
     setDirty(false)
     setMessage({ tone: 'ok', text: t('saved') })
   }
-
-  if (teams.length === 0) return <div className="mp-empty">
-    <b>{t('noTeamsTitle')}</b>
-    <p>{t('noTeamsText')}</p>
-    <Link className="ui-btn ui-btn-primary" href="/tournaments?view=open">{t('noTeamsCta')}</Link>
-  </div>
 
   const slotPosition = picking !== null ? layout[picking]?.position : null
   const sheetGroups = picking === null ? [] : [
@@ -113,14 +141,13 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
     {teams.length === 1 && <p className="mp-team-one"><b>{teams[0].name}</b>{teams[0].tournaments?.[0]?.name && <small> · {teams[0].tournaments[0].name}</small>}</p>}
 
     {loading ? <div className="mp-loading"><LoaderCircle size={22} className="mp-spin" aria-hidden="true" /> {tl('matchPlanBoard.loading')}</div>
-      : roster.length === 0 ? <div className="mp-empty">
-          <span className="mp-empty-icon" aria-hidden="true"><UserPlus size={26} /></span>
-          <b>{t('emptyRosterTitle')}</b>
-          <p>{t('emptyRosterText')}</p>
-          <Link className="ui-btn ui-btn-primary" href="/team-members">{t('invite')}</Link>
-          {message?.tone === 'error' && <p className="mp-msg is-error" role="alert"><ShieldAlert size={17} aria-hidden="true" />{message.text}</p>}
-        </div>
       : <>
+        {!live && <div className="mp-draft" role="note">
+          <b>{teams.length ? t('draftTitle') : t('draftNoTeamTitle')}</b>
+          <p>{teams.length ? t('draftText') : t('draftNoTeamText')}</p>
+          <Link href={teams.length ? '/team-members' : '/tournaments?view=open'}>{teams.length ? t('invite') : t('noTeamsCta')} →</Link>
+          {message?.tone === 'error' && !payload && <p className="mp-msg is-error" role="alert"><ShieldAlert size={17} aria-hidden="true" />{message.text}</p>}
+        </div>}
         <section aria-label={tl('matchPlanBoard.formation')}>
           <h2 className="mp-h">{tl('matchPlanBoard.formation')}</h2>
           <div className="mp-formations">
@@ -155,12 +182,17 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
 
         <section aria-label={t('availableTitle')}>
           <h2 className="mp-h">{t('availableTitle')}</h2>
+          {!live && <form className="mp-add" onSubmit={event => { event.preventDefault(); addDraftPlayer() }}>
+            <label className="mp-sr" htmlFor="mp-add-name">{t('addName')}</label>
+            <input id="mp-add-name" value={newName} maxLength={DRAFT_NAME_MAX} onChange={event => setNewName(event.target.value)} placeholder={t('addNamePlaceholder')} autoComplete="off" />
+            <button type="submit" className="ui-btn ui-btn-primary ui-btn-sm" disabled={!newName.trim() || draftPlayers.length >= DRAFT_PLAYERS_MAX}><Plus size={16} aria-hidden="true" />{t('add')}</button>
+          </form>}
           {free.length
             ? <ul className="mp-free">{free.map(member => <li key={member.athlete_id}>
                 <span><b>{member.display_name}</b>{member.profile_position && <small>{member.profile_position}</small>}</span>
                 <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => update(benchPlayer(board, member.athlete_id))}>{t('toBench')}</button>
               </li>)}</ul>
-            : <p className="mp-hint">{t('allPlaced')}</p>}
+            : <p className="mp-hint">{roster.length ? t('allPlaced') : t('noNamesYet')}</p>}
         </section>
 
         <details className="mp-notes" open={Boolean(matchFocus || teamTalk) || undefined}>
@@ -173,7 +205,7 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
         <div className="mp-savebar">
           {message ? <p className={`mp-msg is-${message.tone}`} role={message.tone === 'error' ? 'alert' : 'status'}>{message.tone === 'ok' ? <CheckCircle2 size={17} aria-hidden="true" /> : <ShieldAlert size={17} aria-hidden="true" />}{message.text}</p>
             : dirty && <p className="mp-msg">{t('unsaved')}</p>}
-          <button type="button" className="ui-btn ui-btn-primary" disabled={saving} onClick={save}><Save size={17} aria-hidden="true" />{saving ? t('saving') : t('save')}</button>
+          <button type="button" className="ui-btn ui-btn-primary" disabled={saving} onClick={save}><Save size={17} aria-hidden="true" />{saving ? t('saving') : live ? t('save') : t('saveDraft')}</button>
         </div>
       </>}
 
@@ -193,7 +225,12 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
             <b>{name(id)}</b>{byId.get(id)?.profile_position && <small>{byId.get(id)!.profile_position}</small>}
           </button></li>)}</ul>
         </div>)}
-        {sheetGroups.length === 0 && <p className="mp-hint">{t('allPlaced')}</p>}
+        {!live && <form className="mp-add" onSubmit={event => { event.preventDefault(); addDraftPlayer() }}>
+          <label className="mp-sr" htmlFor="mp-sheet-name">{t('addName')}</label>
+          <input id="mp-sheet-name" value={newName} maxLength={DRAFT_NAME_MAX} onChange={event => setNewName(event.target.value)} placeholder={t('addNamePlaceholder')} autoComplete="off" />
+          <button type="submit" className="ui-btn ui-btn-primary ui-btn-sm" disabled={!newName.trim() || draftPlayers.length >= DRAFT_PLAYERS_MAX}><Plus size={16} aria-hidden="true" />{t('add')}</button>
+        </form>}
+        {sheetGroups.length === 0 && live && <p className="mp-hint">{t('allPlaced')}</p>}
       </div>
     </div>}
   </div>
