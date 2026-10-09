@@ -12,6 +12,7 @@ import { withAvatarUrls } from '@/lib/athlete-avatar'
 import { SKILL_KEYS, skillText } from '@/lib/skill-ratings'
 import { cardProvenance } from '@/lib/player-card'
 import { seasonSummary } from '@/lib/player-profile'
+import { FORM_EVENT_LIMIT, formHistory, playerTab, type RatingEventRow } from '@/lib/player-form'
 import { fetchRankPosition } from '@/lib/public-ranking-page'
 import PageHeader from '@/components/PageHeader'
 import ReportHighlightButton from './ReportHighlightButton'
@@ -22,7 +23,9 @@ import './player.css'
 // A public athlete profile (docs/design-system.md). Stadium header with the same card the
 // athlete builds at /card, then Paper sections in the order a coach or scout reads them:
 // this season's verified numbers, skills, identity, about, highlights, achievements, and
-// where it all comes from. AGENTS.md rule 8 throughout: every number says its source, a
+// where it all comes from. Skills, form and match-by-match sit behind three tabs (?tab=),
+// the way a football card site reads; form is rating_events, which only verified results
+// write. AGENTS.md rule 8 throughout: every number says its source, a
 // skill nobody assessed is a dash, and a profile with no player_ranks row is a STARTER
 // card that shows no Power, rank or skills at all.
 
@@ -68,8 +71,9 @@ const POSITIONS = ['FW', 'MF', 'DF', 'GK'] as const
 const ASSESSED_KEYS = ['speed', 'stamina', 'strength', 'technique', 'vision'] as const
 const VERIFICATION = ['self', 'coach_verified', 'performance_verified'] as const
 
-export default async function PlayerPage(props: { params: Promise<{ id: string }> }) {
-  const params = await props.params
+export default async function PlayerPage(props: { params: Promise<{ id: string }>; searchParams?: Promise<{ tab?: string }> }) {
+  const [params, searchParams] = await Promise.all([props.params, props.searchParams ?? Promise.resolve({} as { tab?: string })])
+  const tab = playerTab(searchParams.tab)
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -108,7 +112,7 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
     athleteId ? fetchAthleteAge(supabase, athleteId) : null,
     // This season's verified results behind the rank row (public read, written only by
     // verified match results).
-    rank && !isSampleId(rank.id) ? supabase.from('player_ratings').select('power_rating, matches_played, wins, draws, losses, goals, assists, clean_sheets, mvps').eq('player_rank_id', rank.id).eq('sport', rankSport).eq('season', rankSeason).maybeSingle() : null,
+    rank && !isSampleId(rank.id) ? supabase.from('player_ratings').select('id, power_rating, matches_played, wins, draws, losses, goals, assists, clean_sheets, mvps').eq('player_rank_id', rank.id).eq('sport', rankSport).eq('season', rankSeason).maybeSingle() : null,
     rank && typeof rank.pts === 'number' && !isSampleId(rank.id) ? fetchRankPosition(supabase, { sport: rankSport, season: rankSeason, id: rank.id, pts: rank.pts }).catch(() => null) : null,
   ])
   // The photo is a private object (T51): signed only if this viewer may see it.
@@ -123,6 +127,12 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
   if (!rank && !athleteProfile) redirect('/athletes')
   const hasRanking = Boolean(rank)
   const season = seasonSummary(ratingResult?.data ?? null)
+  // Match by match, newest first: one indexed read (player_rating_id, created_at desc).
+  const ratingId = season ? (ratingResult?.data as { id?: string } | null)?.id : null
+  const eventsResult = ratingId
+    ? await supabase.from('rating_events').select('created_at, result, rating_after, rating_change, goals, assists, mvp, clean_sheet').eq('player_rating_id', ratingId).order('created_at', { ascending: false }).limit(FORM_EVENT_LIMIT)
+    : null
+  const form = formHistory((eventsResult?.data ?? []) as RatingEventRow[])
 
   const displayName = athleteProfile?.display_name || rank?.player_name || t('fallbackName')
   const team = athleteProfile?.current_team || rank?.team || null
@@ -154,16 +164,33 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
   const xp = identityProgress?.xp_total ?? 0
   const earned = new Set(athleteBadges.map(item => item.badge_key))
   const facts = [
+    { label: t('facts.position'), value: positionName ?? t('notSet') },
     { label: t('facts.age'), value: age !== null && age !== undefined ? t('age', { age }) : t('notSet') },
     { label: t('facts.height'), value: athleteProfile?.height_cm ? t('cm', { value: athleteProfile.height_cm }) : t('notSet') },
     { label: t('facts.weight'), value: athleteProfile?.weight_kg ? t('kg', { value: athleteProfile.weight_kg }) : t('notSet') },
     { label: t('facts.province'), value: province ?? t('notSet') },
+    { label: t('facts.team'), value: team ?? t('notSet') },
   ]
+  const skillsCard = <>
+    <div className="pp-section-head"><h2>{t('skills')}</h2><span className={`ui-chip ${skillChip.tone}`}>{skillChip.text}</span></div>
+    <div className="ui-card pp-bars">
+      {skillRows.map(item => <div className={`pp-bar${item.value === null ? ' is-na' : ''}`} key={item.key}>
+        <span>{item.label}</span>
+        <span className="pp-track" aria-hidden="true">{item.value !== null && <i style={{ width: `${Math.max(0, Math.min(100, item.value))}%` }} />}</span>
+        <b>{skillText(item.value)}</b>
+      </div>)}
+      {skillRows.some(item => item.value === null) && <p className="pp-note">{t('skillDash')}</p>}
+    </div>
+  </>
+  const tabHref = (item: string) => `${item === 'skills' ? '?' : `?tab=${item}`}#pp-tabs`
+  const dateText = (value: string) => new Intl.DateTimeFormat(locale === 'th' ? 'th-TH' : 'en-GB', { day: 'numeric', month: 'short', timeZone: 'Asia/Bangkok' }).format(new Date(value))
+  const changeTone = (value: number) => ['is-down', undefined, 'is-up'][Math.sign(value) + 1]
+  const signed = (value: number) => (value > 0 ? `+${value}` : value < 0 ? `−${Math.abs(value)}` : '0')
   const subline = [positionName, team, province, age !== null && age !== undefined ? t('age', { age }) : null].filter(Boolean).join(' · ')
   const meta = [team, province].filter(Boolean).join(' · ')
 
   return (
-    <main className="bds-page pp">
+    <main className="bds-page pp ui-matchday">
       <PageHeader back={{ href: '/athletes', label: t('back') }} />
 
       <section className="pp-hero ui-dark">
@@ -195,6 +222,7 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
               <span className={`ui-chip ${provenance === 'performance' ? 'is-performance' : provenance === 'coach' ? 'is-coach' : 'is-self'}`}>{provenance !== 'self' && <CheckCircle2 size={13} aria-hidden="true" />}{t(`verification.${evidence}`)}</span>
               {athleteId && <span className="ui-chip is-self">{t('level', { level: String(level).padStart(2, '0') })}</span>}
             </div>
+            {athleteProfile && <dl className="pp-quick">{facts.map(item => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl>}
             <div className="pp-actions">
               <ShareProfileButton name={displayName} />
               {position && <Link className="ui-btn ui-btn-ghost-d pp-rank-link" href={`/ranking?page=${position.page}#rank-${position.rankId}`}>{t('inRanking')}</Link>}
@@ -229,16 +257,53 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
               </div>}
         </section>
 
-        {skillRows.length > 0 && <section className="pp-section">
-          <div className="pp-section-head"><h2>{t('skills')}</h2><span className={`ui-chip ${skillChip.tone}`}>{skillChip.text}</span></div>
-          <div className="ui-card pp-bars">
-            {skillRows.map(item => <div className={`pp-bar${item.value === null ? ' is-na' : ''}`} key={item.key}>
-              <span>{item.label}</span>
-              <span className="pp-track" aria-hidden="true">{item.value !== null && <i style={{ width: `${Math.max(0, Math.min(100, item.value))}%` }} />}</span>
-              <b>{skillText(item.value)}</b>
-            </div>)}
-            {skillRows.some(item => item.value === null) && <p className="pp-note">{t('skillDash')}</p>}
-          </div>
+        {hasRanking && <section className="pp-section pp-tabbed" id="pp-tabs">
+          <nav className="pp-tabs" aria-label={t('tabsLabel')}>
+            {(['skills', 'form', 'matches'] as const).map(item => <a key={item} href={tabHref(item)} className={item === tab ? 'is-on' : undefined} aria-current={item === tab ? 'page' : undefined}>{t(`tabs.${item}`)}</a>)}
+          </nav>
+          {tab === 'skills' && skillsCard}
+          {tab === 'form' && <>
+            <div className="pp-section-head"><h2>{t('formTitle')}</h2>{form.matches.length > 0 && <span className="ui-chip is-performance">{t('seasonSource')}</span>}</div>
+            {form.matches.length
+              ? <div className="ui-card pp-form">
+                  <ol className="pp-last5" aria-label={t('lastFive')}>
+                    {form.lastFive.map((result, index) => <li key={index} className={`is-${result}`} title={t(`result.${result}`)}><span aria-hidden="true">{t(`resultShort.${result}`)}</span><span className="pp-sr">{t(`result.${result}`)}</span></li>)}
+                  </ol>
+                  {form.chart
+                    ? <figure className="pp-chart">
+                        <figcaption><small>{t('chartTitle')}</small><b>{form.chart.first.toLocaleString('en-US')} → {form.chart.last.toLocaleString('en-US')}</b></figcaption>
+                        <svg viewBox="0 0 320 120" role="img" aria-label={t('chartLabel', { first: form.chart.first, last: form.chart.last, count: form.chart.points.length })}>
+                          <path className="pp-chart-area" d={`${form.chart.line} L${form.chart.points[form.chart.points.length - 1][0]} 120 L${form.chart.points[0][0]} 120 Z`} />
+                          <path className="pp-chart-line" d={form.chart.line} />
+                          {form.chart.points.map(([x, y], index) => <circle key={index} cx={x} cy={y} r={index === form.chart!.points.length - 1 ? 4.5 : 3} />)}
+                        </svg>
+                        <p className="pp-note">{t('chartNote', { count: form.chart.points.length })}</p>
+                      </figure>
+                    : <p className="pp-note">{t('chartNeedsTwo')}</p>}
+                </div>
+              : <div className="ui-card pp-starter"><b>{t('noSeasonTitle')}</b><p>{t('noFormText')}</p></div>}
+          </>}
+          {tab === 'matches' && <>
+            <div className="pp-section-head"><h2>{t('matchesTitle')}</h2>{form.matches.length > 0 && <span className="ui-chip is-performance">{t('seasonSource')}</span>}</div>
+            {form.matches.length
+              ? <ol className="ui-card pp-matchlist">
+                  {form.matches.map((item, index) => <li key={`${item.date}-${index}`}>
+                    <span className={`pp-res is-${item.result}`} title={t(`result.${item.result}`)}><span aria-hidden="true">{t(`resultShort.${item.result}`)}</span><span className="pp-sr">{t(`result.${item.result}`)}</span></span>
+                    <div className="pp-match-main">
+                      <b>{dateText(item.date)}</b>
+                      <small>{[t('matchGoals', { count: item.goals }), t('matchAssists', { count: item.assists }), item.cleanSheet ? t('cleanSheetTag') : null].filter(Boolean).join(' · ')}</small>
+                      {item.mvp && <span className="pp-mvp">{t('mvpTag')}</span>}
+                    </div>
+                    <div className="pp-match-rating"><b>{item.ratingAfter.toLocaleString('en-US')}</b><small className={changeTone(item.change)}>{signed(item.change)}</small></div>
+                  </li>)}
+                </ol>
+              : <div className="ui-card pp-starter"><b>{t('noSeasonTitle')}</b><p>{t('noFormText')}</p></div>}
+            {form.matches.length >= FORM_EVENT_LIMIT && <p className="pp-note">{t('matchesWindow', { count: FORM_EVENT_LIMIT })}</p>}
+          </>}
+        </section>}
+
+        {!hasRanking && skillRows.length > 0 && <section className="pp-section">
+          {skillsCard}
         </section>}
 
         {athleteId && <section className="pp-section">
@@ -254,12 +319,9 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
           </div>
         </section>}
 
-        {athleteProfile && <section className="pp-section">
+        {athleteProfile?.bio && <section className="pp-section">
           <div className="pp-section-head"><h2>{t('about')}</h2></div>
-          <div className="ui-card pp-about">
-            <dl className="pp-facts">{facts.map(item => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl>
-            {athleteProfile.bio && <p className="pp-bio">{athleteProfile.bio}</p>}
-          </div>
+          <div className="ui-card pp-about"><p className="pp-bio">{athleteProfile.bio}</p></div>
         </section>}
 
         {(uploadedHighlights.length > 0 || videos.length > 0) && <section className="pp-section">

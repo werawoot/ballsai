@@ -1348,7 +1348,9 @@
       "age": "Age",
       "height": "Height",
       "weight": "Weight",
-      "province": "Province"
+      "province": "Province",
+      "position": "Position",
+      "team": "Team"
     },
     "cm": "{value} cm",
     "kg": "{value} kg",
@@ -1371,7 +1373,36 @@
       "notAssessed": "Skills not assessed yet."
     },
     "trustNote": "Self-reported details are kept apart from what a coach or a match result confirms, and a starting value is never treated as performance.",
-    "fallbackName": "BallDoenSai athlete"
+    "fallbackName": "BallDoenSai athlete",
+    "tabsLabel": "Athlete details",
+    "tabs": {
+      "skills": "Skills",
+      "form": "Form",
+      "matches": "Matches"
+    },
+    "formTitle": "Recent form",
+    "lastFive": "Last 5 results, newest on the left",
+    "result": {
+      "win": "Win",
+      "draw": "Draw",
+      "loss": "Loss"
+    },
+    "resultShort": {
+      "win": "W",
+      "draw": "D",
+      "loss": "L"
+    },
+    "chartTitle": "Power Rating by match",
+    "chartLabel": "Power Rating over the last {count} matches, from {first} to {last}",
+    "chartNote": "Each point is the Power Rating after a match (last {count} matches)",
+    "chartNeedsTwo": "The chart appears after 2 verified matches",
+    "noFormText": "Form and match-by-match results appear after the first match an organizer confirms",
+    "matchesTitle": "Match by match",
+    "matchGoals": "{count, plural, one {# goal} other {# goals}}",
+    "matchAssists": "{count, plural, one {# assist} other {# assists}}",
+    "cleanSheetTag": "Clean sheet",
+    "mvpTag": "MVP",
+    "matchesWindow": "Showing the last {count} matches"
   },
   "ranking": {
     "eyebrow": "SEASON {season} · {sport}",

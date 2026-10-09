@@ -135,7 +135,8 @@ body:has(.bds-nav) .tn-dock { bottom: calc(70px + env(safe-area-inset-bottom)); 
 @media (prefers-reduced-motion: reduce) { .tn-card { transition: none; } }
 
 /* /tournaments/[id]/fixtures: Stadium heading with progress, Paper board (components/FixtureBoard) */
-.fxp-page { background: var(--ui-paper); min-height: 100vh; }
+.fxp-page { min-height: 100vh; }
+.fxp-page:not(.ui-matchday) { background: var(--ui-paper); }
 .fxp-hero { background: radial-gradient(420px 220px at 10% 0%, rgba(204,0,1,.38), transparent 70%), var(--ui-ink); color: #fff; padding: 14px 16px 20px; }
 .fxp-hero > * { margin-left: auto; margin-right: auto; max-width: 1120px; }
 .fxp-eyebrow { color: var(--ui-gold); font-size: 13.5px; font-weight: 700; margin-bottom: 4px; margin-top: 0; }
@@ -146,7 +147,10 @@ body:has(.bds-nav) .tn-dock { bottom: calc(70px + env(safe-area-inset-bottom)); 
 .fxp-track { background: rgba(255,255,255,.14); border-radius: 9px; height: 6px; overflow: hidden; }
 .fxp-track i { background: linear-gradient(90deg, var(--ui-red-hot), var(--ui-gold)); border-radius: 9px; display: block; height: 100%; }
 .fxp-body { margin: 0 auto; max-width: 1120px; padding: 0 16px 32px; }
-.fxp-empty { background: #fff; border: 1px solid var(--ui-line); border-radius: 18px; margin-top: 18px; padding: 26px 20px; text-align: center; }
+/* On the matchday page the heading sits on the page's own red glow. */
+.ui-matchday .fxp-hero { background: transparent; }
+.ui-matchday .fxp-body { padding-top: 4px; }
+.fxp-empty { background: var(--ui-card); border: 1px solid var(--ui-line); border-radius: 18px; margin-top: 18px; padding: 26px 20px; text-align: center; }
 .fxp-empty-icon { align-items: center; background: var(--ui-red-soft); border-radius: 18px; color: var(--ui-red); display: inline-flex; height: 60px; justify-content: center; margin-bottom: 12px; width: 60px; }
 .fxp-empty h2 { font: 800 18px/1.4 var(--font-sarabun), sans-serif; margin: 0 0 6px; }
 .fxp-empty p { color: var(--ui-mute); font-size: 14.5px; line-height: 1.6; margin: 0; }

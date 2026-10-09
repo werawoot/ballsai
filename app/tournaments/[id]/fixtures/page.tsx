@@ -51,7 +51,7 @@ export default async function PublicFixturesPage(props: { params: Promise<{ id: 
   const progress = draw ? drawProgress(draw) : null
 
   return (
-    <main className="bds-page fxp-page">
+    <main className="bds-page fxp-page ui-matchday">
       <PageHeader back={{ href: `/tournaments/${params.id}`, label: t('backToTournament') }} />
       <div className="fxp-hero ui-dark">
         <p className="fxp-eyebrow">{t('publicTitle')}</p>
