@@ -4,20 +4,22 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Bell, ClipboardList, House, Search, User, type LucideIcon } from 'lucide-react'
+import { Bell, ClipboardCheck, ClipboardList, Dumbbell, House, IdCard, LayoutDashboard, Search, Shield, Trophy, User, Users, type LucideIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { fetchUnreadNotificationCount } from '@/lib/notification-count'
 import { unreadBadge } from '@/lib/notification-unread'
+import { homeKind } from '@/lib/role-home'
 import {
-  NAV_ITEMS,
   NAV_PENDING_WATCHDOG_MS,
   abandonNavigation,
   activeNavItem,
   linkNavigationTarget,
+  navItemsFor,
   navigationPhase,
   showsSiteNav,
   startNavigation,
   type NavItemId,
+  type NavKind,
   type NavPending,
 } from '@/lib/site-nav'
 
@@ -30,6 +32,20 @@ const ICONS: Record<NavItemId, LucideIcon> = {
   tournaments: ClipboardList,
   notifications: Bell,
   profile: User,
+  training: Dumbbell,
+  card: IdCard,
+  team: Shield,
+  kids: Users,
+  plan: LayoutDashboard,
+  manage: Trophy,
+  results: ClipboardCheck,
+}
+
+// The last role seen in this tab, so a page change does not flash the general bar before
+// the role is read again. Per tab and per session only: a convenience, never a permission.
+const KIND_KEY = 'bds-nav-kind'
+const readKind = (): NavKind | null => {
+  try { return (window.sessionStorage.getItem(KIND_KEY) as NavKind | null) || null } catch { return null }
 }
 
 /** How long the progress bar takes to fill and fade once the new route has arrived. */
@@ -41,6 +57,7 @@ export default function SiteNav() {
   const visible = showsSiteNav(pathname)
   const [pending, setPending] = useState<NavPending>(null)
   const [unread, setUnread] = useState<number | null>(null)
+  const [kind, setKind] = useState<NavKind | null>(null)
 
   // Derived, not tracked: the tap is loading while we are still on the route it was made
   // from, and done the moment we are anywhere else.
@@ -92,11 +109,25 @@ export default function SiteNav() {
     if (!visible) return
     let cancelled = false
     const load = async () => {
+      // The role seen last in this tab first, then the fresh one below.
+      const cached = readKind()
+      if (cached) setKind(current => current ?? cached)
       const supabase = createClient()
       const { data } = await supabase.auth.getSession()
       const userId = data.session?.user.id
-      const count = userId ? await fetchUnreadNotificationCount(supabase, userId) : null
-      if (!cancelled) setUnread(count)
+      const [count, role] = userId
+        ? await Promise.all([
+          fetchUnreadNotificationCount(supabase, userId),
+          // Which bar to draw (lib/role-home.ts decides the kind). RLS lets a person read
+          // their own profile row only.
+          supabase.from('profiles').select('onboarding_persona, role').eq('id', userId).maybeSingle()
+            .then(({ data: row }) => row ? homeKind({ persona: row.onboarding_persona, role: row.role }) : null, () => null),
+        ])
+        : [null, null]
+      if (cancelled) return
+      setUnread(count)
+      setKind(role)
+      try { if (role) window.sessionStorage.setItem(KIND_KEY, role); else window.sessionStorage.removeItem(KIND_KEY) } catch { /* the bar still works without it */ }
     }
     // A badge must never be the reason navigation breaks.
     load().catch(() => { if (!cancelled) setUnread(null) })
@@ -105,7 +136,8 @@ export default function SiteNav() {
 
   if (!visible) return null
 
-  const active = activeNavItem(pathname)
+  const items = navItemsFor(kind)
+  const active = activeNavItem(pathname, items)
   const badge = unreadBadge(unread)
   const loading = phase === 'loading'
 
@@ -115,7 +147,7 @@ export default function SiteNav() {
         that have one. It replaces the old blanket `body { padding-bottom: 80px }`. */}
     <div className="bds-nav-spacer" aria-hidden="true" />
     <nav className="bds-nav" aria-label={t('label')} aria-busy={loading}>
-      {NAV_ITEMS.map(item => {
+      {items.map(item => {
         const Icon = ICONS[item.id]
         const isActive = item.id === active
         const isPending = loading && pending?.href === item.href

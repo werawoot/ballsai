@@ -27,7 +27,14 @@
       "discover": "Athletes",
       "tournaments": "Events",
       "notifications": "Alerts",
-      "profile": "Me"
+      "profile": "Me",
+      "training": "Training",
+      "card": "Card",
+      "team": "Team",
+      "kids": "My children",
+      "plan": "Match plan",
+      "manage": "Manage",
+      "results": "Results"
     }
   },
   "tournaments": {

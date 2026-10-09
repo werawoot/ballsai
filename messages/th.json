@@ -27,7 +27,14 @@
       "discover": "นักกีฬา",
       "tournaments": "รายการแข่ง",
       "notifications": "แจ้งเตือน",
-      "profile": "ของฉัน"
+      "profile": "ของฉัน",
+      "training": "ซ้อม",
+      "card": "การ์ด",
+      "team": "ทีม",
+      "kids": "ลูกของฉัน",
+      "plan": "แผนแข่ง",
+      "manage": "จัดการแข่ง",
+      "results": "บันทึกผล"
     }
   },
   "tournaments": {
