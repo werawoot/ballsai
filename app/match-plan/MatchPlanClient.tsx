@@ -1,13 +1,15 @@
 'use client'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { useEffect, useMemo, useState } from 'react'
-import { CheckCircle2, LoaderCircle, Plus, Save, ShieldAlert, X } from 'lucide-react'
-import { BOARD_FORMATIONS, DEFAULT_FORMATION, DRAFT_NAME_MAX, DRAFT_PLAYERS_MAX, benchPlayer, draftKey, readDraft, writeDraft, boardFromRoster, boardToPlayers, changeFormation, formationSlots, placePlayer, removePlayer, type BoardPosition, type BoardState } from '@/lib/match-plan-board'
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { CheckCircle2, GripVertical, LoaderCircle, Plus, RotateCcw, Save, ShieldAlert, X } from 'lucide-react'
+import { BOARD_FORMATIONS, DEFAULT_FORMATION, DRAFT_NAME_MAX, DRAFT_PLAYERS_MAX, benchPlayer, boardLayout, draftKey, dropOnPitch, readDraft, resetPoints, writeDraft, boardFromRoster, boardToPlayers, changeFormation, formationSlots, placePlayer, removePlayer, type BoardPosition, type BoardState } from '@/lib/match-plan-board'
 import './match-plan.css'
 
 // The coach's pitch board (lib/match-plan-board). Pick a team, pick a shape, tap a circle on
-// the pitch and pick who plays there; everyone else can go on the bench. Only members who
+// the pitch and pick who plays there, or drag: a circle anywhere on the pitch (the point is
+// saved by sql/68), onto another player to swap, or a name from the lists onto the pitch;
+// everyone else can go on the bench. Tapping keeps working for anyone who cannot drag. Only members who
 // accepted the team invite can be saved (get_match_plan_safely). Before that -- no team yet,
 // or nobody has accepted -- the coach plans a draft with names typed in, kept only in this
 // browser (lib/match-plan-board readDraft). A plan is preparation, never a result: it
@@ -16,7 +18,7 @@ import './match-plan.css'
 type Tournament = { name: string; start_date: string | null }
 type TournamentRelation = Tournament[] | null
 export type MatchPlanTeam = { id: string; name: string; status: string; tournament_id: string; tournaments: TournamentRelation }
-type RosterMember = { athlete_id: string; display_name: string; profile_position: string | null; lineup_role: 'starter' | 'substitute' | null; position: BoardPosition | null; slot_order: number | null }
+type RosterMember = { athlete_id: string; display_name: string; profile_position: string | null; lineup_role: 'starter' | 'substitute' | null; position: BoardPosition | null; slot_order: number | null; pos_x?: number | null; pos_y?: number | null }
 type Plan = { id: string; formation: string; match_focus: string; team_talk: string; updated_at: string }
 type PlanPayload = { plan: Plan | null; roster: RosterMember[] }
 
@@ -43,6 +45,24 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
   const [picking, setPicking] = useState<number | null>(null)
   const [dirty, setDirty] = useState(false)
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
+  // A drag in progress: who, where the pointer started and is now. Moving under 6px is a tap.
+  const [drag, setDrag] = useState<{ id: string; startX: number; startY: number; x: number; y: number; moved: boolean } | null>(null)
+  const pitchRef = useRef<HTMLDivElement>(null)
+  const dragged = useRef(false)
+  const pointerY = useRef(0)
+
+  // On a phone the lists sit below the pitch: holding a dragged name near the top or bottom
+  // edge scrolls the page, so it can reach the pitch (or the bench) without letting go.
+  const dragging = Boolean(drag?.moved)
+  useEffect(() => {
+    if (!dragging) return
+    const timer = window.setInterval(() => {
+      const y = pointerY.current, edge = 90, bottomEdge = window.innerHeight - 170
+      if (y < edge) window.scrollBy(0, -Math.ceil((edge - y) / 6))
+      else if (y > bottomEdge) window.scrollBy(0, Math.ceil((y - bottomEdge) / 6))
+    }, 16)
+    return () => window.clearInterval(timer)
+  }, [dragging])
 
   useEffect(() => {
     let active = true
@@ -86,7 +106,7 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
   const live = (payload?.roster.length ?? 0) > 0
   const roster = useMemo(() => (payload?.roster.length ? payload.roster : draftPlayers), [payload, draftPlayers])
   const byId = useMemo(() => new Map(roster.map(member => [member.athlete_id, member])), [roster])
-  const layout = formationSlots(board.formation)
+  const layout = boardLayout(board)
   const onPitch = new Set(board.slots.filter(Boolean) as string[])
   const onBench = new Set(board.bench)
   const free = roster.filter(member => !onPitch.has(member.athlete_id) && !onBench.has(member.athlete_id))
@@ -94,6 +114,34 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
   const name = (id: string) => byId.get(id)?.display_name ?? '—'
 
   const update = (next: BoardState) => { setBoard(next); setDirty(true); setMessage(null) }
+  const startDrag = (athleteId: string) => (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.button !== 0) return
+    event.currentTarget.setPointerCapture(event.pointerId)
+    dragged.current = false
+    setDrag({ id: athleteId, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY, moved: false })
+  }
+  const moveDrag = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!drag) return
+    pointerY.current = event.clientY
+    const moved = drag.moved || Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 6
+    setDrag({ ...drag, x: event.clientX, y: event.clientY, moved })
+  }
+  const endDrag = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!drag) return
+    const current = drag
+    setDrag(null)
+    if (!current.moved) return
+    // Swallow only the click this same release fires on a circle, never a later tap.
+    dragged.current = true
+    window.setTimeout(() => { dragged.current = false }, 0)
+    const box = pitchRef.current?.getBoundingClientRect()
+    if (box && event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom) {
+      update(dropOnPitch(board, current.id, (event.clientX - box.left) / box.width * 100, (event.clientY - box.top) / box.height * 100))
+    } else if (document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-drop="bench"]')) {
+      update(benchPlayer(board, current.id))
+    }
+  }
+  const dragHandlers = (athleteId: string) => ({ onPointerDown: startDrag(athleteId), onPointerMove: moveDrag, onPointerUp: endDrag, onPointerCancel: () => setDrag(null) })
   const pick = (athleteId: string) => { if (picking !== null) update(placePlayer(board, picking, athleteId)); setPicking(null) }
   // A draft name typed by the coach; placed straight into the open slot when there is one.
   const addDraftPlayer = () => {
@@ -160,23 +208,25 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
         <section aria-label={tl('matchPlanBoard.lineup')}>
           <div className="mp-h-row"><h2 className="mp-h">{tl('matchPlanBoard.lineup')}</h2><span className="mp-count">{t('counts', { starters, slots: layout.length, bench: board.bench.length })}</span></div>
           <p className="mp-hint">{t('pitchHint')}</p>
-          <div className="mp-pitch">
+          <div className={`mp-pitch${drag?.moved ? ' is-dropping' : ''}`} ref={pitchRef}>
             <i className="mp-pitch-lines" aria-hidden="true" />
             {layout.map(slot => {
               const id = board.slots[slot.index]
-              return <button type="button" key={slot.index} className={`mp-slot${id ? ' is-filled' : ''}${picking === slot.index ? ' is-picking' : ''}`} style={{ left: `${slot.x}%`, top: `${slot.y}%` }} onClick={() => setPicking(slot.index)}
+              return <button type="button" key={slot.index} className={`mp-slot${id ? ' is-filled' : ''}${picking === slot.index ? ' is-picking' : ''}${drag?.moved && drag.id === id ? ' is-dragging' : ''}`} style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
+                onClick={() => { if (dragged.current) { dragged.current = false; return } setPicking(slot.index) }} {...(id ? dragHandlers(id) : {})}
                 aria-label={id ? t('slotFilled', { position: t(`positionNames.${slot.position}`), name: name(id) }) : t('slotEmpty', { position: t(`positionNames.${slot.position}`) })}>
                 <span className="mp-dot">{id ? [...shortName(name(id))][0] : <Plus size={18} aria-hidden="true" />}</span>
                 <span className="mp-slot-name">{id ? shortName(name(id)) : slot.position}</span>
               </button>
             })}
           </div>
+          {board.points && <button type="button" className="mp-reset" onClick={() => update(resetPoints(board))}><RotateCcw size={15} aria-hidden="true" />{t('resetPoints')}</button>}
         </section>
 
-        <section aria-label={t('benchTitle')}>
+        <section aria-label={t('benchTitle')} data-drop="bench" className={drag?.moved && board.slots.includes(drag.id) ? 'mp-bench-zone is-target' : 'mp-bench-zone'}>
           <h2 className="mp-h">{t('benchTitle')}</h2>
           {board.bench.length
-            ? <ul className="mp-bench">{board.bench.map(id => <li key={id}><span>{name(id)}</span><button type="button" aria-label={t('removeFromBench', { name: name(id) })} onClick={() => update(removePlayer(board, id))}><X size={15} aria-hidden="true" /></button></li>)}</ul>
+            ? <ul className="mp-bench">{board.bench.map(id => <li key={id}><span className="mp-grip" aria-hidden="true" {...dragHandlers(id)}><GripVertical size={16} /></span><span>{name(id)}</span><button type="button" aria-label={t('removeFromBench', { name: name(id) })} onClick={() => update(removePlayer(board, id))}><X size={15} aria-hidden="true" /></button></li>)}</ul>
             : <p className="mp-hint">{t('benchEmpty')}</p>}
         </section>
 
@@ -189,7 +239,8 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
           </form>}
           {free.length
             ? <ul className="mp-free">{free.map(member => <li key={member.athlete_id}>
-                <span><b>{member.display_name}</b>{member.profile_position && <small>{member.profile_position}</small>}</span>
+                <span className="mp-grip" aria-hidden="true" {...dragHandlers(member.athlete_id)}><GripVertical size={18} /></span>
+                <span className="mp-free-name"><b>{member.display_name}</b>{member.profile_position && <small>{member.profile_position}</small>}</span>
                 <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => update(benchPlayer(board, member.athlete_id))}>{t('toBench')}</button>
               </li>)}</ul>
             : <p className="mp-hint">{roster.length ? t('allPlaced') : t('noNamesYet')}</p>}
@@ -209,6 +260,7 @@ export default function MatchPlanClient({ teams }: { teams: MatchPlanTeam[] }) {
         </div>
       </>}
 
+    {drag?.moved && <span className="mp-ghost" style={{ left: drag.x, top: drag.y }} aria-hidden="true">{[...shortName(name(drag.id))][0]}</span>}
     {picking !== null && <div className="mp-sheet-wrap" onClick={() => setPicking(null)}>
       <div className="mp-sheet" role="dialog" aria-modal="true" aria-labelledby="mp-sheet-title" onClick={event => event.stopPropagation()}>
         <div className="mp-sheet-head">

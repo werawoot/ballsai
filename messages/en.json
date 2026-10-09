@@ -824,11 +824,11 @@
     "searchButton": "Search",
     "empty": "No teams here yet",
     "title": "Match plan",
-    "lead": "Tap a circle on the pitch to pick a starter, add substitutes, then save once.",
+    "lead": "Drag or tap circles on the pitch to set the starters, add substitutes, then save once.",
     "teamPick": "Choose a team",
     "players": "{count} players",
     "counts": "Starters {starters}/{slots} · Subs {bench}",
-    "pitchHint": "Tap a circle, then pick a name. Tap a player on the pitch to swap or move them to the bench.",
+    "pitchHint": "Drag a circle anywhere, onto another player to swap, or tap it to pick a player. Drag names from the lists below onto the pitch.",
     "slotEmpty": "{position}, empty. Tap to pick a player",
     "slotFilled": "{position}: {name}. Tap to change",
     "positionNames": {
@@ -877,7 +877,8 @@
     "noNamesYet": "No names yet. Type one above and tap Add",
     "saveDraft": "Save draft on this device",
     "draftSaved": "Draft saved on this device",
-    "draftSaveFailed": "Could not save the draft: this browser blocks storage"
+    "draftSaveFailed": "Could not save the draft: this browser blocks storage",
+    "resetPoints": "Back to the formation"
   },
   "fixtures": {
     "record": "Record result",

@@ -99,3 +99,18 @@
 .mp-sheet .mp-add { margin-top: 12px; }
 .mp-sheet .mp-add input { color: #f4f6fb; }
 .mp-sr { clip: rect(0 0 0 0); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
+
+/* Dragging: a filled circle or a grip handle follows the finger (touch-action none only on
+   them, so the page still scrolls everywhere else). The ghost is drawn at the pointer. */
+.mp-slot.is-filled { cursor: grab; touch-action: none; }
+.mp-slot.is-dragging { opacity: .3; }
+.mp-pitch.is-dropping { box-shadow: 0 0 0 3px rgba(244,185,66,.6); }
+.mp-ghost { align-items: center; background: linear-gradient(160deg, #ff3b3b, #a00000); border: 2px solid #fff; border-radius: 50%; box-shadow: 0 10px 24px rgba(0,0,0,.5); color: #fff; display: flex; font: 800 18px var(--font-sarabun), sans-serif; height: 48px; justify-content: center; pointer-events: none; position: fixed; transform: translate(-50%, -50%) scale(1.08); width: 48px; z-index: 300; }
+.mp-grip { align-items: center; color: var(--ui-mute); cursor: grab; display: inline-flex; flex: none; height: 44px; justify-content: center; touch-action: none; width: 32px; }
+.mp-free li { justify-content: flex-start; }
+.mp-free-name { flex: 1; }
+.mp-bench li { padding-left: 2px; }
+.mp-bench-zone { border: 2px dashed transparent; border-radius: 14px; margin: -6px; padding: 6px; transition: border-color .15s; }
+.mp-bench-zone.is-target { border-color: rgba(244,185,66,.7); }
+.mp-reset { align-items: center; background: none; border: 0; color: #ffd98a; cursor: pointer; display: flex; font: 800 14px var(--font-sarabun), sans-serif; gap: 6px; margin: 8px auto 0; min-height: 44px; }
+@media (prefers-reduced-motion: reduce) { .mp-bench-zone { transition: none; } }

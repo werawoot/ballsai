@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BOARD_FORMATIONS, boardFromRoster, boardToPlayers, changeFormation, formationSlots, placePlayer, removePlayer, type BoardState, draftKey, readDraft, writeDraft } from '@/lib/match-plan-board'
+import { BOARD_FORMATIONS, boardFromRoster, boardLayout, boardToPlayers, changeFormation, dropOnPitch, formationSlots, movePlayer, placePlayer, removePlayer, resetPoints, type BoardState, draftKey, readDraft, writeDraft } from '@/lib/match-plan-board'
 
 const member = (id: string, role: 'starter' | 'substitute' | null = null, slot: number | null = null, position: 'GK' | 'DF' | 'MF' | 'FW' | null = null) => ({
   athlete_id: id, display_name: id, profile_position: null, lineup_role: role, position, slot_order: slot,
@@ -95,11 +95,11 @@ describe('the board saved as plan rows', () => {
   it('saves each starter with its slot and position, the bench after the pitch', () => {
     const players = boardToPlayers({ formation: '1-2-1', slots: ['g', null, 'm', null, 'f'], bench: ['s1', 's2'] })
     expect(players).toEqual([
-      { athlete_id: 'g', lineup_role: 'starter', position: 'GK', slot_order: 0 },
-      { athlete_id: 'm', lineup_role: 'starter', position: 'MF', slot_order: 2 },
-      { athlete_id: 'f', lineup_role: 'starter', position: 'FW', slot_order: 4 },
-      { athlete_id: 's1', lineup_role: 'substitute', position: 'MF', slot_order: 5 },
-      { athlete_id: 's2', lineup_role: 'substitute', position: 'MF', slot_order: 6 },
+      { athlete_id: 'g', lineup_role: 'starter', position: 'GK', slot_order: 0, pos_x: null, pos_y: null },
+      { athlete_id: 'm', lineup_role: 'starter', position: 'MF', slot_order: 2, pos_x: null, pos_y: null },
+      { athlete_id: 'f', lineup_role: 'starter', position: 'FW', slot_order: 4, pos_x: null, pos_y: null },
+      { athlete_id: 's1', lineup_role: 'substitute', position: 'MF', slot_order: 5, pos_x: null, pos_y: null },
+      { athlete_id: 's2', lineup_role: 'substitute', position: 'MF', slot_order: 6, pos_x: null, pos_y: null },
     ])
   })
 
@@ -144,5 +144,81 @@ describe('a draft plan kept on this device (no team or no accepted players yet)'
   it('is stored per team, with one key for a coach who has no team yet', () => {
     expect(draftKey('team-1')).toBe('bds-match-plan-draft:team-1')
     expect(draftKey('')).toBe('bds-match-plan-draft:no-team')
+  })
+})
+
+describe('dragging players anywhere on the pitch (SQL68 stores the point)', () => {
+  const base = (): BoardState => ({ formation: '1-2-1', slots: ['g', 'd', 'm1', 'm2', 'f'], bench: ['s'] })
+
+  it('moves a player to where they were dropped, inside the pitch, in whole percent', () => {
+    const board = movePlayer(base(), 4, 61.4, 12.6)
+    expect(board.points![4]).toEqual({ x: 61, y: 13 })
+    expect(movePlayer(base(), 4, 140, -20).points![4]).toEqual({ x: 100, y: 0 })
+  })
+
+  it('draws each slot at its own point, or at the formation spot when it has none', () => {
+    const layout = boardLayout(movePlayer(base(), 2, 20, 20))
+    expect(layout[2]).toMatchObject({ x: 20, y: 20 })
+    expect(layout[3]).toMatchObject(formationSlots('1-2-1')[3])
+  })
+
+  it('names the position from where the player stands; the keeper slot stays the keeper', () => {
+    expect(boardLayout(movePlayer(base(), 1, 50, 20))[1].position).toBe('FW')
+    expect(boardLayout(movePlayer(base(), 4, 50, 70))[4].position).toBe('DF')
+    expect(boardLayout(movePlayer(base(), 4, 50, 45))[4].position).toBe('MF')
+    expect(boardLayout(movePlayer(base(), 0, 50, 20))[0].position).toBe('GK')
+  })
+
+  it('dropping onto another player swaps them, each taking the other\'s spot', () => {
+    const moved = movePlayer(base(), 4, 70, 10)
+    const board = dropOnPitch(moved, 'd', 70, 11)
+    expect(board.slots[4]).toBe('d')
+    expect(board.slots[1]).toBe('f')
+    expect(board.points![4]).toEqual({ x: 70, y: 10 })
+  })
+
+  it('dropping a player on open grass moves them there', () => {
+    const board = dropOnPitch(base(), 'm1', 10, 50)
+    expect(board.slots[2]).toBe('m1')
+    expect(board.points![2]).toEqual({ x: 10, y: 50 })
+  })
+
+  it('dropping a substitute on open grass takes the nearest free slot, at that point', () => {
+    const board = dropOnPitch({ ...base(), slots: ['g', null, 'm1', 'm2', null] }, 's', 80, 15)
+    expect(board.slots[4]).toBe('s')
+    expect(board.points![4]).toEqual({ x: 80, y: 15 })
+    expect(board.bench).toEqual([])
+  })
+
+  it('with no free slot, the nearest starter goes to the bench', () => {
+    const board = dropOnPitch(base(), 's', 50, 20)
+    expect(board.slots[4]).toBe('s')
+    expect(board.bench).toEqual(['f'])
+  })
+
+  it('a new formation, or a reset, puts everyone back on the formation spots', () => {
+    expect(changeFormation(movePlayer(base(), 4, 1, 1), '2-2-1').points).toBeUndefined()
+    expect(resetPoints(movePlayer(base(), 4, 1, 1)).points).toBeUndefined()
+  })
+
+  it('saves the point with each starter and reads it back', () => {
+    const board = movePlayer(base(), 4, 30, 8)
+    const rows = boardToPlayers(board)
+    expect(rows.find(row => row.athlete_id === 'f')).toMatchObject({ pos_x: 30, pos_y: 8, position: 'FW', slot_order: 4 })
+    expect(rows.find(row => row.athlete_id === 'd')).toMatchObject({ pos_x: null, pos_y: null })
+    expect(rows.find(row => row.athlete_id === 's')).toMatchObject({ pos_x: null, pos_y: null })
+    const back = boardFromRoster(rows.map(row => ({ ...row })), '1-2-1')
+    expect(back.points![4]).toEqual({ x: 30, y: 8 })
+    expect(back.points![1]).toBeNull()
+  })
+
+  it('ignores a stored point it cannot trust', () => {
+    const back = boardFromRoster([{ athlete_id: 'a', lineup_role: 'starter', slot_order: 0, pos_x: 50, pos_y: null }, { athlete_id: 'b', lineup_role: 'starter', slot_order: 1, pos_x: 300, pos_y: 5 }], '1-2-1')
+    expect(back.points).toBeUndefined()
+  })
+
+  it('keeps the points in a draft too', () => {
+    const draft = { board: movePlayer({ formation: '1-2-1', slots: ['draft-1', null, null, null, null], bench: [] }, 0, 40, 95), players: [{ id: 'draft-1', name: 'ก้อง' }], focus: '', talk: '' }
+    expect(readDraft(writeDraft(draft))!.board.points![0]).toEqual({ x: 40, y: 95 })
   })
 })
