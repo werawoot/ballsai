@@ -1348,7 +1348,9 @@
       "age": "อายุ",
       "height": "ส่วนสูง",
       "weight": "น้ำหนัก",
-      "province": "จังหวัด"
+      "province": "จังหวัด",
+      "position": "ตำแหน่ง",
+      "team": "ทีม"
     },
     "cm": "{value} ซม.",
     "kg": "{value} กก.",
@@ -1371,7 +1373,36 @@
       "notAssessed": "ทักษะยังไม่ได้ประเมิน"
     },
     "trustNote": "ระบบแยกข้อมูลที่นักกีฬากรอกเองออกจากข้อมูลที่โค้ชหรือผลแข่งยืนยัน และไม่ถือค่าเริ่มต้นเป็นผลงานจริง",
-    "fallbackName": "นักกีฬา BallDoenSai"
+    "fallbackName": "นักกีฬา BallDoenSai",
+    "tabsLabel": "ข้อมูลนักกีฬา",
+    "tabs": {
+      "skills": "ทักษะ",
+      "form": "ฟอร์ม",
+      "matches": "รายนัด"
+    },
+    "formTitle": "ฟอร์มล่าสุด",
+    "lastFive": "ผล 5 นัดล่าสุด ใหม่สุดอยู่ซ้าย",
+    "result": {
+      "win": "ชนะ",
+      "draw": "เสมอ",
+      "loss": "แพ้"
+    },
+    "resultShort": {
+      "win": "ช",
+      "draw": "ส",
+      "loss": "พ"
+    },
+    "chartTitle": "คะแนนฝีมือรายนัด",
+    "chartLabel": "คะแนนฝีมือ {count} นัดล่าสุด จาก {first} เป็น {last}",
+    "chartNote": "แต่ละจุดคือคะแนนฝีมือหลังจบนัด ({count} นัดล่าสุด)",
+    "chartNeedsTwo": "กราฟจะขึ้นเมื่อมีผลแข่งที่ยืนยันตั้งแต่ 2 นัด",
+    "noFormText": "ฟอร์มและผลรายนัดจะขึ้นหลังนัดแรกที่ผู้จัดยืนยันผล",
+    "matchesTitle": "ผลรายนัด",
+    "matchGoals": "{count} ประตู",
+    "matchAssists": "{count} แอสซิสต์",
+    "cleanSheetTag": "คลีนชีต",
+    "mvpTag": "ยอดเยี่ยม",
+    "matchesWindow": "แสดง {count} นัดล่าสุด"
   },
   "ranking": {
     "eyebrow": "ฤดูกาล {season} · {sport}",

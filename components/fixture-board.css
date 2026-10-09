@@ -1,4 +1,6 @@
-/* FixtureBoard: Paper cards on the design-system tokens (app/ui.css). Team names may wrap;
+/* FixtureBoard: cards on the design-system tokens (app/ui.css), Paper by default and dark
+   on a .ui-matchday page (the public fixtures page), where the tabs become a segmented
+   control and the result reads like a live-score app. Team names may wrap;
    numbers never do and line up (tabular figures). */
 
 .fx-board { display: grid; gap: 14px; }
@@ -6,13 +8,13 @@
    at 320px pushed the page to 364px). Let them shrink so each table scrolls inside itself. */
 .fx-board > *, .fx-split > *, .fx-main > *, .fx-aside > * { min-width: 0; }
 
-.fx-tabs { background: #fff; border-bottom: 1px solid var(--ui-line); display: flex; gap: 4px; margin: 0 -16px; overflow-x: auto; padding: 4px 12px 0; position: sticky; top: 0; z-index: 2; }
+.fx-tabs { background: var(--ui-card); border-bottom: 1px solid var(--ui-line); display: flex; gap: 4px; margin: 0 -16px; overflow-x: auto; padding: 4px 12px 0; position: sticky; top: 0; z-index: 2; }
 .fx-tab { border-bottom: 3px solid transparent; color: var(--ui-mute); flex: 1 0 auto; font-size: 15px; font-weight: 700; min-height: 48px; padding: 12px 10px; text-align: center; text-decoration: none; white-space: nowrap; }
 .fx-tab.is-on { border-color: var(--ui-red); color: var(--ui-text); }
 
 .fx-filters { display: flex; gap: 8px; margin: 0 -16px; overflow-x: auto; padding: 2px 16px 4px; }
-.fx-filter { align-items: center; background: #fff; border: 1.5px solid var(--ui-line); border-radius: 99px; color: var(--ui-text); display: inline-flex; flex: none; font-size: 14px; font-weight: 700; min-height: 44px; padding: 0 16px; text-decoration: none; white-space: nowrap; }
-.fx-filter.is-on { background: var(--ui-text); border-color: var(--ui-text); color: #fff; }
+.fx-filter { align-items: center; background: var(--ui-card); border: 1.5px solid var(--ui-line); border-radius: 99px; color: var(--ui-text); display: inline-flex; flex: none; font-size: 14px; font-weight: 700; min-height: 44px; padding: 0 16px; text-decoration: none; white-space: nowrap; }
+.fx-filter.is-on { background: var(--ui-text); border-color: var(--ui-text); color: var(--ui-card); }
 
 .fx-pager { align-items: center; display: grid; gap: 8px; grid-template-columns: 1fr auto 1fr; }
 .fx-pager b { font-size: 15px; }
@@ -28,7 +30,7 @@
 .fx-section-title small { color: var(--ui-mute); font-size: 13px; font-weight: 600; }
 .fx-matches { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
 
-.fx-match { align-items: center; background: #fff; border: 1px solid var(--ui-line); border-radius: 16px; box-shadow: 0 1px 2px rgba(17,24,39,.04); display: grid; gap: 8px 12px; grid-template-columns: minmax(0, 1fr) auto; padding: 12px 14px; }
+.fx-match { align-items: center; background: var(--ui-card); border: 1px solid var(--ui-line); border-radius: 16px; box-shadow: 0 1px 2px rgba(17,24,39,.04); display: grid; gap: 8px 12px; grid-template-columns: minmax(0, 1fr) auto; padding: 12px 14px; }
 .fx-team { align-items: center; display: flex; font-size: 15.5px; font-weight: 600; gap: 10px; line-height: 1.4; min-width: 0; }
 .fx-team.is-win { font-weight: 800; }
 .fx-team.is-lose { color: var(--ui-mute); }
@@ -41,11 +43,11 @@
 .fx-foot { align-items: center; border-top: 1px dashed var(--ui-line); color: var(--ui-mute); display: flex; font-size: 12.5px; gap: 8px; grid-column: 1 / -1; justify-content: space-between; padding-top: 8px; }
 .fx-status { border-radius: 99px; font-size: 12px; font-weight: 800; padding: 3px 10px; text-align: right; }
 .fx-status.is-done { background: #e3f6ec; color: #0c7a45; }
-.fx-status.is-wait { background: #eeebe5; color: var(--ui-mute); }
+.fx-status.is-wait { background: var(--ui-sunk); color: var(--ui-mute); }
 .fx-status.is-pen { background: #fff3db; color: #8a5a00; }
 .fx-match > :last-child:not(.fx-foot) { grid-column: 1 / -1; }
 
-.fx-table-card { background: #fff; border: 1px solid var(--ui-line); border-radius: 16px; padding: 12px 12px 8px; }
+.fx-table-card { background: var(--ui-card); border: 1px solid var(--ui-line); border-radius: 16px; padding: 12px 12px 8px; }
 .fx-table-title { align-items: baseline; display: flex; justify-content: space-between; margin: 2px 4px 6px; }
 .fx-table-title b { font: 800 17px/1.4 var(--font-sarabun), sans-serif; }
 .fx-table-title small { color: var(--ui-mute); font-size: 12.5px; font-weight: 600; }
@@ -55,7 +57,7 @@
 .fx-table thead th { color: var(--ui-mute); font-size: 12px; font-weight: 600; }
 .fx-table thead th:first-child { text-align: left; }
 .fx-table tbody th { font-weight: 700; min-width: 120px; overflow-wrap: anywhere; text-align: left; white-space: normal; }
-.fx-table tbody tr { border-top: 1px solid #f0ece6; }
+.fx-table tbody tr { border-top: 1px solid var(--ui-line); }
 .fx-table tbody tr.is-through th { box-shadow: inset 3px 0 0 var(--ui-green); }
 .fx-pos { color: var(--ui-mute); display: inline-block; font-weight: 700; padding-left: 6px; width: 24px; }
 .fx-points { font-weight: 800; }
@@ -65,14 +67,31 @@
 .fx-bracket { display: flex; gap: 14px; overflow-x: auto; padding: 4px 0 12px; scroll-padding-left: 0; scroll-snap-type: x mandatory; }
 .fx-bracket-round { display: flex; flex: 0 0 min(78%, 300px); flex-direction: column; gap: 12px; justify-content: space-around; scroll-snap-align: start; }
 .fx-bracket-round h2 { color: var(--ui-mute); font: 800 14.5px/1.4 var(--font-sarabun), sans-serif; margin: 0; }
-.fx-bracket-match { background: #fff; border: 1px solid var(--ui-line); border-radius: 14px; overflow: hidden; }
+.fx-bracket-match { background: var(--ui-card); border: 1px solid var(--ui-line); border-radius: 14px; overflow: hidden; }
 .fx-bracket-match small { background: #fff3db; color: #8a5a00; display: block; font-size: 12px; font-weight: 700; padding: 5px 12px; }
 .fx-slot { align-items: center; display: flex; line-height: 1.45; font-size: 14.5px; font-weight: 600; gap: 10px; justify-content: space-between; min-height: 42px; padding: 8px 12px; }
-.fx-slot + .fx-slot { border-top: 1px solid #f0ece6; }
-.fx-slot.is-win { background: #fbfaf7; font-weight: 800; }
+.fx-slot + .fx-slot { border-top: 1px solid var(--ui-line); }
+.fx-slot.is-win { background: var(--ui-sunk); font-weight: 800; }
 .fx-slot b { font-family: var(--font-oswald), sans-serif; font-variant-numeric: tabular-nums; }
 .fx-source { color: var(--ui-mute); font-size: 13.5px; font-style: italic; font-weight: 500; }
 .fx-champion { align-items: center; background: linear-gradient(160deg, #2b1d05, #e7b54a); border-radius: 14px; color: #fff; display: flex; font-size: 14.5px; font-weight: 800; gap: 8px; justify-content: center; margin: 0; padding: 14px; }
+
+/* Matchday (public page): segmented tabs, glowing winner, dim loser, dark chips. */
+.ui-matchday .fx-tabs { background: rgba(255,255,255,.05); border: 1px solid var(--ui-line); border-radius: 14px; gap: 4px; margin: 0; padding: 4px; top: 6px; backdrop-filter: blur(10px); }
+.ui-matchday .fx-tab { border: 0; border-radius: 10px; font-weight: 800; padding: 10px; }
+.ui-matchday .fx-tab.is-on { background: linear-gradient(90deg, #ff3b3b, #c80808); box-shadow: 0 8px 20px rgba(255,59,59,.3); color: #fff; }
+.ui-matchday .fx-filter { background: rgba(255,255,255,.05); }
+.ui-matchday .fx-filter.is-on { background: #fff; border-color: #fff; color: #0a0d14; }
+.ui-matchday .fx-match, .ui-matchday .fx-table-card, .ui-matchday .fx-bracket-match { background: linear-gradient(160deg, #181d2a, #10131b); box-shadow: 0 10px 24px rgba(0,0,0,.3); }
+.ui-matchday .fx-team.is-win .fx-name, .ui-matchday .fx-slot.is-win span { color: #fff; }
+.ui-matchday .fx-score { color: #fff; }
+.ui-matchday .fx-score.is-lose { color: rgba(244,246,251,.38); }
+.ui-matchday .fx-vs { color: var(--ui-mute); }
+.ui-matchday .fx-status.is-done { background: rgba(74,222,128,.14); color: var(--ui-ok); }
+.ui-matchday .fx-status.is-pen, .ui-matchday .fx-bracket-match small { background: rgba(244,185,66,.18); color: #ffd98a; }
+.ui-matchday .fx-pager-link { color: #ff6b6b; }
+.ui-matchday .fx-table tbody tr.is-through th { box-shadow: inset 3px 0 0 var(--ui-ok); }
+.ui-matchday .fx-legend i { background: var(--ui-ok); }
 
 @media (min-width: 960px) {
   .fx-tabs { margin: 0; border-radius: 14px 14px 0 0; }

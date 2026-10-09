@@ -1,5 +1,6 @@
 // QA: a local stand-in for Supabase with a signed-in user per role, so the role pages
-// (/team-members, /guardian, /dashboard, /dashboard/results, /match-plan, /training) can be
+// (/team-members, /guardian, /dashboard, /dashboard/results, /match-plan, /training) and the
+// public athlete page /players/p-1 can be
 // screenshotted without Staging. Never point it at a real project. Results from it are
 // "local mock", not Staging.
 //
@@ -31,6 +32,19 @@ const teams = [
   { id: 'team-2', name: 'โคราช U13', tournament_id: 't-1', status: 'pending', members: '', created_by: 'u-other', created_at: '2026-10-09', tournaments: { name: tournament.name, organizer_id: 'u-organizer', fee: 0 } },
 ]
 
+// One public athlete for /players/p-1: a rank row, this season's verified numbers and the
+// rating events behind them (form and match-by-match tabs). PAC and DEF are not assessed.
+const athlete = { user_id: 'u-athlete', display_name: 'ด.ช. ทดสอบ ใจสู้', position: 'FW', province: 'ขอนแก่น', height_cm: 152, weight_kg: 41, current_team: 'ขอนแก่น U13', bio: null, profile_image_url: null, verification_level: 'performance_verified' }
+const rank = { id: 'p-1', player_id: 'u-athlete', player_name: athlete.display_name, team: athlete.current_team, province: 'ขอนแก่น', position: 'FW', sport: 'football', season: '2026', ovr: 68, pts: 1046, pac: null, sho: 71, pas: 64, dri: 69, def: null }
+const rating = { id: 'r-1', power_rating: 1046, matches_played: 5, wins: 3, draws: 1, losses: 1, goals: 6, assists: 2, clean_sheets: 0, mvps: 1 }
+const ratingEvents = [
+  { created_at: '2026-10-24T10:30:00Z', result: 'win', rating_after: 1046, rating_change: 18, goals: 2, assists: 1, mvp: true, clean_sheet: false },
+  { created_at: '2026-10-24T08:30:00Z', result: 'loss', rating_after: 1028, rating_change: -14, goals: 0, assists: 0, mvp: false, clean_sheet: false },
+  { created_at: '2026-10-17T10:00:00Z', result: 'win', rating_after: 1042, rating_change: 21, goals: 3, assists: 0, mvp: false, clean_sheet: false },
+  { created_at: '2026-10-10T10:00:00Z', result: 'draw', rating_after: 1021, rating_change: 2, goals: 0, assists: 1, mvp: false, clean_sheet: false },
+  { created_at: '2026-10-03T10:00:00Z', result: 'win', rating_after: 1019, rating_change: 19, goals: 1, assists: 0, mvp: false, clean_sheet: false },
+]
+
 http.createServer((request, response) => {
   request.resume()
   request.on('end', () => {
@@ -51,6 +65,10 @@ http.createServer((request, response) => {
     const table = url.pathname.replace('/rest/v1/', '')
     if (table === 'profiles') return rows(me ? [{ id: me.id, role: me.role, onboarding_persona: me.persona, onboarding_completed_at: '2026-10-01', full_name: 'ผู้ทดสอบ' }] : [])
     if (table === 'tournaments') return rows([tournament])
+    if (table === 'player_ranks') return rows([rank])
+    if (table === 'player_ratings') return rows([rating])
+    if (table === 'rating_events') return rows(ratingEvents)
+    if (table === 'athlete_profiles') return rows([athlete])
     if (table === 'teams') return rows(role === 'coach' ? teams.slice(0, 1) : role === 'organizer' ? teams : [])
     send(200, [])
   })
