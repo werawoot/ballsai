@@ -53,7 +53,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
   const fixturesText = await getTranslations('fixtures')
 
   return (
-    <main className="bds-page" style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden' }}>
+    <main className="bds-page ui-matchday" style={{ minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* TOPBAR */}
       <PageHeader eyebrow={tl('dashboardLabels.eyebrow')} />
@@ -64,7 +64,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
         <div style={{ position: 'relative' }}>
           <h1 style={{ fontFamily: 'var(--font-oswald)', fontSize: 'clamp(28px,8vw,48px)', fontWeight: 700, color: 'white', lineHeight: 0.9, textTransform: 'uppercase' }}>
             {tl('dashboardLabels.heroTop')}<br />
-            <span style={{ WebkitTextStroke: '2px rgba(255,255,255,0.4)', color: 'transparent' }}>{tl('dashboardLabels.eyebrow')}</span>
+            <span style={{ color: '#ffd84d' }}>{tl('dashboardLabels.eyebrow')}</span>
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 10 }}>จัดการรายการแข่งขันของคุณ</p>
         </div>
@@ -84,10 +84,10 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
             { icon: <Clock size={20} color="#f59e0b" />, label: 'รอยืนยัน', value: stats.pending },
             { icon: <CheckCircle size={20} color="#16a34a" />, label: 'ยืนยันแล้ว', value: stats.confirmed },
           ].map((s, i) => (
-            <div key={i} style={{ background: 'white', borderRadius: 12, border: '1.5px solid #e5e5e5', padding: '14px 10px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+            <div key={i} style={{ background: 'var(--ui-card)', borderRadius: 12, border: '1.5px solid var(--ui-line)', padding: '14px 10px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>{s.icon}</div>
-              <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 700, color: '#111', lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', marginTop: 3 }}>{s.label}</div>
+              <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 700, color: 'var(--ui-text)', lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ui-mute)', marginTop: 3 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -118,17 +118,17 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
               {myTournaments.map(t => {
                 const { total: tTeamCount, pending: tPending } = teamCounts[t.id] ?? { total: 0, pending: 0 }
                 return (
-                  <div key={t.id} style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                  <div key={t.id} style={{ background: 'var(--ui-card)', borderRadius: 14, border: '1.5px solid var(--ui-line)', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                     <div style={{ height: 5, background: 'linear-gradient(90deg,#CC0001,#ff4444)' }} />
                     <div style={{ padding: '14px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <h3 style={{ fontSize: 15, fontWeight: 800, color: '#111', marginBottom: 6 }}>{t.name}</h3>
+                          <h3 style={{ fontSize: 15, fontWeight: 800, color: 'var(--ui-text)', marginBottom: 6 }}>{t.name}</h3>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#555' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ui-mute)' }}>
                               <MapPin size={12} color="#CC0001" /> {t.location}
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#555' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ui-mute)' }}>
                               <Calendar size={12} color="#CC0001" /> {t.start_date}
                             </div>
                           </div>
@@ -140,12 +140,12 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
                               {tPending} รอยืนยัน
                             </div>
                           )}
-                          <div style={{ background: t.status === 'open' ? '#dcfce7' : '#fee2e2', color: t.status === 'open' ? '#166534' : '#991b1b', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20 }}>
+                          <div style={{ background: t.status === 'open' ? 'var(--ui-sunk)' : 'var(--ui-sunk)', color: t.status === 'open' ? '#166534' : '#991b1b', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20 }}>
                             {t.status === 'open' ? 'เปิดรับสมัคร' : 'ปิดรับสมัคร'}
                           </div>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#f8f8f8', borderRadius: 8, padding: '8px 10px', fontSize: 12, fontWeight: 700, color: '#555' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--ui-sunk)', borderRadius: 8, padding: '8px 10px', fontSize: 12, fontWeight: 700, color: 'var(--ui-mute)' }}>
                         <Users size={14} color="#aaa" /> {tTeamCount} ทีม
                       </div>
                       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
@@ -164,9 +164,9 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
               <Pagination basePath="/dashboard" page={tournamentsPage} hasNext={tournamentsHasNext} params={{ pending: pendingPage > 1 ? String(pendingPage) : '' }} />
             </div>
           ) : (
-            <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: '32px', textAlign: 'center' }}>
+            <div style={{ background: 'var(--ui-card)', borderRadius: 14, border: '1.5px solid var(--ui-line)', padding: '32px', textAlign: 'center' }}>
               <Trophy size={40} color="#ddd" strokeWidth={1} style={{ marginBottom: 10 }} />
-              <p style={{ fontSize: 14, fontWeight: 700, color: '#aaa' }}>ยังไม่มีรายการแข่งขัน</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--ui-mute)' }}>ยังไม่มีรายการแข่งขัน</p>
               <Link href="/dashboard/create" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 14, background: '#CC0001', color: 'white', borderRadius: 20, padding: '8px 20px', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>
                 <Plus size={14} /> สร้างรายการแรก
               </Link>
@@ -176,9 +176,9 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
 
         {/* An empty queue still says where submitted teams will appear (Claude Desktop test, 8 Oct). */}
         {stats.pending === 0 && pendingPage === 1 && (
-          <div role="status" style={{ background: 'white', borderRadius: 14, border: '1.5px dashed #e5e5e5', padding: '16px 14px', marginBottom: 20, textAlign: 'center' }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#111', marginBottom: 4 }}>{tl('dashboardLabels.noPendingTitle')}</div>
-            <p style={{ fontSize: 12, color: '#888', margin: 0, lineHeight: 1.6 }}>{tl('dashboardLabels.noPendingText')}</p>
+          <div role="status" style={{ background: 'var(--ui-card)', borderRadius: 14, border: '1.5px dashed var(--ui-line)', padding: '16px 14px', marginBottom: 20, textAlign: 'center' }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--ui-text)', marginBottom: 4 }}>{tl('dashboardLabels.noPendingTitle')}</div>
+            <p style={{ fontSize: 12, color: 'var(--ui-mute)', margin: 0, lineHeight: 1.6 }}>{tl('dashboardLabels.noPendingText')}</p>
           </div>
         )}
 
@@ -195,14 +195,14 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
                 const payment = paymentsByTeam[team.id]
                 const action = approvalAction(team.tournaments?.fee, payment ?? null)
                 return (
-                  <div key={team.id} style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                  <div key={team.id} style={{ background: 'var(--ui-card)', borderRadius: 14, border: '1.5px solid var(--ui-line)', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                     <div style={{ height: 4, background: '#f59e0b' }} />
                     <div style={{ padding: '14px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 15, fontWeight: 800, color: '#111', marginBottom: 3 }}>{team.name}</div>
-                          <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{team.tournaments?.name}</div>
-                          <div style={{ fontSize: 12, color: '#aaa', lineHeight: 1.6 }}>{team.members}</div>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--ui-text)', marginBottom: 3 }}>{team.name}</div>
+                          <div style={{ fontSize: 12, color: 'var(--ui-mute)', marginBottom: 4 }}>{team.tournaments?.name}</div>
+                          <div style={{ fontSize: 12, color: 'var(--ui-mute)', lineHeight: 1.6 }}>{team.members}</div>
                         </div>
                         <div style={{ background: '#fef9c3', color: '#854d0e', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 20, flexShrink: 0 }}>
                           รอยืนยัน
@@ -212,26 +212,26 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
                       {/* PAYMENT SLIP */}
                       {payment ? (
                         <div style={{ marginBottom: 12 }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ui-mute)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
                             <ImageIcon size={13} /> หลักฐานการชำระเงิน
                           </div>
-                          <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '10px', marginBottom: 8 }}>
+                          <div style={{ background: 'var(--ui-sunk)', borderRadius: 10, padding: '10px', marginBottom: 8 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                              <span style={{ fontSize: 12, color: '#888' }}>ยอดชำระ</span>
+                              <span style={{ fontSize: 12, color: 'var(--ui-mute)' }}>ยอดชำระ</span>
                               <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, fontWeight: 700, color: '#CC0001' }}>฿{payment.amount?.toLocaleString()}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: 12, color: '#888' }}>สถานะ</span>
-                              <span style={{ fontSize: 11, fontWeight: 800, background: payment.status === 'confirmed' ? '#dcfce7' : '#fef9c3', color: payment.status === 'confirmed' ? '#16a34a' : '#854d0e', padding: '2px 8px', borderRadius: 20 }}>
+                              <span style={{ fontSize: 12, color: 'var(--ui-mute)' }}>สถานะ</span>
+                              <span style={{ fontSize: 11, fontWeight: 800, background: payment.status === 'confirmed' ? 'var(--ui-sunk)' : '#fef9c3', color: payment.status === 'confirmed' ? '#16a34a' : '#854d0e', padding: '2px 8px', borderRadius: 20 }}>
                                 {payment.status === 'confirmed' ? '✓ ยืนยันแล้ว' : '⏳ รอตรวจสอบ'}
                               </span>
                             </div>
                           </div>
 
                           {payment.slip_url && (
-                            <a href={`/api/payments/${payment.id}/slip`} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', border: '1.5px solid #e5e5e5' }}>
-                              <Image src={`/api/payments/${payment.id}/slip`} alt="slip" width={640} height={900} unoptimized style={{ width: '100%', maxHeight: 140, height: 'auto', objectFit: 'contain', display: 'block', background: '#f8f8f8' }} />
-                              <div style={{ background: '#f8f8f8', padding: '6px', textAlign: 'center', fontSize: 11, color: '#888', fontWeight: 600 }}>
+                            <a href={`/api/payments/${payment.id}/slip`} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', border: '1.5px solid var(--ui-line)' }}>
+                              <Image src={`/api/payments/${payment.id}/slip`} alt="slip" width={640} height={900} unoptimized style={{ width: '100%', maxHeight: 140, height: 'auto', objectFit: 'contain', display: 'block', background: 'var(--ui-sunk)' }} />
+                              <div style={{ background: 'var(--ui-sunk)', padding: '6px', textAlign: 'center', fontSize: 11, color: 'var(--ui-mute)', fontWeight: 600 }}>
                                 แตะเพื่อดูรูปขนาดเต็ม
                               </div>
                             </a>
@@ -239,8 +239,8 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
 
                         </div>
                       ) : (
-                        <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '12px', marginBottom: 12, textAlign: 'center' }}>
-                          <p style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>{action === 'confirmTeam' ? tl('dashboardLabels.freeNoSlip') : '⏳ ยังไม่ได้อัปโหลดสลิป'}</p>
+                        <div style={{ background: 'var(--ui-sunk)', borderRadius: 10, padding: '12px', marginBottom: 12, textAlign: 'center' }}>
+                          <p style={{ fontSize: 12, color: 'var(--ui-mute)', fontWeight: 600 }}>{action === 'confirmTeam' ? tl('dashboardLabels.freeNoSlip') : '⏳ ยังไม่ได้อัปโหลดสลิป'}</p>
                         </div>
                       )}
 

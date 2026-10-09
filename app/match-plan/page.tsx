@@ -34,7 +34,7 @@ export default async function MatchPlanPage(
   ])
 
   return (
-    <main className="bds-page" style={{ minHeight: '100vh', background: '#f7f7f5', paddingBottom: 56 }}>
+    <main className="bds-page ui-matchday" style={{ minHeight: '100vh', paddingBottom: 56 }}>
       <PageHeader back={{ href: '/dashboard', label: tl('dashboardLabels.back') }} />
 
       <section style={{ background: 'linear-gradient(118deg,#101827 0%,#203047 60%,#8d1014 140%)', color: 'white', padding: '34px 18px 41px', position: 'relative', overflow: 'hidden' }}>
@@ -47,10 +47,10 @@ export default async function MatchPlanPage(
       </section>
 
       <section style={{ maxWidth: 850, margin: '0 auto', padding: '22px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#394150', marginBottom: 14, fontSize: 12, fontWeight: 700 }}><ClipboardPenLine size={16} color="#CC0001" /> เลือกได้เฉพาะสมาชิกที่ตอบรับคำเชิญเข้าทีมแล้ว</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ui-mute)', marginBottom: 14, fontSize: 12, fontWeight: 700 }}><ClipboardPenLine size={16} color="#CC0001" /> เลือกได้เฉพาะสมาชิกที่ตอบรับคำเชิญเข้าทีมแล้ว</div>
         <MatchPlanTeamFilter scope={scope} search={search} />
         {search && teams.length === 0
-          ? <p style={{ background: '#fff', border: '1px solid #e0e4ea', borderRadius: 14, padding: 20, color: '#627084', margin: 0 }}>{t('empty')}</p>
+          ? <p style={{ background: 'var(--ui-card)', border: '1px solid var(--ui-line)', borderRadius: 14, padding: 20, color: 'var(--ui-mute)', margin: 0 }}>{t('empty')}</p>
           // Keyed by the list shown, so a new scope, search or page starts on its first team.
           : <MatchPlanClient key={`${scope}:${search}:${page}`} teams={teams as unknown as MatchPlanTeam[]} />}
         <Pagination basePath="/match-plan" page={page} hasNext={hasNext} params={{ scope, q: search }} />

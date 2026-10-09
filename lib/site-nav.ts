@@ -14,6 +14,8 @@
 // Kept free of React so every rule here can be tested directly.
 
 export type NavItemId = 'home' | 'discover' | 'tournaments' | 'notifications' | 'profile'
+  // Role tabs (owner, 9 Oct 2026): the bar belongs to the person's role. See ROLE_NAV.
+  | 'training' | 'card' | 'team' | 'kids' | 'plan' | 'manage' | 'results'
 
 export type NavItem = {
   id: NavItemId
@@ -40,6 +42,47 @@ export const NAV_ITEMS: readonly NavItem[] = [
     ],
   },
 ] as const
+
+// --- Role bars ---------------------------------------------------------------------
+//
+// Approved mockup, 9 Oct 2026: a signed-in athlete, guardian, coach or organizer sees a bar
+// whose first tab is their main job, with notifications and profile always kept. Venue
+// owners and sponsors keep the general bar until their own is designed. Profile owns every
+// route of the general Profile tab that a role tab does not claim, so nothing loses its tab.
+
+export type NavKind = 'athlete' | 'guardian' | 'coach' | 'organizer' | 'venue' | 'sponsor'
+
+const GENERAL_PROFILE = NAV_ITEMS.find(item => item.id === 'profile')!
+const NOTIFICATIONS = NAV_ITEMS.find(item => item.id === 'notifications')!
+const TOURNAMENTS = NAV_ITEMS.find(item => item.id === 'tournaments')!
+
+function roleBar(first: NavItem[], middle: NavItem[] = []): readonly NavItem[] {
+  const claimed = [...first, ...middle].flatMap(item => item.owns)
+  const profile: NavItem = { ...GENERAL_PROFILE, owns: GENERAL_PROFILE.owns.filter(prefix => !claimed.includes(prefix)) }
+  return [...first, ...middle, NOTIFICATIONS, profile]
+}
+
+export const ROLE_NAV: Readonly<Record<'athlete' | 'guardian' | 'coach' | 'organizer', readonly NavItem[]>> = {
+  athlete: roleBar([
+    { id: 'training', href: '/training', owns: ['/training'] },
+    { id: 'card', href: '/card', owns: ['/card', '/career'] },
+    { id: 'team', href: '/team-members', owns: ['/team-members'] },
+  ]),
+  guardian: roleBar([{ id: 'kids', href: '/guardian', owns: ['/guardian'] }], [TOURNAMENTS]),
+  coach: roleBar([
+    { id: 'team', href: '/team-members', owns: ['/team-members'] },
+    { id: 'plan', href: '/match-plan', owns: ['/match-plan'] },
+  ], [TOURNAMENTS]),
+  organizer: roleBar([
+    { id: 'manage', href: '/dashboard', owns: ['/dashboard'] },
+    { id: 'results', href: '/dashboard/results', owns: ['/dashboard/results'] },
+  ], [TOURNAMENTS]),
+}
+
+/** The bar for this person: their role's, or the general one when signed out or unknown. */
+export function navItemsFor(kind: NavKind | null | undefined): readonly NavItem[] {
+  return kind && kind in ROLE_NAV ? ROLE_NAV[kind as keyof typeof ROLE_NAV] : NAV_ITEMS
+}
 
 /** The platform ceiling. A test holds the list to it so a sixth tab cannot creep back in. */
 export const MAX_NAV_ITEMS = 5
@@ -83,11 +126,11 @@ export function showsSiteNav(pathname: string): boolean {
  * The tab to light for a route. `null` for pages that sit outside every tab -- terms,
  * privacy -- where lighting one would claim a location the user is not in.
  */
-export function activeNavItem(pathname: string): NavItemId | null {
-  if (pathname === '/') return 'home'
+export function activeNavItem(pathname: string, items: readonly NavItem[] = NAV_ITEMS): NavItemId | null {
+  if (pathname === '/') return items.some(item => item.id === 'home') ? 'home' : null
   // Longest matching prefix wins, so a more specific owner can never be shadowed.
   let best: { id: NavItemId; length: number } | null = null
-  for (const item of NAV_ITEMS) {
+  for (const item of items) {
     for (const prefix of item.owns) {
       if (isWithin(pathname, prefix) && (best === null || prefix.length > best.length)) {
         best = { id: item.id, length: prefix.length }

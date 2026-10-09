@@ -60,7 +60,7 @@ export default async function MatchResultsPage(
   const tournamentNames = data ? { [data.tournament.id]: data.tournament.name } : {}
 
   return (
-    <main className="bds-page mr-page">
+    <main className="bds-page mr-page ui-matchday">
       <PageHeader back={{ href: '/dashboard', label: tl('dashboardLabels.back') }} />
 
       <div className="mr-head">
@@ -80,11 +80,11 @@ export default async function MatchResultsPage(
       </div>
 
       {selectedId && !data && (
-        <p role="alert" style={{ margin: '14px 16px 0', background: '#fff0f0', borderLeft: '3px solid #d71920', color: '#9b1d27', fontSize: 13, padding: '10px 12px' }}>{t('notFound')}</p>
+        <p role="alert" style={{ margin: '14px 16px 0', background: 'var(--ui-sunk)', borderLeft: '3px solid #d71920', color: '#9b1d27', fontSize: 13, padding: '10px 12px' }}>{t('notFound')}</p>
       )}
 
       {data && <>
-        {data.unrecordableCount > 0 && <p role="note" style={{ margin: '8px 16px 0', fontSize: 12, color: '#8a5a12', background: '#fff6db', borderRadius: 8, padding: '8px 10px' }}>{t('unrecordable', { count: data.unrecordableCount })}</p>}
+        {data.unrecordableCount > 0 && <p role="note" style={{ margin: '8px 16px 0', fontSize: 12, color: '#8a5a12', background: 'var(--ui-sunk)', borderRadius: 8, padding: '8px 10px' }}>{t('unrecordable', { count: data.unrecordableCount })}</p>}
         {/* Keyed by tournament, so choosing another one starts the form afresh. */}
         <MatchResultForm
           key={data.tournament.id}
@@ -101,7 +101,7 @@ export default async function MatchResultsPage(
             tournamentNames={tournamentNames}
           />
           {data.matchResults.length >= RESULT_HISTORY_LIMIT && (
-            <p style={{ fontSize: 11, color: '#888', marginTop: 8 }}>{t('history', { count: RESULT_HISTORY_LIMIT })}</p>
+            <p style={{ fontSize: 11, color: 'var(--ui-mute)', marginTop: 8 }}>{t('history', { count: RESULT_HISTORY_LIMIT })}</p>
           )}
         </div>
       </>}

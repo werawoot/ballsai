@@ -6,7 +6,7 @@
 :root {
   --ui-red: #CC0001; --ui-red-hot: #e0171d; --ui-red-soft: #fde8e8;
   --ui-ink: #0b0f16; --ui-ink-2: #121821; --ui-ink-3: #1a2230; --ui-line-d: rgba(255,255,255,.1); --ui-mute-d: rgba(255,255,255,.64);
-  --ui-paper: #f6f3ee; --ui-card: #ffffff; --ui-line: #e7e2da; --ui-text: #111827; --ui-mute: #5b6472;
+  --ui-paper: #f6f3ee; --ui-sunk: #f4f1ec; --ui-ok: #166534; --ui-card: #ffffff; --ui-line: #e7e2da; --ui-text: #111827; --ui-mute: #5b6472;
   --ui-gold: #f4b942; --ui-green: #149a5a; --ui-blue: #2869d8;
   --ui-r-sm: 10px; --ui-r-md: 14px; --ui-r-lg: 20px;
 }
@@ -41,14 +41,17 @@
 .ui-chip.is-self { background: #eeebe5; color: #5b6472; }
 .ui-chip.is-warn { background: #fff3db; color: #8a5a00; }
 .ui-chip.is-red { background: var(--ui-red-soft); color: var(--ui-red); }
-.ui-dark .ui-chip.is-performance { background: rgba(20,154,90,.92); color: #fff; }
-.ui-dark .ui-chip.is-coach { background: rgba(40,105,216,.9); color: #fff; }
-.ui-dark .ui-chip.is-self { background: rgba(255,255,255,.14); color: #fff; }
-.ui-dark .ui-chip.is-warn { background: rgba(244,185,66,.2); color: #ffd98a; }
+.ui-dark .ui-chip.is-performance, .ui-matchday .ui-chip.is-performance { background: rgba(20,154,90,.92); color: #fff; }
+.ui-dark .ui-chip.is-coach, .ui-matchday .ui-chip.is-coach { background: rgba(40,105,216,.9); color: #fff; }
+.ui-dark .ui-chip.is-self, .ui-matchday .ui-chip.is-self { background: rgba(255,255,255,.14); color: #fff; }
+.ui-dark .ui-chip.is-warn, .ui-matchday .ui-chip.is-warn { background: rgba(244,185,66,.2); color: #ffd98a; }
+.ui-matchday .ui-chip.is-red { background: rgba(255,59,59,.18); color: #ff8a8a; }
 
 .ui-field { background: var(--ui-card); border: 1.5px solid var(--ui-line); border-radius: var(--ui-r-md); display: flex; flex-direction: column; padding: 8px 14px; }
 .ui-field > span { color: var(--ui-mute); font-size: 12px; font-weight: 700; }
 .ui-field input { background: transparent; border: 0; color: inherit; font: 700 16px var(--font-sarabun), sans-serif; min-height: 30px; min-width: 0; outline: none; padding: 0; }
+.ui-matchday .ui-field { background: rgba(255,255,255,.06); border-color: var(--ui-line-d); color: #fff; }
+.ui-matchday .ui-field > span { color: var(--ui-mute-d); }
 .ui-dark .ui-field { background: rgba(255,255,255,.06); border-color: var(--ui-line-d); color: #fff; }
 .ui-dark .ui-field > span { color: var(--ui-mute-d); }
 .ui-dark .ui-field input::placeholder { color: rgba(255,255,255,.32); }
@@ -69,6 +72,20 @@
 .ui-progress i.is-on { background: var(--ui-red-hot); }
 
 .ui-card { background: var(--ui-card); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); box-shadow: 0 10px 24px rgba(17,24,39,.05); }
+
+/* Matchday (approved mockup, 9 Oct 2026): the look of the signed-in role app. It re-points the
+   Paper tokens at a dark ground, so a page that uses the tokens turns dark by adding the
+   class; colours a page hard-codes need their own override next to the page's rules. The
+   home page never takes it (AGENTS.md rule 7). */
+.ui-matchday { --ui-ok: #4ade80; --ui-paper: #0a0d14; --ui-sunk: rgba(255,255,255,.05); --ui-card: #151a26; --ui-line: rgba(255,255,255,.09); --ui-text: #f4f6fb; --ui-mute: rgba(244,246,251,.68); --ui-red-soft: rgba(255,59,59,.16); }
+.bds-page.ui-matchday { background: radial-gradient(130% 460px at 50% -90px, #4a0a0d 0%, #0c0f17 64%, #07090f 100%) #07090f !important; color: var(--ui-text); }
+body:has(.bds-page.ui-matchday) { background: #07090f; }
+.ui-matchday .ui-eyebrow { color: #ff5a5a; }
+.ui-matchday .ui-num { font-style: italic; }
+.ui-matchday .ui-btn-primary { background: linear-gradient(90deg, #ff3b3b, #c80808); box-shadow: 0 10px 28px rgba(255,59,59,.35); }
+.ui-matchday .ui-btn-primary:hover:not(:disabled) { background: linear-gradient(90deg, #ff4d4d, #d60909); }
+.ui-matchday .ui-btn-ghost:hover:not(:disabled) { border-color: rgba(255,255,255,.32); }
+.ui-matchday .ui-card { background: linear-gradient(160deg, #181d2a, #10131b); box-shadow: 0 14px 30px rgba(0,0,0,.35); }
 
 @media (prefers-reduced-motion: reduce) { .ui-btn, .ui-option { transition: none; } }
 

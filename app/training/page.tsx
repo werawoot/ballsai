@@ -30,7 +30,7 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
   const enrolled = new Set(mine?.enrollments.map(item => item.program_id))
 
   return (
-    <main className="bds-page tr">
+    <main className="bds-page tr ui-matchday">
       <PageHeader back={{ href: '/profile', label: t('back') }} />
       <div className="tr-wrap">
         <p className="ui-eyebrow">{t('eyebrow', { season: ACTIVE_SEASON })}</p>

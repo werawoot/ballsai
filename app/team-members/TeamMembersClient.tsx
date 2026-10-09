@@ -75,7 +75,7 @@ export default function TeamMembersClient({ teams, invites, counts }: { teams: T
       {selected?.status === 'draft' && <RegisterSteps current={2} free={selectedFree} />}
       <p className="ui-eyebrow" style={{ letterSpacing: 0, textTransform: 'none', fontSize: 13, margin: 0 }}>{selected?.name}{selectedTournamentName ? ` · ${selectedTournamentName}` : ''}</p>
       <h2 className="ui-h1" style={{ margin: 0 }}>{(counts?.[selectedTeam]?.accepted ?? 0) + (counts?.[selectedTeam]?.pending ?? 0) === 0 ? t('inviteFirst') : t('invite')}</h2>
-      {teams.length > 1 && <select aria-label={t('team')} value={selectedTeam} onChange={e => setSelectedTeam(e.target.value)} style={{ width: '100%', padding: 11, borderRadius: 10, border: '1px solid #ddd' }}>
+      {teams.length > 1 && <select aria-label={t('team')} value={selectedTeam} onChange={e => setSelectedTeam(e.target.value)} style={{ width: '100%', padding: 11, borderRadius: 10, border: '1px solid var(--ui-line)' }}>
         {teams.map(team => <option key={team.id} value={team.id}>{team.name}</option>)}
       </select>}
       <label className="ui-field">
@@ -92,19 +92,19 @@ export default function TeamMembersClient({ teams, invites, counts }: { teams: T
       </div></div>}
     </section>}
 
-    {inviteState.length > 0 && <section style={{ background: 'white', borderRadius: 16, padding: 18, border: '1px solid #e5e7eb' }}>
+    {inviteState.length > 0 && <section style={{ background: 'var(--ui-card)', borderRadius: 16, padding: 18, border: '1px solid var(--ui-line)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, marginBottom: 12 }}><Users size={18} color="#CC0001" /> คำเชิญของฉัน</div>
       <div style={{ display: 'grid', gap: 10 }}>
-        {inviteState.map(invite => <div key={invite.id} style={{ display: 'grid', gap: 10, border: '1px solid #eee', borderRadius: 12, padding: 14 }}>
-          <div><strong>{invite.teams?.name ?? 'ทีมของคุณ'}</strong><div style={{ color: '#888', fontSize: 12 }}>{invite.status === 'pending' ? 'รอการตอบรับ' : invite.status === 'accepted' ? 'เข้าร่วมแล้ว' : 'ปฏิเสธแล้ว'}</div></div>
+        {inviteState.map(invite => <div key={invite.id} style={{ display: 'grid', gap: 10, border: '1px solid var(--ui-line)', borderRadius: 12, padding: 14 }}>
+          <div><strong>{invite.teams?.name ?? 'ทีมของคุณ'}</strong><div style={{ color: 'var(--ui-mute)', fontSize: 12 }}>{invite.status === 'pending' ? 'รอการตอบรับ' : invite.status === 'accepted' ? 'เข้าร่วมแล้ว' : 'ปฏิเสธแล้ว'}</div></div>
           {invite.status === 'pending' && <div style={{ display: 'grid', gap: 8, width: '100%' }}>
-            <p style={{ margin: 0, color: '#555', fontSize: 13, lineHeight: 1.6 }}>{tInvite('ifJoin')}<br />{tInvite('ifDecline')}</p>
+            <p style={{ margin: 0, color: 'var(--ui-mute)', fontSize: 13, lineHeight: 1.6 }}>{tInvite('ifJoin')}<br />{tInvite('ifDecline')}</p>
             <button type="button" className="ui-btn ui-btn-primary" onClick={() => respond(invite.id, 'accepted')}>{tInvite('join')}</button>
             <button type="button" className="ui-btn ui-btn-ghost" onClick={() => respond(invite.id, 'declined')}>{tInvite('decline')}</button>
           </div>}
         </div>)}
       </div>
-      {inviteMessage && <div style={{ marginTop: 12, background: inviteMessage.includes('ไม่สำเร็จ') ? '#fef2f2' : '#f0fdf4', color: inviteMessage.includes('ไม่สำเร็จ') ? '#b91c1c' : '#166534', borderRadius: 10, padding: '10px 12px', fontSize: 13, lineHeight: 1.5 }}>{inviteMessage}{inviteMessage.startsWith('รับคำเชิญแล้ว') && <Link href="/career" style={{ display: 'block', marginTop: 5, color: 'inherit', fontWeight: 800 }}>{tl('teamMembersLabels.passport')}</Link>}</div>}
+      {inviteMessage && <div style={{ marginTop: 12, background: inviteMessage.includes('ไม่สำเร็จ') ? 'var(--ui-sunk)' : 'var(--ui-card)', color: inviteMessage.includes('ไม่สำเร็จ') ? '#b91c1c' : '#166534', borderRadius: 10, padding: '10px 12px', fontSize: 13, lineHeight: 1.5 }}>{inviteMessage}{inviteMessage.startsWith('รับคำเชิญแล้ว') && <Link href="/career" style={{ display: 'block', marginTop: 5, color: 'inherit', fontWeight: 800 }}>{tl('teamMembersLabels.passport')}</Link>}</div>}
     </section>}
   </div>
 }

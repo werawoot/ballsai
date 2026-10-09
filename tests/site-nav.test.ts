@@ -308,8 +308,9 @@ describe('the styles that make it fit', () => {
     return css.slice(start, css.indexOf('}', start))
   }
 
-  it('lays five equal columns, so there is no content width to overflow', () => {
-    expect(rule('.bds-nav')).toContain('grid-template-columns:repeat(5,minmax(0,1fr))')
+  it('lays equal columns, one per tab (4 or 5 by role), so there is no content width to overflow', () => {
+    expect(rule('.bds-nav')).toContain('grid-auto-columns:minmax(0,1fr)')
+    expect(rule('.bds-nav')).toContain('grid-auto-flow:column')
     expect(rule('.bds-nav-item')).toContain('min-width:0')
   })
 

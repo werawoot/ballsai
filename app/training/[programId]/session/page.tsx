@@ -29,7 +29,7 @@ export default async function SessionPage(props: { params: Promise<{ programId: 
   const after = trainingProgress({ start: enrollment.start_date, weekdays: enrollment.weekdays, weeks: program.weeks, checkins: [...checkins, today], today })
 
   return (
-    <main className="bds-page tr">
+    <main className="bds-page tr ui-matchday">
       <PageHeader back={{ href: `/training/${program.id}`, label: say(program.title, locale) }} />
       <div className="tr-wrap tr-session">
         <SessionRunner

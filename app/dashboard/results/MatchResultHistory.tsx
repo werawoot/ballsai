@@ -54,23 +54,23 @@ export default function MatchResultHistory({
 
   if (matchResults.length === 0) {
     return (
-      <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+      <div style={{ background: 'var(--ui-card)', borderRadius: 14, border: '1.5px solid var(--ui-line)', padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#CC0001', textTransform: 'uppercase', marginBottom: 8 }}>
           <History size={17} /> ผลที่บันทึกไปแล้ว
         </div>
-        <p style={{ fontSize: 12, color: '#888', margin: 0 }}>ยังไม่มีผลแข่งที่บันทึกในรายการของคุณ</p>
+        <p style={{ fontSize: 12, color: 'var(--ui-mute)', margin: 0 }}>ยังไม่มีผลแข่งที่บันทึกในรายการของคุณ</p>
       </div>
     )
   }
 
   return (
-    <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #e5e5e5', padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+    <div style={{ background: 'var(--ui-card)', borderRadius: 14, border: '1.5px solid var(--ui-line)', padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: 'var(--font-oswald)', fontSize: 15, fontWeight: 700, color: '#CC0001', textTransform: 'uppercase', marginBottom: 12 }}>
         <History size={17} /> ผลที่บันทึกไปแล้ว
       </div>
 
       {message && (
-        <div style={{ background: message.kind === 'success' ? '#dcfce7' : '#fee2e2', color: message.kind === 'success' ? '#166534' : '#991b1b', borderRadius: 10, padding: '10px 12px', fontSize: 12, fontWeight: 700, lineHeight: 1.6, marginBottom: 12 }}>
+        <div style={{ background: message.kind === 'success' ? 'var(--ui-sunk)' : 'var(--ui-sunk)', color: message.kind === 'success' ? '#166534' : '#991b1b', borderRadius: 10, padding: '10px 12px', fontSize: 12, fontWeight: 700, lineHeight: 1.6, marginBottom: 12 }}>
           {message.text}
         </div>
       )}
@@ -79,23 +79,23 @@ export default function MatchResultHistory({
         {matchResults.map(result => {
           const isVoid = result.status === 'void'
           return (
-            <div key={result.id} style={{ border: '1.5px solid #eee', borderRadius: 12, padding: 12, background: isVoid ? '#fafafa' : 'white', opacity: isVoid ? 0.7 : 1 }}>
+            <div key={result.id} style={{ border: '1.5px solid var(--ui-line)', borderRadius: 12, padding: 12, background: isVoid ? 'var(--ui-card)' : 'white', opacity: isVoid ? 0.7 : 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: '#111', textDecoration: isVoid ? 'line-through' : 'none' }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--ui-text)', textDecoration: isVoid ? 'line-through' : 'none' }}>
                     {teamNames[result.team_a_id] ?? 'Team A'} {result.team_a_score} - {result.team_b_score} {teamNames[result.team_b_id] ?? 'Team B'}
                   </div>
-                  <div style={{ fontSize: 11, color: '#888', marginTop: 3 }}>
+                  <div style={{ fontSize: 11, color: 'var(--ui-mute)', marginTop: 3 }}>
                     {tournamentNames[result.tournament_id] ?? 'รายการแข่งขัน'} · {new Date(result.created_at).toLocaleDateString('th-TH')}
                   </div>
                 </div>
                 {isVoid ? (
-                  <span style={{ flex: '0 0 auto', background: '#f3f4f6', color: '#6b7280', borderRadius: 20, padding: '5px 11px', fontSize: 11, fontWeight: 800 }}>ยกเลิกแล้ว</span>
+                  <span style={{ flex: '0 0 auto', background: 'var(--ui-sunk)', color: 'var(--ui-mute)', borderRadius: 20, padding: '5px 11px', fontSize: 11, fontWeight: 800 }}>ยกเลิกแล้ว</span>
                 ) : (
                   <button
                     onClick={() => voidResult(result)}
                     disabled={Boolean(voidingId)}
-                    style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 5, background: 'white', color: '#CC0001', border: '1.5px solid #f2d0d0', borderRadius: 20, padding: '6px 12px', fontSize: 11, fontWeight: 800, cursor: voidingId ? 'default' : 'pointer' }}
+                    style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 5, background: 'var(--ui-card)', color: '#CC0001', border: '1.5px solid var(--ui-line)', borderRadius: 20, padding: '6px 12px', fontSize: 11, fontWeight: 800, cursor: voidingId ? 'default' : 'pointer' }}
                   >
                     {voidingId === result.id ? <Loader2 size={13} /> : <Undo2 size={13} />}
                     {voidingId === result.id ? 'กำลังยกเลิก...' : 'ยกเลิกผล'}

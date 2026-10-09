@@ -23,7 +23,7 @@ export default async function StartPage(props: { params: Promise<{ programId: st
   if (mine.enrollments.some(item => item.program_id === program.id)) redirect(`/training/${program.id}/session`)
 
   return (
-    <main className="bds-page tr">
+    <main className="bds-page tr ui-matchday">
       <PageHeader back={{ href: `/training/${program.id}`, label: say(program.title, locale) }} />
       <div className="tr-wrap tr-session">
         {!mine.available
