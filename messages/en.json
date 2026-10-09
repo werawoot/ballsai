@@ -2050,5 +2050,27 @@
       "title": "Where the data comes from",
       "text": "The label on the card says where: entered by me, confirmed by a coach, or confirmed by match results. Results confirmed by an organizer are the most trusted"
     }
+  },
+  "teamPage": {
+    "back": "My team",
+    "noTournament": "Team",
+    "loadFailed": "Some data did not load, so numbers may be incomplete. Reload the page.",
+    "unnamed": "Athlete",
+    "statsTitle": "Team stats",
+    "statsSource": "From organizer-confirmed results",
+    "colName": "Athlete",
+    "colMatches": "Matches",
+    "colGoals": "Goals",
+    "colAssists": "Assists",
+    "colMvps": "MVP",
+    "statsNote": "\"—\" means no confirmed result yet, not zero · Minutes played and training attendance come in a later round",
+    "noMembers": "No athlete on this team has accepted yet",
+    "inviteLink": "Invite athletes",
+    "sheetTitle": "Team sheet",
+    "sheetPrivacy": "This sheet holds names and positions only: no birth date, phone number or address",
+    "saveImage": "Save as image",
+    "savePdf": "Print / save PDF",
+    "imageFailed": "Could not save the image. Try the print button instead",
+    "open": "Stats and team sheet"
   }
 }

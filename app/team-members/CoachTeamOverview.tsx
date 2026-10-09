@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import type { AttestationState, CoachTeamView } from '@/lib/coach-team-overview'
 import CoachRosterActions from './CoachRosterActions'
 
@@ -10,7 +11,7 @@ const badge: Record<string, { label: string; background: string; color: string }
 // Read-only summary. Every roster mutation stays in TeamMembersClient, which calls the
 // guarded RPCs; this panel exists so a coach can see state and what to do next.
 export default function CoachTeamOverview({
-  teams, rosterError = false, attestations = {}, attestationError = false,
+  teams, rosterError = false, attestations = {}, attestationError = false, statsLabel,
 }: {
   teams: CoachTeamView[]
   /** The roster query failed. An empty roster and a failed lookup must not look alike. */
@@ -18,6 +19,8 @@ export default function CoachTeamOverview({
   /** Newest attestation state per athlete id, used to gate the attestation form. */
   attestations?: Record<string, AttestationState>
   attestationError?: boolean
+  /** Label of the link to the team's stats and team sheet (/team-members/[teamId]). */
+  statsLabel?: string
 }) {
   if (teams.length === 0) return null
 
@@ -31,6 +34,7 @@ export default function CoachTeamOverview({
         </span>
       </div>
 
+      {statsLabel && <Link href={`/team-members/${team.id}`} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, marginTop: 4, color: '#ff6b6b', fontSize: 14, fontWeight: 800, textDecoration: 'none' }}>{statsLabel} →</Link>}
       <p style={{ margin: '9px 0 0', fontSize: 12, fontWeight: 800, color: 'var(--ui-ok)' }}>ขั้นต่อไป: {team.nextAction}</p>
 
       <p style={{ margin: '8px 0 0', fontSize: 11, color: 'var(--ui-mute)' }}>
