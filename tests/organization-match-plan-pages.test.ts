@@ -96,4 +96,12 @@ describe('/match-plan', () => {
     expect(await render(MatchPlanPage, {})).toContain('My Lions')
     expect(await render(MatchPlanPage, { q: 'nothing like this' })).toContain('No teams here yet')
   })
+
+  it('shows a coach their team on a pitch board, without the organizer\'s team groups', async () => {
+    db.user = 'user-1'
+    db.tables = { profiles: [{ id: 'user-1', role: 'athlete', onboarding_persona: 'coach_organizer' }], teams }
+    const html = await render(MatchPlanPage, {})
+    expect(hrefs(html)).not.toContain('/match-plan?scope=organized')
+    expect(html).toContain('My Lions')
+  })
 })

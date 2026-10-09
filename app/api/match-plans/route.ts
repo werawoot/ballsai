@@ -52,11 +52,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'ข้อมูลแผนยาวเกินกำหนด' }, { status: 400 })
   }
 
+  // The pitch board sends the slot each starter stands in; keep it when every slot is a
+  // whole number 0-24 and none repeats, else number by list order as older pages did.
+  const slots = body.players.map(player => player.slot_order)
+  const keepSlots = slots.every(slot => Number.isInteger(slot) && slot! >= 0 && slot! <= 24) && new Set(slots).size === slots.length
   const players = body.players.map((player, index) => ({
     athlete_id: player.athlete_id,
     lineup_role: player.lineup_role,
     position: player.position,
-    slot_order: index,
+    slot_order: keepSlots ? player.slot_order! : index,
   }))
   const invalidPlayer = players.some(player => !validUuid(player.athlete_id ?? null) || !['starter', 'substitute'].includes(player.lineup_role ?? '') || !['GK', 'DF', 'MF', 'FW'].includes(player.position ?? ''))
   if (invalidPlayer) return NextResponse.json({ error: 'รายชื่อนักกีฬาในแผนไม่ถูกต้อง' }, { status: 400 })

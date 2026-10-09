@@ -28,7 +28,7 @@ export function qaSessionCookie(role) {
 
 const tournament = { id: 't-1', name: 'BallDoenSai ทดสอบรอบแรก', organizer_id: 'u-organizer', location: 'สนามกีฬากลาง ขอนแก่น', start_date: '2026-10-24', end_date: '2026-10-24', fee: 0, status: 'open', sport: 'football', season: '2026', max_teams: 8 }
 const teams = [
-  { id: 'team-1', name: 'ขอนแก่น U13', tournament_id: 't-1', status: 'pending', members: '', created_by: 'u-coach', created_at: '2026-10-09', tournaments: { name: tournament.name, organizer_id: 'u-organizer', fee: 0 } },
+  { id: '7e57a000-0000-4000-8000-000000000001', name: 'ขอนแก่น U13', tournament_id: 't-1', status: 'pending', members: '', created_by: 'u-coach', created_at: '2026-10-09', tournaments: { name: tournament.name, organizer_id: 'u-organizer', fee: 0 } },
   { id: 'team-2', name: 'โคราช U13', tournament_id: 't-1', status: 'pending', members: '', created_by: 'u-other', created_at: '2026-10-09', tournaments: { name: tournament.name, organizer_id: 'u-organizer', fee: 0 } },
 ]
 
@@ -69,6 +69,8 @@ http.createServer((request, response) => {
     if (table === 'player_ratings') return rows([rating])
     if (table === 'rating_events') return rows(ratingEvents)
     if (table === 'athlete_profiles') return rows([athlete])
+    // The coach's pitch board: an empty plan and four players who accepted the invite.
+    if (table === 'rpc/get_match_plan_safely') return send(200, { plan: null, roster: ['ด.ช. ก้อง ใจดี', 'ด.ช. บอส รักบอล', 'ด.ญ. ฟ้า ใสใจ', 'ด.ช. ต้น กล้าหาญ'].map((name, index) => ({ athlete_id: `a${index + 1}aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa`, display_name: name, profile_position: ['GK', 'DF', 'MF', 'FW'][index], lineup_role: null, position: null, slot_order: null })) })
     if (table === 'teams') return rows(role === 'coach' ? teams.slice(0, 1) : role === 'organizer' ? teams : [])
     send(200, [])
   })
