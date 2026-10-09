@@ -54,3 +54,17 @@ athlete whose invitation is still pending.
 5. Open as an unrelated user: the page/API must deny access.
 6. Confirm `/dashboard/results`, Rating, XP, and Career have not changed merely
    from saving the plan.
+
+## Pitch board (October 2026)
+
+`/match-plan` is a pitch board (`lib/match-plan-board.ts`, `app/match-plan/MatchPlanClient.tsx`):
+
+- Pick a formation, then tap a circle and pick a player, or drag: a circle anywhere on the
+  pitch, a player onto another to swap, a name from the lists onto the pitch, a starter onto
+  the bench. Holding a dragged name near the top or bottom of the screen scrolls the page.
+- A starter's `slot_order` is its slot. A dragged starter also has a point (`pos_x`, `pos_y`,
+  whole percent), stored by [`../sql/68-match-plan-free-positions-v1.sql`](../sql/68-match-plan-free-positions-v1.sql);
+  its position (DF/MF/FW) follows its height on the pitch, and slot 0 is always the keeper.
+  Before SQL68 the points are not stored and the board shows formation spots.
+- With no team yet, or nobody accepted, the coach plans a draft with typed names, kept only
+  in that browser (`localStorage`), never sent to the server.

@@ -39,4 +39,24 @@ describe('saving a match plan from the pitch board', () => {
     await save([{ athlete_id: A, lineup_role: 'starter', position: 'GK', slot_order: 30 }])
     expect(sent()).toEqual([0])
   })
+
+  it('passes a starter\'s point on the pitch through, and none for a substitute', async () => {
+    const response = await save([
+      { athlete_id: A, lineup_role: 'starter', position: 'FW', slot_order: 6, pos_x: 40, pos_y: 12 },
+      { athlete_id: B, lineup_role: 'substitute', position: 'MF', slot_order: 7 },
+    ])
+    expect(response.status).toBe(200)
+    expect(rpc.mock.calls[0][1].p_players).toEqual([
+      { athlete_id: A, lineup_role: 'starter', position: 'FW', slot_order: 6, pos_x: 40, pos_y: 12 },
+      { athlete_id: B, lineup_role: 'substitute', position: 'MF', slot_order: 7, pos_x: null, pos_y: null },
+    ])
+  })
+
+  it('refuses a point it cannot store, before the database is asked', async () => {
+    for (const bad of [{ pos_x: 40 }, { pos_x: 101, pos_y: 5 }, { pos_x: 4.5, pos_y: 5 }, { pos_x: '40', pos_y: 5 }]) {
+      expect((await save([{ athlete_id: A, lineup_role: 'starter', position: 'FW', slot_order: 0, ...bad }])).status).toBe(400)
+    }
+    expect((await save([{ athlete_id: B, lineup_role: 'substitute', position: 'MF', slot_order: 7, pos_x: 5, pos_y: 5 }])).status).toBe(400)
+    expect(rpc).not.toHaveBeenCalled()
+  })
 })

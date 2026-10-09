@@ -7,6 +7,8 @@ type LineupPlayer = {
   lineup_role?: 'starter' | 'substitute'
   position?: 'GK' | 'DF' | 'MF' | 'FW'
   slot_order?: number
+  pos_x?: number | null
+  pos_y?: number | null
 }
 
 type MatchPlanBody = {
@@ -61,7 +63,14 @@ export async function POST(request: Request) {
     lineup_role: player.lineup_role,
     position: player.position,
     slot_order: keepSlots ? player.slot_order! : index,
+    pos_x: player.pos_x ?? null,
+    pos_y: player.pos_y ?? null,
   }))
+  // A point on the pitch (sql/68): both or neither, whole percent 0-100, starters only.
+  const inPitch = (value: unknown) => Number.isInteger(value) && (value as number) >= 0 && (value as number) <= 100
+  const badPoint = players.some(player => (player.pos_x === null) !== (player.pos_y === null)
+    || (player.pos_x !== null && (!inPitch(player.pos_x) || !inPitch(player.pos_y) || player.lineup_role !== 'starter')))
+  if (badPoint) return NextResponse.json({ error: 'ตำแหน่งบนสนามไม่ถูกต้อง' }, { status: 400 })
   const invalidPlayer = players.some(player => !validUuid(player.athlete_id ?? null) || !['starter', 'substitute'].includes(player.lineup_role ?? '') || !['GK', 'DF', 'MF', 'FW'].includes(player.position ?? ''))
   if (invalidPlayer) return NextResponse.json({ error: 'รายชื่อนักกีฬาในแผนไม่ถูกต้อง' }, { status: 400 })
 
