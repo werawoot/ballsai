@@ -72,6 +72,11 @@ http.createServer((request, response) => {
     // The coach's pitch board: an empty plan and four players who accepted the invite.
     if (table === 'rpc/get_match_plan_safely') return send(200, { plan: null, roster: ['ด.ช. ก้อง ใจดี', 'ด.ช. บอส รักบอล', 'ด.ญ. ฟ้า ใสใจ', 'ด.ช. ต้น กล้าหาญ'].map((name, index) => ({ athlete_id: `a${index + 1}aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa`, display_name: name, profile_position: ['GK', 'DF', 'MF', 'FW'][index], lineup_role: null, position: null, slot_order: null })) })
     // QA_COACH_NO_TEAM=1: a coach who has not entered a team yet (the draft board).
+    // The coach's accepted members, for /team-members/[teamId] (stats and team sheet).
+    if (table === 'team_members' && role === 'coach') return rows([
+      { id: 'tm-1', team_id: teams[0].id, athlete_id: 'u-athlete', status: 'accepted', invited_at: '2026-10-09', athlete_profiles: { display_name: athlete.display_name, position: 'FW' } },
+      { id: 'tm-2', team_id: teams[0].id, athlete_id: 'u-keeper', status: 'accepted', invited_at: '2026-10-09', athlete_profiles: { display_name: 'ด.ช. ปาล์ม มือหนึ่ง', position: 'GK' } },
+    ])
     if (table === 'teams') return rows(role === 'coach' ? (process.env.QA_COACH_NO_TEAM ? [] : teams.slice(0, 1)) : role === 'organizer' ? teams : [])
     send(200, [])
   })

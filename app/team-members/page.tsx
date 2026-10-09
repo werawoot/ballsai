@@ -21,7 +21,7 @@ export default async function TeamMembersPage() {
   })
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/team-members')
-  const t = await getTranslations('teamRoster')
+  const [t, tp] = await Promise.all([getTranslations('teamRoster'), getTranslations('teamPage')])
   const [{ data: teams, error: teamsError }, { data: invites, error: invitesError }] = await Promise.all([
     supabase.from('teams').select('id, name, tournament_id, status, tournaments(name, fee)').eq('created_by', user.id).order('created_at', { ascending: false }),
     supabase.from('team_members').select('id, team_id, athlete_id, status, invited_at, teams(name)').eq('athlete_id', user.id).order('created_at', { ascending: false }),
@@ -83,5 +83,5 @@ export default async function TeamMembersPage() {
     {!teamsError && !invitesError && !teams?.length && !invites?.length ? <NoTeamYet /> : null}
     {/* The invitation form comes first: it is the step the coach is on (UX mockup v3-A). */}
     {teams?.length || invites?.length ? <TeamMembersClient teams={teams ?? []} invites={(invites ?? []) as never[]} counts={rosterError ? null : countsByTeam} /> : null}
-    <div style={{ marginTop: 16 }}><CoachTeamOverview teams={overview} rosterError={Boolean(rosterError)} attestations={attestationState} attestationError={Boolean(coachAttestationError)} /></div></div></main>
+    <div style={{ marginTop: 16 }}><CoachTeamOverview statsLabel={tp('open')} teams={overview} rosterError={Boolean(rosterError)} attestations={attestationState} attestationError={Boolean(coachAttestationError)} /></div></div></main>
 }
