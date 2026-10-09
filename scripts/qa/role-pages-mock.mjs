@@ -71,7 +71,8 @@ http.createServer((request, response) => {
     if (table === 'athlete_profiles') return rows([athlete])
     // The coach's pitch board: an empty plan and four players who accepted the invite.
     if (table === 'rpc/get_match_plan_safely') return send(200, { plan: null, roster: ['ด.ช. ก้อง ใจดี', 'ด.ช. บอส รักบอล', 'ด.ญ. ฟ้า ใสใจ', 'ด.ช. ต้น กล้าหาญ'].map((name, index) => ({ athlete_id: `a${index + 1}aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa`, display_name: name, profile_position: ['GK', 'DF', 'MF', 'FW'][index], lineup_role: null, position: null, slot_order: null })) })
-    if (table === 'teams') return rows(role === 'coach' ? teams.slice(0, 1) : role === 'organizer' ? teams : [])
+    // QA_COACH_NO_TEAM=1: a coach who has not entered a team yet (the draft board).
+    if (table === 'teams') return rows(role === 'coach' ? (process.env.QA_COACH_NO_TEAM ? [] : teams.slice(0, 1)) : role === 'organizer' ? teams : [])
     send(200, [])
   })
 }).listen(54322, '127.0.0.1', () => console.log('role pages mock on http://127.0.0.1:54322'))

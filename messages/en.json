@@ -866,7 +866,18 @@
     "invite": "Invite players",
     "noTeamsTitle": "No team yet",
     "noTeamsText": "Enter a team in a tournament and invite players, then come back here to plan.",
-    "noTeamsCta": "See open tournaments"
+    "noTeamsCta": "See open tournaments",
+    "draftTitle": "No player has accepted yet. Plan a draft now",
+    "draftText": "Type names and place them on the pitch. The draft stays on this device; once players accept the invite, place them and save to the team.",
+    "draftNoTeamTitle": "No team yet. Plan a draft now",
+    "draftNoTeamText": "Type names and place them on the pitch. The draft stays on this device; enter a team and invite players later.",
+    "addName": "Player name",
+    "addNamePlaceholder": "Type a player name",
+    "add": "Add",
+    "noNamesYet": "No names yet. Type one above and tap Add",
+    "saveDraft": "Save draft on this device",
+    "draftSaved": "Draft saved on this device",
+    "draftSaveFailed": "Could not save the draft: this browser blocks storage"
   },
   "fixtures": {
     "record": "Record result",

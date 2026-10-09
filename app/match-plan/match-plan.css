@@ -85,3 +85,17 @@
 .mp-sheet-group small { color: rgba(244,246,251,.6); flex: none; font-size: 12px; font-weight: 700; }
 
 @media (prefers-reduced-motion: reduce) { .mp-spin { animation: none; } }
+
+/* Draft mode: no team yet, or nobody accepted. Names typed by the coach, kept on this device. */
+.mp-draft { background: rgba(244,185,66,.1); border: 1px solid rgba(244,185,66,.32); border-radius: 14px; padding: 12px 14px; }
+.mp-draft b { color: #ffd98a; display: block; font-size: 15px; }
+.mp-draft p { color: var(--ui-text); font-size: 13.5px; line-height: 1.55; margin: 4px 0 6px; }
+.mp-draft a { align-items: center; color: #ffd98a; display: inline-flex; font-size: 14px; font-weight: 800; min-height: 44px; text-decoration: none; }
+.mp-draft .mp-msg { margin-top: 4px; }
+.mp-add { display: flex; gap: 8px; margin: 0 0 10px; }
+.mp-add input { background: rgba(255,255,255,.06); border: 1.5px solid var(--ui-line); border-radius: 12px; box-sizing: border-box; color: var(--ui-text); flex: 1; font: 16px var(--font-sarabun), sans-serif; min-height: 48px; min-width: 0; padding: 0 12px; }
+.mp-add input::placeholder { color: rgba(244,246,251,.4); }
+.mp-add .ui-btn { flex: none; min-height: 48px; width: auto; }
+.mp-sheet .mp-add { margin-top: 12px; }
+.mp-sheet .mp-add input { color: #f4f6fb; }
+.mp-sr { clip: rect(0 0 0 0); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BOARD_FORMATIONS, boardFromRoster, boardToPlayers, changeFormation, formationSlots, placePlayer, removePlayer, type BoardState } from '@/lib/match-plan-board'
+import { BOARD_FORMATIONS, boardFromRoster, boardToPlayers, changeFormation, formationSlots, placePlayer, removePlayer, type BoardState, draftKey, readDraft, writeDraft } from '@/lib/match-plan-board'
 
 const member = (id: string, role: 'starter' | 'substitute' | null = null, slot: number | null = null, position: 'GK' | 'DF' | 'MF' | 'FW' | null = null) => ({
   athlete_id: id, display_name: id, profile_position: null, lineup_role: role, position, slot_order: slot,
@@ -112,5 +112,37 @@ describe('the board saved as plan rows', () => {
     const state: BoardState = { formation: '2-3-1', slots: ['g', null, 'd', 'm1', null, 'm3', 'f'], bench: ['s'] }
     const rows = boardToPlayers(state).map(row => member(row.athlete_id, row.lineup_role, row.slot_order, row.position))
     expect(boardFromRoster(rows, '2-3-1')).toEqual(state)
+  })
+})
+
+describe('a draft plan kept on this device (no team or no accepted players yet)', () => {
+  const players = [{ id: 'draft-1', name: 'ก้อง' }, { id: 'draft-2', name: 'บอส' }, { id: 'draft-3', name: 'ฟ้า' }]
+
+  it('round-trips the board, the typed names and the notes', () => {
+    const draft = { board: { formation: '1-2-1', slots: ['draft-1', null, 'draft-2', null, null], bench: ['draft-3'] }, players, focus: 'กดดัน', talk: 'สู้ ๆ' }
+    expect(readDraft(writeDraft(draft))).toEqual(draft)
+  })
+
+  it('has no draft for nothing stored or something it cannot read', () => {
+    for (const raw of [null, '', 'not json', '{"board":1}', '[]']) expect(readDraft(raw)).toBeNull()
+  })
+
+  it('drops names it does not know, repeats and slots past the formation', () => {
+    const raw = JSON.stringify({ board: { formation: '1-2-1', slots: ['draft-1', 'ghost', 'draft-1', null, null, 'draft-2'], bench: ['draft-2', 'draft-2', 'ghost'] }, players, focus: '', talk: '' })
+    expect(readDraft(raw)!.board).toEqual({ formation: '1-2-1', slots: ['draft-1', null, null, null, null], bench: ['draft-2'] })
+  })
+
+  it('keeps names short and the squad within 25, and falls back to a known formation', () => {
+    const many = Array.from({ length: 40 }, (_, index) => ({ id: `draft-${index}`, name: 'x'.repeat(100) }))
+    const draft = readDraft(JSON.stringify({ board: { formation: 'banana', slots: [], bench: [] }, players: many, focus: '', talk: '' }))!
+    expect(draft.players).toHaveLength(25)
+    expect(draft.players[0].name).toHaveLength(60)
+    expect(draft.board.formation).toBe('2-3-1')
+    expect(draft.board.slots).toHaveLength(7)
+  })
+
+  it('is stored per team, with one key for a coach who has no team yet', () => {
+    expect(draftKey('team-1')).toBe('bds-match-plan-draft:team-1')
+    expect(draftKey('')).toBe('bds-match-plan-draft:no-team')
   })
 })

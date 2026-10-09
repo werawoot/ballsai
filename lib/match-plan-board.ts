@@ -90,3 +90,43 @@ export function boardToPlayers(state: BoardState, profilePositions: Record<strin
   })
   return [...starters, ...bench]
 }
+
+// A draft board for a coach with no team yet, or a team nobody has accepted: names typed by
+// the coach, kept only in this browser (localStorage), never sent anywhere. It becomes a real
+// plan once players accept and the coach places them. Read defensively: storage is the
+// viewer's to change.
+export type DraftPlayer = { id: string; name: string }
+export type DraftPlan = { board: BoardState; players: DraftPlayer[]; focus: string; talk: string }
+export const DRAFT_NAME_MAX = 60
+export const DRAFT_PLAYERS_MAX = 25
+
+export function draftKey(teamId: string) {
+  return `bds-match-plan-draft:${teamId || 'no-team'}`
+}
+
+export function writeDraft(draft: DraftPlan) {
+  return JSON.stringify(draft)
+}
+
+export function readDraft(raw: string | null): DraftPlan | null {
+  let value: unknown
+  try { value = JSON.parse(raw ?? '') } catch { return null }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  const draft = value as { board?: { formation?: unknown; slots?: unknown; bench?: unknown }; players?: unknown; focus?: unknown; talk?: unknown }
+  if (!draft.board || typeof draft.board !== 'object' || !Array.isArray(draft.players)) return null
+  const players: DraftPlayer[] = []
+  for (const item of draft.players as { id?: unknown; name?: unknown }[]) {
+    if (players.length >= DRAFT_PLAYERS_MAX) break
+    if (!item || typeof item.id !== 'string' || typeof item.name !== 'string' || !item.name.trim() || players.some(player => player.id === item.id)) continue
+    players.push({ id: item.id, name: item.name.trim().slice(0, DRAFT_NAME_MAX) })
+  }
+  const known = new Set(players.map(player => player.id))
+  const formation = typeof draft.board.formation === 'string' && (BOARD_FORMATIONS as readonly string[]).includes(draft.board.formation) ? draft.board.formation : DEFAULT_FORMATION
+  const used = new Set<string>()
+  const take = (id: unknown) => (typeof id === 'string' && known.has(id) && !used.has(id) ? (used.add(id), id) : null)
+  const savedSlots = Array.isArray(draft.board.slots) ? draft.board.slots : []
+  const slots = formationSlots(formation).map((_, index) => take(savedSlots[index]))
+  const bench = (Array.isArray(draft.board.bench) ? draft.board.bench : []).map(take).filter((id): id is string => id !== null)
+  const text = (value: unknown) => (typeof value === 'string' ? value.slice(0, 1000) : '')
+  return { board: { formation, slots, bench }, players, focus: text(draft.focus), talk: text(draft.talk) }
+}
