@@ -6,7 +6,7 @@ import th from '@/messages/th.json'
 
 // /team-members/[teamId]: only the coach who created the team sees it, numbers come from
 // confirmed results only, and the team sheet holds a name and a position.
-const db = vi.hoisted(() => ({ user: 'coach-1', tables: {} as Record<string, Record<string, unknown>[]> }))
+const db = vi.hoisted(() => ({ user: 'coach-1', tables: {} as Record<string, Record<string, unknown>[]>, missing: [] as string[] }))
 vi.mock('@/lib/supabase-server', () => ({ createServerSupabaseClient: async () => ({
   auth: { getUser: async () => ({ data: { user: { id: db.user } } }) },
   from: (table: string) => {
@@ -15,9 +15,11 @@ vi.mock('@/lib/supabase-server', () => ({ createServerSupabaseClient: async () =
       select: () => builder,
       eq: (column: string, value: unknown) => { rows = rows.filter(row => row[column] === value); return builder },
       in: (column: string, values: unknown[]) => { rows = rows.filter(row => values.includes(row[column])); return builder },
+      order: () => builder,
+      limit: () => builder,
       or: (filter: string) => { const ids = [...filter.matchAll(/team_[ab]_id\.eq\.([^,]+)/g)].map(m => m[1]); rows = rows.filter(row => ids.includes(row.team_a_id as string) || ids.includes(row.team_b_id as string)); return builder },
       maybeSingle: async () => ({ data: rows[0] ?? null, error: null }),
-      then: (resolve: (value: unknown) => unknown) => Promise.resolve({ data: rows, error: null }).then(resolve),
+      then: (resolve: (value: unknown) => unknown) => Promise.resolve(db.missing.includes(table) ? { data: null, error: { code: 'PGRST205', message: 'missing' } } : { data: rows, error: null }).then(resolve),
     }
     return builder
   },
@@ -36,6 +38,7 @@ const render = async () => renderToStaticMarkup(createElement(NextIntlClientProv
 
 const seed = () => {
   db.user = 'coach-1'
+  db.missing = []
   db.tables = {
     teams: [{ id: 'team-1', name: 'ขอนแก่น U13', tournament_id: 'cup', created_by: 'coach-1', tournaments: { name: 'BallDoenSai ทดสอบรอบแรก', start_date: '2026-10-24' } }],
     team_members: [
@@ -77,5 +80,22 @@ describe('/team-members/[teamId]', () => {
     seed()
     db.user = 'someone-else'
     await expect(render()).rejects.toThrow('not found')
+  })
+
+  it('offers the coach a skill rating per accepted member, with where each one stands (sql/69)', async () => {
+    seed()
+    db.tables.coach_skill_assessments = [{ team_id: 'team-1', athlete_id: 'a-ton', status: 'pending', created_at: '2026-10-09T00:00:00Z', speed: 70, stamina: null, strength: null, technique: null, vision: null }]
+    const html = await render()
+    expect(html).toContain(th.coachSkills.title)
+    expect(html).toContain(th.coachSkills.status.pending)
+    expect(html).toContain('คือยังไม่ประเมิน')
+  })
+
+  it('says the rating is not on yet, instead of failing, before SQL69 is applied', async () => {
+    seed()
+    db.missing = ['coach_skill_assessments']
+    const html = await render()
+    expect(html).toContain(th.coachSkills.notReady)
+    expect(html).toContain('ขอนแก่น U13')
   })
 })

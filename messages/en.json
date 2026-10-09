@@ -544,7 +544,13 @@
     "fixtureResultsMigrationMissing": "Moving fixtures on from results is not switched on during the beta",
     "fixtureAlreadyAdvanced": "This result sent a team into a later match that already has a result; void that later match first",
     "fixtureWinnerInvalid": "A winner can only be chosen for a drawn knockout match, from its two teams",
-    "fixturesPublishMigrationMissing": "Publishing fixtures is not switched on during the beta"
+    "fixturesPublishMigrationMissing": "Publishing fixtures is not switched on during the beta",
+    "tooManyRequests": "Too many requests. Please wait a moment",
+    "requestInvalid": "The request is not valid",
+    "notAllowed": "You are not allowed to do this",
+    "featureNotReady": "This feature is not switched on yet. Please contact the team",
+    "alreadyAnswered": "This was already answered. Please reload",
+    "actionFailed": "That did not work. Please check and try again"
   },
   "impact": {
     "back": "Home",
@@ -2071,6 +2077,32 @@
     "saveImage": "Save as image",
     "savePdf": "Print / save PDF",
     "imageFailed": "Could not save the image. Try the print button instead",
-    "open": "Stats and team sheet"
+    "open": "Stats and team sheet",
+    "coachChip": "Coach assessed"
+  },
+  "coachSkills": {
+    "title": "Skill assessment",
+    "pickAthlete": "Choose an athlete",
+    "lower": "Lower {skill}",
+    "raise": "Raise {skill}",
+    "rule": "\"—\" means not assessed · The athlete must accept before the numbers appear on their card as \"Coach assessed\"",
+    "send": "Send to the athlete to confirm",
+    "sending": "Sending…",
+    "sent": "Sent. Waiting for the athlete to accept",
+    "sendFailed": "Could not send the assessment",
+    "status": {
+      "pending": "Sent, waiting for the athlete",
+      "accepted": "Accepted by the athlete, now on their card",
+      "declined": "Declined by the athlete. Adjust and send again"
+    },
+    "notReady": "Coach skill assessment is not switched on yet",
+    "inboxTitle": "Your coach assessed your skills",
+    "inboxRule": "If you accept, the numbers appear on your card as \"Coach assessed\". If you decline, nobody sees them.",
+    "fromTeam": "From the coach of {team}",
+    "accept": "Accept",
+    "decline": "Decline",
+    "accepted": "Accepted. The numbers are on your card",
+    "declined": "Declined. Nothing changed",
+    "answerFailed": "Could not answer. Please try again"
   }
 }

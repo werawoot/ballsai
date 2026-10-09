@@ -1,11 +1,13 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import { BarChart3, ClipboardList } from 'lucide-react'
+import { BarChart3, ClipboardList, Gauge } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { teamMatchIds, teamSeasonStats, teamSheet, type MatchRow, type PerformanceRow, type RankLink, type TeamMember } from '@/lib/team-stats'
 import TeamSheetActions from './TeamSheetActions'
+import CoachSkillPanel, { type LatestProposal } from './CoachSkillPanel'
+import { COACH_SKILL_KEYS, latestProposals, type CoachSkills, type ProposalRow, type ProposalStatus } from '@/lib/coach-skills'
 import '../team-page.css'
 
 // One team, for the coach who created it: this season's numbers per member and the team
@@ -29,11 +31,14 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
   if (!team) notFound()
   const typedTeam = team as unknown as TeamRow
 
-  const [{ data: rosterRows, error: rosterError }, { data: matchRows, error: matchError }] = await Promise.all([
+  const [{ data: rosterRows, error: rosterError }, { data: matchRows, error: matchError }, { data: proposalRows, error: proposalError }] = await Promise.all([
     supabase.from('team_members').select('athlete_id, athlete_profiles(display_name, position)').eq('team_id', teamId).eq('status', 'accepted'),
     typedTeam.tournament_id
       ? supabase.from('match_results').select('id, team_a_id, team_b_id, status').eq('tournament_id', typedTeam.tournament_id).eq('status', 'confirmed').or(`team_a_id.eq.${teamId},team_b_id.eq.${teamId}`)
       : Promise.resolve({ data: [], error: null }),
+    // This coach's skill ratings for the team (sql/69; RLS shows the coach their own).
+    // Before SQL69 the table is missing and the panel says the feature is not on yet.
+    supabase.from('coach_skill_assessments').select('athlete_id, status, created_at, speed, stamina, strength, technique, vision').eq('team_id', teamId).order('created_at', { ascending: false }).limit(200),
   ])
   const roster: TeamMember[] = ((rosterRows ?? []) as unknown as RosterRow[]).map(row => ({
     athleteId: row.athlete_id,
@@ -52,6 +57,12 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
   const failed = Boolean(rosterError || matchError || performanceError)
   const dash = (value: number | null) => (value === null ? '—' : value)
   const tournamentName = typedTeam.tournaments?.name ?? null
+  const latest: Record<string, LatestProposal> = Object.fromEntries(Object.entries(latestProposals((proposalRows ?? []) as ProposalRow[])).map(([athleteId, row]) => [athleteId, {
+    status: row.status as ProposalStatus,
+    createdAt: row.created_at,
+    skills: Object.fromEntries(COACH_SKILL_KEYS.map(key => [key, row[key] ?? null])) as CoachSkills,
+  }]))
+  const ts = await getTranslations('coachSkills')
 
   return (
     <main className="bds-page ui-matchday tp">
@@ -76,6 +87,11 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
                 <p className="tp-note">{t('statsNote')}</p>
               </div>}
         </section>
+
+        {roster.length > 0 && <section className="tp-section" aria-labelledby="tp-skills">
+          <div className="tp-head"><h2 id="tp-skills"><Gauge size={18} aria-hidden="true" />{ts('title')}</h2><span className="ui-chip is-coach">{t('coachChip')}</span></div>
+          <CoachSkillPanel teamId={teamId} members={roster.map(member => ({ athleteId: member.athleteId, name: member.name }))} latest={latest} ready={!proposalError} />
+        </section>}
 
         <section className="tp-section" aria-labelledby="tp-sheet">
           <div className="tp-head"><h2 id="tp-sheet"><ClipboardList size={18} aria-hidden="true" />{t('sheetTitle')}</h2></div>
