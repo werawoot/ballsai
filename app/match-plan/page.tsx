@@ -1,4 +1,3 @@
-import { ClipboardPenLine } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import MatchPlanClient, { type MatchPlanTeam } from './MatchPlanClient'
@@ -34,21 +33,19 @@ export default async function MatchPlanPage(
   ])
 
   return (
-    <main className="bds-page ui-matchday" style={{ minHeight: '100vh', paddingBottom: 56 }}>
+    <main className="bds-page ui-matchday" style={{ minHeight: '100vh', paddingBottom: 24 }}>
       <PageHeader back={{ href: '/dashboard', label: tl('dashboardLabels.back') }} />
 
-      <section style={{ background: 'linear-gradient(118deg,#101827 0%,#203047 60%,#8d1014 140%)', color: 'white', padding: '34px 18px 41px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, opacity: .15, backgroundImage: 'repeating-linear-gradient(135deg, transparent 0 20px, white 20px 21px)' }} />
-        <div style={{ maxWidth: 850, margin: '0 auto', position: 'relative' }}>
-          <p style={{ color: '#f5c518', margin: 0, font: '800 11px var(--font-oswald)', letterSpacing: 1.4 }}>{tl('matchPlanPage.eyebrow')}</p>
-          <h1 style={{ margin: '9px 0 6px', font: '800 clamp(38px,8vw,68px)/.88 var(--font-oswald)', letterSpacing: -.5 }}>{tl('matchPlanPage.titleLine1')}<br /><span style={{ color: '#f5c518' }}>{tl('matchPlanPage.titleLine2')}</span></h1>
-          <p style={{ margin: 0, maxWidth: 510, color: 'rgba(255,255,255,.75)', fontSize: 13, lineHeight: 1.55 }}>{tl('matchPlanPage.intro')}</p>
-        </div>
+      <section className="mp-head">
+        <p className="ui-eyebrow">{tl('matchPlanPage.eyebrow')}</p>
+        <h1>{t('title')}</h1>
+        <p>{t('lead')}</p>
       </section>
 
-      <section style={{ maxWidth: 850, margin: '0 auto', padding: '22px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ui-mute)', marginBottom: 14, fontSize: 12, fontWeight: 700 }}><ClipboardPenLine size={16} color="#CC0001" /> เลือกได้เฉพาะสมาชิกที่ตอบรับคำเชิญเข้าทีมแล้ว</div>
-        <MatchPlanTeamFilter scope={scope} search={search} />
+      <section style={{ maxWidth: 720, margin: '0 auto', padding: '6px 16px 22px' }}>
+        {/* Team groups and search are for organizers, who see every team in their tournaments; a
+            coach with only their own team or two goes straight to the board. */}
+        {(organizes || search || hasNext || page > 1) && <MatchPlanTeamFilter scope={scope} search={search} showScopes={organizes} />}
         {search && teams.length === 0
           ? <p style={{ background: 'var(--ui-card)', border: '1px solid var(--ui-line)', borderRadius: 14, padding: 20, color: 'var(--ui-mute)', margin: 0 }}>{t('empty')}</p>
           // Keyed by the list shown, so a new scope, search or page starts on its first team.

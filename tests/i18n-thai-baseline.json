@@ -65,8 +65,6 @@
   "app/examples/LoadingModalExamples.tsx",
   "app/guardian/GuardianLinksClient.tsx",
   "app/login/LoginPanel.tsx",
-  "app/match-plan/MatchPlanClient.tsx",
-  "app/match-plan/page.tsx",
   "app/organization/OrganizationClient.tsx",
   "app/organization/invites/InviteClient.tsx",
   "app/organization/invites/page.tsx",
