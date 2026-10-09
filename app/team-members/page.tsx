@@ -6,6 +6,8 @@ import TeamMembersClient from './TeamMembersClient'
 import NoTeamYet from './NoTeamYet'
 import CoachTeamOverview from './CoachTeamOverview'
 import AthleteAttestationInbox from './AthleteAttestationInbox'
+import AthleteSkillInbox, { type SkillProposal } from './AthleteSkillInbox'
+import { COACH_SKILL_KEYS, type CoachSkills } from '@/lib/coach-skills'
 import {
   coachTeamOverview, latestAttestations,
   type AthleteAttestation, type AttestationRow, type CoachTeamRow, type RosterRow,
@@ -75,10 +77,26 @@ export default async function TeamMembersPage() {
       .in('team_id', teamIds)
       .order('created_at', { ascending: true })
     : { data: [], error: null }
+  // Skill ratings a coach sent this athlete (sql/69), waiting on them. Before SQL69 the
+  // table is missing: there is nothing to answer, so nothing is shown.
+  const { data: skillRows } = await supabase
+    .from('coach_skill_assessments')
+    .select('id, created_at, speed, stamina, strength, technique, vision, teams(name)')
+    .eq('athlete_id', user.id)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+    .limit(20)
+  const skillProposals: SkillProposal[] = ((skillRows ?? []) as unknown as (Record<string, unknown> & { id: string; created_at: string; teams: { name?: string } | null })[]).map(row => ({
+    id: row.id,
+    createdAt: row.created_at,
+    teamName: row.teams?.name ?? '',
+    skills: Object.fromEntries(COACH_SKILL_KEYS.map(key => [key, (row[key] as number | null) ?? null])) as CoachSkills,
+  }))
   const attestationState = latestAttestations(coachAttestationRows as AttestationRow[] | null)
   return <main className="bds-page ui-matchday" style={{ minHeight: '100vh' }}><PageHeader back={{ href: '/profile', label: 'โปรไฟล์' }} /><div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px 170px' }}><h1 className="ui-h1" style={{ marginBottom: 8 }}>{t('title')}</h1><p style={{ color: 'var(--ui-mute)', marginBottom: 14 }}>เชื่อมสมาชิกทีมกับบัญชีจริง เพื่อให้ผลแข่งและเส้นทางนักกีฬาถูกต้อง</p>{teams?.length ? <Link href="/match-plan" style={{ marginBottom: 20, background: '#101827', color: 'white', borderRadius: 10, padding: '11px 13px', display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}><ClipboardPenLine size={16} color="#f5c518" /> วางแผนก่อนแข่ง</Link> : null}{attestationError
       ? <p role="alert" style={{ margin: '0 0 16px', padding: '9px 11px', borderRadius: 9, background: 'var(--ui-sunk)', color: '#b91c1c', fontSize: 12, fontWeight: 700 }}>โหลดคำรับรองจากโค้ชไม่สำเร็จ กรุณาโหลดหน้าใหม่</p>
       : <AthleteAttestationInbox attestations={attestations} />}
+    <AthleteSkillInbox proposals={skillProposals} />
     {teamsError || invitesError ? <p role="alert" style={{ margin: '0 0 16px', padding: '9px 11px', borderRadius: 9, background: 'var(--ui-sunk)', color: '#b91c1c', fontSize: 13, fontWeight: 700 }}>{t('loadFailed')}</p> : null}
     {!teamsError && !invitesError && !teams?.length && !invites?.length ? <NoTeamYet /> : null}
     {/* The invitation form comes first: it is the step the coach is on (UX mockup v3-A). */}

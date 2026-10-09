@@ -39,3 +39,22 @@
   #team-sheet { background: #fff; border-radius: 0; left: 0; padding: 12mm; position: absolute; right: 0; top: 0; }
   .bds-nav, .bds-nav-spacer { display: none !important; }
 }
+
+/* Coach skill rating (sql/69): member chips, five rows of − / +, send for the athlete to accept. */
+.tp-skills { display: grid; gap: 10px; padding: 14px !important; }
+.tp-chips { display: flex; gap: 8px; margin: 0 -14px; overflow-x: auto; padding: 0 14px 2px; }
+.tp-chips button { background: rgba(255,255,255,.04); border: 1px solid var(--ui-line); border-radius: 99px; color: var(--ui-text); cursor: pointer; flex: none; font: 700 14px var(--font-sarabun), sans-serif; min-height: 44px; padding: 0 14px; }
+.tp-chips button.is-on { background: #fff; border-color: #fff; color: #0a0d14; }
+.tp-status { border-radius: 10px; font-size: 13.5px; font-weight: 700; margin: 0; padding: 8px 10px; }
+.tp-status.is-pending { background: rgba(244,185,66,.14); color: #ffd98a; }
+.tp-status.is-accepted { background: rgba(74,222,128,.14); color: var(--ui-ok); }
+.tp-status.is-declined { background: var(--ui-red-soft); color: #ff8a8a; }
+.tp-skill { align-items: center; display: grid; font-size: 14px; font-weight: 700; gap: 8px; grid-template-columns: 84px minmax(0, 1fr) 44px 44px 30px; }
+.tp-skill > span:first-child { color: var(--ui-text); }
+.tp-track { background: var(--ui-sunk); border-radius: 5px; height: 8px; overflow: hidden; }
+.tp-track i { background: linear-gradient(90deg, #c80808, #ff3b3b); display: block; height: 100%; }
+.tp-skill button { align-items: center; background: rgba(255,255,255,.05); border: 1px solid var(--ui-line); border-radius: 10px; color: var(--ui-text); cursor: pointer; display: flex; height: 44px; justify-content: center; }
+.tp-skill button:disabled { cursor: not-allowed; opacity: .4; }
+.tp-skill b { color: var(--ui-text); font-variant-numeric: tabular-nums; text-align: right; }
+.tp-ok { color: var(--ui-ok); font-size: 13.5px; font-weight: 700; margin: 0; }
+@media (max-width: 359px) { .tp-skill { grid-template-columns: 70px minmax(0, 1fr) 44px 44px 26px; gap: 6px; } }

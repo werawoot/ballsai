@@ -77,6 +77,8 @@ http.createServer((request, response) => {
       { id: 'tm-1', team_id: teams[0].id, athlete_id: 'u-athlete', status: 'accepted', invited_at: '2026-10-09', athlete_profiles: { display_name: athlete.display_name, position: 'FW' } },
       { id: 'tm-2', team_id: teams[0].id, athlete_id: 'u-keeper', status: 'accepted', invited_at: '2026-10-09', athlete_profiles: { display_name: 'ด.ช. ปาล์ม มือหนึ่ง', position: 'GK' } },
     ])
+    // Skill ratings (sql/69): the athlete has one waiting; the coach has none yet.
+    if (table === 'coach_skill_assessments') return rows(role === 'athlete' ? [{ id: 'cs-1', athlete_id: 'u-athlete', status: 'pending', created_at: '2026-10-09T08:00:00Z', speed: 75, stamina: null, strength: 60, technique: 70, vision: null, teams: { name: teams[0].name } }] : [])
     if (table === 'teams') return rows(role === 'coach' ? (process.env.QA_COACH_NO_TEAM ? [] : teams.slice(0, 1)) : role === 'organizer' ? teams : [])
     send(200, [])
   })

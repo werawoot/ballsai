@@ -15,6 +15,7 @@ function fakeClient() {
       eq: (column: string, value: unknown) => { rows = rows.filter(row => row[column] === value); return builder },
       in: (column: string, values: unknown[]) => { rows = rows.filter(row => values.includes(row[column])); return builder },
       order: () => builder,
+      limit: () => builder,
       then: (resolve: (value: unknown) => unknown) => Promise.resolve(db.failing.has(table) ? { data: null, error: { message: 'boom' } } : { data: rows, error: null }).then(resolve),
     }
     return builder
@@ -169,5 +170,31 @@ describe('/team-members when a lookup fails', () => {
     const html = await render()
     expect(html).toContain('โหลดข้อมูลทีมไม่สำเร็จ')
     expect(html).not.toContain('ยังไม่มีทีม')
+  })
+})
+
+describe('/team-members: a skill rating from the coach waits for the athlete (sql/69)', () => {
+  it('shows the pending rating with accept and decline, and says what each does', async () => {
+    db.user = 'u1'
+    db.failing = new Set()
+    db.tables = { teams: [], team_members: [invite], coach_attestations: [], coach_skill_assessments: [
+      { id: 'p1', athlete_id: 'u1', status: 'pending', created_at: '2026-10-09', speed: 70, stamina: null, strength: null, technique: 64, vision: null, teams: { name: 'ขอนแก่น U13' } },
+      { id: 'p2', athlete_id: 'u1', status: 'accepted', created_at: '2026-10-01', speed: 50, stamina: null, strength: null, technique: null, vision: null, teams: { name: 'ทีมเก่า' } },
+    ] }
+    const html = await render()
+    expect(html).toContain(th.coachSkills.inboxTitle)
+    expect(html).toContain('จากโค้ชทีม ขอนแก่น U13')
+    expect(html).toContain('>ยอมรับ<')
+    expect(html).toContain('>ไม่ยอมรับ<')
+    expect(html).not.toContain('ทีมเก่า')
+  })
+
+  it('shows nothing about ratings before SQL69 exists', async () => {
+    db.user = 'u1'
+    db.failing = new Set(['coach_skill_assessments'])
+    db.tables = { teams: [], team_members: [invite], coach_attestations: [] }
+    const html = await render()
+    expect(html).not.toContain(th.coachSkills.inboxTitle)
+    db.failing = new Set()
   })
 })
