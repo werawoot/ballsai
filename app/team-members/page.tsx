@@ -12,6 +12,9 @@ import MyNewsPanel, { type MyAnnouncementRow } from './MyNewsPanel'
 import MyTrainingPanel, { type MyPlanRow } from './MyTrainingPanel'
 import MyCoachNotesPanel, { type MyNoteRow } from './MyCoachNotesPanel'
 import MyMinutesPanel, { type MyMinutesRow } from './MyMinutesPanel'
+import StaffInvitesPanel from './StaffInvitesPanel'
+import MyTeamStaffPanel from './MyTeamStaffPanel'
+import type { MyStaffTeamRow, MyTeamStaffRow } from '@/lib/team-staff'
 import { planToday } from '@/lib/team-training'
 import { COACH_SKILL_KEYS, type CoachSkills } from '@/lib/coach-skills'
 import {
@@ -115,18 +118,27 @@ export default async function TeamMembersPage() {
   // Season minutes recorded by the coach (sql/74); nothing before SQL74.
   const { data: minuteRows, error: minutesError } = await supabase.rpc('my_match_minutes')
   const myMinutes = minutesError ? [] : ((minuteRows ?? []) as MyMinutesRow[])
+  // Assistant coaches (sql/75): this account's invitations and teams it helps coach, and
+  // the staff of the athlete's own teams. Nothing before SQL75.
+  const [{ data: staffTeamRows, error: staffTeamsError }, { data: teamStaffRows, error: teamStaffError }] = await Promise.all([
+    supabase.rpc('my_staff_teams'), supabase.rpc('my_team_staff'),
+  ])
+  const myStaffTeams = staffTeamsError ? [] : ((staffTeamRows ?? []) as MyStaffTeamRow[])
+  const myTeamStaff = teamStaffError ? [] : ((teamStaffRows ?? []) as MyTeamStaffRow[])
   const attestationState = latestAttestations(coachAttestationRows as AttestationRow[] | null)
   return <main className="bds-page ui-matchday" style={{ minHeight: '100vh' }}><PageHeader back={{ href: '/profile', label: 'โปรไฟล์' }} /><div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px 170px' }}><h1 className="ui-h1" style={{ marginBottom: 8 }}>{t('title')}</h1><p style={{ color: 'var(--ui-mute)', marginBottom: 14 }}>เชื่อมสมาชิกทีมกับบัญชีจริง เพื่อให้ผลแข่งและเส้นทางนักกีฬาถูกต้อง</p>{teams?.length ? <Link href="/match-plan" style={{ marginBottom: 20, background: '#101827', color: 'white', borderRadius: 10, padding: '11px 13px', display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}><ClipboardPenLine size={16} color="#f5c518" /> วางแผนก่อนแข่ง</Link> : null}{attestationError
       ? <p role="alert" style={{ margin: '0 0 16px', padding: '9px 11px', borderRadius: 9, background: 'var(--ui-sunk)', color: '#b91c1c', fontSize: 12, fontWeight: 700 }}>โหลดคำรับรองจากโค้ชไม่สำเร็จ กรุณาโหลดหน้าใหม่</p>
       : <AthleteAttestationInbox attestations={attestations} />}
+    <StaffInvitesPanel rows={myStaffTeams} />
     <MyNewsPanel rows={myNews} />
     <MyCoachNotesPanel rows={coachNotes} viewerId={user.id} />
     <MyMinutesPanel rows={myMinutes} viewerId={user.id} />
     <MyTrainingPanel rows={myPlans} thisWeek={planDay.thisWeek} today={planDay.today} />
     <MyEventsPanel rows={myEvents} viewerId={user.id} />
     <AthleteSkillInbox proposals={skillProposals} />
+    <MyTeamStaffPanel rows={myTeamStaff} />
     {teamsError || invitesError ? <p role="alert" style={{ margin: '0 0 16px', padding: '9px 11px', borderRadius: 9, background: 'var(--ui-sunk)', color: '#b91c1c', fontSize: 13, fontWeight: 700 }}>{t('loadFailed')}</p> : null}
-    {!teamsError && !invitesError && !teams?.length && !invites?.length ? <NoTeamYet /> : null}
+    {!teamsError && !invitesError && !teams?.length && !invites?.length && !myStaffTeams.length ? <NoTeamYet /> : null}
     {/* The invitation form comes first: it is the step the coach is on (UX mockup v3-A). */}
     {teams?.length || invites?.length ? <TeamMembersClient teams={teams ?? []} invites={(invites ?? []) as never[]} counts={rosterError ? null : countsByTeam} /> : null}
     <div style={{ marginTop: 16 }}><CoachTeamOverview statsLabel={tp('open')} teams={overview} rosterError={Boolean(rosterError)} attestations={attestationState} attestationError={Boolean(coachAttestationError)} /></div></div></main>

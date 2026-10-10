@@ -4,7 +4,7 @@ import { NextIntlClientProvider, createTranslator } from 'next-intl'
 import { describe, expect, it, vi } from 'vitest'
 import th from '@/messages/th.json'
 
-const db = vi.hoisted(() => ({ persona: 'guardian' as string | null, events: null as Record<string, unknown>[] | null, news: null as Record<string, unknown>[] | null, plans: null as Record<string, unknown>[] | null, notes: null as Record<string, unknown>[] | null, minutes: null as Record<string, unknown>[] | null }))
+const db = vi.hoisted(() => ({ persona: 'guardian' as string | null, events: null as Record<string, unknown>[] | null, news: null as Record<string, unknown>[] | null, plans: null as Record<string, unknown>[] | null, notes: null as Record<string, unknown>[] | null, minutes: null as Record<string, unknown>[] | null, staff: null as Record<string, unknown>[] | null }))
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
@@ -16,7 +16,7 @@ function fakeClient() {
   // my_upcoming_team_events (sql/70) and my_team_announcements (sql/71): missing until
   // the file is applied, unless a test seeds rows.
   const rpc = async (name: string) => {
-    const rows = ({ my_upcoming_team_events: db.events, my_team_announcements: db.news, my_team_training_plans: db.plans, my_coach_notes: db.notes, my_match_minutes: db.minutes } as Record<string, Record<string, unknown>[] | null>)[name] ?? null
+    const rows = ({ my_upcoming_team_events: db.events, my_team_announcements: db.news, my_team_training_plans: db.plans, my_coach_notes: db.notes, my_match_minutes: db.minutes, my_team_staff: db.staff } as Record<string, Record<string, unknown>[] | null>)[name] ?? null
     return rows ? { data: rows, error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } }
   }
   return { from, rpc, auth: { getUser: async () => ({ data: { user: { id: 'me', email: 'parent@example.com' } } }) } }
@@ -139,3 +139,15 @@ describe('/guardian minutes played (sql/74)', () => {
   })
 })
 
+
+describe('/guardian team staff (sql/75)', () => {
+  it("shows every adult on the child's team staff, head coach first", async () => {
+    db.persona = 'guardian'
+    db.staff = [{ team_id: 't1', team_name: 'ขอนแก่น U13', name: 'โค้ชเล็ก', is_head: false }, { team_id: 't1', team_name: 'ขอนแก่น U13', name: 'โค้ชใหญ่', is_head: true }]
+    const html = await render(GuardianPage as () => Promise<ReactElement>)
+    db.staff = null
+    expect(html).toContain(th.teamStaff.familyTitle)
+    expect(html.indexOf('โค้ชใหญ่')).toBeLessThan(html.indexOf('โค้ชเล็ก'))
+    expect(html).toContain(th.teamStaff.familyNote)
+  })
+})

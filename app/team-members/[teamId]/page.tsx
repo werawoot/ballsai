@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { BarChart3, CalendarDays, ClipboardList, Dumbbell, Gauge, Megaphone, NotebookPen, Timer } from 'lucide-react'
+import { BarChart3, CalendarDays, ClipboardList, Dumbbell, Gauge, Megaphone, NotebookPen, Timer, UsersRound } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { teamMatchIds, teamSeasonStats, teamSheet, type MatchRow, type PerformanceRow, type RankLink, type TeamMember } from '@/lib/team-stats'
@@ -13,13 +13,15 @@ import TeamNewsPanel, { type SentAnnouncement } from './TeamNewsPanel'
 import TeamTrainingPanel from './TeamTrainingPanel'
 import CoachNotesPanel, { type CoachNote } from './CoachNotesPanel'
 import MatchMinutesPanel, { type MinutesMatch } from './MatchMinutesPanel'
+import TeamStaffPanel from './TeamStaffPanel'
+import type { StaffRow } from '@/lib/team-staff'
 import { minutesTotals, type MinuteEntry } from '@/lib/match-minutes'
 import { eventTimeParts } from '@/lib/team-events'
 import { addWeeks, libraryDrills, weekStartOf, weekdayOf, type PlanDay } from '@/lib/team-training'
 import { attendanceOpen, attendanceRates, splitEvents, type EventKind } from '@/lib/team-events'
 import '../team-page.css'
 
-// One team, for the coach who created it: this season's numbers per member and the team
+// One team, for its staff (sql/75: the coach who created it, or an accepted assistant): this season's numbers per member and the team
 // sheet to send an organizer or share in LINE (lib/team-stats). Reads only what RLS already
 // lets the coach see, through indexed lookups: the tournament's matches
 // (match_results_tournament_created_idx), then the performances of those matches
@@ -38,29 +40,44 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
   const t = await getTranslations('teamPage')
 
   const { data: team } = await supabase.from('teams').select('id, name, tournament_id, tournaments(name, start_date)').eq('id', teamId).eq('created_by', user.id).maybeSingle()
-  if (!team) notFound()
-  const typedTeam = team as unknown as TeamRow
+  // The head coach reads their own team row. An accepted assistant (sql/75) cannot read
+  // teams and gets the same fields through team_for_staff; before SQL75 that is missing
+  // and only the head coach gets in.
+  const isHead = Boolean(team)
+  let staffTeam: TeamRow | null = null
+  if (!isHead) {
+    const { data: staffRows } = await supabase.rpc('team_for_staff', { p_team_id: teamId })
+    const row = ((staffRows ?? []) as { id: string; name: string; tournament_id: string | null; tournament_name: string | null; start_date: string | null }[])[0]
+    if (row) staffTeam = { id: row.id, name: row.name, tournament_id: row.tournament_id, tournaments: row.tournament_name ? { name: row.tournament_name, start_date: row.start_date } : null }
+  }
+  if (!team && !staffTeam) notFound()
+  const typedTeam = (team as unknown as TeamRow | null) ?? (staffTeam as TeamRow)
+  // Coach notes and skill ratings are the head coach's alone: an assistant's page never
+  // asks for them, whatever RLS would answer.
+  const headOnly = <T,>(query: PromiseLike<T>) => (isHead ? query : Promise.resolve({ data: [], error: null }))
 
   const now = Date.now()
   const thisWeek = weekStartOf(now), nextWeek = addWeeks(thisWeek, 1)
-  const [{ data: rosterRows, error: rosterError }, { data: matchRows, error: matchError }, { data: proposalRows, error: proposalError }, { data: noteRows, error: noteError }, { data: planRows, error: planError }, { data: newsRows, error: newsError }, { data: eventRows, error: eventError }] = await Promise.all([
+  const [{ data: rosterRows, error: rosterError }, { data: matchRows, error: matchError }, { data: proposalRows, error: proposalError }, { data: noteRows, error: noteError }, { data: planRows, error: planError }, { data: newsRows, error: newsError }, { data: eventRows, error: eventError }, { data: staffRows, error: staffError }] = await Promise.all([
     supabase.from('team_members').select('athlete_id, athlete_profiles(display_name, position)').eq('team_id', teamId).eq('status', 'accepted'),
     typedTeam.tournament_id
       ? supabase.from('match_results').select('id, team_a_id, team_b_id, status, team_a_score, team_b_score, created_at').eq('tournament_id', typedTeam.tournament_id).eq('status', 'confirmed').or(`team_a_id.eq.${teamId},team_b_id.eq.${teamId}`)
       : Promise.resolve({ data: [], error: null }),
     // This coach's skill ratings for the team (sql/69; RLS shows the coach their own).
     // Before SQL69 the table is missing and the panel says the feature is not on yet.
-    supabase.from('coach_skill_assessments').select('athlete_id, status, created_at, speed, stamina, strength, technique, vision').eq('team_id', teamId).order('created_at', { ascending: false }).limit(200),
+    headOnly(supabase.from('coach_skill_assessments').select('athlete_id, status, created_at, speed, stamina, strength, technique, vision').eq('team_id', teamId).order('created_at', { ascending: false }).limit(200)),
     // Team events from 30 days back (sql/70; team_events_team_starts_idx). The save
     // function caps a team at 200 upcoming events, so this read is bounded too.
     // This coach's notes about current members (sql/73; RLS hides notes about anyone who
     // left the team and anything expired). coach_athlete_notes_team_idx.
-    supabase.from('coach_athlete_notes').select('id, athlete_id, category, body, created_at, expires_at').eq('team_id', teamId).order('created_at', { ascending: false }).limit(300),
+    headOnly(supabase.from('coach_athlete_notes').select('id, athlete_id, category, body, created_at, expires_at').eq('team_id', teamId).order('created_at', { ascending: false }).limit(300)),
     // This week's and next week's plan (sql/72; primary key team_id, week_start).
     supabase.from('team_training_plans').select('week_start, days').eq('team_id', teamId).in('week_start', [thisWeek, nextWeek]),
     // The coach's last ten announcements (sql/71; team_announcements_team_created_idx).
     supabase.from('team_announcements').select('id, body, created_at, to_athletes, to_guardians').eq('team_id', teamId).order('created_at', { ascending: false }).limit(10),
     supabase.from('team_events').select('id, kind, title, starts_at, location, cancelled_at').eq('team_id', teamId).gte('starts_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()).order('starts_at', { ascending: true }).limit(250),
+    // The head coach and up to three assistants (sql/75; at most 10 rows).
+    supabase.rpc('team_staff_list', { p_team_id: teamId }),
   ])
   const roster: TeamMember[] = ((rosterRows ?? []) as unknown as RosterRow[]).map(row => ({
     athleteId: row.athlete_id,
@@ -156,7 +173,9 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     createdAt: row.created_at,
     skills: Object.fromEntries(COACH_SKILL_KEYS.map(key => [key, row[key] ?? null])) as CoachSkills,
   }]))
-  const [ts, te, tn, tt, tc, tm] = await Promise.all([getTranslations('coachSkills'), getTranslations('teamEvents'), getTranslations('teamNews'), getTranslations('teamTraining'), getTranslations('coachNotes'), getTranslations('matchMinutes')])
+  const [ts, te, tn, tt, tc, tm, tf] = await Promise.all([getTranslations('coachSkills'), getTranslations('teamEvents'), getTranslations('teamNews'), getTranslations('teamTraining'), getTranslations('coachNotes'), getTranslations('matchMinutes'), getTranslations('teamStaff')])
+  const showSkills = isHead && roster.length > 0
+  const showNotes = isHead && roster.length > 0
 
   return (
     <main className="bds-page ui-matchday tp">
@@ -169,7 +188,7 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
         <section className="tp-section" aria-labelledby="tp-stats">
           <div className="tp-head"><h2 id="tp-stats"><BarChart3 size={18} aria-hidden="true" />{t('statsTitle')}</h2><span className="ui-chip is-performance">{t('statsSource')}</span></div>
           {roster.length === 0
-            ? <p className="tp-empty">{t('noMembers')} <Link href="/team-members">{t('inviteLink')}</Link></p>
+            ? <p className="tp-empty">{t('noMembers')} {isHead && <Link href="/team-members">{t('inviteLink')}</Link>}</p>
             : <div className="ui-card tp-table-card">
                 <table className="tp-table">
                   <thead><tr><th scope="col">{t('colName')}</th><th scope="col">{t('colMatches')}</th><th scope="col">{t('colGoals')}</th><th scope="col">{t('colAssists')}</th><th scope="col">{t('colMvps')}</th><th scope="col">{te('colAttendance')}</th><th scope="col">{tm('colMinutes')}</th></tr></thead>
@@ -197,7 +216,7 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
           <TeamEventsPanel teamId={teamId} members={roster.map(member => ({ athleteId: member.athleteId, name: member.name }))} upcoming={split.upcoming.map(toPanel)} past={split.past.map(toPanel)} ready={!eventError} />
         </section>
 
-        {roster.length > 0 && <section className="tp-section" aria-labelledby="tp-skills">
+        {showSkills && <section className="tp-section" aria-labelledby="tp-skills">
           <div className="tp-head"><h2 id="tp-skills"><Gauge size={18} aria-hidden="true" />{ts('title')}</h2><span className="ui-chip is-coach">{t('coachChip')}</span></div>
           <CoachSkillPanel teamId={teamId} members={roster.map(member => ({ athleteId: member.athleteId, name: member.name }))} latest={latest} ready={!proposalError} />
         </section>}
@@ -207,10 +226,15 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
           <MatchMinutesPanel teamId={teamId} members={roster.map(member => ({ athleteId: member.athleteId, name: member.name }))} matches={minutesMatches} ready={!sheetError} />
         </section>}
 
-        {roster.length > 0 && <section className="tp-section" aria-labelledby="tp-notes">
+        {showNotes && <section className="tp-section" aria-labelledby="tp-notes">
           <div className="tp-head"><h2 id="tp-notes"><NotebookPen size={18} aria-hidden="true" />{tc('title')}</h2><span className="ui-chip is-coach">{t('coachChip')}</span></div>
           <CoachNotesPanel teamId={teamId} members={roster.map(member => ({ athleteId: member.athleteId, name: member.name }))} notes={notes} ready={!noteError} />
         </section>}
+
+        <section className="tp-section" aria-labelledby="tp-staff">
+          <div className="tp-head"><h2 id="tp-staff"><UsersRound size={18} aria-hidden="true" />{tf('title')}</h2></div>
+          <TeamStaffPanel teamId={teamId} rows={(staffRows ?? []) as StaffRow[]} isHead={isHead} ready={!staffError} />
+        </section>
 
         <section className="tp-section" aria-labelledby="tp-sheet">
           <div className="tp-head"><h2 id="tp-sheet"><ClipboardList size={18} aria-hidden="true" />{t('sheetTitle')}</h2></div>
