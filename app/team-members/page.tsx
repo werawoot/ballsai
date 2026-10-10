@@ -11,6 +11,7 @@ import MyEventsPanel, { type MyEventRow } from './MyEventsPanel'
 import MyNewsPanel, { type MyAnnouncementRow } from './MyNewsPanel'
 import MyTrainingPanel, { type MyPlanRow } from './MyTrainingPanel'
 import MyCoachNotesPanel, { type MyNoteRow } from './MyCoachNotesPanel'
+import MyMinutesPanel, { type MyMinutesRow } from './MyMinutesPanel'
 import { planToday } from '@/lib/team-training'
 import { COACH_SKILL_KEYS, type CoachSkills } from '@/lib/coach-skills'
 import {
@@ -111,12 +112,16 @@ export default async function TeamMembersPage() {
   // Coach notes about the athlete or the children this guardian may act for (sql/73).
   const { data: noteRows, error: notesError } = await supabase.rpc('my_coach_notes', { p_limit: 50 })
   const coachNotes = notesError ? [] : ((noteRows ?? []) as MyNoteRow[])
+  // Season minutes recorded by the coach (sql/74); nothing before SQL74.
+  const { data: minuteRows, error: minutesError } = await supabase.rpc('my_match_minutes')
+  const myMinutes = minutesError ? [] : ((minuteRows ?? []) as MyMinutesRow[])
   const attestationState = latestAttestations(coachAttestationRows as AttestationRow[] | null)
   return <main className="bds-page ui-matchday" style={{ minHeight: '100vh' }}><PageHeader back={{ href: '/profile', label: 'โปรไฟล์' }} /><div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px 170px' }}><h1 className="ui-h1" style={{ marginBottom: 8 }}>{t('title')}</h1><p style={{ color: 'var(--ui-mute)', marginBottom: 14 }}>เชื่อมสมาชิกทีมกับบัญชีจริง เพื่อให้ผลแข่งและเส้นทางนักกีฬาถูกต้อง</p>{teams?.length ? <Link href="/match-plan" style={{ marginBottom: 20, background: '#101827', color: 'white', borderRadius: 10, padding: '11px 13px', display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}><ClipboardPenLine size={16} color="#f5c518" /> วางแผนก่อนแข่ง</Link> : null}{attestationError
       ? <p role="alert" style={{ margin: '0 0 16px', padding: '9px 11px', borderRadius: 9, background: 'var(--ui-sunk)', color: '#b91c1c', fontSize: 12, fontWeight: 700 }}>โหลดคำรับรองจากโค้ชไม่สำเร็จ กรุณาโหลดหน้าใหม่</p>
       : <AthleteAttestationInbox attestations={attestations} />}
     <MyNewsPanel rows={myNews} />
     <MyCoachNotesPanel rows={coachNotes} viewerId={user.id} />
+    <MyMinutesPanel rows={myMinutes} viewerId={user.id} />
     <MyTrainingPanel rows={myPlans} thisWeek={planDay.thisWeek} today={planDay.today} />
     <MyEventsPanel rows={myEvents} viewerId={user.id} />
     <AthleteSkillInbox proposals={skillProposals} />

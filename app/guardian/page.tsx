@@ -7,6 +7,7 @@ import MyEventsPanel, { type MyEventRow } from '../team-members/MyEventsPanel'
 import MyNewsPanel, { type MyAnnouncementRow } from '../team-members/MyNewsPanel'
 import MyTrainingPanel, { type MyPlanRow } from '../team-members/MyTrainingPanel'
 import MyCoachNotesPanel, { type MyNoteRow } from '../team-members/MyCoachNotesPanel'
+import MyMinutesPanel, { type MyMinutesRow } from '../team-members/MyMinutesPanel'
 import { planToday } from '@/lib/team-training'
 import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
@@ -69,6 +70,9 @@ export default async function GuardianPage() {
   // Coach notes about the athlete or the children this guardian may act for (sql/73).
   const { data: noteRows, error: notesError } = await supabase.rpc('my_coach_notes', { p_limit: 50 })
   const coachNotes = notesError ? [] : ((noteRows ?? []) as MyNoteRow[])
+  // Season minutes recorded by the coach (sql/74); nothing before SQL74.
+  const { data: minuteRows, error: minutesError } = await supabase.rpc('my_match_minutes')
+  const myMinutes = minutesError ? [] : ((minuteRows ?? []) as MyMinutesRow[])
   const isGuardian = (profile as Profile | null)?.onboarding_persona === 'guardian'
   const links = ((guardianRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
   const incoming = ((incomingRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
@@ -83,6 +87,7 @@ export default async function GuardianPage() {
       </div>}
       <MyNewsPanel rows={news} />
       <MyCoachNotesPanel rows={coachNotes} viewerId={user.id} />
+      <MyMinutesPanel rows={myMinutes} viewerId={user.id} />
       <MyTrainingPanel rows={plans} thisWeek={planDay.thisWeek} today={planDay.today} />
       <MyEventsPanel rows={events} viewerId={user.id} />
       <GuardianLinksClient isGuardian={isGuardian} links={links} incoming={incoming} />

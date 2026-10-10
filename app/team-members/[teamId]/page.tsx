@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { BarChart3, CalendarDays, ClipboardList, Dumbbell, Gauge, Megaphone, NotebookPen } from 'lucide-react'
+import { BarChart3, CalendarDays, ClipboardList, Dumbbell, Gauge, Megaphone, NotebookPen, Timer } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { teamMatchIds, teamSeasonStats, teamSheet, type MatchRow, type PerformanceRow, type RankLink, type TeamMember } from '@/lib/team-stats'
@@ -12,6 +12,9 @@ import TeamEventsPanel, { type PanelEvent } from './TeamEventsPanel'
 import TeamNewsPanel, { type SentAnnouncement } from './TeamNewsPanel'
 import TeamTrainingPanel from './TeamTrainingPanel'
 import CoachNotesPanel, { type CoachNote } from './CoachNotesPanel'
+import MatchMinutesPanel, { type MinutesMatch } from './MatchMinutesPanel'
+import { minutesTotals, type MinuteEntry } from '@/lib/match-minutes'
+import { eventTimeParts } from '@/lib/team-events'
 import { addWeeks, libraryDrills, weekStartOf, weekdayOf, type PlanDay } from '@/lib/team-training'
 import { attendanceOpen, attendanceRates, splitEvents, type EventKind } from '@/lib/team-events'
 import '../team-page.css'
@@ -43,7 +46,7 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
   const [{ data: rosterRows, error: rosterError }, { data: matchRows, error: matchError }, { data: proposalRows, error: proposalError }, { data: noteRows, error: noteError }, { data: planRows, error: planError }, { data: newsRows, error: newsError }, { data: eventRows, error: eventError }] = await Promise.all([
     supabase.from('team_members').select('athlete_id, athlete_profiles(display_name, position)').eq('team_id', teamId).eq('status', 'accepted'),
     typedTeam.tournament_id
-      ? supabase.from('match_results').select('id, team_a_id, team_b_id, status').eq('tournament_id', typedTeam.tournament_id).eq('status', 'confirmed').or(`team_a_id.eq.${teamId},team_b_id.eq.${teamId}`)
+      ? supabase.from('match_results').select('id, team_a_id, team_b_id, status, team_a_score, team_b_score, created_at').eq('tournament_id', typedTeam.tournament_id).eq('status', 'confirmed').or(`team_a_id.eq.${teamId},team_b_id.eq.${teamId}`)
       : Promise.resolve({ data: [], error: null }),
     // This coach's skill ratings for the team (sql/69; RLS shows the coach their own).
     // Before SQL69 the table is missing and the panel says the feature is not on yet.
@@ -65,6 +68,33 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     position: row.athlete_profiles?.position ?? null,
   }))
   const matchIds = teamMatchIds((matchRows ?? []) as MatchRow[], teamId)
+  // Minutes played (sql/74): this coach's sheets and entries for the team's confirmed
+  // matches (team_match_minutes_team_idx). Before SQL74 the tables are missing and the
+  // panel says it is not on yet. Opponent names come from teams the coach may read.
+  type ScoredMatch = MatchRow & { team_a_score: number; team_b_score: number; created_at: string }
+  const scored = ((matchRows ?? []) as ScoredMatch[]).filter(match => matchIds.includes(match.id))
+    .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
+  const [{ data: sheetRows, error: sheetError }, { data: entryRows }, { data: opponentRows }] = await Promise.all([
+    supabase.from('team_match_minutes').select('match_result_id, match_length').eq('team_id', teamId).limit(500),
+    supabase.from('team_match_minute_entries').select('match_result_id, athlete_id, started, on_minute, off_minute, minutes').eq('team_id', teamId).limit(5000),
+    scored.length
+      ? supabase.from('teams').select('id, name').in('id', [...new Set(scored.map(match => (match.team_a_id === teamId ? match.team_b_id : match.team_a_id)))])
+      : Promise.resolve({ data: [] }),
+  ])
+  const entriesAll = (entryRows ?? []) as { match_result_id: string; athlete_id: string; started: boolean; on_minute: number | null; off_minute: number | null; minutes: number }[]
+  const opponentName = new Map(((opponentRows ?? []) as { id: string; name: string }[]).map(row => [row.id, row.name]))
+  const minutesMatches: MinutesMatch[] = scored.map(match => {
+    const home = match.team_a_id === teamId
+    const at = eventTimeParts(match.created_at)
+    const opponent = opponentName.get(home ? match.team_b_id : match.team_a_id)
+    return {
+      id: match.id,
+      label: `${at.day}/${at.month} · ${home ? match.team_a_score : match.team_b_score}-${home ? match.team_b_score : match.team_a_score}${opponent ? ` · ${opponent}` : ''}`,
+      length: ((sheetRows ?? []) as { match_result_id: string; match_length: number }[]).find(row => row.match_result_id === match.id)?.match_length ?? null,
+      entries: entriesAll.filter(row => row.match_result_id === match.id).map((row): MinuteEntry => ({ athleteId: row.athlete_id, started: row.started, on: row.on_minute, off: row.off_minute })),
+    }
+  })
+  const minutesByAthlete = minutesTotals(entriesAll.filter(row => matchIds.includes(row.match_result_id)))
   const { data: performanceRows, error: performanceError } = matchIds.length
     ? await supabase.from('match_player_performances').select('player_rank_id, goals, assists, mvp').in('match_result_id', matchIds).eq('team_id', teamId)
     : { data: [], error: null }
@@ -126,7 +156,7 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     createdAt: row.created_at,
     skills: Object.fromEntries(COACH_SKILL_KEYS.map(key => [key, row[key] ?? null])) as CoachSkills,
   }]))
-  const [ts, te, tn, tt, tc] = await Promise.all([getTranslations('coachSkills'), getTranslations('teamEvents'), getTranslations('teamNews'), getTranslations('teamTraining'), getTranslations('coachNotes')])
+  const [ts, te, tn, tt, tc, tm] = await Promise.all([getTranslations('coachSkills'), getTranslations('teamEvents'), getTranslations('teamNews'), getTranslations('teamTraining'), getTranslations('coachNotes'), getTranslations('matchMinutes')])
 
   return (
     <main className="bds-page ui-matchday tp">
@@ -142,10 +172,10 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
             ? <p className="tp-empty">{t('noMembers')} <Link href="/team-members">{t('inviteLink')}</Link></p>
             : <div className="ui-card tp-table-card">
                 <table className="tp-table">
-                  <thead><tr><th scope="col">{t('colName')}</th><th scope="col">{t('colMatches')}</th><th scope="col">{t('colGoals')}</th><th scope="col">{t('colAssists')}</th><th scope="col">{t('colMvps')}</th><th scope="col">{te('colAttendance')}</th></tr></thead>
+                  <thead><tr><th scope="col">{t('colName')}</th><th scope="col">{t('colMatches')}</th><th scope="col">{t('colGoals')}</th><th scope="col">{t('colAssists')}</th><th scope="col">{t('colMvps')}</th><th scope="col">{te('colAttendance')}</th><th scope="col">{tm('colMinutes')}</th></tr></thead>
                   <tbody>{stats.map(row => <tr key={row.athleteId}>
                     <th scope="row">{row.name}{row.position && <small>{row.position}</small>}</th>
-                    <td>{dash(row.matches)}</td><td>{dash(row.goals)}</td><td>{dash(row.assists)}</td><td>{dash(row.mvps)}</td><td>{rates[row.athleteId] ? `${rates[row.athleteId].percent}%` : '—'}</td>
+                    <td>{dash(row.matches)}</td><td>{dash(row.goals)}</td><td>{dash(row.assists)}</td><td>{dash(row.mvps)}</td><td>{rates[row.athleteId] ? `${rates[row.athleteId].percent}%` : '—'}</td><td>{minutesByAthlete[row.athleteId]?.minutes ?? '—'}</td>
                   </tr>)}</tbody>
                 </table>
                 <p className="tp-note">{t('statsNote')}</p>
@@ -170,6 +200,11 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
         {roster.length > 0 && <section className="tp-section" aria-labelledby="tp-skills">
           <div className="tp-head"><h2 id="tp-skills"><Gauge size={18} aria-hidden="true" />{ts('title')}</h2><span className="ui-chip is-coach">{t('coachChip')}</span></div>
           <CoachSkillPanel teamId={teamId} members={roster.map(member => ({ athleteId: member.athleteId, name: member.name }))} latest={latest} ready={!proposalError} />
+        </section>}
+
+        {roster.length > 0 && <section className="tp-section" aria-labelledby="tp-minutes">
+          <div className="tp-head"><h2 id="tp-minutes"><Timer size={18} aria-hidden="true" />{tm('title')}</h2><span className="ui-chip is-coach">{tm('source')}</span></div>
+          <MatchMinutesPanel teamId={teamId} members={roster.map(member => ({ athleteId: member.athleteId, name: member.name }))} matches={minutesMatches} ready={!sheetError} />
         </section>}
 
         {roster.length > 0 && <section className="tp-section" aria-labelledby="tp-notes">

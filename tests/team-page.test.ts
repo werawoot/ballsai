@@ -74,7 +74,8 @@ describe('/team-members/[teamId]', () => {
   it('puts the keeper first on the team sheet and states what it leaves out', async () => {
     seed()
     const html = await render()
-    expect(html.indexOf('<b>ปาล์ม</b>')).toBeLessThan(html.indexOf('<b>ต้น</b>'))
+    const sheet = html.slice(html.indexOf('id="team-sheet"'))
+    expect(sheet.indexOf('<b>ปาล์ม</b>')).toBeLessThan(sheet.indexOf('<b>ต้น</b>'))
     expect(html).toContain(th.teamPage.sheetPrivacy)
   })
 
@@ -224,6 +225,34 @@ describe('/team-members/[teamId]', () => {
       seed()
       db.missing = ['coach_athlete_notes']
       expect(await render()).toContain(th.coachNotes.notReady)
+    })
+  })
+
+  describe('minutes played (sql/74)', () => {
+    it("adds the coach's minutes to the stats and opens the latest confirmed match's sheet", async () => {
+      seed()
+      db.tables.match_results = [
+        { id: 'm1', tournament_id: 'cup', team_a_id: 'team-1', team_b_id: 'team-2', status: 'confirmed', team_a_score: 2, team_b_score: 1, created_at: '2026-10-05T03:00:00Z' },
+        { id: 'm2', tournament_id: 'cup', team_a_id: 'team-2', team_b_id: 'team-1', status: 'void', team_a_score: 0, team_b_score: 9, created_at: '2026-10-06T03:00:00Z' },
+      ]
+      db.tables.teams.push({ id: 'team-2', name: 'โคราช U13', created_by: 'coach-2' })
+      db.tables.team_match_minutes = [{ team_id: 'team-1', match_result_id: 'm1', match_length: 50 }]
+      db.tables.team_match_minute_entries = [
+        { team_id: 'team-1', match_result_id: 'm1', athlete_id: 'a-ton', started: true, on_minute: null, off_minute: 35, minutes: 35 },
+        { team_id: 'team-1', match_result_id: 'm2', athlete_id: 'a-ton', started: true, on_minute: null, off_minute: null, minutes: 50 },
+      ]
+      const html = await render()
+      expect(html).toContain(th.matchMinutes.title)
+      expect(html).toContain('5/10 · 2-1 · โคราช U13')
+      expect(html).toMatch(/ต้น<small>FW<\/small><\/th>(<td>[^<]*<\/td>){5}<td>35<\/td>/)
+      expect(html).toMatch(/ปาล์ม<small>GK<\/small><\/th>(<td>[^<]*<\/td>){5}<td>—<\/td>/)
+      expect(html).toMatch(/aria-pressed="true"[^>]*>ตัวจริง</)
+    })
+
+    it('says minutes are not on yet before SQL74 is applied', async () => {
+      seed()
+      db.missing = ['team_match_minutes']
+      expect(await render()).toContain(th.matchMinutes.notReady)
     })
   })
 })
