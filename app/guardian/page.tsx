@@ -8,6 +8,8 @@ import MyNewsPanel, { type MyAnnouncementRow } from '../team-members/MyNewsPanel
 import MyTrainingPanel, { type MyPlanRow } from '../team-members/MyTrainingPanel'
 import MyCoachNotesPanel, { type MyNoteRow } from '../team-members/MyCoachNotesPanel'
 import MyMinutesPanel, { type MyMinutesRow } from '../team-members/MyMinutesPanel'
+import MyTeamStaffPanel from '../team-members/MyTeamStaffPanel'
+import type { MyTeamStaffRow } from '@/lib/team-staff'
 import { planToday } from '@/lib/team-training'
 import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
@@ -73,6 +75,9 @@ export default async function GuardianPage() {
   // Season minutes recorded by the coach (sql/74); nothing before SQL74.
   const { data: minuteRows, error: minutesError } = await supabase.rpc('my_match_minutes')
   const myMinutes = minutesError ? [] : ((minuteRows ?? []) as MyMinutesRow[])
+  // Every adult on the staff of the children's teams (sql/75); nothing before SQL75.
+  const { data: staffRows, error: staffError } = await supabase.rpc('my_team_staff')
+  const teamStaff = staffError ? [] : ((staffRows ?? []) as MyTeamStaffRow[])
   const isGuardian = (profile as Profile | null)?.onboarding_persona === 'guardian'
   const links = ((guardianRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
   const incoming = ((incomingRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
@@ -90,6 +95,7 @@ export default async function GuardianPage() {
       <MyMinutesPanel rows={myMinutes} viewerId={user.id} />
       <MyTrainingPanel rows={plans} thisWeek={planDay.thisWeek} today={planDay.today} />
       <MyEventsPanel rows={events} viewerId={user.id} />
+      <MyTeamStaffPanel rows={teamStaff} />
       <GuardianLinksClient isGuardian={isGuardian} links={links} incoming={incoming} />
     </section>
   </main>

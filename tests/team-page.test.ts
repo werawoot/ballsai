@@ -6,9 +6,11 @@ import th from '@/messages/th.json'
 
 // /team-members/[teamId]: only the coach who created the team sees it, numbers come from
 // confirmed results only, and the team sheet holds a name and a position.
-const db = vi.hoisted(() => ({ user: 'coach-1', tables: {} as Record<string, Record<string, unknown>[]>, missing: [] as string[] }))
+const db = vi.hoisted(() => ({ user: 'coach-1', tables: {} as Record<string, Record<string, unknown>[]>, missing: [] as string[], rpcs: {} as Record<string, unknown[]> }))
 vi.mock('@/lib/supabase-server', () => ({ createServerSupabaseClient: async () => ({
   auth: { getUser: async () => ({ data: { user: { id: db.user } } }) },
+  // Functions by name; one that is not listed is missing, as before its SQL file is applied.
+  rpc: async (name: string) => (db.rpcs[name] ? { data: db.rpcs[name], error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } }),
   from: (table: string) => {
     let rows = db.tables[table] ?? []
     const builder = {
@@ -41,6 +43,7 @@ const render = async () => renderToStaticMarkup(createElement(NextIntlClientProv
 const seed = () => {
   db.user = 'coach-1'
   db.missing = []
+  db.rpcs = {}
   db.tables = {
     teams: [{ id: 'team-1', name: 'ขอนแก่น U13', tournament_id: 'cup', created_by: 'coach-1', tournaments: { name: 'BallDoenSai ทดสอบรอบแรก', start_date: '2026-10-24' } }],
     team_members: [
@@ -257,3 +260,72 @@ describe('/team-members/[teamId]', () => {
   })
 })
 
+
+// Assistant coaches (sql/75): an accepted assistant opens the team through team_for_staff
+// and gets the everyday tools; coach notes and skill ratings stay with the head coach.
+describe('/team-members/[teamId] staff (sql/75)', () => {
+  const staff = (me: string) => [
+    { id: null, user_id: 'coach-1', name: 'โค้ชใหญ่', email: null, status: 'accepted', is_head: true, is_me: me === 'coach-1' },
+    { id: 'st-1', user_id: 'assist-1', name: 'โค้ชเล็ก', email: me === 'coach-1' ? 'lek@example.com' : null, status: 'accepted', is_head: false, is_me: me === 'assist-1' },
+  ]
+  const asAssistant = () => {
+    seed()
+    db.user = 'assist-1'
+    db.rpcs.team_for_staff = [{ id: 'team-1', name: 'ขอนแก่น U13', tournament_id: 'cup', tournament_name: 'BallDoenSai ทดสอบรอบแรก', start_date: '2026-10-24', is_head: false }]
+    db.rpcs.team_staff_list = staff('assist-1')
+    db.tables.coach_athlete_notes = [{ id: 'n1', team_id: 'team-1', athlete_id: 'a-ton', category: 'technical', body: 'โน้ตลับของหัวหน้าโค้ช', created_at: '2026-10-09T00:00:00Z', expires_at: '2027-10-09T00:00:00Z' }]
+    db.tables.coach_skill_assessments = [{ team_id: 'team-1', athlete_id: 'a-ton', status: 'pending', created_at: '2026-10-09T00:00:00Z', speed: 70, stamina: null, strength: null, technique: null, vision: null }]
+  }
+
+  it('opens the team for an accepted assistant, with stats, events, minutes and the staff list', async () => {
+    asAssistant()
+    const html = await render()
+    expect(html).toContain('ขอนแก่น U13')
+    expect(html).toContain('BallDoenSai ทดสอบรอบแรก')
+    expect(html).toMatch(/ต้น<small>FW<\/small><\/th><td>1<\/td><td>2<\/td>/)
+    expect(html).toContain(th.teamEvents.title)
+    expect(html).toContain(th.matchMinutes.title)
+    expect(html).toContain(th.teamStaff.title)
+    expect(html).toContain('โค้ชใหญ่')
+    expect(html).toContain(th.teamStaff.assistantNote)
+    expect(html).toContain(th.teamStaff.leave)
+  })
+
+  it('never shows an assistant the coach notes or the skill ratings, nor the invite form', async () => {
+    asAssistant()
+    const html = await render()
+    expect(html).not.toContain('id="tp-notes"')
+    expect(html).not.toContain('โน้ตลับของหัวหน้าโค้ช')
+    expect(html).not.toContain('id="tp-skills"')
+    expect(html).not.toContain(th.teamStaff.invite)
+    expect(html).not.toContain('lek@example.com')
+  })
+
+  it('gives the head coach the invite form, each assistant with their email, and remove', async () => {
+    seed()
+    db.rpcs.team_staff_list = [...staff('coach-1'), { id: 'st-2', user_id: 'assist-2', name: '', email: 'new@example.com', status: 'pending', is_head: false, is_me: false }]
+    const html = await render()
+    expect(html).toContain(th.teamStaff.invite)
+    expect(html).toContain('lek@example.com')
+    expect(html).toContain('new@example.com')
+    expect(html).toContain(th.teamStaff.pending)
+    expect(html).toContain(th.teamStaff.remove)
+    expect(html).toContain(th.teamStaff.withdraw)
+    expect(html).toContain('id="tp-notes"')
+    expect(html).toContain('id="tp-skills"')
+  })
+
+  it('is not found for someone who is not on the staff', async () => {
+    seed()
+    db.user = 'someone-else'
+    db.rpcs.team_for_staff = []
+    await expect(render()).rejects.toThrow('not found')
+  })
+
+  it('keeps working for the head coach before SQL75, saying assistants are not on yet', async () => {
+    seed()
+    const html = await render()
+    expect(html).toContain('ขอนแก่น U13')
+    expect(html).toContain(th.teamStaff.notReady)
+  })
+})

@@ -9,7 +9,7 @@
 //   NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54322 NEXT_PUBLIC_SUPABASE_ANON_KEY=anon-test npx next start -p 3072
 //
 // Sign in as a role by setting the cookie `sb-127-auth-token` to `qaSessionCookie(role)`
-// below (athlete, guardian, coach, organizer). Tables answer with a few rows each; anything
+// below (athlete, guardian, coach, organizer, assistant). Tables answer with a few rows each; anything
 // not listed answers with an empty list, which is how a new account looks.
 import http from 'node:http'
 
@@ -18,6 +18,7 @@ const USERS = {
   guardian: { id: 'u-guardian', persona: 'guardian', role: 'user' },
   coach: { id: 'u-coach', persona: 'coach_organizer', role: 'user' },
   organizer: { id: 'u-organizer', persona: 'coach_organizer', role: 'organizer' },
+  assistant: { id: 'u-assistant', persona: 'coach_organizer', role: 'user' },
 }
 
 export function qaSessionCookie(role) {
@@ -121,6 +122,20 @@ http.createServer((request, response) => {
       { match_result_id: 'b0000000-0000-4000-8000-000000000001', athlete_id: 'u-athlete', started: true, on_minute: null, off_minute: 35, minutes: 35 },
     ] : [])
     if (table === 'rpc/my_match_minutes') return send(200, role === 'athlete' || role === 'guardian' ? [{ team_id: teams[0].id, team_name: teams[0].name, athlete_id: 'u-athlete', athlete_name: athlete.display_name, matches: 3, starts: 2, minutes: 130 }] : [])
+    // Assistant coaches (sql/75): u-assistant helps coach the first team and has one
+    // pending invitation from the second; families see the head coach and the assistant.
+    const head = { id: null, user_id: 'u-coach', name: 'โค้ชใหญ่ ทดสอบ', email: null, status: 'accepted', is_head: true, is_me: role === 'coach' }
+    const helper = { id: 'c0000000-0000-4000-8000-000000000001', user_id: 'u-assistant', name: 'โค้ชเล็ก ช่วยสอน', email: role === 'coach' ? 'assistant@example.com' : null, status: 'accepted', is_head: false, is_me: role === 'assistant' }
+    if (table === 'rpc/team_for_staff') return send(200, role === 'assistant' ? [{ id: teams[0].id, name: teams[0].name, tournament_id: 't-1', tournament_name: tournament.name, start_date: tournament.start_date, is_head: false }] : [])
+    if (table === 'rpc/team_staff_list') return send(200, role === 'coach' ? [head, helper, { id: 'c0000000-0000-4000-8000-000000000002', user_id: 'u-new', name: '', email: 'new.coach@example.com', status: 'pending', is_head: false, is_me: false }] : role === 'assistant' ? [head, helper] : [])
+    if (table === 'rpc/my_staff_teams') return send(200, role === 'assistant' ? [
+      { staff_id: 'c0000000-0000-4000-8000-000000000003', team_id: 'team-2', team_name: 'โคราช U13', tournament_name: tournament.name, status: 'pending', head_name: 'โค้ชโคราช', invited_at: '2026-10-10T03:00:00Z' },
+      { staff_id: helper.id, team_id: teams[0].id, team_name: teams[0].name, tournament_name: tournament.name, status: 'accepted', head_name: head.name, invited_at: '2026-10-09T03:00:00Z' },
+    ] : [])
+    if (table === 'rpc/my_team_staff') return send(200, role === 'athlete' || role === 'guardian' ? [
+      { team_id: teams[0].id, team_name: teams[0].name, name: head.name, is_head: true }, { team_id: teams[0].id, team_name: teams[0].name, name: helper.name, is_head: false },
+    ] : [])
+    if (table === 'team_members' && url.searchParams.has('team_id') && (role === 'coach' || role === 'assistant')) return rows([{ id: 'tm-1', team_id: teams[0].id, athlete_id: 'u-athlete', status: 'accepted', invited_at: '2026-10-01', athlete_profiles: { display_name: athlete.display_name, position: 'FW' } }])
     if (table === 'teams') return rows(role === 'coach' ? (process.env.QA_COACH_NO_TEAM ? [] : teams.slice(0, 1)) : role === 'organizer' ? teams : [])
     send(200, [])
   })

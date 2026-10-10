@@ -153,3 +153,12 @@
 .mm-status { margin-left: 0; }
 .mm-minutes { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .mm-minutes input { background: var(--ui-sunk); border: 1px solid var(--ui-line); border-radius: 10px; color: var(--ui-text); font: 600 15px var(--font-sarabun), sans-serif; min-height: 44px; min-width: 0; padding: 0 10px; width: 100%; }
+/* Team staff (sql/75) */
+.ts-list { display: grid; list-style: none; margin: 0; padding: 0; }
+.ts-list li { align-items: center; border-top: 1px solid var(--ui-line); display: flex; gap: 8px; justify-content: space-between; min-height: 48px; padding: 6px 0; }
+.ts-list li:first-child { border-top: 0; }
+.ts-who { display: grid; gap: 2px; min-width: 0; }
+.ts-who b { color: var(--ui-text); font-size: 15px; overflow-wrap: anywhere; }
+.ts-who small { color: var(--ui-mute); font-size: 12.5px; font-weight: 700; overflow-wrap: anywhere; }
+.ts-adult { align-items: center; color: var(--ui-text); cursor: pointer; display: flex; font-size: 14px; font-weight: 700; gap: 10px; min-height: 44px; }
+.ts-adult input { accent-color: #cc0001; flex: none; height: 22px; width: 22px; }

@@ -282,3 +282,54 @@ describe('/team-members coach notes (sql/73)', () => {
   })
 })
 
+
+// Assistant coaches (sql/75): the invited person answers here, an assistant finds their
+// teams here, and athletes and guardians see every adult on their team's staff.
+describe('/team-members assistant coaches (sql/75)', () => {
+  const base = () => ({ teams: [], team_members: [], coach_attestations: [] })
+
+  it('shows a pending invitation with the 18+ confirmation, what the assistant will see, and both answers', async () => {
+    db.user = 'u1'; db.failing = new Set(); db.tables = { ...base(), my_staff_teams: [
+      { staff_id: 's1', team_id: 'tm1', team_name: 'ขอนแก่น U13', tournament_name: 'ศึกชิงถ้วย', status: 'pending', head_name: 'โค้ชใหญ่', invited_at: '2026-10-10T00:00:00Z' },
+    ] }
+    const html = await render()
+    expect(html).toContain(th.teamStaff.invitesTitle)
+    expect(html).toContain('ทีม ขอนแก่น U13 · หัวหน้าโค้ช โค้ชใหญ่')
+    expect(html).toContain(th.teamStaff.adultConfirm)
+    expect(html).toContain(th.teamStaff.duty)
+    expect(html).toMatch(new RegExp(`disabled=""[^>]*>[^<]*(<svg[\\s\\S]*?</svg>)?${th.teamStaff.accept}<`))
+    expect(html).toContain(th.teamStaff.decline)
+    expect(html).not.toContain('ยังไม่มีทีม')
+  })
+
+  it('links an accepted assistant to the team page instead of showing "no team yet"', async () => {
+    db.user = 'u1'; db.failing = new Set(); db.tables = { ...base(), my_staff_teams: [
+      { staff_id: 's1', team_id: 'tm1', team_name: 'ขอนแก่น U13', tournament_name: null, status: 'accepted', head_name: 'โค้ชใหญ่', invited_at: '2026-10-10T00:00:00Z' },
+    ] }
+    const html = await render()
+    expect(html).toContain(th.teamStaff.myTeamsTitle)
+    expect(hrefs(html)).toContain('/team-members/tm1')
+    expect(html).not.toContain('ยังไม่มีทีม')
+    expect(html).not.toContain(th.teamStaff.adultConfirm)
+  })
+
+  it('shows an athlete every adult on the team staff, head coach first', async () => {
+    db.user = 'u1'; db.failing = new Set(); db.tables = { ...base(), my_team_staff: [
+      { team_id: 'tm1', team_name: 'ขอนแก่น U13', name: 'โค้ชเล็ก', is_head: false },
+      { team_id: 'tm1', team_name: 'ขอนแก่น U13', name: 'โค้ชใหญ่', is_head: true },
+      { team_id: 'tm1', team_name: 'ขอนแก่น U13', name: '', is_head: false },
+    ] }
+    const html = await render()
+    expect(html).toContain(th.teamStaff.familyTitle)
+    expect(html.indexOf('โค้ชใหญ่')).toBeLessThan(html.indexOf('โค้ชเล็ก'))
+    expect(html).toContain(th.teamStaff.unnamed)
+    expect(html).toContain(th.teamStaff.familyNote)
+  })
+
+  it('shows nothing about assistant coaches before SQL75 is applied', async () => {
+    db.user = 'u1'; db.failing = new Set(); db.tables = base()
+    const html = await render()
+    expect(html).not.toContain(th.teamStaff.invitesTitle)
+    expect(html).not.toContain(th.teamStaff.familyTitle)
+  })
+})
