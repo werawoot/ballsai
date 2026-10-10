@@ -4,7 +4,7 @@ import { NextIntlClientProvider, createTranslator } from 'next-intl'
 import { describe, expect, it, vi } from 'vitest'
 import th from '@/messages/th.json'
 
-const db = vi.hoisted(() => ({ persona: 'guardian' as string | null, events: null as Record<string, unknown>[] | null }))
+const db = vi.hoisted(() => ({ persona: 'guardian' as string | null, events: null as Record<string, unknown>[] | null, news: null as Record<string, unknown>[] | null }))
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
@@ -13,8 +13,12 @@ function fakeClient() {
     builder.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(resolve)
     return builder
   }
-  // my_upcoming_team_events (sql/70): missing until SQL70 is applied, unless a test seeds rows.
-  const rpc = async () => (db.events ? { data: db.events, error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } })
+  // my_upcoming_team_events (sql/70) and my_team_announcements (sql/71): missing until
+  // the file is applied, unless a test seeds rows.
+  const rpc = async (name: string) => {
+    const rows = name === 'my_team_announcements' ? db.news : db.events
+    return rows ? { data: rows, error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } }
+  }
   return { from, rpc, auth: { getUser: async () => ({ data: { user: { id: 'me', email: 'parent@example.com' } } }) } }
 }
 vi.mock('@supabase/ssr', () => ({ createServerClient: () => fakeClient() }))
@@ -85,3 +89,15 @@ describe('/guardian team events (sql/70)', () => {
     expect(await render(GuardianPage as () => Promise<ReactElement>)).not.toContain(th.teamEvents.myTitle)
   })
 })
+
+describe('/guardian team announcements (sql/71)', () => {
+  it("shows a message from the child's team", async () => {
+    db.persona = 'guardian'
+    db.news = [{ id: 'n1', team_name: 'ขอนแก่น U13', body: 'งดซ้อมวันเสาร์ ฝนตก', created_at: '2026-10-12T09:00:00Z', read_at: null }]
+    const html = await render(GuardianPage as () => Promise<ReactElement>)
+    db.news = null
+    expect(html).toContain('งดซ้อมวันเสาร์ ฝนตก')
+    expect(html).toContain('ทีม ขอนแก่น U13')
+  })
+})
+

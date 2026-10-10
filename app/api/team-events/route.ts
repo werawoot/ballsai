@@ -6,8 +6,8 @@ import { parseEventInput } from '@/lib/team-events'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
-// Team sessions and matches (sql/70). Four actions, each one guarded SQL70 function:
-// the coach saves or cancels an event and ticks attendance; an athlete or their guardian
+// Team sessions and matches (sql/70; remind from sql/71). Five actions, each one guarded SQL70 function:
+// the coach saves or cancels an event, ticks attendance and reminds who has not answered; an athlete or their guardian
 // answers. Who may do which is decided in the database by auth.uid(); the route refuses
 // malformed input before the call and words errors with apiError codes.
 export async function POST(request: Request) {
@@ -36,6 +36,10 @@ export async function POST(request: Request) {
     if (data.answer !== 'yes' && data.answer !== 'no') return bad()
     rpc = 'respond_team_event'
     args = { p_event_id: data.id, p_athlete_id: data.athleteId, p_answer: data.answer }
+  } else if (body?.action === 'remind') {
+    if (typeof data.id !== 'string' || !UUID.test(data.id)) return bad()
+    rpc = 'remind_team_event'
+    args = { p_event_id: data.id }
   } else if (body?.action === 'attendance') {
     const present = data.present
     if (typeof data.id !== 'string' || !UUID.test(data.id) || !Array.isArray(present) || present.length > 60
@@ -53,6 +57,7 @@ export async function POST(request: Request) {
     if (error.message?.includes('EVENT_CLOSED')) return apiError('eventClosed', 409)
     if (error.message?.includes('EVENT_NOT_STARTED')) return apiError('eventNotStarted', 409)
     if (error.message?.includes('TOO_MANY_EVENTS')) return apiError('tooManyEvents', 409)
+    if (error.message?.includes('REMINDED_RECENTLY')) return apiError('remindedRecently', 409)
     return apiError('actionFailed', 400)
   }
   return NextResponse.json({ ok: true, data: result }, { headers: { 'Cache-Control': 'no-store' } })
