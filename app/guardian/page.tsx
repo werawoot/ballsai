@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server'
 import { createServerClient } from '@supabase/ssr'
 import GuardianLinksClient, { type GuardianLink } from './GuardianLinksClient'
 import MyEventsPanel, { type MyEventRow } from '../team-members/MyEventsPanel'
+import MyNewsPanel, { type MyAnnouncementRow } from '../team-members/MyNewsPanel'
 import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import { CHANGE_ROLE_PATH } from '@/lib/onboarding'
@@ -55,6 +56,9 @@ export default async function GuardianPage() {
   // SQL70 the function is missing and nothing is shown.
   const { data: eventRows, error: eventsError } = await supabase.rpc('my_upcoming_team_events', { p_limit: 30 })
   const events = eventsError ? [] : ((eventRows ?? []) as MyEventRow[])
+  // Announcements from their children's teams (sql/71); nothing before SQL71.
+  const { data: newsRows, error: newsError } = await supabase.rpc('my_team_announcements', { p_limit: 10 })
+  const news = newsError ? [] : ((newsRows ?? []) as MyAnnouncementRow[])
   const isGuardian = (profile as Profile | null)?.onboarding_persona === 'guardian'
   const links = ((guardianRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
   const incoming = ((incomingRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
@@ -67,6 +71,7 @@ export default async function GuardianPage() {
         <p style={{ margin: '0 0 12px' }}>{tp('notGuardian.body')}</p>
         <Link href={CHANGE_ROLE_PATH} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 18px', borderRadius: 12, background: '#CC0001', color: 'white', fontWeight: 800, fontSize: 15, textDecoration: 'none' }}>{tp('notGuardian.changeRole')}</Link>
       </div>}
+      <MyNewsPanel rows={news} />
       <MyEventsPanel rows={events} viewerId={user.id} />
       <GuardianLinksClient isGuardian={isGuardian} links={links} incoming={incoming} />
     </section>

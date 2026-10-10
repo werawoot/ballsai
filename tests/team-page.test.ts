@@ -147,4 +147,40 @@ describe('/team-members/[teamId]', () => {
       expect(html).toContain('ขอนแก่น U13')
     })
   })
+
+  describe('team announcements (sql/71)', () => {
+    it('lists sent messages with who they went to and how many have read them', async () => {
+      seed()
+      db.tables.team_announcements = [
+        { id: 'n1', team_id: 'team-1', body: 'เลื่อนซ้อมเป็น 5 โมงเย็น', created_at: '2026-10-12T09:00:00Z', to_athletes: true, to_guardians: true },
+        { id: 'n9', team_id: 'team-2', body: 'ของทีมอื่น', created_at: '2026-10-12T09:00:00Z', to_athletes: true, to_guardians: false },
+      ]
+      db.tables.team_announcement_recipients = [
+        { announcement_id: 'n1', read_at: '2026-10-12T10:00:00Z' },
+        { announcement_id: 'n1', read_at: null },
+        { announcement_id: 'n1', read_at: '2026-10-12T11:00:00Z' },
+      ]
+      const html = await render()
+      expect(html).toContain('เลื่อนซ้อมเป็น 5 โมงเย็น')
+      expect(html).not.toContain('ของทีมอื่น')
+      expect(html).toContain('นักกีฬา + ผู้ปกครอง · อ่านแล้ว 2 จาก 3')
+    })
+
+    it('says announcements are not on yet before SQL71 is applied', async () => {
+      seed()
+      db.missing = ['team_announcements']
+      expect(await render()).toContain(th.teamNews.notReady)
+    })
+
+    it('offers a reminder only on an upcoming event someone has not answered', async () => {
+      seed()
+      const soon = new Date(Date.now() + 2 * 86400000).toISOString()
+      db.tables.team_events = [{ id: 'e1', team_id: 'team-1', kind: 'training', title: 'ซ้อม', starts_at: soon, location: null, cancelled_at: null }]
+      db.tables.team_event_responses = [{ event_id: 'e1', athlete_id: 'a-ton', answer: 'yes' }]
+      expect(await render()).toContain('เตือนคนที่ยังไม่ตอบ (1)')
+      db.tables.team_event_responses.push({ event_id: 'e1', athlete_id: 'a-palm', answer: 'no' })
+      expect(await render()).not.toContain('เตือนคนที่ยังไม่ตอบ')
+    })
+  })
 })
+

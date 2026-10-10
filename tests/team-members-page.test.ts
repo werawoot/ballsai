@@ -20,8 +20,9 @@ function fakeClient() {
     }
     return builder
   }
-  // my_upcoming_team_events (sql/70): the seeded rows, or missing like before SQL70.
-  const rpc = async () => (db.tables.my_upcoming_team_events ? { data: db.tables.my_upcoming_team_events, error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } })
+  // Functions (sql/70 my_upcoming_team_events, sql/71 my_team_announcements): the seeded
+  // rows under the function's name, or missing like before the file.
+  const rpc = async (name: string) => (db.tables[name] ? { data: db.tables[name], error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } })
   return { from, rpc, auth: { getUser: async () => ({ data: { user: { id: db.user } } }) } }
 }
 vi.mock('@supabase/ssr', () => ({ createServerClient: () => fakeClient() }))
@@ -210,6 +211,24 @@ describe('/team-members team events (sql/70)', () => {
     expect(html).toContain(th.teamEvents.myTitle)
     expect(html).toContain('ซ้อมเย็นวันพุธ')
     expect(html).toMatch(/aria-pressed="true"[^>]*>มาไม่ได้</)
+  })
+})
+
+describe('/team-members team announcements (sql/71)', () => {
+  it('shows the newest message first and marks an unread one as new', async () => {
+    db.user = 'u1'; db.failing = new Set(); db.tables = { teams: [], team_members: [], coach_attestations: [], my_team_announcements: [
+      { id: 'n2', team_name: 'ขอนแก่น U13', body: 'เลื่อนซ้อมเป็น 5 โมงเย็น ใส่ชุดสีแดง', created_at: '2026-10-12T09:00:00Z', read_at: null },
+      { id: 'n1', team_name: 'ขอนแก่น U13', body: 'พรุ่งนี้ซ้อมตามปกติ', created_at: '2026-10-11T09:00:00Z', read_at: '2026-10-11T10:00:00Z' },
+    ] }
+    const html = await render()
+    expect(html).toContain(th.teamNews.myTitle)
+    expect(html.indexOf('เลื่อนซ้อมเป็น 5 โมงเย็น')).toBeLessThan(html.indexOf('พรุ่งนี้ซ้อมตามปกติ'))
+    expect(html.match(new RegExp(`>${th.teamNews.unread}<`, 'g'))).toHaveLength(1)
+  })
+
+  it('shows no announcement section before SQL71 is applied', async () => {
+    db.user = 'u1'; db.failing = new Set(); db.tables = { teams: [], team_members: [], coach_attestations: [] }
+    expect(await render()).not.toContain(th.teamNews.myTitle)
   })
 })
 

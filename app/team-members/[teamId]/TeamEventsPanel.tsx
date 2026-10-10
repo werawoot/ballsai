@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { CalendarPlus, Check, MapPin, X } from 'lucide-react'
+import { BellRing, CalendarPlus, Check, MapPin, X } from 'lucide-react'
 import { bangkokIso, eventCounts, eventTimeParts, type EventKind } from '@/lib/team-events'
 import { useApiErrorText } from '@/lib/use-api-error-text'
 
@@ -33,6 +33,7 @@ export default function TeamEventsPanel({ teamId, members, upcoming, past, ready
   const [busy, setBusy] = useState<string | null>(null)
   const [message, setMessage] = useState<Message>(null)
   const [checking, setChecking] = useState<{ id: string; present: string[] } | null>(null)
+  const [reminded, setReminded] = useState<string[]>([])
 
   if (!ready) return <p className="tp-empty">{t('notReady')}</p>
 
@@ -76,6 +77,17 @@ export default function TeamEventsPanel({ teamId, members, upcoming, past, ready
     setMessage({ tone: 'ok', text: t('attendanceSaved') })
     router.refresh()
   }
+  // Notifies the members who have not answered, and their guardians (sql/71, at most once
+  // every 6 hours per event; the database says so if it is too soon).
+  const remind = async (id: string) => {
+    if (busy) return
+    setBusy(`remind:${id}`); setMessage(null)
+    const result = await post('remind', { id })
+    setBusy(null)
+    if (!result.ok) { setMessage({ tone: 'error', text: errorText(result.body, t('remindFailed')) }); return }
+    setReminded(current => [...current, id])
+    setMessage({ tone: 'ok', text: t('reminded', { count: Number(result.body?.data ?? 0) }) })
+  }
   const toggle = (athleteId: string) => setChecking(current => current && {
     ...current, present: current.present.includes(athleteId) ? current.present.filter(id => id !== athleteId) : [...current.present, athleteId],
   })
@@ -96,6 +108,7 @@ export default function TeamEventsPanel({ teamId, members, upcoming, past, ready
 
   const card = (event: PanelEvent, isPast: boolean) => {
     const counts = eventCounts(Object.entries(event.answers).map(([athlete_id, answer]) => ({ athlete_id, answer })), memberIds)
+    const canRemind = !isPast && counts.waiting > 0 && !reminded.includes(event.id)
     return <article className="ui-card te-card" key={event.id}>
       <div className="te-top">
         <span className={`te-kind is-${event.kind}`}>{t(`kinds.${event.kind}`)}</span>
@@ -115,6 +128,7 @@ export default function TeamEventsPanel({ teamId, members, upcoming, past, ready
       {isPast && !event.present && checking?.id !== event.id && <p className="te-counts">{t('attendanceNone')}</p>}
       <div className="te-actions">
         {event.attendanceOpen && members.length > 0 && checklist(event)}
+        {canRemind && <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" disabled={Boolean(busy)} onClick={() => remind(event.id)}><BellRing size={15} aria-hidden="true" />{busy === `remind:${event.id}` ? t('reminding') : t('remind', { count: counts.waiting })}</button>}
         {!isPast && <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm te-cancel" disabled={Boolean(busy)} onClick={() => cancel(event.id)}><X size={15} aria-hidden="true" />{t('cancelEvent')}</button>}
       </div>
     </article>

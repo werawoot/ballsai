@@ -95,3 +95,12 @@
 .me-for { color: var(--ui-mute); font-size: 12.5px; font-weight: 700; }
 .me-answers { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
 .me-answers .is-chosen { outline: 2px solid #fff; outline-offset: 1px; }
+/* Team announcements (sql/71): compose, audience, read count; the recipient list. */
+.te-form textarea { background: var(--ui-sunk); border: 1px solid var(--ui-line); border-radius: 10px; color: var(--ui-text); font: 500 15px/1.55 var(--font-sarabun), sans-serif; min-height: 88px; padding: 10px 12px; resize: vertical; width: 100%; }
+.tn-row { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
+.tn-length { color: var(--ui-mute); flex: none; font-size: 12px; font-variant-numeric: tabular-nums; }
+.tn-body { color: var(--ui-text); font-size: 15px; line-height: 1.6; margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.tn-meta { align-items: center; color: var(--ui-mute); display: flex; flex-wrap: wrap; font-size: 12.5px; font-weight: 700; gap: 8px; justify-content: space-between; }
+.tn-when { align-items: center; color: var(--ui-mute); display: inline-flex; font-size: 12.5px; font-weight: 700; gap: 6px; }
+.tn-new { background: #cc0001; border-radius: 99px; color: #fff; font-size: 11px; padding: 2px 8px; }
+.me-card h2 { align-items: center; display: flex; gap: 6px; }

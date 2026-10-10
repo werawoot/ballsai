@@ -93,6 +93,13 @@ http.createServer((request, response) => {
     if (table === 'rpc/my_upcoming_team_events') return send(200, role === 'athlete' || role === 'guardian' ? [
       { event_id: 'e0000000-0000-4000-8000-000000000001', team_id: teams[0].id, team_name: teams[0].name, kind: 'training', title: 'ซ้อมเย็นวันพุธ', starts_at: soon, location: 'สนามโรงเรียนบ้านโนน', note: null, athlete_id: 'u-athlete', athlete_name: athlete.display_name, answer: role === 'athlete' ? 'yes' : null },
     ] : [])
+    // Team announcements (sql/71): the coach sent one (2 of 3 read); athlete and guardian have one unread.
+    if (table === 'team_announcements') return rows(role === 'coach' ? [{ id: 'a0000000-0000-4000-8000-000000000001', body: 'เลื่อนซ้อมวันพุธเป็น 5 โมงเย็น ใส่ชุดสีแดงนะครับ', created_at: '2026-10-10T09:00:00Z', to_athletes: true, to_guardians: true }] : [])
+    if (table === 'team_announcement_recipients') return rows(role === 'coach' ? [{ announcement_id: 'a0000000-0000-4000-8000-000000000001', read_at: '2026-10-10T10:00:00Z' }, { announcement_id: 'a0000000-0000-4000-8000-000000000001', read_at: '2026-10-10T11:00:00Z' }, { announcement_id: 'a0000000-0000-4000-8000-000000000001', read_at: null }] : [])
+    if (table === 'rpc/my_team_announcements') return send(200, role === 'athlete' || role === 'guardian' ? [
+      { id: 'a0000000-0000-4000-8000-000000000001', team_name: teams[0].name, body: 'เลื่อนซ้อมวันพุธเป็น 5 โมงเย็น ใส่ชุดสีแดงนะครับ', created_at: '2026-10-10T09:00:00Z', read_at: null },
+    ] : [])
+    if (table === 'rpc/mark_team_announcements_read') { console.log('mark read', role); return send(200, 1) }
     if (table === 'teams') return rows(role === 'coach' ? (process.env.QA_COACH_NO_TEAM ? [] : teams.slice(0, 1)) : role === 'organizer' ? teams : [])
     send(200, [])
   })

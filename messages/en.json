@@ -553,7 +553,9 @@
     "actionFailed": "That did not work. Please check and try again",
     "eventClosed": "This event no longer takes answers (it started or was cancelled)",
     "eventNotStarted": "Attendance opens close to the start time",
-    "tooManyEvents": "This team already has 200 upcoming events"
+    "tooManyEvents": "This team already has 200 upcoming events",
+    "tooManyAnnouncements": "This team has sent 30 announcements today. Try again tomorrow.",
+    "remindedRecently": "A reminder was just sent. You can remind again after 6 hours."
   },
   "impact": {
     "back": "Home",
@@ -2167,6 +2169,39 @@
       "5": "Fri",
       "6": "Sat"
     },
-    "when": "{weekday} {day}/{month} · {time}"
+    "when": "{weekday} {day}/{month} · {time}",
+    "remind": "Remind who hasn't answered ({count})",
+    "reminding": "Sending reminder…",
+    "reminded": "Reminded {count} people",
+    "remindFailed": "Could not send the reminder"
+  },
+  "teamNews": {
+    "title": "Team announcements",
+    "label": "Message",
+    "placeholder": "e.g. Wednesday training moves to 5 pm, wear red",
+    "audience": "Send to",
+    "toAthletes": "Athletes",
+    "toGuardians": "Guardians",
+    "length": "{count}/500",
+    "send": "Send announcement",
+    "sending": "Sending…",
+    "sent": "Sent to {count} people",
+    "sendFailed": "Could not send the announcement",
+    "rule": "Everyone you pick is notified at once. Never put a phone number, address or a child's personal details in an announcement.",
+    "history": "Sent",
+    "none": "No announcements yet",
+    "readCount": "Read by {read} of {total}",
+    "audienceBoth": "Athletes + guardians",
+    "audienceAthletes": "Athletes",
+    "audienceGuardians": "Guardians",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this announcement? The message and its notifications disappear for everyone.",
+    "deleted": "Announcement deleted",
+    "deleteFailed": "Could not delete the announcement",
+    "notReady": "Announcements are not switched on yet",
+    "myTitle": "From your team",
+    "unread": "New",
+    "fromTeam": "Team {team}",
+    "when": "{day}/{month} · {time}"
   }
 }
