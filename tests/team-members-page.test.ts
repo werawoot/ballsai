@@ -232,3 +232,38 @@ describe('/team-members team announcements (sql/71)', () => {
   })
 })
 
+describe('/team-members team training plan (sql/72)', () => {
+  it("marks today, links a library drill to its how-to and words the load", async () => {
+    const { weekStartOf, weekdayOf } = await import('@/lib/team-training')
+    db.user = 'u1'; db.failing = new Set(); db.tables = { teams: [], team_members: [], coach_attestations: [], my_team_training_plans: [
+      { team_id: 'tm1', team_name: 'ขอนแก่น U13', week_start: weekStartOf(Date.now()), days: [{ day: weekdayOf(Date.now()), title: 'บอลติดเท้า', blocks: [
+        { drill: 'a1-react-jog', name: 'วิ่งเหยาะ หยุดและเปลี่ยนทิศตามสัญญาณ', minutes: 10, load: 1 },
+        { drill: null, name: 'เกมเล็ก 5 ต่อ 5', minutes: 25, load: 3 },
+      ] }] },
+    ] }
+    const html = await render()
+    expect(html).toContain(th.teamTraining.today)
+    expect(html).toContain('href="/training/drills/a1-react-jog"')
+    expect(html).toContain('เกมเล็ก 5 ต่อ 5')
+    expect(html).toContain('25 นาที · หนัก')
+  })
+
+  it('shows no plan section before SQL72 is applied', async () => {
+    db.user = 'u1'; db.failing = new Set(); db.tables = { teams: [], team_members: [], coach_attestations: [] }
+    expect(await render()).not.toContain(th.teamTraining.myTitle)
+  })
+})
+
+
+describe('/team-members plan days already past', () => {
+  it('leaves out the days of this week that are over', async () => {
+    const { weekStartOf, weekdayOf } = await import('@/lib/team-training')
+    const today = weekdayOf(Date.now())
+    const days = [{ day: today, title: '', blocks: [{ drill: null, name: 'วันนี้ซ้อม', minutes: 10, load: 1 }] }]
+    if (today > 0) days.unshift({ day: (today - 1) as typeof today, title: '', blocks: [{ drill: null, name: 'เมื่อวานซ้อม', minutes: 10, load: 1 }] })
+    db.user = 'u1'; db.failing = new Set(); db.tables = { teams: [], team_members: [], coach_attestations: [], my_team_training_plans: [{ team_id: 'tm1', team_name: 'ทีม', week_start: weekStartOf(Date.now()), days }] }
+    const html = await render()
+    expect(html).toContain('วันนี้ซ้อม')
+    expect(html).not.toContain('เมื่อวานซ้อม')
+  })
+})

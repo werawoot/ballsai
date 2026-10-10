@@ -31,7 +31,7 @@ vi.mock('next/navigation', () => ({
   redirect: (to: string) => { throw new Error(`redirect ${to}`) },
   usePathname: () => '/', useRouter: () => ({ push: () => {} }), useSearchParams: () => new URLSearchParams(),
 }))
-vi.mock('next-intl/server', () => ({ getTranslations: async (namespace: string) => createTranslator({ locale: 'th', messages: th, namespace: namespace as never }) }))
+vi.mock('next-intl/server', () => ({ getLocale: async () => 'th', getTranslations: async (namespace: string) => createTranslator({ locale: 'th', messages: th, namespace: namespace as never }) }))
 
 import TeamPage from '@/app/team-members/[teamId]/page'
 
@@ -180,6 +180,29 @@ describe('/team-members/[teamId]', () => {
       expect(await render()).toContain('เตือนคนที่ยังไม่ตอบ (1)')
       db.tables.team_event_responses.push({ event_id: 'e1', athlete_id: 'a-palm', answer: 'no' })
       expect(await render()).not.toContain('เตือนคนที่ยังไม่ตอบ')
+    })
+  })
+
+  describe('team training plan (sql/72)', () => {
+    it("opens on today's day of this week's plan, with the drills and the week's totals", async () => {
+      const { weekStartOf, weekdayOf } = await import('@/lib/team-training')
+      seed()
+      db.tables.team_training_plans = [
+        { team_id: 'team-1', week_start: weekStartOf(Date.now()), days: [{ day: weekdayOf(Date.now()), title: 'บอลติดเท้า', blocks: [{ drill: null, name: 'เลี้ยงบอลผ่านกรวย', minutes: 15, load: 2 }, { drill: null, name: 'เกมเล็ก', minutes: 30, load: 3 }] }] },
+        { team_id: 'team-2', week_start: weekStartOf(Date.now()), days: [{ day: weekdayOf(Date.now()), title: '', blocks: [{ drill: null, name: 'ของทีมอื่น', minutes: 15, load: 2 }] }] },
+      ]
+      const html = await render()
+      expect(html).toContain(th.teamTraining.title)
+      expect(html).toContain('เลี้ยงบอลผ่านกรวย')
+      expect(html).not.toContain('ของทีมอื่น')
+      expect(html).toContain('ซ้อม 1 วัน · รวม 45 นาที')
+      expect(html).toContain('ความหนักเฉลี่ย หนัก')
+    })
+
+    it('says plans are not on yet before SQL72 is applied', async () => {
+      seed()
+      db.missing = ['team_training_plans']
+      expect(await render()).toContain(th.teamTraining.notReady)
     })
   })
 })

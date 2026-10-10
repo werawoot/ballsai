@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
-import { BarChart3, CalendarDays, ClipboardList, Gauge, Megaphone } from 'lucide-react'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { BarChart3, CalendarDays, ClipboardList, Dumbbell, Gauge, Megaphone } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { teamMatchIds, teamSeasonStats, teamSheet, type MatchRow, type PerformanceRow, type RankLink, type TeamMember } from '@/lib/team-stats'
@@ -10,6 +10,8 @@ import CoachSkillPanel, { type LatestProposal } from './CoachSkillPanel'
 import { COACH_SKILL_KEYS, latestProposals, type CoachSkills, type ProposalRow, type ProposalStatus } from '@/lib/coach-skills'
 import TeamEventsPanel, { type PanelEvent } from './TeamEventsPanel'
 import TeamNewsPanel, { type SentAnnouncement } from './TeamNewsPanel'
+import TeamTrainingPanel from './TeamTrainingPanel'
+import { addWeeks, libraryDrills, weekStartOf, weekdayOf, type PlanDay } from '@/lib/team-training'
 import { attendanceOpen, attendanceRates, splitEvents, type EventKind } from '@/lib/team-events'
 import '../team-page.css'
 
@@ -35,7 +37,9 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
   if (!team) notFound()
   const typedTeam = team as unknown as TeamRow
 
-  const [{ data: rosterRows, error: rosterError }, { data: matchRows, error: matchError }, { data: proposalRows, error: proposalError }, { data: newsRows, error: newsError }, { data: eventRows, error: eventError }] = await Promise.all([
+  const now = Date.now()
+  const thisWeek = weekStartOf(now), nextWeek = addWeeks(thisWeek, 1)
+  const [{ data: rosterRows, error: rosterError }, { data: matchRows, error: matchError }, { data: proposalRows, error: proposalError }, { data: planRows, error: planError }, { data: newsRows, error: newsError }, { data: eventRows, error: eventError }] = await Promise.all([
     supabase.from('team_members').select('athlete_id, athlete_profiles(display_name, position)').eq('team_id', teamId).eq('status', 'accepted'),
     typedTeam.tournament_id
       ? supabase.from('match_results').select('id, team_a_id, team_b_id, status').eq('tournament_id', typedTeam.tournament_id).eq('status', 'confirmed').or(`team_a_id.eq.${teamId},team_b_id.eq.${teamId}`)
@@ -45,6 +49,8 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     supabase.from('coach_skill_assessments').select('athlete_id, status, created_at, speed, stamina, strength, technique, vision').eq('team_id', teamId).order('created_at', { ascending: false }).limit(200),
     // Team events from 30 days back (sql/70; team_events_team_starts_idx). The save
     // function caps a team at 200 upcoming events, so this read is bounded too.
+    // This week's and next week's plan (sql/72; primary key team_id, week_start).
+    supabase.from('team_training_plans').select('week_start, days').eq('team_id', teamId).in('week_start', [thisWeek, nextWeek]),
     // The coach's last ten announcements (sql/71; team_announcements_team_created_idx).
     supabase.from('team_announcements').select('id, body, created_at, to_athletes, to_guardians').eq('team_id', teamId).order('created_at', { ascending: false }).limit(10),
     supabase.from('team_events').select('id, kind, title, starts_at, location, cancelled_at').eq('team_id', teamId).gte('starts_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()).order('starts_at', { ascending: true }).limit(250),
@@ -94,12 +100,14 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     const list = (presentByEvent[row.event_id] ??= [])
     if (row.present) list.push(row.athlete_id)
   }
-  const now = Date.now()
   const toPanel = (event: EventRow): PanelEvent => ({
     id: event.id, kind: event.kind, title: event.title, startsAt: event.starts_at, location: event.location,
     answers: answersByEvent[event.id] ?? {}, present: presentByEvent[event.id] ?? null, attendanceOpen: attendanceOpen(event.starts_at, now),
   })
   const split = splitEvents(events, now)
+  const planOf = (week: string) => ((planRows ?? []) as { week_start: string; days: PlanDay[] }[]).find(row => row.week_start === week)?.days ?? []
+  const planWeeks = [thisWeek, nextWeek].map(week => ({ weekStart: week, days: planOf(week) }))
+  const library = libraryDrills(await getLocale())
   const rates = attendanceRates((seasonAttendanceRows ?? []) as { athlete_id: string; present: boolean }[])
 
   const stats = teamSeasonStats(roster, (performanceRows ?? []) as PerformanceRow[], (rankRows ?? []) as RankLink[])
@@ -112,7 +120,7 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     createdAt: row.created_at,
     skills: Object.fromEntries(COACH_SKILL_KEYS.map(key => [key, row[key] ?? null])) as CoachSkills,
   }]))
-  const [ts, te, tn] = await Promise.all([getTranslations('coachSkills'), getTranslations('teamEvents'), getTranslations('teamNews')])
+  const [ts, te, tn, tt] = await Promise.all([getTranslations('coachSkills'), getTranslations('teamEvents'), getTranslations('teamNews'), getTranslations('teamTraining')])
 
   return (
     <main className="bds-page ui-matchday tp">
@@ -136,6 +144,11 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
                 </table>
                 <p className="tp-note">{t('statsNote')}</p>
               </div>}
+        </section>
+
+        <section className="tp-section" aria-labelledby="tp-training">
+          <div className="tp-head"><h2 id="tp-training"><Dumbbell size={18} aria-hidden="true" />{tt('title')}</h2></div>
+          <TeamTrainingPanel teamId={teamId} weeks={planWeeks} today={weekdayOf(now)} library={library} ready={!planError} />
         </section>
 
         <section className="tp-section" aria-labelledby="tp-news">

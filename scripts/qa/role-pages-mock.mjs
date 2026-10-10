@@ -100,6 +100,16 @@ http.createServer((request, response) => {
       { id: 'a0000000-0000-4000-8000-000000000001', team_name: teams[0].name, body: 'เลื่อนซ้อมวันพุธเป็น 5 โมงเย็น ใส่ชุดสีแดงนะครับ', created_at: '2026-10-10T09:00:00Z', read_at: null },
     ] : [])
     if (table === 'rpc/mark_team_announcements_read') { console.log('mark read', role); return send(200, 1) }
+    // Team training plan (sql/72): this Bangkok week, today plus Thursday.
+    const bangkok = new Date(Date.now() + 7 * 3600000), weekday = (bangkok.getUTCDay() + 6) % 7
+    const weekStart = new Date(bangkok.getTime() - weekday * 86400000).toISOString().slice(0, 10)
+    const planDays = [...new Set([weekday, 3])].sort().map(day => ({ day, title: day === 3 ? 'เกมเล็ก' : 'บอลติดเท้า', blocks: [
+      { drill: 'a1-react-jog', name: 'วิ่งเหยาะ หยุดและเปลี่ยนทิศตามสัญญาณ', minutes: 10, load: 1 },
+      { drill: null, name: 'เลี้ยงบอลผ่านกรวย', minutes: 15, load: 2 },
+      { drill: null, name: 'เกมเล็ก 5 ต่อ 5', minutes: 25, load: 3 },
+    ] }))
+    if (table === 'team_training_plans') return rows(role === 'coach' ? [{ week_start: weekStart, days: planDays }] : [])
+    if (table === 'rpc/my_team_training_plans') return send(200, role === 'athlete' || role === 'guardian' ? [{ team_id: teams[0].id, team_name: teams[0].name, week_start: weekStart, days: planDays }] : [])
     if (table === 'teams') return rows(role === 'coach' ? (process.env.QA_COACH_NO_TEAM ? [] : teams.slice(0, 1)) : role === 'organizer' ? teams : [])
     send(200, [])
   })

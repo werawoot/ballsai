@@ -5,6 +5,8 @@ import { createServerClient } from '@supabase/ssr'
 import GuardianLinksClient, { type GuardianLink } from './GuardianLinksClient'
 import MyEventsPanel, { type MyEventRow } from '../team-members/MyEventsPanel'
 import MyNewsPanel, { type MyAnnouncementRow } from '../team-members/MyNewsPanel'
+import MyTrainingPanel, { type MyPlanRow } from '../team-members/MyTrainingPanel'
+import { planToday } from '@/lib/team-training'
 import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import { CHANGE_ROLE_PATH } from '@/lib/onboarding'
@@ -59,6 +61,10 @@ export default async function GuardianPage() {
   // Announcements from their children's teams (sql/71); nothing before SQL71.
   const { data: newsRows, error: newsError } = await supabase.rpc('my_team_announcements', { p_limit: 10 })
   const news = newsError ? [] : ((newsRows ?? []) as MyAnnouncementRow[])
+  // This week's and next week's plans of their children's teams (sql/72).
+  const { data: planRows, error: plansError } = await supabase.rpc('my_team_training_plans')
+  const plans = plansError ? [] : ((planRows ?? []) as MyPlanRow[])
+  const planDay = planToday()
   const isGuardian = (profile as Profile | null)?.onboarding_persona === 'guardian'
   const links = ((guardianRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
   const incoming = ((incomingRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
@@ -72,6 +78,7 @@ export default async function GuardianPage() {
         <Link href={CHANGE_ROLE_PATH} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 18px', borderRadius: 12, background: '#CC0001', color: 'white', fontWeight: 800, fontSize: 15, textDecoration: 'none' }}>{tp('notGuardian.changeRole')}</Link>
       </div>}
       <MyNewsPanel rows={news} />
+      <MyTrainingPanel rows={plans} thisWeek={planDay.thisWeek} today={planDay.today} />
       <MyEventsPanel rows={events} viewerId={user.id} />
       <GuardianLinksClient isGuardian={isGuardian} links={links} incoming={incoming} />
     </section>
