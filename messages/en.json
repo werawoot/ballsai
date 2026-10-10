@@ -2076,7 +2076,7 @@
     "colGoals": "Goals",
     "colAssists": "Assists",
     "colMvps": "MVP",
-    "statsNote": "\"—\" means no confirmed match yet, not zero · \"Attendance\" counts only sessions the coach has checked · Minutes played come in a later round",
+    "statsNote": "\"—\" means no confirmed match yet, not zero · \"Attendance\" counts only sessions the coach has checked · \"Min\" is minutes played as recorded by the coach, not verified by the system",
     "noMembers": "No athlete on this team has accepted yet",
     "inviteLink": "Invite athletes",
     "sheetTitle": "Team sheet",
@@ -2312,5 +2312,37 @@
     "reported": "Reported; an admin will check it",
     "reportFailed": "Could not report the note",
     "when": "{day}/{month}"
+  },
+  "matchMinutes": {
+    "title": "Minutes played",
+    "source": "Recorded by the coach",
+    "pickMatch": "Pick a match",
+    "match": "{date} · {score}",
+    "vs": "vs {team}",
+    "length": "Match length",
+    "minutesUnit": "{count} min",
+    "status": {
+      "none": "Didn't play",
+      "start": "Started",
+      "sub": "Came on"
+    },
+    "on": "On at",
+    "off": "Off at",
+    "offHint": "Blank = played to the end",
+    "played": "Played {count} min",
+    "save": "Save minutes",
+    "saving": "Saving…",
+    "saved": "Saved; athletes and guardians can see it",
+    "saveFailed": "Could not save",
+    "invalid": "Check the minutes: a substitute needs the minute they came on, and off must be after on",
+    "noMatches": "No confirmed matches yet. Minutes can be recorded once the organizer confirms a result.",
+    "recorded": "Recorded",
+    "notReady": "Minutes played is not switched on yet",
+    "rule": "Recorded by the coach, not verified by the system. It does not change ratings or the athlete card.",
+    "colMinutes": "Min",
+    "myTitle": "Minutes played",
+    "myLine": "{minutes} min · {matches} matches · {starts} starts",
+    "fromTeam": "Team {team}",
+    "forAthlete": "{name}"
   }
 }

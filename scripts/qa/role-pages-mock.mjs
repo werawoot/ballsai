@@ -114,6 +114,13 @@ http.createServer((request, response) => {
     const note = { id: 'n0000000-0000-4000-8000-000000000001', athlete_id: 'u-athlete', category: 'technical', body: 'รับบอลด้วยเท้าซ้ายดีขึ้นมาก ลองเปิดบอลออกข้างให้เร็วขึ้น', created_at: '2026-10-10T03:00:00Z', expires_at: '2027-10-10T03:00:00Z' }
     if (table === 'coach_athlete_notes') return rows(role === 'coach' ? [note] : [])
     if (table === 'rpc/my_coach_notes') return send(200, role === 'athlete' || role === 'guardian' ? [{ ...note, team_name: teams[0].name, athlete_name: athlete.display_name, reported: false }] : [])
+    // Minutes played (sql/74): one confirmed match with a saved sheet; season totals for the athlete.
+    if (table === 'match_results' && role === 'coach') return rows([{ id: 'b0000000-0000-4000-8000-000000000001', tournament_id: 't-1', team_a_id: teams[0].id, team_b_id: 'b0000000-0000-4000-8000-0000000000ff', status: 'confirmed', team_a_score: 2, team_b_score: 1, created_at: '2026-10-05T03:00:00Z' }])
+    if (table === 'team_match_minutes') return rows(role === 'coach' ? [{ match_result_id: 'b0000000-0000-4000-8000-000000000001', match_length: 50 }] : [])
+    if (table === 'team_match_minute_entries') return rows(role === 'coach' ? [
+      { match_result_id: 'b0000000-0000-4000-8000-000000000001', athlete_id: 'u-athlete', started: true, on_minute: null, off_minute: 35, minutes: 35 },
+    ] : [])
+    if (table === 'rpc/my_match_minutes') return send(200, role === 'athlete' || role === 'guardian' ? [{ team_id: teams[0].id, team_name: teams[0].name, athlete_id: 'u-athlete', athlete_name: athlete.display_name, matches: 3, starts: 2, minutes: 130 }] : [])
     if (table === 'teams') return rows(role === 'coach' ? (process.env.QA_COACH_NO_TEAM ? [] : teams.slice(0, 1)) : role === 'organizer' ? teams : [])
     send(200, [])
   })

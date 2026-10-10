@@ -146,3 +146,10 @@
 .tt-my-day li a { color: #ff8a8a; font-weight: 700; }
 .tt-my-day li span { color: var(--ui-text); }
 .tt-my-day li small { color: var(--ui-mute); flex: none; font-size: 12px; }
+/* Minutes played (sql/74): one row per member, status chips and the minute on/off. */
+.mm-select { background: var(--ui-sunk); border: 1px solid var(--ui-line); border-radius: 10px; color: var(--ui-text); font: 600 15px var(--font-sarabun), sans-serif; min-height: 44px; padding: 0 10px; width: 100%; }
+.mm-row { border-top: 1px solid var(--ui-line); display: grid; gap: 8px; padding-top: 10px; }
+.mm-row b { color: var(--ui-text); font-size: 14.5px; }
+.mm-status { margin-left: 0; }
+.mm-minutes { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mm-minutes input { background: var(--ui-sunk); border: 1px solid var(--ui-line); border-radius: 10px; color: var(--ui-text); font: 600 15px var(--font-sarabun), sans-serif; min-height: 44px; min-width: 0; padding: 0 10px; width: 100%; }
