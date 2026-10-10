@@ -7,6 +7,7 @@ import NoTeamYet from './NoTeamYet'
 import CoachTeamOverview from './CoachTeamOverview'
 import AthleteAttestationInbox from './AthleteAttestationInbox'
 import AthleteSkillInbox, { type SkillProposal } from './AthleteSkillInbox'
+import MyEventsPanel, { type MyEventRow } from './MyEventsPanel'
 import { COACH_SKILL_KEYS, type CoachSkills } from '@/lib/coach-skills'
 import {
   coachTeamOverview, latestAttestations,
@@ -92,10 +93,15 @@ export default async function TeamMembersPage() {
     teamName: row.teams?.name ?? '',
     skills: Object.fromEntries(COACH_SKILL_KEYS.map(key => [key, (row[key] as number | null) ?? null])) as CoachSkills,
   }))
+  // Upcoming team events for this athlete and any child they guard (sql/70). Before SQL70
+  // the function is missing: there is nothing to answer, so nothing is shown.
+  const { data: myEventRows, error: myEventsError } = await supabase.rpc('my_upcoming_team_events', { p_limit: 30 })
+  const myEvents = myEventsError ? [] : ((myEventRows ?? []) as MyEventRow[])
   const attestationState = latestAttestations(coachAttestationRows as AttestationRow[] | null)
   return <main className="bds-page ui-matchday" style={{ minHeight: '100vh' }}><PageHeader back={{ href: '/profile', label: 'โปรไฟล์' }} /><div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px 170px' }}><h1 className="ui-h1" style={{ marginBottom: 8 }}>{t('title')}</h1><p style={{ color: 'var(--ui-mute)', marginBottom: 14 }}>เชื่อมสมาชิกทีมกับบัญชีจริง เพื่อให้ผลแข่งและเส้นทางนักกีฬาถูกต้อง</p>{teams?.length ? <Link href="/match-plan" style={{ marginBottom: 20, background: '#101827', color: 'white', borderRadius: 10, padding: '11px 13px', display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}><ClipboardPenLine size={16} color="#f5c518" /> วางแผนก่อนแข่ง</Link> : null}{attestationError
       ? <p role="alert" style={{ margin: '0 0 16px', padding: '9px 11px', borderRadius: 9, background: 'var(--ui-sunk)', color: '#b91c1c', fontSize: 12, fontWeight: 700 }}>โหลดคำรับรองจากโค้ชไม่สำเร็จ กรุณาโหลดหน้าใหม่</p>
       : <AthleteAttestationInbox attestations={attestations} />}
+    <MyEventsPanel rows={myEvents} viewerId={user.id} />
     <AthleteSkillInbox proposals={skillProposals} />
     {teamsError || invitesError ? <p role="alert" style={{ margin: '0 0 16px', padding: '9px 11px', borderRadius: 9, background: 'var(--ui-sunk)', color: '#b91c1c', fontSize: 13, fontWeight: 700 }}>{t('loadFailed')}</p> : null}
     {!teamsError && !invitesError && !teams?.length && !invites?.length ? <NoTeamYet /> : null}

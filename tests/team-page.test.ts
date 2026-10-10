@@ -13,7 +13,9 @@ vi.mock('@/lib/supabase-server', () => ({ createServerSupabaseClient: async () =
     let rows = db.tables[table] ?? []
     const builder = {
       select: () => builder,
-      eq: (column: string, value: unknown) => { rows = rows.filter(row => row[column] === value); return builder },
+      // A dotted column filters on an embedded row (team_events!inner(team_id)).
+      eq: (column: string, value: unknown) => { const [head, tail] = column.split('.'); rows = rows.filter(row => (tail ? (row[head] as Record<string, unknown> | null)?.[tail] : row[column]) === value); return builder },
+      gte: (column: string, value: string) => { rows = rows.filter(row => String(row[column]) >= value); return builder },
       in: (column: string, values: unknown[]) => { rows = rows.filter(row => values.includes(row[column])); return builder },
       order: () => builder,
       limit: () => builder,
@@ -97,5 +99,52 @@ describe('/team-members/[teamId]', () => {
     const html = await render()
     expect(html).toContain(th.coachSkills.notReady)
     expect(html).toContain('ขอนแก่น U13')
+  })
+
+  describe('team events (sql/70)', () => {
+    const inDays = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
+    const events = () => [
+      { id: 'e-next', team_id: 'team-1', kind: 'training', title: 'ซ้อมเย็นวันพุธ', starts_at: inDays(2), location: 'สนามโรงเรียน', cancelled_at: null },
+      { id: 'e-gone', team_id: 'team-1', kind: 'match', title: 'นัดที่ยกเลิก', starts_at: inDays(3), location: null, cancelled_at: inDays(-1) },
+      { id: 'e-last', team_id: 'team-1', kind: 'training', title: 'ซ้อมเมื่อวาน', starts_at: inDays(-1), location: null, cancelled_at: null },
+      { id: 'e-other', team_id: 'team-2', kind: 'training', title: 'ทีมอื่น', starts_at: inDays(2), location: null, cancelled_at: null },
+    ]
+
+    it('lists upcoming with who answered, leaves out cancelled and other teams, and shows attendance', async () => {
+      seed()
+      db.tables.team_events = events()
+      db.tables.team_event_responses = [{ event_id: 'e-next', athlete_id: 'a-ton', answer: 'yes' }, { event_id: 'e-next', athlete_id: 'a-wait', answer: 'no' }]
+      db.tables.team_event_attendance = [
+        { event_id: 'e-last', athlete_id: 'a-ton', present: true, team_events: { team_id: 'team-1' } },
+        { event_id: 'e-last', athlete_id: 'a-palm', present: false, team_events: { team_id: 'team-1' } },
+      ]
+      const html = await render()
+      expect(html).toContain('ซ้อมเย็นวันพุธ')
+      expect(html).toContain('สนามโรงเรียน')
+      expect(html).not.toContain('นัดที่ยกเลิก')
+      expect(html).not.toContain('ทีมอื่น')
+      // A pending member's answer is not counted: 1 yes, 0 no, 1 waiting of two accepted.
+      expect(html).toContain('มา 1 · ไม่มา 0 · ยังไม่ตอบ 1')
+      expect(html).toContain('เช็กชื่อแล้ว: มา 1 คน')
+      expect(html).toMatch(/ต้น<small>FW<\/small><\/th>(<td>[^<]*<\/td>){4}<td>100%<\/td>/)
+      expect(html).toMatch(/ปาล์ม<small>GK<\/small><\/th>(<td>[^<]*<\/td>){4}<td>0%<\/td>/)
+    })
+
+    it('shows a dash, not 0%, for a member never checked', async () => {
+      seed()
+      db.tables.team_events = events()
+      db.tables.team_event_attendance = []
+      const html = await render()
+      expect(html).toMatch(/ต้น<small>FW<\/small><\/th>(<td>[^<]*<\/td>){4}<td>—<\/td>/)
+      expect(html).toContain(th.teamEvents.attendanceNone)
+    })
+
+    it('says events are not on yet, instead of failing, before SQL70 is applied', async () => {
+      seed()
+      db.missing = ['team_events']
+      const html = await render()
+      expect(html).toContain(th.teamEvents.notReady)
+      expect(html).toContain('ขอนแก่น U13')
+    })
   })
 })

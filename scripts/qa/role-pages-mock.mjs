@@ -79,6 +79,20 @@ http.createServer((request, response) => {
     ])
     // Skill ratings (sql/69): the athlete has one waiting; the coach has none yet.
     if (table === 'coach_skill_assessments') return rows(role === 'athlete' ? [{ id: 'cs-1', athlete_id: 'u-athlete', status: 'pending', created_at: '2026-10-09T08:00:00Z', speed: 75, stamina: null, strength: 60, technique: 70, vision: null, teams: { name: teams[0].name } }] : [])
+    // Team events (sql/70): one session the day after tomorrow, one yesterday already checked.
+    const soon = new Date(Date.now() + 2 * 86400000).toISOString(), yesterday = new Date(Date.now() - 86400000).toISOString()
+    if (table === 'team_events') return rows(role === 'coach' ? [
+      { id: 'e0000000-0000-4000-8000-000000000001', kind: 'training', title: 'ซ้อมเย็นวันพุธ', starts_at: soon, location: 'สนามโรงเรียนบ้านโนน', cancelled_at: null },
+      { id: 'e0000000-0000-4000-8000-000000000002', kind: 'training', title: 'ซ้อมทีม', starts_at: yesterday, location: null, cancelled_at: null },
+    ] : [])
+    if (table === 'team_event_responses') return rows(role === 'coach' ? [{ event_id: 'e0000000-0000-4000-8000-000000000001', athlete_id: 'u-athlete', answer: 'yes' }] : [])
+    if (table === 'team_event_attendance') return rows(role === 'coach' ? [
+      { event_id: 'e0000000-0000-4000-8000-000000000002', athlete_id: 'u-athlete', present: true },
+      { event_id: 'e0000000-0000-4000-8000-000000000002', athlete_id: 'u-keeper', present: false },
+    ] : [])
+    if (table === 'rpc/my_upcoming_team_events') return send(200, role === 'athlete' || role === 'guardian' ? [
+      { event_id: 'e0000000-0000-4000-8000-000000000001', team_id: teams[0].id, team_name: teams[0].name, kind: 'training', title: 'ซ้อมเย็นวันพุธ', starts_at: soon, location: 'สนามโรงเรียนบ้านโนน', note: null, athlete_id: 'u-athlete', athlete_name: athlete.display_name, answer: role === 'athlete' ? 'yes' : null },
+    ] : [])
     if (table === 'teams') return rows(role === 'coach' ? (process.env.QA_COACH_NO_TEAM ? [] : teams.slice(0, 1)) : role === 'organizer' ? teams : [])
     send(200, [])
   })

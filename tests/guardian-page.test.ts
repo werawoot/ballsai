@@ -4,7 +4,7 @@ import { NextIntlClientProvider, createTranslator } from 'next-intl'
 import { describe, expect, it, vi } from 'vitest'
 import th from '@/messages/th.json'
 
-const db = vi.hoisted(() => ({ persona: 'guardian' as string | null }))
+const db = vi.hoisted(() => ({ persona: 'guardian' as string | null, events: null as Record<string, unknown>[] | null }))
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
@@ -13,7 +13,9 @@ function fakeClient() {
     builder.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(resolve)
     return builder
   }
-  return { from, auth: { getUser: async () => ({ data: { user: { id: 'me', email: 'parent@example.com' } } }) } }
+  // my_upcoming_team_events (sql/70): missing until SQL70 is applied, unless a test seeds rows.
+  const rpc = async () => (db.events ? { data: db.events, error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } })
+  return { from, rpc, auth: { getUser: async () => ({ data: { user: { id: 'me', email: 'parent@example.com' } } }) } }
 }
 vi.mock('@supabase/ssr', () => ({ createServerClient: () => fakeClient() }))
 vi.mock('next/headers', () => ({ cookies: () => ({ getAll: () => [], set: () => {} }) }))
@@ -64,5 +66,22 @@ describe('/guardian for someone who did not choose ผู้ปกครอง',
   it('a guardian does not see it', async () => {
     const html = await render(GuardianPage as never)
     expect(html).not.toContain('/welcome?again=1')
+  })
+})
+
+describe('/guardian team events (sql/70)', () => {
+  it("lists a child's upcoming event with its own answer buttons", async () => {
+    db.persona = 'guardian'
+    db.events = [{ event_id: 'e1', team_id: 't1', team_name: 'ขอนแก่น U13', kind: 'match', title: 'นัดกระชับมิตร', starts_at: '2026-10-18T02:00:00Z', location: null, note: null, athlete_id: 'child', athlete_name: 'ปาล์ม', answer: null }]
+    const html = await render(GuardianPage as () => Promise<ReactElement>)
+    db.events = null
+    expect(html).toContain('นัดกระชับมิตร')
+    expect(html).toContain('สำหรับ ปาล์ม')
+    expect(html).toContain(th.teamEvents.yes)
+  })
+
+  it('shows no event section before SQL70 is applied', async () => {
+    db.events = null
+    expect(await render(GuardianPage as () => Promise<ReactElement>)).not.toContain(th.teamEvents.myTitle)
   })
 })
