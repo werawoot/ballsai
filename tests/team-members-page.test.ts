@@ -267,3 +267,18 @@ describe('/team-members plan days already past', () => {
     expect(html).not.toContain('เมื่อวานซ้อม')
   })
 })
+
+describe('/team-members coach notes (sql/73)', () => {
+  it('shows the athlete the notes about them, with no report button once reported', async () => {
+    db.user = 'u1'; db.failing = new Set(); db.tables = { teams: [], team_members: [], coach_attestations: [], my_coach_notes: [
+      { id: 'n1', team_name: 'ขอนแก่น U13', athlete_id: 'u1', athlete_name: 'ต้น', category: 'goal', body: 'ฝึกยิงเท้าซ้ายวันละ 20 ครั้ง', created_at: '2026-10-10T03:00:00Z', expires_at: '2027-10-10T03:00:00Z', reported: true },
+    ] }
+    const html = await render()
+    expect(html).toContain(th.coachNotes.myNotice)
+    expect(html).toContain('ฝึกยิงเท้าซ้ายวันละ 20 ครั้ง')
+    expect(html).not.toContain('เกี่ยวกับ ต้น')
+    expect(html).not.toContain(th.coachNotes.report + '<')
+    expect(html).toContain(th.coachNotes.reported)
+  })
+})
+

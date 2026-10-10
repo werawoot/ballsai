@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { BarChart3, CalendarDays, ClipboardList, Dumbbell, Gauge, Megaphone } from 'lucide-react'
+import { BarChart3, CalendarDays, ClipboardList, Dumbbell, Gauge, Megaphone, NotebookPen } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { teamMatchIds, teamSeasonStats, teamSheet, type MatchRow, type PerformanceRow, type RankLink, type TeamMember } from '@/lib/team-stats'
@@ -11,6 +11,7 @@ import { COACH_SKILL_KEYS, latestProposals, type CoachSkills, type ProposalRow, 
 import TeamEventsPanel, { type PanelEvent } from './TeamEventsPanel'
 import TeamNewsPanel, { type SentAnnouncement } from './TeamNewsPanel'
 import TeamTrainingPanel from './TeamTrainingPanel'
+import CoachNotesPanel, { type CoachNote } from './CoachNotesPanel'
 import { addWeeks, libraryDrills, weekStartOf, weekdayOf, type PlanDay } from '@/lib/team-training'
 import { attendanceOpen, attendanceRates, splitEvents, type EventKind } from '@/lib/team-events'
 import '../team-page.css'
@@ -39,7 +40,7 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
 
   const now = Date.now()
   const thisWeek = weekStartOf(now), nextWeek = addWeeks(thisWeek, 1)
-  const [{ data: rosterRows, error: rosterError }, { data: matchRows, error: matchError }, { data: proposalRows, error: proposalError }, { data: planRows, error: planError }, { data: newsRows, error: newsError }, { data: eventRows, error: eventError }] = await Promise.all([
+  const [{ data: rosterRows, error: rosterError }, { data: matchRows, error: matchError }, { data: proposalRows, error: proposalError }, { data: noteRows, error: noteError }, { data: planRows, error: planError }, { data: newsRows, error: newsError }, { data: eventRows, error: eventError }] = await Promise.all([
     supabase.from('team_members').select('athlete_id, athlete_profiles(display_name, position)').eq('team_id', teamId).eq('status', 'accepted'),
     typedTeam.tournament_id
       ? supabase.from('match_results').select('id, team_a_id, team_b_id, status').eq('tournament_id', typedTeam.tournament_id).eq('status', 'confirmed').or(`team_a_id.eq.${teamId},team_b_id.eq.${teamId}`)
@@ -49,6 +50,9 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     supabase.from('coach_skill_assessments').select('athlete_id, status, created_at, speed, stamina, strength, technique, vision').eq('team_id', teamId).order('created_at', { ascending: false }).limit(200),
     // Team events from 30 days back (sql/70; team_events_team_starts_idx). The save
     // function caps a team at 200 upcoming events, so this read is bounded too.
+    // This coach's notes about current members (sql/73; RLS hides notes about anyone who
+    // left the team and anything expired). coach_athlete_notes_team_idx.
+    supabase.from('coach_athlete_notes').select('id, athlete_id, category, body, created_at, expires_at').eq('team_id', teamId).order('created_at', { ascending: false }).limit(300),
     // This week's and next week's plan (sql/72; primary key team_id, week_start).
     supabase.from('team_training_plans').select('week_start, days').eq('team_id', teamId).in('week_start', [thisWeek, nextWeek]),
     // The coach's last ten announcements (sql/71; team_announcements_team_created_idx).
@@ -108,6 +112,8 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
   const planOf = (week: string) => ((planRows ?? []) as { week_start: string; days: PlanDay[] }[]).find(row => row.week_start === week)?.days ?? []
   const planWeeks = [thisWeek, nextWeek].map(week => ({ weekStart: week, days: planOf(week) }))
   const library = libraryDrills(await getLocale())
+  const notes: CoachNote[] = ((noteRows ?? []) as { id: string; athlete_id: string; category: CoachNote['category']; body: string; created_at: string; expires_at: string }[])
+    .map(row => ({ id: row.id, athleteId: row.athlete_id, category: row.category, body: row.body, createdAt: row.created_at, expiresAt: row.expires_at }))
   const rates = attendanceRates((seasonAttendanceRows ?? []) as { athlete_id: string; present: boolean }[])
 
   const stats = teamSeasonStats(roster, (performanceRows ?? []) as PerformanceRow[], (rankRows ?? []) as RankLink[])
@@ -120,7 +126,7 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     createdAt: row.created_at,
     skills: Object.fromEntries(COACH_SKILL_KEYS.map(key => [key, row[key] ?? null])) as CoachSkills,
   }]))
-  const [ts, te, tn, tt] = await Promise.all([getTranslations('coachSkills'), getTranslations('teamEvents'), getTranslations('teamNews'), getTranslations('teamTraining')])
+  const [ts, te, tn, tt, tc] = await Promise.all([getTranslations('coachSkills'), getTranslations('teamEvents'), getTranslations('teamNews'), getTranslations('teamTraining'), getTranslations('coachNotes')])
 
   return (
     <main className="bds-page ui-matchday tp">
@@ -164,6 +170,11 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
         {roster.length > 0 && <section className="tp-section" aria-labelledby="tp-skills">
           <div className="tp-head"><h2 id="tp-skills"><Gauge size={18} aria-hidden="true" />{ts('title')}</h2><span className="ui-chip is-coach">{t('coachChip')}</span></div>
           <CoachSkillPanel teamId={teamId} members={roster.map(member => ({ athleteId: member.athleteId, name: member.name }))} latest={latest} ready={!proposalError} />
+        </section>}
+
+        {roster.length > 0 && <section className="tp-section" aria-labelledby="tp-notes">
+          <div className="tp-head"><h2 id="tp-notes"><NotebookPen size={18} aria-hidden="true" />{tc('title')}</h2><span className="ui-chip is-coach">{t('coachChip')}</span></div>
+          <CoachNotesPanel teamId={teamId} members={roster.map(member => ({ athleteId: member.athleteId, name: member.name }))} notes={notes} ready={!noteError} />
         </section>}
 
         <section className="tp-section" aria-labelledby="tp-sheet">

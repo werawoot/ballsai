@@ -4,7 +4,7 @@ import { NextIntlClientProvider, createTranslator } from 'next-intl'
 import { describe, expect, it, vi } from 'vitest'
 import th from '@/messages/th.json'
 
-const db = vi.hoisted(() => ({ persona: 'guardian' as string | null, events: null as Record<string, unknown>[] | null, news: null as Record<string, unknown>[] | null, plans: null as Record<string, unknown>[] | null }))
+const db = vi.hoisted(() => ({ persona: 'guardian' as string | null, events: null as Record<string, unknown>[] | null, news: null as Record<string, unknown>[] | null, plans: null as Record<string, unknown>[] | null, notes: null as Record<string, unknown>[] | null }))
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
@@ -16,7 +16,7 @@ function fakeClient() {
   // my_upcoming_team_events (sql/70) and my_team_announcements (sql/71): missing until
   // the file is applied, unless a test seeds rows.
   const rpc = async (name: string) => {
-    const rows = name === 'my_team_announcements' ? db.news : name === 'my_team_training_plans' ? db.plans : db.events
+    const rows = ({ my_upcoming_team_events: db.events, my_team_announcements: db.news, my_team_training_plans: db.plans, my_coach_notes: db.notes } as Record<string, Record<string, unknown>[] | null>)[name] ?? null
     return rows ? { data: rows, error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } }
   }
   return { from, rpc, auth: { getUser: async () => ({ data: { user: { id: 'me', email: 'parent@example.com' } } }) } }
@@ -110,6 +110,20 @@ describe('/guardian team training plan (sql/72)', () => {
     db.plans = null
     expect(html).toContain(th.teamTraining.myTitle)
     expect(html).toContain('เลี้ยงบอลผ่านกรวย')
+  })
+})
+
+describe('/guardian coach notes (sql/73)', () => {
+  it("shows every note about the child, who it is about, and lets the guardian delete or report it", async () => {
+    db.persona = 'guardian'
+    db.notes = [{ id: 'n1', team_name: 'ขอนแก่น U13', athlete_id: 'child', athlete_name: 'ปาล์ม', category: 'technical', body: 'รับบอลเท้าซ้ายดีขึ้น', created_at: '2026-10-10T03:00:00Z', expires_at: '2027-10-10T03:00:00Z', reported: false }]
+    const html = await render(GuardianPage as () => Promise<ReactElement>)
+    db.notes = null
+    expect(html).toContain(th.coachNotes.myTitle)
+    expect(html).toContain('เกี่ยวกับ ปาล์ม')
+    expect(html).toContain('รับบอลเท้าซ้ายดีขึ้น')
+    expect(html).toContain(th.coachNotes.report)
+    expect(html).toContain('ลบเองวันที่ 10/10/2027')
   })
 })
 

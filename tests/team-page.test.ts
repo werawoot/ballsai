@@ -205,5 +205,26 @@ describe('/team-members/[teamId]', () => {
       expect(await render()).toContain(th.teamTraining.notReady)
     })
   })
+
+  describe('coach notes (sql/73)', () => {
+    it("lists this coach's notes for the picked member, with the PDPA notice", async () => {
+      seed()
+      db.tables.coach_athlete_notes = [
+        { id: 'n1', team_id: 'team-1', athlete_id: 'a-ton', category: 'tactical', body: 'ยืนตำแหน่งดีขึ้น', created_at: '2026-10-10T03:00:00Z', expires_at: '2027-10-10T03:00:00Z' },
+        { id: 'n2', team_id: 'team-1', athlete_id: 'a-palm', category: 'goal', body: 'โน้ตของปาล์ม', created_at: '2026-10-10T03:00:00Z', expires_at: '2027-10-10T03:00:00Z' },
+      ]
+      const html = await render()
+      expect(html).toContain(th.coachNotes.title)
+      expect(html).toContain(th.coachNotes.notice)
+      expect(html).toContain('ยืนตำแหน่งดีขึ้น')
+      expect(html).not.toContain('โน้ตของปาล์ม')
+    })
+
+    it('says notes are not on yet before SQL73 is applied', async () => {
+      seed()
+      db.missing = ['coach_athlete_notes']
+      expect(await render()).toContain(th.coachNotes.notReady)
+    })
+  })
 })
 

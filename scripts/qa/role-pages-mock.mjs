@@ -110,6 +110,10 @@ http.createServer((request, response) => {
     ] }))
     if (table === 'team_training_plans') return rows(role === 'coach' ? [{ week_start: weekStart, days: planDays }] : [])
     if (table === 'rpc/my_team_training_plans') return send(200, role === 'athlete' || role === 'guardian' ? [{ team_id: teams[0].id, team_name: teams[0].name, week_start: weekStart, days: planDays }] : [])
+    // Coach notes (sql/73): one note about the athlete; the athlete sees it with delete and report.
+    const note = { id: 'n0000000-0000-4000-8000-000000000001', athlete_id: 'u-athlete', category: 'technical', body: 'รับบอลด้วยเท้าซ้ายดีขึ้นมาก ลองเปิดบอลออกข้างให้เร็วขึ้น', created_at: '2026-10-10T03:00:00Z', expires_at: '2027-10-10T03:00:00Z' }
+    if (table === 'coach_athlete_notes') return rows(role === 'coach' ? [note] : [])
+    if (table === 'rpc/my_coach_notes') return send(200, role === 'athlete' || role === 'guardian' ? [{ ...note, team_name: teams[0].name, athlete_name: athlete.display_name, reported: false }] : [])
     if (table === 'teams') return rows(role === 'coach' ? (process.env.QA_COACH_NO_TEAM ? [] : teams.slice(0, 1)) : role === 'organizer' ? teams : [])
     send(200, [])
   })
