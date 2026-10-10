@@ -4,7 +4,7 @@ import { NextIntlClientProvider, createTranslator } from 'next-intl'
 import { describe, expect, it, vi } from 'vitest'
 import th from '@/messages/th.json'
 
-const db = vi.hoisted(() => ({ persona: 'guardian' as string | null, events: null as Record<string, unknown>[] | null, news: null as Record<string, unknown>[] | null }))
+const db = vi.hoisted(() => ({ persona: 'guardian' as string | null, events: null as Record<string, unknown>[] | null, news: null as Record<string, unknown>[] | null, plans: null as Record<string, unknown>[] | null }))
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
@@ -16,7 +16,7 @@ function fakeClient() {
   // my_upcoming_team_events (sql/70) and my_team_announcements (sql/71): missing until
   // the file is applied, unless a test seeds rows.
   const rpc = async (name: string) => {
-    const rows = name === 'my_team_announcements' ? db.news : db.events
+    const rows = name === 'my_team_announcements' ? db.news : name === 'my_team_training_plans' ? db.plans : db.events
     return rows ? { data: rows, error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } }
   }
   return { from, rpc, auth: { getUser: async () => ({ data: { user: { id: 'me', email: 'parent@example.com' } } }) } }
@@ -98,6 +98,18 @@ describe('/guardian team announcements (sql/71)', () => {
     db.news = null
     expect(html).toContain('งดซ้อมวันเสาร์ ฝนตก')
     expect(html).toContain('ทีม ขอนแก่น U13')
+  })
+})
+
+describe('/guardian team training plan (sql/72)', () => {
+  it("shows the child's team plan for this week", async () => {
+    const { weekStartOf, weekdayOf } = await import('@/lib/team-training')
+    db.persona = 'guardian'
+    db.plans = [{ team_id: 't1', team_name: 'ขอนแก่น U13', week_start: weekStartOf(Date.now()), days: [{ day: weekdayOf(Date.now()), title: 'บอลติดเท้า', blocks: [{ drill: null, name: 'เลี้ยงบอลผ่านกรวย', minutes: 15, load: 2 }] }] }]
+    const html = await render(GuardianPage as () => Promise<ReactElement>)
+    db.plans = null
+    expect(html).toContain(th.teamTraining.myTitle)
+    expect(html).toContain('เลี้ยงบอลผ่านกรวย')
   })
 })
 

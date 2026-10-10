@@ -104,3 +104,45 @@
 .tn-when { align-items: center; color: var(--ui-mute); display: inline-flex; font-size: 12.5px; font-weight: 700; gap: 6px; }
 .tn-new { background: #cc0001; border-radius: 99px; color: #fff; font-size: 11px; padding: 2px 8px; }
 .me-card h2 { align-items: center; display: flex; gap: 6px; }
+/* Team training plan (sql/72): week, day chips, drills with minutes and load, library. */
+.tt-days { display: grid; gap: 6px; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.tt-days button { align-items: center; background: rgba(255,255,255,.04); border: 1px solid var(--ui-line); border-radius: 12px; color: var(--ui-text); cursor: pointer; display: flex; flex-direction: column; font: 800 13px var(--font-sarabun), sans-serif; gap: 4px; min-height: 52px; justify-content: center; padding: 6px 0; }
+.tt-days button i { background: transparent; border-radius: 50%; height: 6px; width: 6px; }
+.tt-days button.has-plan i { background: #ff5a5a; }
+.tt-days button.is-on { background: linear-gradient(180deg, #ff3b3b, #b00707); border-color: transparent; color: #fff; }
+.tt-days button.is-on i { background: #fff; }
+.tt-days button.is-on:not(.has-plan) i { background: transparent; }
+.tt-block { border-top: 1px solid var(--ui-line); display: grid; gap: 8px; padding-top: 10px; }
+.tt-block-head { align-items: center; display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr) 36px 36px 36px; }
+.tt-block-head span { display: grid; gap: 2px; min-width: 0; }
+.tt-block-head b { color: var(--ui-text); font-size: 14.5px; overflow-wrap: anywhere; }
+.tt-block-head small { color: var(--ui-mute); font-size: 12px; }
+.tt-block-head button, .tt-block-controls > button { align-items: center; background: rgba(255,255,255,.05); border: 1px solid var(--ui-line); border-radius: 10px; color: var(--ui-text); cursor: pointer; display: flex; height: 36px; justify-content: center; }
+.tt-block-head button:disabled { opacity: .35; }
+.tt-block-controls { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; }
+.tt-block-controls > button { width: 44px; height: 44px; }
+.tt-block-controls > b { color: var(--ui-text); font-size: 14px; font-variant-numeric: tabular-nums; min-width: 56px; text-align: center; }
+.tt-loads { display: inline-flex; gap: 4px; margin-left: auto; }
+.tt-loads button { background: rgba(255,255,255,.04); border: 1px solid var(--ui-line); border-radius: 99px; color: var(--ui-mute); cursor: pointer; font: 700 12.5px var(--font-sarabun), sans-serif; min-height: 36px; padding: 0 10px; }
+.tt-loads button.is-on.is-load-1 { background: rgba(74,222,128,.16); border-color: #4ade80; color: #4ade80; }
+.tt-loads button.is-on.is-load-2 { background: rgba(255,216,77,.16); border-color: #ffd84d; color: #ffd84d; }
+.tt-loads button.is-on.is-load-3 { background: rgba(255,90,90,.16); border-color: #ff5a5a; color: #ff8a8a; }
+.tt-own { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) auto; }
+.tt-own input, .tt-search input { background: var(--ui-sunk); border: 1px solid var(--ui-line); border-radius: 10px; color: var(--ui-text); font: 600 15px var(--font-sarabun), sans-serif; min-height: 44px; min-width: 0; padding: 0 12px; width: 100%; }
+.tt-library { background: var(--ui-sunk); border-radius: 12px; display: grid; gap: 8px; max-height: 420px; overflow-y: auto; padding: 12px; }
+.tt-library h4 { color: var(--ui-mute); font-size: 12.5px; margin: 6px 0 2px; }
+.tt-search { align-items: center; color: var(--ui-mute); display: grid; gap: 8px; grid-template-columns: 16px minmax(0, 1fr); }
+.tt-pick { align-items: center; border-top: 1px solid var(--ui-line); display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) auto; }
+.tt-pick button { align-items: center; background: none; border: 0; color: var(--ui-text); cursor: pointer; display: grid; font: 600 14px var(--font-sarabun), sans-serif; gap: 8px; grid-template-columns: 16px minmax(0, 1fr) auto; min-height: 44px; padding: 0; text-align: left; }
+.tt-pick small { color: var(--ui-mute); font-size: 12px; }
+.tt-pick a { color: #ff6b6b; font-size: 12.5px; font-weight: 700; }
+.tt-notify { align-items: center; color: var(--ui-text); display: flex; font-size: 14px; font-weight: 700; gap: 8px; min-height: 44px; }
+.tt-notify input { accent-color: #cc0001; height: 20px; width: 20px; }
+.tt-my-day { border-radius: 10px; display: grid; gap: 4px; padding: 6px 8px; }
+.tt-my-day.is-today { background: rgba(204,0,1,.12); box-shadow: inset 0 0 0 1px rgba(255,90,90,.4); }
+.tt-my-day b { color: var(--ui-text); font-size: 14px; }
+.tt-my-day ul { display: grid; gap: 2px; list-style: none; margin: 0; padding: 0; }
+.tt-my-day li { align-items: baseline; display: flex; font-size: 13.5px; gap: 8px; justify-content: space-between; }
+.tt-my-day li a { color: #ff8a8a; font-weight: 700; }
+.tt-my-day li span { color: var(--ui-text); }
+.tt-my-day li small { color: var(--ui-mute); flex: none; font-size: 12px; }
