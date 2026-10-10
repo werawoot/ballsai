@@ -555,7 +555,9 @@
     "eventNotStarted": "Attendance opens close to the start time",
     "tooManyEvents": "This team already has 200 upcoming events",
     "tooManyAnnouncements": "This team has sent 30 announcements today. Try again tomorrow.",
-    "remindedRecently": "A reminder was just sent. You can remind again after 6 hours."
+    "remindedRecently": "A reminder was just sent. You can remind again after 6 hours.",
+    "noteHealthWords": "This note mentions health or an injury, which is sensitive data and cannot be kept in a coach note. Talk to the guardian directly instead.",
+    "noteTooSoon": "You already wrote a note in this category for this athlete this week. You can write another after 7 days."
   },
   "impact": {
     "back": "Home",
@@ -2273,5 +2275,42 @@
     "today": "Today",
     "fromTeam": "Team {team}",
     "myRule": "Your coach's plan. If you are hurt or unwell, rest and tell your coach."
+  },
+  "coachNotes": {
+    "title": "Coach notes",
+    "pickAthlete": "Pick an athlete",
+    "category": "Category",
+    "categories": {
+      "technical": "Technical",
+      "tactical": "Tactical",
+      "physical": "Physical (not medical)",
+      "teamwork": "Teamwork",
+      "goal": "Goal"
+    },
+    "label": "Note",
+    "placeholder": "What you saw on the pitch, e.g. first touch with the left foot is better; try to switch play faster",
+    "length": "{count}/280",
+    "notice": "The athlete and their guardian see every note you write and can delete or report it. Notes delete themselves after 12 months. Never write about health, injuries, medicine, family, money, discipline, or compare with other children.",
+    "healthWarning": "This mentions health (\"{word}\") and cannot be saved. For an injury, talk to the guardian directly.",
+    "save": "Save note",
+    "saving": "Saving…",
+    "saved": "Note saved; the athlete and guardian can see it",
+    "saveFailed": "Could not save the note",
+    "none": "No notes for this athlete yet",
+    "history": "Notes written",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this note?",
+    "deleted": "Note deleted",
+    "deleteFailed": "Could not delete the note",
+    "expires": "Deletes itself on {date}",
+    "notReady": "Coach notes are not switched on yet",
+    "myTitle": "Notes from your coach",
+    "myNotice": "Your coach writes these to help you improve. Only you, your guardian and the coach who wrote them can see them. They delete themselves after 12 months. If one is wrong or not appropriate, delete or report it.",
+    "forAthlete": "About {name}",
+    "fromTeam": "Team {team}",
+    "report": "Report as not appropriate",
+    "reported": "Reported; an admin will check it",
+    "reportFailed": "Could not report the note",
+    "when": "{day}/{month}"
   }
 }
