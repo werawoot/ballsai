@@ -550,7 +550,10 @@
     "notAllowed": "You are not allowed to do this",
     "featureNotReady": "This feature is not switched on yet. Please contact the team",
     "alreadyAnswered": "This was already answered. Please reload",
-    "actionFailed": "That did not work. Please check and try again"
+    "actionFailed": "That did not work. Please check and try again",
+    "eventClosed": "This event no longer takes answers (it started or was cancelled)",
+    "eventNotStarted": "Attendance opens close to the start time",
+    "tooManyEvents": "This team already has 200 upcoming events"
   },
   "impact": {
     "back": "Home",
@@ -2069,7 +2072,7 @@
     "colGoals": "Goals",
     "colAssists": "Assists",
     "colMvps": "MVP",
-    "statsNote": "\"—\" means no confirmed result yet, not zero · Minutes played and training attendance come in a later round",
+    "statsNote": "\"—\" means no confirmed match yet, not zero · \"Attendance\" counts only sessions the coach has checked · Minutes played come in a later round",
     "noMembers": "No athlete on this team has accepted yet",
     "inviteLink": "Invite athletes",
     "sheetTitle": "Team sheet",
@@ -2104,5 +2107,66 @@
     "accepted": "Accepted. The numbers are on your card",
     "declined": "Declined. Nothing changed",
     "answerFailed": "Could not answer. Please try again"
+  },
+  "teamEvents": {
+    "title": "Training and matches",
+    "create": "+ New event",
+    "kinds": {
+      "training": "Training",
+      "match": "Match"
+    },
+    "kindLabel": "Type",
+    "titleLabel": "Title",
+    "titleTraining": "Team training",
+    "titleMatch": "Match",
+    "dateLabel": "Date",
+    "timeLabel": "Time",
+    "locationLabel": "Place (optional)",
+    "save": "Save event",
+    "saving": "Saving…",
+    "cancelForm": "Cancel",
+    "saved": "Event saved. Athletes and guardians can see it",
+    "saveFailed": "Could not save the event",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "none": "No events yet. Tap \"+ New event\" to start",
+    "counts": "Coming {yes} · Not coming {no} · No answer {waiting}",
+    "answer": {
+      "yes": "Coming",
+      "no": "Not coming",
+      "waiting": "No answer"
+    },
+    "cancelEvent": "Cancel this event",
+    "cancelled": "Event cancelled",
+    "cancelFailed": "Could not cancel the event",
+    "attendanceTitle": "Attendance: tap who came",
+    "attendanceSave": "Save attendance ({count} present)",
+    "attendanceSaved": "Attendance saved",
+    "attendanceFailed": "Could not save attendance",
+    "attendanceDone": "Attendance taken: {count} present",
+    "attendanceOpen": "Take attendance",
+    "notReady": "Team events are not switched on yet",
+    "myTitle": "Upcoming events",
+    "myRule": "Answer whether you can come. You can change it until the start time; the coach sees it straight away.",
+    "yes": "Coming",
+    "no": "Not coming",
+    "forAthlete": "For {name}",
+    "answerFailed": "Could not answer. Please try again",
+    "answered": "Answered: {answer}",
+    "colAttendance": "Attendance",
+    "cancelConfirm": "Cancel this event?",
+    "whoAnswered": "See each answer",
+    "noPast": "No events in the last 30 days",
+    "attendanceNone": "Not checked yet",
+    "weekdays": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    },
+    "when": "{weekday} {day}/{month} · {time}"
   }
 }

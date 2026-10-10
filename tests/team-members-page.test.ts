@@ -20,7 +20,9 @@ function fakeClient() {
     }
     return builder
   }
-  return { from, auth: { getUser: async () => ({ data: { user: { id: db.user } } }) } }
+  // my_upcoming_team_events (sql/70): the seeded rows, or missing like before SQL70.
+  const rpc = async () => (db.tables.my_upcoming_team_events ? { data: db.tables.my_upcoming_team_events, error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } })
+  return { from, rpc, auth: { getUser: async () => ({ data: { user: { id: db.user } } }) } }
 }
 vi.mock('@supabase/ssr', () => ({ createServerClient: () => fakeClient() }))
 vi.mock('next/headers', () => ({ cookies: () => ({ getAll: () => [], set: () => {} }) }))
@@ -198,3 +200,16 @@ describe('/team-members: a skill rating from the coach waits for the athlete (sq
     db.failing = new Set()
   })
 })
+
+describe('/team-members team events (sql/70)', () => {
+  it('shows an athlete their upcoming event with มาได้ / มาไม่ได้', async () => {
+    db.user = 'u1'; db.failing = new Set(); db.tables = { teams: [], team_members: [], coach_attestations: [], my_upcoming_team_events: [
+      { event_id: 'e1', team_id: 'tm1', team_name: 'ขอนแก่น U13', kind: 'training', title: 'ซ้อมเย็นวันพุธ', starts_at: '2026-10-14T10:00:00Z', location: 'สนามโรงเรียน', note: null, athlete_id: 'u1', athlete_name: 'ต้น', answer: 'no' },
+    ] }
+    const html = await render()
+    expect(html).toContain(th.teamEvents.myTitle)
+    expect(html).toContain('ซ้อมเย็นวันพุธ')
+    expect(html).toMatch(/aria-pressed="true"[^>]*>มาไม่ได้</)
+  })
+})
+

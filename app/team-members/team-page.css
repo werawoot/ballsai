@@ -58,3 +58,40 @@
 .tp-skill b { color: var(--ui-text); font-variant-numeric: tabular-nums; text-align: right; }
 .tp-ok { color: var(--ui-ok); font-size: 13.5px; font-weight: 700; margin: 0; }
 @media (max-width: 359px) { .tp-skill { grid-template-columns: 70px minmax(0, 1fr) 44px 44px 26px; gap: 6px; } }
+
+/* Team events (sql/70): make a session or match, who is coming, tick who came. */
+.te { display: grid; gap: 10px; }
+.te-new { justify-self: start; }
+.te-sub { color: var(--ui-mute); font: 800 13px var(--font-sarabun), sans-serif; letter-spacing: .02em; margin: 8px 0 0; }
+.te-form, .te-card { display: grid; gap: 8px; padding: 14px !important; }
+.te-form label { color: var(--ui-mute); display: grid; font-size: 13px; font-weight: 700; gap: 5px; min-width: 0; }
+.te-form input { background: var(--ui-sunk); border: 1px solid var(--ui-line); border-radius: 10px; color: var(--ui-text); font: 600 15px var(--font-sarabun), sans-serif; min-height: 44px; min-width: 0; padding: 0 12px; width: 100%; }
+.te-row { display: grid; gap: 8px; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+.te-top { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
+.te-top time { color: var(--ui-text); font-size: 13.5px; font-weight: 700; }
+.te-kind { border-radius: 99px; font-size: 12px; font-weight: 800; padding: 3px 10px; }
+.te-kind.is-training { background: rgba(74,222,128,.14); color: var(--ui-ok); }
+.te-kind.is-match { background: var(--ui-red-soft); color: #ff8a8a; }
+.te-title { color: var(--ui-text); font-size: 16px; overflow-wrap: anywhere; }
+.te-place { align-items: center; color: var(--ui-mute); display: flex; font-size: 13px; gap: 5px; overflow-wrap: anywhere; }
+.te-counts { color: var(--ui-text); font-size: 13.5px; font-weight: 700; margin: 0; }
+.te-who summary { color: #ff6b6b; cursor: pointer; font-size: 13.5px; font-weight: 700; min-height: 32px; }
+.te-who ul { list-style: none; margin: 4px 0 0; padding: 0; }
+.te-who li { align-items: center; border-top: 1px solid var(--ui-line); display: flex; font-size: 14px; justify-content: space-between; min-height: 38px; }
+.te-who li span { color: var(--ui-text); }
+.te-who em { font-style: normal; font-weight: 700; }
+.te-who em.is-yes { color: var(--ui-ok); }
+.te-who em.is-no { color: #ff8a8a; }
+.te-who em.is-waiting { color: var(--ui-mute); }
+.te-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.te-check { display: grid; gap: 8px; width: 100%; }
+.tp-chips.is-wrap { flex-wrap: wrap; margin: 0; overflow: visible; padding: 0; }
+.tp-chips button { align-items: center; display: inline-flex; gap: 5px; }
+.te-cancel { margin-left: auto; }
+/* Athlete / guardian answer list (my_upcoming_team_events). */
+.me-card { display: grid; gap: 8px; margin-bottom: 20px; padding: 14px !important; }
+.me-card h2 { color: var(--ui-text); font-size: 16px; font-weight: 800; margin: 0; }
+.me-item { border-top: 1px solid var(--ui-line); display: grid; gap: 6px; padding-top: 10px; }
+.me-for { color: var(--ui-mute); font-size: 12.5px; font-weight: 700; }
+.me-answers { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+.me-answers .is-chosen { outline: 2px solid #fff; outline-offset: 1px; }

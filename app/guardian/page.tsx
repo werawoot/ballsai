@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { createServerClient } from '@supabase/ssr'
 import GuardianLinksClient, { type GuardianLink } from './GuardianLinksClient'
+import MyEventsPanel, { type MyEventRow } from '../team-members/MyEventsPanel'
 import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import { CHANGE_ROLE_PATH } from '@/lib/onboarding'
@@ -50,6 +51,10 @@ export default async function GuardianPage() {
     supabase.from('guardian_links').select('id, status, requested_at, athlete_profiles!guardian_links_athlete_id_fkey(display_name, is_public, athlete_progress(xp_total, current_level), athlete_badges(badge_key))').eq('guardian_id', user.id).order('requested_at', { ascending: false }),
     supabase.from('guardian_links').select('id, status, requested_at').eq('athlete_id', user.id).eq('status', 'pending').order('requested_at', { ascending: false }),
   ])
+  // Upcoming team events of the children this guardian may answer for (sql/70). Before
+  // SQL70 the function is missing and nothing is shown.
+  const { data: eventRows, error: eventsError } = await supabase.rpc('my_upcoming_team_events', { p_limit: 30 })
+  const events = eventsError ? [] : ((eventRows ?? []) as MyEventRow[])
   const isGuardian = (profile as Profile | null)?.onboarding_persona === 'guardian'
   const links = ((guardianRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
   const incoming = ((incomingRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
@@ -62,6 +67,7 @@ export default async function GuardianPage() {
         <p style={{ margin: '0 0 12px' }}>{tp('notGuardian.body')}</p>
         <Link href={CHANGE_ROLE_PATH} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 18px', borderRadius: 12, background: '#CC0001', color: 'white', fontWeight: 800, fontSize: 15, textDecoration: 'none' }}>{tp('notGuardian.changeRole')}</Link>
       </div>}
+      <MyEventsPanel rows={events} viewerId={user.id} />
       <GuardianLinksClient isGuardian={isGuardian} links={links} incoming={incoming} />
     </section>
   </main>
