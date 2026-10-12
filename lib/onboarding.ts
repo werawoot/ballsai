@@ -29,7 +29,8 @@ export const goalFor = (choice: Choice): Goal => GOALS[personaOf(choice)]
 const DESTINATIONS: Record<Choice, string> = {
   athlete: '/card',
   guardian: '/guardian',
-  coach: '/tournaments',
+  // Their own home first, where a coach can work at once (AGENTS.md product rule).
+  coach: '/profile',
   // "My page" shows an organizer their tournaments, or says plainly that the permission is not granted yet.
   organizer: '/profile',
   venue_owner: '/venue',

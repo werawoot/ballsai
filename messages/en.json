@@ -93,7 +93,7 @@
     "finish": {
       "athlete": "Make my card",
       "guardian": "Link my child",
-      "coach": "Find a tournament",
+      "coach": "Go to my page",
       "organizer": "Go to my page",
       "venue_owner": "Manage my venue",
       "sponsor_brand": "Go to the sponsor page"
@@ -149,7 +149,7 @@
     "nextNote": {
       "athlete": "Next: add your name and your first card is ready",
       "guardian": "Next: enter the email your child signed up with, then wait for them to accept",
-      "coach": "Next: pick a tournament that is open",
+      "coach": "Next: coach tools work straight away, no team needed",
       "organizer": "Next: see what your account can do",
       "venue_owner": "Next: add a venue and open free times",
       "sponsor_brand": "Next: create a sponsorship"
@@ -1829,12 +1829,35 @@
       },
       "matchPlan": {
         "label": "Plan before the match"
+      },
+      "draftBoard": {
+        "label": "Open the match board",
+        "title": "Try your line-up on the board",
+        "text": "Type your players' names, drag them into place. Saved on this device; no team needed yet."
+      },
+      "drills": {
+        "label": "Drill library",
+        "hint": "Drills with pictures, by skill"
+      },
+      "programmes": {
+        "label": "Programmes by age",
+        "hint": "U10–U13 and U14–U17"
+      },
+      "findAthletesTool": {
+        "label": "Find athletes",
+        "hint": "Public profiles"
+      },
+      "findTournamentTool": {
+        "label": "Tournaments",
+        "hint": "Open for entries"
       }
     },
     "loadFailed": {
       "title": "We could not load your work",
       "text": "Try loading this page again."
-    }
+    },
+    "useNow": "Use now",
+    "nextStep": "Have a real team? Enter a tournament, then invite your athletes."
   },
   "loginPage": {
     "title": "Sign in or sign up",

@@ -40,7 +40,7 @@ describe('what the six choices save', () => {
   it('takes each role to the same place as before', () => {
     expect(destinationFor('athlete')).toBe('/card')
     expect(destinationFor('guardian')).toBe('/guardian')
-    expect(destinationFor('coach')).toBe('/tournaments')
+    expect(destinationFor('coach')).toBe('/profile')
     expect(destinationFor('venue_owner')).toBe('/venue')
     expect(destinationFor('sponsor_brand')).toBe('/sponsor')
   })

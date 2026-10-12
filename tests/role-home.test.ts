@@ -42,8 +42,19 @@ describe('guardian: ลูกของฉัน', () => {
 
 describe('coach: ทีมของฉัน', () => {
   const team = (status: string, accepted: number, pending = 0) => ({ id: 't', name: 'Lions', status, accepted, pending })
-  it('starts at registering a team when there is none', () => {
-    expect(roleHome('coach', { teams: [] }).primary).toEqual({ key: 'registerTeam', href: '/tournaments' })
+  it('starts with something to use at once when there is no team, and leaves registering for last', () => {
+    const home = roleHome('coach', { teams: [] })
+    // The match board has a draft mode on this device: no team, no invitation needed (report 10).
+    expect(home.primary).toEqual({ key: 'draftBoard', href: '/match-plan' })
+    expect(home.tools?.map(tool => tool.href)).toEqual(['/training/drills', '/training', '/athletes', '/tournaments'])
+    expect(home.next).toEqual({ key: 'registerTeam', href: '/tournaments' })
+  })
+  it('keeps the tools once there is a team, without repeating a shortcut', () => {
+    const home = roleHome('coach', { teams: [team('draft', 0, 2)] })
+    const tools = (home.tools ?? []).map(tool => tool.key)
+    expect(tools).toEqual(['drills', 'programmes', 'findAthletes'])
+    expect(home.rows.map(row => row.key).some(key => tools.includes(key))).toBe(false)
+    expect(home.next).toBeUndefined()
   })
   it('invites athletes while nobody has accepted', () => {
     expect(roleHome('coach', { teams: [team('draft', 0, 2)] }).primary).toEqual({ key: 'inviteAthletes', href: '/team-members' })
@@ -62,7 +73,7 @@ describe('coach: ทีมของฉัน', () => {
     const none = roleHome('coach', { teams: [] })
     const some = roleHome('coach', { teams: [team('draft', 0)] })
     for (const home of [none, some]) {
-      expect([home.primary.href, ...home.rows.map(row => row.href)].some(href => href.startsWith('/dashboard'))).toBe(false)
+      expect([home.primary.href, ...home.rows.map(row => row.href), ...(home.tools ?? []).map(tool => tool.href), home.next?.href ?? ''].some(href => href.startsWith('/dashboard'))).toBe(false)
     }
   })
 })

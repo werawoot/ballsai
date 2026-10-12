@@ -236,11 +236,14 @@ describe('/profile is "ของฉัน": it opens on the work of each role (U
     expect(primaries(html)).toBe(1)
   })
 
-  it('sends a coach with no team to register one', async () => {
+  it('gives a coach with no team something to use at once, and registering a team last', async () => {
     as('coach_organizer')
     const html = await render(ProfilePage as never)
+    // AGENTS.md product rule (report 10): the draft board needs no team and no invitation.
+    expect(anchor(html, '/match-plan')).toContain('pf-btn-primary')
+    expect(anchor(html, '/training/drills')).toContain('rh-tool')
     expect(text(html)).toContain('สมัครทีมเข้ารายการ')
-    expect(anchor(html, '/tournaments')).toContain('pf-btn-primary')
+    expect(html.indexOf('/match-plan')).toBeLessThan(html.indexOf('rh-next'))
   })
 
   it('shows a guardian their children', async () => {
