@@ -16,6 +16,7 @@ import MatchMinutesPanel, { type MinutesMatch } from './MatchMinutesPanel'
 import TeamStaffPanel from './TeamStaffPanel'
 import type { StaffRow } from '@/lib/team-staff'
 import { minutesTotals, type MinuteEntry } from '@/lib/match-minutes'
+import { rosterProfiles } from '@/lib/roster-names'
 import { eventTimeParts } from '@/lib/team-events'
 import { addWeeks, libraryDrills, weekStartOf, weekdayOf, type PlanDay } from '@/lib/team-training'
 import { attendanceOpen, attendanceRates, splitEvents, type EventKind } from '@/lib/team-events'
@@ -30,7 +31,6 @@ import '../team-page.css'
 
 type TeamRow = { id: string; name: string; tournament_id: string | null; tournaments: { name: string; start_date: string | null } | null }
 type EventRow = { id: string; kind: EventKind; title: string; starts_at: string; location: string | null; cancelled_at: string | null }
-type RosterRow = { athlete_id: string; athlete_profiles: { display_name: string | null; position: string | null } | null }
 
 export default async function TeamPage(props: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await props.params
@@ -59,7 +59,7 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
   const now = Date.now()
   const thisWeek = weekStartOf(now), nextWeek = addWeeks(thisWeek, 1)
   const [{ data: rosterRows, error: rosterError }, { data: matchRows, error: matchError }, { data: proposalRows, error: proposalError }, { data: noteRows, error: noteError }, { data: planRows, error: planError }, { data: newsRows, error: newsError }, { data: eventRows, error: eventError }, { data: staffRows, error: staffError }] = await Promise.all([
-    supabase.from('team_members').select('athlete_id, athlete_profiles(display_name, position)').eq('team_id', teamId).eq('status', 'accepted'),
+    supabase.from('team_members').select('athlete_id').eq('team_id', teamId).eq('status', 'accepted'),
     typedTeam.tournament_id
       ? supabase.from('match_results').select('id, team_a_id, team_b_id, status, team_a_score, team_b_score, created_at').eq('tournament_id', typedTeam.tournament_id).eq('status', 'confirmed').or(`team_a_id.eq.${teamId},team_b_id.eq.${teamId}`)
       : Promise.resolve({ data: [], error: null }),
@@ -79,10 +79,13 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     // The head coach and up to three assistants (sql/75; at most 10 rows).
     supabase.rpc('team_staff_list', { p_team_id: teamId }),
   ])
-  const roster: TeamMember[] = ((rosterRows ?? []) as unknown as RosterRow[]).map(row => ({
+  // Names in a second read: team_members cannot embed athlete_profiles (lib/roster-names).
+  const memberRows = (rosterRows ?? []) as { athlete_id: string }[]
+  const profiles = await rosterProfiles(supabase as never, memberRows.map(row => row.athlete_id))
+  const roster: TeamMember[] = memberRows.map(row => ({
     athleteId: row.athlete_id,
-    name: row.athlete_profiles?.display_name?.trim() || t('unnamed'),
-    position: row.athlete_profiles?.position ?? null,
+    name: profiles.get(row.athlete_id)?.display_name?.trim() || t('unnamed'),
+    position: profiles.get(row.athlete_id)?.position ?? null,
   }))
   const matchIds = teamMatchIds((matchRows ?? []) as MatchRow[], teamId)
   // Minutes played (sql/74): this coach's sheets and entries for the team's confirmed

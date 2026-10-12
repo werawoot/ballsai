@@ -13,8 +13,11 @@ vi.mock('@/lib/supabase-server', () => ({ createServerSupabaseClient: async () =
   rpc: async (name: string) => (db.rpcs[name] ? { data: db.rpcs[name], error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } }),
   from: (table: string) => {
     let rows = db.tables[table] ?? []
+    // As real PostgREST: team_members has no foreign key to athlete_profiles, so embedding
+    // it fails with PGRST200 (team_members.athlete_id references auth.users only).
+    let embedError = false
     const builder = {
-      select: () => builder,
+      select: (columns = '') => { embedError = table === 'team_members' && columns.includes('athlete_profiles('); return builder },
       // A dotted column filters on an embedded row (team_events!inner(team_id)).
       eq: (column: string, value: unknown) => { const [head, tail] = column.split('.'); rows = rows.filter(row => (tail ? (row[head] as Record<string, unknown> | null)?.[tail] : row[column]) === value); return builder },
       gte: (column: string, value: string) => { rows = rows.filter(row => String(row[column]) >= value); return builder },
@@ -23,7 +26,7 @@ vi.mock('@/lib/supabase-server', () => ({ createServerSupabaseClient: async () =
       limit: () => builder,
       or: (filter: string) => { const ids = [...filter.matchAll(/team_[ab]_id\.eq\.([^,]+)/g)].map(m => m[1]); rows = rows.filter(row => ids.includes(row.team_a_id as string) || ids.includes(row.team_b_id as string)); return builder },
       maybeSingle: async () => ({ data: rows[0] ?? null, error: null }),
-      then: (resolve: (value: unknown) => unknown) => Promise.resolve(db.missing.includes(table) ? { data: null, error: { code: 'PGRST205', message: 'missing' } } : { data: rows, error: null }).then(resolve),
+      then: (resolve: (value: unknown) => unknown) => Promise.resolve(embedError ? { data: null, error: { code: 'PGRST200', message: "Could not find a relationship between 'team_members' and 'athlete_profiles'" } } : db.missing.includes(table) ? { data: null, error: { code: 'PGRST205', message: 'missing' } } : { data: rows, error: null }).then(resolve),
     }
     return builder
   },
@@ -47,9 +50,14 @@ const seed = () => {
   db.tables = {
     teams: [{ id: 'team-1', name: 'ขอนแก่น U13', tournament_id: 'cup', created_by: 'coach-1', tournaments: { name: 'BallDoenSai ทดสอบรอบแรก', start_date: '2026-10-24' } }],
     team_members: [
-      { team_id: 'team-1', athlete_id: 'a-ton', status: 'accepted', athlete_profiles: { display_name: 'ต้น', position: 'FW' } },
-      { team_id: 'team-1', athlete_id: 'a-palm', status: 'accepted', athlete_profiles: { display_name: 'ปาล์ม', position: 'GK' } },
-      { team_id: 'team-1', athlete_id: 'a-wait', status: 'pending', athlete_profiles: { display_name: 'รอตอบ', position: 'MF' } },
+      { team_id: 'team-1', athlete_id: 'a-ton', status: 'accepted' },
+      { team_id: 'team-1', athlete_id: 'a-palm', status: 'accepted' },
+      { team_id: 'team-1', athlete_id: 'a-wait', status: 'pending' },
+    ],
+    athlete_profiles: [
+      { user_id: 'a-ton', display_name: 'ต้น', position: 'FW' },
+      { user_id: 'a-palm', display_name: 'ปาล์ม', position: 'GK' },
+      { user_id: 'a-wait', display_name: 'รอตอบ', position: 'MF' },
     ],
     match_results: [
       { id: 'm1', tournament_id: 'cup', team_a_id: 'team-1', team_b_id: 'team-2', status: 'confirmed' },
@@ -72,6 +80,7 @@ describe('/team-members/[teamId]', () => {
     expect(html).toMatch(/ปาล์ม<small>GK<\/small><\/th><td>—<\/td>/)
     expect(html).not.toContain('รอตอบ')
     expect(html).not.toContain('>7<')
+    expect(html).not.toContain(th.teamPage.loadFailed)
   })
 
   it('puts the keeper first on the team sheet and states what it leaves out', async () => {
