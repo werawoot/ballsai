@@ -1,0 +1,66 @@
+/* Notifications (/notifications). Stadium head with what is still unread, then Paper:
+   the list by Bangkok day (docs/design-system.md), like /tournaments. */
+
+.bds-page.nt-page { background: var(--ui-paper) !important; color: var(--ui-text); font-family: var(--font-sarabun), sans-serif; min-height: 100vh; }
+
+.nt-stadium { background: var(--ui-ink); color: #fff; overflow: hidden; position: relative; }
+.nt-stadium::before { background: radial-gradient(closest-side, rgba(204,0,1,.6), rgba(204,0,1,0)); content: ''; height: 460px; pointer-events: none; position: absolute; right: -200px; top: -210px; width: 460px; }
+.nt-stadium::after { background: repeating-linear-gradient(118deg, transparent 0 22px, rgba(255,255,255,.03) 23px 24px); content: ''; inset: 0; pointer-events: none; position: absolute; }
+.nt-stadium-inner { display: flex; flex-direction: column; gap: 10px; margin: 0 auto; max-width: 760px; padding: 22px 16px 24px; position: relative; z-index: 1; }
+.nt-eyebrow { color: var(--ui-gold); font: 800 13px var(--font-sarabun), sans-serif; margin: 0; }
+.nt-headline { align-items: flex-end; display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: space-between; }
+.nt-title { font: 800 clamp(32px, 9vw, 48px)/1.1 var(--font-sarabun), sans-serif; margin: 0; }
+.nt-count { align-items: center; background: rgba(255,255,255,.08); border: 1px solid var(--ui-line-d); border-radius: 99px; color: var(--ui-mute-d); display: inline-flex; font: 700 13px var(--font-sarabun), sans-serif; gap: 8px; margin: 0 0 4px; min-height: 34px; padding: 0 14px; }
+.nt-count.is-on { background: var(--ui-red); border-color: var(--ui-red); color: #fff; }
+.nt-count b { font: 800 20px/1 var(--font-oswald), sans-serif; }
+.nt-intro { color: var(--ui-mute-d); font-size: 14.5px; line-height: 1.6; margin: 0; max-width: 520px; }
+
+.nt-tabs { background: rgba(255,255,255,.07); border: 1px solid var(--ui-line-d); border-radius: 14px; display: flex; gap: 4px; margin-top: 8px; padding: 4px; }
+.nt-tabs a { align-items: center; border-radius: 10px; color: var(--ui-mute-d); display: flex; flex: 1; font: 700 14px var(--font-sarabun), sans-serif; gap: 8px; justify-content: center; min-height: 44px; padding: 0 8px; text-decoration: none; transition: background .15s, color .15s; }
+.nt-tabs a:hover { color: #fff; }
+.nt-tabs a.is-on { background: #fff; box-shadow: 0 6px 16px rgba(0,0,0,.28); color: var(--ui-ink); }
+.nt-tab-badge { background: var(--ui-red); border-radius: 99px; color: #fff; font: 800 11px/18px var(--font-sarabun), sans-serif; min-width: 18px; padding: 0 6px; text-align: center; }
+.nt-tabs a:focus-visible, .nt-link:focus-visible, .nt-mark:focus-visible { outline: 3px solid var(--ui-gold); outline-offset: 2px; }
+
+.nt-wrap { margin: 0 auto; max-width: 760px; padding: 6px 16px calc(96px + env(safe-area-inset-bottom)); }
+.nt-toolbar { display: flex; justify-content: flex-end; margin-top: 16px; }
+.nt-toolbar .ui-btn { gap: 6px; }
+.nt-ok, .nt-alert { border-radius: 12px; font-size: 14px; font-weight: 700; margin: 14px 0 0; padding: 10px 14px; }
+.nt-ok { background: #ecfdf5; color: var(--ui-ok); }
+.nt-alert { background: var(--ui-red-soft); color: #b91c1c; }
+
+.nt-day-label { color: var(--ui-text); font: 800 15px var(--font-sarabun), sans-serif; margin: 24px 2px 10px; }
+.nt-list { display: grid; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.nt-item { align-items: stretch; background: var(--ui-card); border: 1px solid var(--ui-line); border-radius: 16px; box-shadow: 0 8px 18px rgba(17,24,39,.04); display: flex; overflow: hidden; position: relative; transition: border-color .15s, box-shadow .15s; }
+.nt-item:hover { border-color: #cfc8bd; box-shadow: 0 14px 28px rgba(17,24,39,.08); }
+.nt-item.is-unread { background: #fffaf9; border-color: #f3c4c0; }
+.nt-item.is-unread::before { background: var(--ui-red); bottom: 0; content: ''; left: 0; position: absolute; top: 0; width: 4px; }
+.nt-link { align-items: center; color: inherit; display: flex; flex: 1; gap: 12px; min-width: 0; padding: 13px 12px 13px 14px; text-decoration: none; }
+.nt-icon { align-items: center; align-self: flex-start; background: #f1ede6; border-radius: 13px; color: var(--ui-mute); display: flex; flex: 0 0 42px; height: 42px; justify-content: center; }
+.nt-icon.is-result { background: #e8f5ee; color: var(--ui-green); }
+.nt-icon.is-badge { background: #fdf3dc; color: #b7791f; }
+.nt-icon.is-team, .nt-icon.is-family { background: #e9f0fc; color: var(--ui-blue); }
+.nt-icon.is-news, .nt-icon.is-event, .nt-icon.is-training { background: var(--ui-red-soft); color: var(--ui-red); }
+.nt-icon.is-venue { background: #ece9f9; color: #5b45c7; }
+.nt-text { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
+.nt-meta { align-items: center; color: var(--ui-mute); display: flex; flex-wrap: wrap; font-size: 12px; gap: 4px 8px; }
+.nt-kind { color: var(--ui-text); font-weight: 800; }
+.nt-meta time::before { content: '·'; margin-right: 8px; }
+.nt-dot { background: var(--ui-red); border-radius: 50%; display: inline-block; height: 8px; width: 8px; }
+.nt-sr { clip: rect(0 0 0 0); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
+.nt-item-title { font: 800 15.5px/1.35 var(--font-sarabun), sans-serif; overflow-wrap: anywhere; }
+.nt-item:not(.is-unread) .nt-item-title { font-weight: 700; }
+.nt-body { -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: var(--ui-mute); display: -webkit-box; font-size: 13.5px; line-height: 1.5; overflow: hidden; overflow-wrap: anywhere; }
+.nt-chevron { color: #b9b2a7; flex: none; transition: color .15s, transform .15s; }
+.nt-link:hover .nt-chevron { color: var(--ui-red); transform: translateX(2px); }
+.nt-mark { align-items: center; background: transparent; border: 0; border-left: 1px solid var(--ui-line); color: var(--ui-ok); cursor: pointer; display: flex; flex: 0 0 52px; justify-content: center; min-height: 44px; transition: background .15s; }
+.nt-mark:hover { background: #ecfdf5; }
+.nt-mark:disabled { cursor: wait; opacity: .5; }
+
+.nt-empty { align-items: center; display: flex; flex-direction: column; gap: 8px; margin-top: 22px; padding: 36px 20px; text-align: center; }
+.nt-empty-icon { align-items: center; background: var(--ui-red-soft); border-radius: 50%; color: var(--ui-red); display: flex; height: 56px; justify-content: center; width: 56px; }
+.nt-empty h2 { font: 800 18px var(--font-sarabun), sans-serif; margin: 6px 0 0; }
+.nt-empty p { color: var(--ui-mute); font-size: 14px; line-height: 1.6; margin: 0; max-width: 360px; }
+.nt-empty .ui-btn { margin-top: 6px; }
+
+@media (prefers-reduced-motion: reduce) { .nt-item, .nt-chevron, .nt-tabs a { transition: none; } }

@@ -76,8 +76,8 @@ describe('screens any visitor can meet, in English', () => {
   it('writes notification dates in the reader\'s language', () => {
     const english = render('en', NotificationList as ComponentType<never>, { notifications })
     const thai = render('th', NotificationList as ComponentType<never>, { notifications })
-    expect(english).toMatch(/Sep 27, 2026/)
-    expect(thai).toMatch(/27 ก\.ย\. 2569/)
+    expect(english).toMatch(/September 27, 2026/)
+    expect(thai).toMatch(/27 กันยายน (พ\.ศ\. )?2569/)
   })
 
   it('names the unread count in both languages, and no longer carries Thai in the lib', () => {
