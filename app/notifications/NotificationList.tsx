@@ -1,13 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Bell, Check, ChevronRight } from 'lucide-react'
+import { Award, Bell, BellOff, CalendarClock, Check, CheckCheck, ChevronRight, ClipboardCheck, Dumbbell, HeartHandshake, MapPin, Megaphone, Users } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
+import { bangkokToday } from '@/lib/public-tournaments'
+import { groupNotificationsByDay, notificationAge, notificationHref, notificationKind, type NotificationFilter, type NotificationKind } from '@/lib/notification-feed'
+import { useApiErrorText } from '@/lib/use-api-error-text'
 
 export type NotificationItem = {
   id: string
+  notification_type: string | null
   title: string
   body: string
   href: string | null
@@ -15,49 +19,109 @@ export type NotificationItem = {
   created_at: string
 }
 
-export default function NotificationList({ notifications }: { notifications: NotificationItem[] }) {
+const ICONS: Record<NotificationKind, ReactNode> = {
+  result: <ClipboardCheck size={20} />,
+  badge: <Award size={20} />,
+  team: <Users size={20} />,
+  family: <HeartHandshake size={20} />,
+  venue: <MapPin size={20} />,
+  news: <Megaphone size={20} />,
+  event: <CalendarClock size={20} />,
+  training: <Dumbbell size={20} />,
+  other: <Bell size={20} />,
+}
+
+// Opening an unread notification marks it read on the way, so the bell and the list agree
+// without a second tap. The tick marks one read without leaving the page.
+export default function NotificationList({ notifications, unreadCount, view, page }: { notifications: NotificationItem[]; unreadCount: number; view: NotificationFilter; page: number }) {
   const router = useRouter()
   const [busy, setBusy] = useState<string | null>(null)
-  const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
+  const [readNow, setReadNow] = useState<Set<string>>(() => new Set())
+  const [feedback, setFeedback] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
   const t = useTranslations('notifications')
+  const errorText = useApiErrorText()
   const format = useFormatter()
-  // In the reader's language, on Bangkok time (the provider's timeZone), like the events.
-  const formatDate = (value: string) => format.dateTime(new Date(value), { dateStyle: 'medium', timeStyle: 'short' })
-  const unread = notifications.filter(item => !item.read_at)
+  const isRead = (item: NotificationItem) => Boolean(item.read_at) || readNow.has(item.id)
 
   const send = async (key: string, path: string, method: string) => {
     if (busy) return
     setBusy(key); setFeedback(null)
     const response = await fetch(path, { method }).catch(() => null)
-    const result = response ? await response.json().catch(() => null) as { error?: string } | null : null
+    const body = response ? await response.json().catch(() => null) as { code?: string; error?: string } | null : null
     setBusy(null)
-    if (!response || !response.ok) {
-      setFeedback({ tone: 'error', text: result?.error ?? t('updateFailed') })
-      return
-    }
-    setFeedback({ tone: 'success', text: t('markedRead') })
+    if (!response?.ok) { setFeedback({ tone: 'error', text: errorText(body, t('updateFailed')) }); return }
+    if (key !== 'all') setReadNow(previous => new Set(previous).add(key))
+    setFeedback({ tone: 'ok', text: key === 'all' ? t('allMarkedRead') : t('markedRead') })
     router.refresh()
   }
 
-  if (notifications.length === 0) {
-    return <div style={{ background: '#fff', border: '1px solid #e6e6e3', padding: 32, textAlign: 'center', color: '#777' }}>{t('empty')}</div>
+  const open = (item: NotificationItem) => {
+    if (isRead(item)) return
+    setReadNow(previous => new Set(previous).add(item.id))
+    // keepalive lets the write finish while the next page loads.
+    void fetch(`/api/notifications/${item.id}`, { method: 'PATCH', keepalive: true }).catch(() => null)
   }
 
-  return <div style={{ display: 'grid', gap: 10 }}>
-    {feedback && <p role="status" aria-live="polite" style={{ margin: 0, padding: '10px 12px', borderRadius: 9, background: feedback.tone === 'error' ? '#fff1f1' : '#ecfdf5', color: feedback.tone === 'error' ? '#b91c1c' : '#166534', fontSize: 13, fontWeight: 700 }}>{feedback.text}</p>}
-    {unread.length > 0 && <button type="button" aria-busy={busy === 'all'} disabled={busy !== null} onClick={() => void send('all', '/api/notifications/read-all', 'POST')} style={{ justifySelf: 'start', border: '1px solid #e6e6e3', borderRadius: 8, background: '#fff', color: '#1b1b1b', padding: '8px 12px', fontWeight: 800, fontSize: 12, cursor: busy ? 'wait' : 'pointer' }}>
-      {busy === 'all' ? t('updating') : t('markAllRead', { count: unread.length })}
-    </button>}
-    {notifications.map(item => <article key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: item.read_at ? '#fff' : '#fff8f7', border: `1px solid ${item.read_at ? '#e6e6e3' : '#f2b5b0'}`, borderRadius: 10, padding: '15px 16px', flexWrap: 'wrap' }}>
-      <span aria-hidden="true" style={{ display: 'grid', placeItems: 'center', width: 34, height: 34, borderRadius: '50%', background: item.read_at ? '#eee' : '#CC0001', color: item.read_at ? '#777' : '#fff', flex: '0 0 auto' }}>{item.read_at ? <Check size={16} /> : <Bell size={16} />}</span>
-      <Link href={item.href || '/notifications'} style={{ flex: '1 1 200px', minWidth: 0, color: '#1b1b1b', textDecoration: 'none' }}>
-        <strong style={{ display: 'block', fontSize: 15 }}>{item.title}</strong>
-        <span style={{ display: 'block', color: '#666', fontSize: 13, marginTop: 3 }}>{item.body}</span>
-        <small style={{ color: '#999', fontSize: 11 }}>{formatDate(item.created_at)}{' · '}{item.read_at ? t('read') : t('unreadTag')}</small>
-      </Link>
-      {item.read_at
-        ? <ChevronRight aria-hidden="true" size={18} color="#aaa" />
-        : <button type="button" aria-busy={busy === item.id} disabled={busy !== null} onClick={() => void send(item.id, `/api/notifications/${item.id}`, 'PATCH')} aria-label={t('markReadLabel', { title: item.title })} style={{ border: '1px solid #e6e6e3', borderRadius: 8, background: '#fff', color: '#166534', padding: '7px 10px', fontWeight: 800, fontSize: 12, cursor: busy ? 'wait' : 'pointer', flex: '0 0 auto' }}>{t('markRead')}</button>}
-    </article>)}
+  const age = (iso: string) => {
+    const value = notificationAge(iso)
+    if (value.unit === 'now') return t('ageNow')
+    if (value.unit === 'minute') return t('ageMinutes', { count: value.value })
+    if (value.unit === 'hour') return t('ageHours', { count: value.value })
+    return format.dateTime(new Date(iso), { timeStyle: 'short' })
+  }
+  const dayLabel = (day: string, label: 'today' | 'yesterday' | 'date') =>
+    label === 'today' ? t('today') : label === 'yesterday' ? t('yesterday')
+      : format.dateTime(new Date(`${day}T12:00:00+07:00`), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+
+  const markAll = unreadCount > 0 && <div className="nt-toolbar">
+    <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" aria-busy={busy === 'all'} disabled={busy !== null} onClick={() => void send('all', '/api/notifications/read-all', 'POST')}>
+      <CheckCheck size={16} aria-hidden="true" />{busy === 'all' ? t('updating') : t('markAllRead', { count: unreadCount })}
+    </button>
   </div>
+  const status = feedback && <p className={feedback.tone === 'ok' ? 'nt-ok' : 'nt-alert'} role={feedback.tone === 'ok' ? 'status' : 'alert'}>{feedback.text}</p>
+
+  if (notifications.length === 0) {
+    const caughtUp = view === 'unread' && page === 1
+    return <>
+      {status}
+      <div className="ui-card nt-empty">
+        <span className="nt-empty-icon" aria-hidden="true">{caughtUp ? <CheckCheck size={26} /> : <BellOff size={26} />}</span>
+        <h2>{page > 1 ? t('emptyPage') : caughtUp ? t('emptyUnread') : t('empty')}</h2>
+        <p>{page > 1 ? t('emptyPageHint') : caughtUp ? t('emptyUnreadHint') : t('emptyHint')}</p>
+        {(page > 1 || caughtUp) && <Link href="/notifications" className="ui-btn ui-btn-ghost ui-btn-sm">{t('backToAll')}</Link>}
+      </div>
+    </>
+  }
+
+  return <>
+    {markAll}
+    {status}
+    {groupNotificationsByDay(notifications, bangkokToday()).map(group => <section key={group.day} className="nt-day" aria-label={dayLabel(group.day, group.label)}>
+      <h2 className="nt-day-label">{dayLabel(group.day, group.label)}</h2>
+      <ul className="nt-list">
+        {group.items.map(item => {
+          const read = isRead(item)
+          const kind = notificationKind(item.notification_type)
+          return <li key={item.id} className={`nt-item${read ? '' : ' is-unread'}`}>
+            <Link href={notificationHref(item.href)} className="nt-link" onClick={() => open(item)}>
+              <span className={`nt-icon is-${kind}`} aria-hidden="true">{ICONS[kind]}</span>
+              <span className="nt-text">
+                <span className="nt-meta">
+                  <span className="nt-kind">{t(`kind.${kind}`)}</span>
+                  <time dateTime={item.created_at} suppressHydrationWarning>{age(item.created_at)}</time>
+                  {!read && <span className="nt-dot"><span className="nt-sr">{t('unreadTag')}</span></span>}
+                </span>
+                <strong className="nt-item-title">{item.title}</strong>
+                {item.body && <span className="nt-body">{item.body}</span>}
+              </span>
+              <ChevronRight className="nt-chevron" size={18} aria-hidden="true" />
+            </Link>
+            {!read && <button type="button" className="nt-mark" aria-busy={busy === item.id} disabled={busy !== null} onClick={() => void send(item.id, `/api/notifications/${item.id}`, 'PATCH')} aria-label={t('markReadLabel', { title: item.title })} title={t('markRead')}>
+              <Check size={18} aria-hidden="true" />
+            </button>}
+          </li>
+        })}
+      </ul>
+    </section>)}
+  </>
 }

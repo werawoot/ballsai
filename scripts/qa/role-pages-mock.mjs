@@ -147,6 +147,20 @@ http.createServer((request, response) => {
     if (table === 'team_announcements') return rows(role === 'coach' || role === 'assistant' ? [{ id: 'd0000000-0000-4000-8000-000000000001', body: 'ทดสอบ-ลบได้', created_at: '2026-10-12T03:12:00Z', to_athletes: true, to_guardians: false }] : [])
     if (table === 'team_events') return rows(role === 'coach' || role === 'assistant' ? [{ id: 'e0000000-0000-4000-8000-000000000001', team_id: teams[0].id, kind: 'training', title: 'ซ้อมเย็น', starts_at: new Date(Date.now() + 86400000).toISOString(), location: 'สนามโรงเรียน', cancelled_at: null }] : [])
     if (table === 'rpc/team_roster_names') return send(200, role === 'coach' || role === 'assistant' ? [{ team_id: teams[0].id, athlete_id: 'u-athlete', display_name: 'ด.ช. ส่วนตัว ใจดี', position: 'MF' }] : [])
+    // /notifications: the athlete has a few of each kind over the last ten days, three
+    // unread. `read_at=is.null` (the unread tab and the count) filters them.
+    if (table === 'notifications') {
+      const ago = minutes => new Date(Date.now() - minutes * 60000).toISOString()
+      const list = role === 'athlete' ? [
+        { id: 'f0000000-0000-4000-8000-000000000001', notification_type: 'team_announcement', title: 'ประกาศจากทีม ขอนแก่น U13', body: 'พรุ่งนี้ซ้อมเลื่อนเป็น 17:00 ที่สนามโรงเรียน ใส่ชุดสีแดง และนำขวดน้ำมาเอง', href: '/team-members', read_at: null, created_at: ago(12) },
+        { id: 'f0000000-0000-4000-8000-000000000002', notification_type: 'match_result', title: 'มีผลแข่งใหม่ในระบบ', body: 'ขอนแก่น U13 ชนะ 2–1 · Power Rating +18', href: '/career', read_at: null, created_at: ago(190) },
+        { id: 'f0000000-0000-4000-8000-000000000003', notification_type: 'badge_earned', title: 'ได้เหรียญตราใหม่: ยิงประตูแรก', body: 'ดูเหรียญตราใน Career Passport', href: '/career', read_at: null, created_at: ago(60 * 26) },
+        { id: 'f0000000-0000-4000-8000-000000000004', notification_type: 'team_event_reminder', title: 'อย่าลืมตอบนัด: ซ้อมเย็น', body: 'วันพฤหัสบดี 17:00 · สนามโรงเรียน', href: '/team-members', read_at: ago(60 * 20), created_at: ago(60 * 30) },
+        { id: 'f0000000-0000-4000-8000-000000000005', notification_type: 'team_invite', title: 'โค้ชเชิญเข้าทีม ขอนแก่น U13', body: 'กดตอบรับที่หน้าทีมของฉัน', href: '/team-members', read_at: ago(60 * 24 * 3), created_at: ago(60 * 24 * 4) },
+        { id: 'f0000000-0000-4000-8000-000000000006', notification_type: 'team_training_plan', title: 'แผนซ้อมใหม่จากโค้ช', body: 'ส่งบอลสั้น 15 นาที · ยิงประตู 20 นาที', href: '/team-members', read_at: ago(60 * 24 * 8), created_at: ago(60 * 24 * 9) },
+      ] : []
+      return rows(url.searchParams.get('read_at') === 'is.null' ? list.filter(item => !item.read_at) : list)
+    }
     if (table === 'teams') return rows(role === 'coach' ? (process.env.QA_COACH_NO_TEAM ? [] : teams.slice(0, 1)) : role === 'organizer' ? teams : [])
     send(200, [])
   })
