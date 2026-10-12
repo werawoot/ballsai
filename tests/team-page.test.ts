@@ -338,3 +338,50 @@ describe('/team-members/[teamId] staff (sql/75)', () => {
     expect(html).toContain(th.teamStaff.notReady)
   })
 })
+
+// W1 findings F2, F6, F7 (docs/w1-coach-tools-findings.md).
+describe('/team-members/[teamId] W1 fixes', () => {
+  it('F2: shows the staff a private member\'s name and position through team_roster_names (sql/76)', async () => {
+    seed()
+    db.tables.athlete_profiles = []
+    db.rpcs.team_roster_names = [{ team_id: 'team-1', athlete_id: 'a-ton', display_name: 'ต้นโปรไฟล์ส่วนตัว', position: 'FW' }]
+    const html = await render()
+    expect(html).toMatch(/ต้นโปรไฟล์ส่วนตัว<small>FW<\/small>/)
+  })
+
+  it('F7: warns that an announcement would reach nobody while the team has no accepted member, and holds the send button', async () => {
+    seed()
+    db.tables.team_members = []
+    const html = await render()
+    expect(html).toContain(th.teamNews.noRecipients)
+    const news = html.slice(html.indexOf('id="tp-news"'), html.indexOf('id="tp-events"'))
+    expect(news).toMatch(/<button[^>]*disabled=""[^>]*>(<svg[\s\S]*?<\/svg>)?ส่งประกาศ<\/button>/)
+  })
+
+  it('F6: marks the chosen audience with a tick, not only a colour', async () => {
+    seed()
+    const html = await render()
+    const news = html.slice(html.indexOf('id="tp-news"'), html.indexOf('id="tp-events"'))
+    expect(news.match(/aria-pressed="true"[^>]*>(<svg[^>]*class="[^"]*tn-tick)/g)).toHaveLength(2)
+  })
+})
+
+describe('/team-members/[teamId] W1 fix F3 (sql/76)', () => {
+  it('asks a coach without a name to add one, on their own row only', async () => {
+    seed()
+    db.rpcs.team_staff_list = [{ id: null, user_id: 'coach-1', name: '', email: null, status: 'accepted', is_head: true, is_me: true }]
+    const html = await render()
+    // The message quotes the placeholder, which HTML escapes.
+    expect(html).toContain(th.teamStaff.nameMissing.replaceAll('"', '&quot;'))
+    expect(html).toContain(th.teamStaff.setName)
+  })
+
+  it('offers to edit a name already set, without the warning', async () => {
+    seed()
+    db.rpcs.team_staff_list = [{ id: null, user_id: 'coach-1', name: 'โค้ชเอก', email: null, status: 'accepted', is_head: true, is_me: true }]
+    const html = await render()
+    expect(html).not.toContain(th.teamStaff.nameMissing.replaceAll('"', '&quot;'))
+    expect(html).toContain(th.teamStaff.editName)
+  })
+})
+

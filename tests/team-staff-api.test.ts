@@ -68,3 +68,21 @@ describe('/api/team-staff (sql/75)', () => {
     }
   })
 })
+
+describe('/api/team-staff display name (sql/76, W1 finding F3)', () => {
+  it('saves the caller\'s own display name, trimmed', async () => {
+    expect((await call({ action: 'name', data: { name: '  โค้ชใหญ่  ' } })).status).toBe(200)
+    expect(rpc).toHaveBeenCalledWith('set_my_display_name', { p_name: 'โค้ชใหญ่' })
+  })
+
+  it('refuses a name that is too short or too long without asking the database, and words the database refusal', async () => {
+    for (const name of ['x', ' ', 'ก'.repeat(61), 42]) {
+      const response = await call({ action: 'name', data: { name } })
+      expect(response.status).toBe(400)
+      expect((await response.json()).code).toBe('staffNameInvalid')
+    }
+    expect(rpc).not.toHaveBeenCalled()
+    rpc.mockResolvedValueOnce({ data: null, error: { code: '22023', message: 'INVALID_NAME' } })
+    expect((await (await call({ action: 'name', data: { name: 'โค้ช' } })).json()).code).toBe('staffNameInvalid')
+  })
+})

@@ -2,7 +2,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Send, Trash2 } from 'lucide-react'
+import { Check, Send, Trash2 } from 'lucide-react'
+import ConfirmButton from '@/components/ConfirmButton'
 import { eventTimeParts } from '@/lib/team-events'
 import { useApiErrorText } from '@/lib/use-api-error-text'
 
@@ -18,7 +19,9 @@ const post = async (action: string, data: Record<string, unknown>) => {
 // The coach's side of team announcements (sql/71): one message to the athletes, their
 // guardians or both, and how many have read each one. The id is made once per draft, so a
 // retried send after a dropped connection is the same message, never a second one.
-export default function TeamNewsPanel({ teamId, sent, ready }: { teamId: string; sent: SentAnnouncement[]; ready: boolean }) {
+// `recipients` is the team's accepted members: with none, a message would reach nobody, so
+// the panel says so and holds the send button (W1 finding F7).
+export default function TeamNewsPanel({ teamId, sent, ready, recipients }: { teamId: string; sent: SentAnnouncement[]; ready: boolean; recipients: number }) {
   const t = useTranslations('teamNews')
   const errorText = useApiErrorText()
   const router = useRouter()
@@ -31,7 +34,7 @@ export default function TeamNewsPanel({ teamId, sent, ready }: { teamId: string;
   const when = (iso: string) => { const at = eventTimeParts(iso); return t('when', { day: at.day, month: at.month, time: at.time }) }
   const audience = (item: SentAnnouncement) => item.toAthletes && item.toGuardians ? t('audienceBoth') : item.toAthletes ? t('audienceAthletes') : t('audienceGuardians')
   const text = draft.body.trim()
-  const canSend = text.length > 0 && text.length <= 500 && (draft.toAthletes || draft.toGuardians) && !busy
+  const canSend = recipients > 0 && text.length > 0 && text.length <= 500 && (draft.toAthletes || draft.toGuardians) && !busy
 
   const send = async () => {
     if (!canSend) return
@@ -46,7 +49,7 @@ export default function TeamNewsPanel({ teamId, sent, ready }: { teamId: string;
     router.refresh()
   }
   const remove = async (id: string) => {
-    if (busy || !window.confirm(t('deleteConfirm'))) return
+    if (busy) return
     setBusy(`delete:${id}`); setMessage(null)
     const result = await post('delete', { id })
     setBusy(null)
@@ -64,11 +67,12 @@ export default function TeamNewsPanel({ teamId, sent, ready }: { teamId: string;
         <div className="tn-row">
           <div className="tp-chips is-wrap" role="group" aria-label={t('audience')}>
             {(['toAthletes', 'toGuardians'] as const).map(key => <button type="button" key={key} className={draft[key] ? 'is-on' : undefined} aria-pressed={draft[key]}
-              onClick={() => setDraft(current => ({ ...current, [key]: !current[key], id: '' }))}>{t(key)}</button>)}
+              onClick={() => setDraft(current => ({ ...current, [key]: !current[key], id: '' }))}>{draft[key] && <Check className="tn-tick" size={15} aria-hidden="true" />}{t(key)}</button>)}
           </div>
           <small className="tn-length">{t('length', { count: draft.body.length })}</small>
         </div>
         <p className="tp-note">{t('rule')}</p>
+        {recipients === 0 && <p className="tp-alert">{t('noRecipients')}</p>}
         {message && <p className={message.tone === 'ok' ? 'tp-ok' : 'tp-alert'} role={message.tone === 'ok' ? 'status' : 'alert'}>{message.text}</p>}
         <button type="button" className="ui-btn ui-btn-primary" disabled={!canSend} onClick={send}><Send size={16} aria-hidden="true" />{busy === 'send' ? t('sending') : t('send')}</button>
       </div>
@@ -79,7 +83,7 @@ export default function TeamNewsPanel({ teamId, sent, ready }: { teamId: string;
             <p className="tn-body">{item.body}</p>
             <div className="tn-meta">
               <span>{audience(item)} · {t('readCount', { read: item.read, total: item.total })} · {when(item.createdAt)}</span>
-              <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" aria-label={`${t('delete')}: ${item.body.slice(0, 40)}`} disabled={Boolean(busy)} onClick={() => remove(item.id)}><Trash2 size={15} aria-hidden="true" />{t('delete')}</button>
+              <ConfirmButton label={t('delete')} question={t('deleteConfirm')} icon={<Trash2 size={15} aria-hidden="true" />} disabled={Boolean(busy)} onConfirm={() => remove(item.id)} />
             </div>
           </article>)
         : <p className="tp-empty">{t('none')}</p>}

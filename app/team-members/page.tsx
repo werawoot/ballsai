@@ -49,7 +49,7 @@ export default async function TeamMembersPage() {
       .order('invited_at', { ascending: true })
     : { data: [], error: null }
   // Names in a second read: team_members cannot embed athlete_profiles (lib/roster-names).
-  const names = await rosterProfiles(supabase as never, ((rosterRows ?? []) as { athlete_id: string }[]).map(row => row.athlete_id))
+  const names = await rosterProfiles(supabase as never, ((rosterRows ?? []) as { athlete_id: string }[]).map(row => row.athlete_id), teamIds)
   const roster = rosterRows ? (rosterRows as { athlete_id: string }[]).map(row => ({ ...row, athlete_profiles: names.has(row.athlete_id) ? { display_name: names.get(row.athlete_id)?.display_name ?? '' } : null })) : null
   // How many have answered, per team: the submit button says why it waits.
   const countsByTeam: Record<string, { accepted: number; pending: number }> = {}

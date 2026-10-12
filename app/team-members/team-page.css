@@ -162,3 +162,13 @@
 .ts-who small { color: var(--ui-mute); font-size: 12.5px; font-weight: 700; overflow-wrap: anywhere; }
 .ts-adult { align-items: center; color: var(--ui-text); cursor: pointer; display: flex; font-size: 14px; font-weight: 700; gap: 10px; min-height: 44px; }
 .ts-adult input { accent-color: #cc0001; flex: none; height: 22px; width: 22px; }
+/* In-page confirm (components/ConfirmButton) */
+.cf-ask { align-items: center; display: inline-flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.cf-question { color: var(--ui-text); flex-basis: 100%; font-size: 13px; font-weight: 700; text-align: right; }
+.ui-matchday .cf-question { color: #fff; }
+/* The chosen audience carries a tick, not only a colour (W1 finding F6). */
+.tn-tick { flex: none; margin-right: 4px; vertical-align: -2px; }
+/* The caller's own display name (sql/76, W1 finding F3) */
+.ts-name { border-top: 1px solid var(--ui-line); display: grid; gap: 6px; padding-top: 10px; }
+.ts-name-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ts-list .ui-btn, .ts-list .cf-ask { flex: none; white-space: nowrap; }

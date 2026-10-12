@@ -11,6 +11,14 @@ export function cleanStaffEmail(value: unknown): string | null {
   return email.length >= 3 && email.length <= 254 && /^[^@\s]+@[^@\s]+$/.test(email) ? email : null
 }
 
+// A display name as set_my_display_name (sql/76) stores it: trimmed, single-spaced,
+// 2-60 characters.
+export function cleanDisplayName(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const name = value.trim().replace(/\s+/g, ' ')
+  return name.length >= 2 && name.length <= 60 ? name : null
+}
+
 export type StaffRow = { id: string | null; user_id: string; name: string; email: string | null; status: 'pending' | 'accepted'; is_head: boolean; is_me: boolean }
 export type MyStaffTeamRow = { staff_id: string; team_id: string; team_name: string; tournament_name: string | null; status: 'pending' | 'accepted'; head_name: string; invited_at: string }
 export type MyTeamStaffRow = { team_id: string; team_name: string; name: string; is_head: boolean }

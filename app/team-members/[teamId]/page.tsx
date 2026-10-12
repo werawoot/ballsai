@@ -79,14 +79,10 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     // The head coach and up to three assistants (sql/75; at most 10 rows).
     supabase.rpc('team_staff_list', { p_team_id: teamId }),
   ])
-  // Names in a second read: team_members cannot embed athlete_profiles (lib/roster-names).
+  // Everything below depends only on the first batch, so it is read in one parallel round
+  // (W1 finding F4): roster names, minutes, performances and their ranks, announcement
+  // read counts, event answers and attendance.
   const memberRows = (rosterRows ?? []) as { athlete_id: string }[]
-  const profiles = await rosterProfiles(supabase as never, memberRows.map(row => row.athlete_id))
-  const roster: TeamMember[] = memberRows.map(row => ({
-    athleteId: row.athlete_id,
-    name: profiles.get(row.athlete_id)?.display_name?.trim() || t('unnamed'),
-    position: profiles.get(row.athlete_id)?.position ?? null,
-  }))
   const matchIds = teamMatchIds((matchRows ?? []) as MatchRow[], teamId)
   // Minutes played (sql/74): this coach's sheets and entries for the team's confirmed
   // matches (team_match_minutes_team_idx). Before SQL74 the tables are missing and the
@@ -94,13 +90,45 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
   type ScoredMatch = MatchRow & { team_a_score: number; team_b_score: number; created_at: string }
   const scored = ((matchRows ?? []) as ScoredMatch[]).filter(match => matchIds.includes(match.id))
     .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
-  const [{ data: sheetRows, error: sheetError }, { data: entryRows }, { data: opponentRows }] = await Promise.all([
+  const news = (newsRows ?? []) as { id: string; body: string; created_at: string; to_athletes: boolean; to_guardians: boolean }[]
+  const events = (eventRows ?? []) as EventRow[]
+  const eventIds = events.map(event => event.id)
+  const none = Promise.resolve({ data: [], error: null })
+  const [
+    profiles,
+    { data: sheetRows, error: sheetError }, { data: entryRows }, { data: opponentRows },
+    { performanceRows, performanceError, rankRows },
+    { data: recipientRows },
+    { data: responseRows }, { data: attendanceRows }, { data: seasonAttendanceRows },
+  ] = await Promise.all([
+    // Names in a second read: team_members cannot embed athlete_profiles (lib/roster-names).
+    rosterProfiles(supabase as never, memberRows.map(row => row.athlete_id), [teamId]),
     supabase.from('team_match_minutes').select('match_result_id, match_length').eq('team_id', teamId).limit(500),
     supabase.from('team_match_minute_entries').select('match_result_id, athlete_id, started, on_minute, off_minute, minutes').eq('team_id', teamId).limit(5000),
     scored.length
       ? supabase.from('teams').select('id, name').in('id', [...new Set(scored.map(match => (match.team_a_id === teamId ? match.team_b_id : match.team_a_id)))])
-      : Promise.resolve({ data: [] }),
+      : none,
+    (async () => {
+      const { data, error } = matchIds.length
+        ? await supabase.from('match_player_performances').select('player_rank_id, goals, assists, mvp').in('match_result_id', matchIds).eq('team_id', teamId)
+        : { data: [], error: null }
+      const rankIds = [...new Set(((data ?? []) as PerformanceRow[]).map(row => row.player_rank_id))]
+      const { data: ranks } = rankIds.length ? await supabase.from('player_ranks').select('id, player_id').in('id', rankIds) : { data: [] }
+      return { performanceRows: data, performanceError: error, rankRows: ranks }
+    })(),
+    // Read counts for those announcements: one row per recipient (a team and its guardians).
+    news.length ? supabase.from('team_announcement_recipients').select('announcement_id, read_at').in('announcement_id', news.map(item => item.id)) : none,
+    eventIds.length ? supabase.from('team_event_responses').select('event_id, athlete_id, answer').in('event_id', eventIds) : none,
+    eventIds.length ? supabase.from('team_event_attendance').select('event_id, athlete_id, present').in('event_id', eventIds) : none,
+    // Attendance for the season column: every recorded session of this team, one row per
+    // member per session (members x sessions; a season is a few thousand).
+    eventIds.length ? supabase.from('team_event_attendance').select('athlete_id, present, team_events!inner(team_id)').eq('team_events.team_id', teamId).limit(5000) : none,
   ])
+  const roster: TeamMember[] = memberRows.map(row => ({
+    athleteId: row.athlete_id,
+    name: profiles.get(row.athlete_id)?.display_name?.trim() || t('unnamed'),
+    position: profiles.get(row.athlete_id)?.position ?? null,
+  }))
   const entriesAll = (entryRows ?? []) as { match_result_id: string; athlete_id: string; started: boolean; on_minute: number | null; off_minute: number | null; minutes: number }[]
   const opponentName = new Map(((opponentRows ?? []) as { id: string; name: string }[]).map(row => [row.id, row.name]))
   const minutesMatches: MinutesMatch[] = scored.map(match => {
@@ -115,17 +143,6 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     }
   })
   const minutesByAthlete = minutesTotals(entriesAll.filter(row => matchIds.includes(row.match_result_id)))
-  const { data: performanceRows, error: performanceError } = matchIds.length
-    ? await supabase.from('match_player_performances').select('player_rank_id, goals, assists, mvp').in('match_result_id', matchIds).eq('team_id', teamId)
-    : { data: [], error: null }
-  const rankIds = [...new Set(((performanceRows ?? []) as PerformanceRow[]).map(row => row.player_rank_id))]
-  const { data: rankRows } = rankIds.length ? await supabase.from('player_ranks').select('id, player_id').in('id', rankIds) : { data: [] }
-
-  // Read counts for those announcements: one row per recipient (a team and its guardians).
-  const news = (newsRows ?? []) as { id: string; body: string; created_at: string; to_athletes: boolean; to_guardians: boolean }[]
-  const { data: recipientRows } = news.length
-    ? await supabase.from('team_announcement_recipients').select('announcement_id, read_at').in('announcement_id', news.map(item => item.id))
-    : { data: [] }
   const reads: Record<string, { read: number; total: number }> = {}
   for (const row of (recipientRows ?? []) as { announcement_id: string; read_at: string | null }[]) {
     const count = (reads[row.announcement_id] ??= { read: 0, total: 0 })
@@ -136,17 +153,6 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     id: item.id, body: item.body, createdAt: item.created_at, toAthletes: item.to_athletes, toGuardians: item.to_guardians,
     read: reads[item.id]?.read ?? 0, total: reads[item.id]?.total ?? 0,
   }))
-  const events = (eventRows ?? []) as EventRow[]
-  const eventIds = events.map(event => event.id)
-  const [{ data: responseRows }, { data: attendanceRows }, { data: seasonAttendanceRows }] = eventIds.length
-    ? await Promise.all([
-        supabase.from('team_event_responses').select('event_id, athlete_id, answer').in('event_id', eventIds),
-        supabase.from('team_event_attendance').select('event_id, athlete_id, present').in('event_id', eventIds),
-        // Attendance for the season column: every recorded session of this team, one
-        // row per member per session (members x sessions; a season is a few thousand).
-        supabase.from('team_event_attendance').select('athlete_id, present, team_events!inner(team_id)').eq('team_events.team_id', teamId).limit(5000),
-      ])
-    : [{ data: [] }, { data: [] }, { data: [] }]
   const answersByEvent: Record<string, Record<string, 'yes' | 'no'>> = {}
   for (const row of (responseRows ?? []) as { event_id: string; athlete_id: string; answer: 'yes' | 'no' }[]) (answersByEvent[row.event_id] ??= {})[row.athlete_id] = row.answer
   const presentByEvent: Record<string, string[]> = {}
@@ -211,7 +217,7 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
 
         <section className="tp-section" aria-labelledby="tp-news">
           <div className="tp-head"><h2 id="tp-news"><Megaphone size={18} aria-hidden="true" />{tn('title')}</h2></div>
-          <TeamNewsPanel teamId={teamId} sent={sent} ready={!newsError} />
+          <TeamNewsPanel teamId={teamId} sent={sent} ready={!newsError} recipients={roster.length} />
         </section>
 
         <section className="tp-section" aria-labelledby="tp-events">
