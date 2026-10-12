@@ -31,3 +31,15 @@ export function tournamentFee(fee: number | null | undefined): string | null {
   if (!Number.isFinite(value) || value <= 0) return null
   return `฿${value.toLocaleString('en-US')}`
 }
+
+export type TournamentCountdown = { kind: 'live' | 'today' | 'tomorrow' } | { kind: 'days'; count: number }
+
+/** How far off the start is, in whole Bangkok calendar days from `today` (YYYY-MM-DD).
+ *  A start already passed means it is on now: the lists only hold ones not over yet. */
+export function tournamentCountdown(today: string, start: string): TournamentCountdown {
+  const days = Math.round((asDate(start).getTime() - asDate(today).getTime()) / 86_400_000)
+  if (days < 0) return { kind: 'live' }
+  if (days === 0) return { kind: 'today' }
+  if (days === 1) return { kind: 'tomorrow' }
+  return { kind: 'days', count: days }
+}

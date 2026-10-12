@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { tournamentDateRange, tournamentDayBox, tournamentFee, tournamentMonthLabel } from '@/lib/tournament-dates'
+import { tournamentCountdown, tournamentDateRange, tournamentDayBox, tournamentFee, tournamentMonthLabel } from '@/lib/tournament-dates'
 
 describe('tournament dates on screen', () => {
   it('shows the calendar day as stored, in either language', () => {
@@ -23,5 +23,15 @@ describe('tournament dates on screen', () => {
     expect(tournamentFee(500)).toBe('฿500')
     expect(tournamentFee(1500)).toBe('฿1,500')
     for (const fee of [0, null, undefined, Number.NaN]) expect(tournamentFee(fee)).toBeNull()
+  })
+
+  it('counts calendar days to the start in Bangkok days, and says when it is on now', () => {
+    const today = '2026-10-12'
+    expect(tournamentCountdown(today, '2026-10-24')).toEqual({ kind: 'days', count: 12 })
+    expect(tournamentCountdown(today, '2026-10-13')).toEqual({ kind: 'tomorrow' })
+    expect(tournamentCountdown(today, '2026-10-12')).toEqual({ kind: 'today' })
+    expect(tournamentCountdown(today, '2026-10-01')).toEqual({ kind: 'live' })
+    // Across a month and a year end, and a timestamp-shaped start.
+    expect(tournamentCountdown('2026-12-30', '2027-01-02T00:00:00')).toEqual({ kind: 'days', count: 3 })
   })
 })
