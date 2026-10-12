@@ -22,6 +22,7 @@ import {
   type AthleteAttestation, type AttestationRow, type CoachTeamRow, type RosterRow,
 } from '@/lib/coach-team-overview'
 import Link from 'next/link'
+import { rosterProfiles } from '@/lib/roster-names'
 import { ClipboardPenLine } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 
@@ -41,12 +42,15 @@ export default async function TeamMembersPage() {
   // the invitations this account received. RLS scopes both; the team ids are only ever
   // the ones the query above already returned.
   const teamIds = (teams ?? []).map(team => team.id)
-  const { data: roster, error: rosterError } = teamIds.length
+  const { data: rosterRows, error: rosterError } = teamIds.length
     ? await supabase.from('team_members')
-      .select('id, team_id, athlete_id, status, invited_at, athlete_profiles(display_name)')
+      .select('id, team_id, athlete_id, status, invited_at')
       .in('team_id', teamIds)
       .order('invited_at', { ascending: true })
     : { data: [], error: null }
+  // Names in a second read: team_members cannot embed athlete_profiles (lib/roster-names).
+  const names = await rosterProfiles(supabase as never, ((rosterRows ?? []) as { athlete_id: string }[]).map(row => row.athlete_id))
+  const roster = rosterRows ? (rosterRows as { athlete_id: string }[]).map(row => ({ ...row, athlete_profiles: names.has(row.athlete_id) ? { display_name: names.get(row.athlete_id)?.display_name ?? '' } : null })) : null
   // How many have answered, per team: the submit button says why it waits.
   const countsByTeam: Record<string, { accepted: number; pending: number }> = {}
   for (const row of (roster ?? []) as unknown as { team_id: string; status: string }[]) {

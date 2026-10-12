@@ -10,13 +10,16 @@ const db = vi.hoisted(() => ({ tables: {} as Record<string, Record<string, unkno
 function fakeClient() {
   const from = (table: string) => {
     let rows = db.tables[table] ?? []
+    // As real PostgREST: team_members has no foreign key to athlete_profiles, so embedding
+    // it fails with PGRST200 (team_members.athlete_id references auth.users only).
+    let embedError = false
     const builder = {
-      select: () => builder,
+      select: (columns = '') => { embedError = table === 'team_members' && columns.includes('athlete_profiles('); return builder },
       eq: (column: string, value: unknown) => { rows = rows.filter(row => row[column] === value); return builder },
       in: (column: string, values: unknown[]) => { rows = rows.filter(row => values.includes(row[column])); return builder },
       order: () => builder,
       limit: () => builder,
-      then: (resolve: (value: unknown) => unknown) => Promise.resolve(db.failing.has(table) ? { data: null, error: { message: 'boom' } } : { data: rows, error: null }).then(resolve),
+      then: (resolve: (value: unknown) => unknown) => Promise.resolve(embedError ? { data: null, error: { code: 'PGRST200', message: "Could not find a relationship between 'team_members' and 'athlete_profiles'" } } : db.failing.has(table) ? { data: null, error: { message: 'boom' } } : { data: rows, error: null }).then(resolve),
     }
     return builder
   }
@@ -102,10 +105,10 @@ describe('an invitation says what each answer does, in words', () => {
 })
 
 describe('/team-members: the second of the three steps (UX mockup v3-A)', () => {
-  const member = (id: string, status: string) => ({ id, team_id: 'tm1', athlete_id: `a-${id}`, status, invited_at: '2026-10-02', created_at: '2026-10-02', athlete_profiles: { display_name: `Player ${id}` } })
+  const member = (id: string, status: string) => ({ id, team_id: 'tm1', athlete_id: `a-${id}`, status, invited_at: '2026-10-02', created_at: '2026-10-02' })
   const coach = (members: ReturnType<typeof member>[] = [], teams: typeof team[] = [team]) => {
     db.user = 'u1'; db.failing = new Set()
-    db.tables = { teams, team_members: members, coach_attestations: [] }
+    db.tables = { teams, team_members: members, coach_attestations: [], athlete_profiles: members.map(row => ({ user_id: row.athlete_id, display_name: `Player ${row.id}` })) }
   }
 
   it('shows the three steps, the second one current, and asks for one email first', async () => {
@@ -140,6 +143,13 @@ describe('/team-members: the second of the three steps (UX mockup v3-A)', () => 
     const html = await render()
     expect(html).toContain('ส่งสมัครได้เมื่อมีนักกีฬาตอบรับอย่างน้อย 1 คน (ตอนนี้ 0 คน)')
     expect(html).toMatch(/<button[^>]*disabled[^>]*>[^<]*ส่งสมัครรายการ/)
+  })
+
+  it('loads the roster with each member\'s name, without the roster load warning', async () => {
+    coach([member('1', 'accepted')])
+    const html = await render()
+    expect(html).toContain('Player 1')
+    expect(html).not.toContain('โหลดรายชื่อสมาชิกไม่สำเร็จ')
   })
 
   it('lets the coach submit once one athlete has accepted', async () => {
