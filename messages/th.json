@@ -59,7 +59,19 @@
     "emptyHint": "เป็นผู้จัดการแข่งขัน? สร้างรายการของคุณได้ที่แดชบอร์ด",
     "emptyCta": "ไปที่แดชบอร์ดผู้จัด",
     "seePast": "ดูรายการที่จบแล้ว",
-    "live": "กำลังแข่ง"
+    "live": "กำลังแข่ง",
+    "spotlightLabel": "รายการถัดไป",
+    "countdownDays": "อีก {count} วัน",
+    "countdownToday": "แข่งวันนี้",
+    "countdownTomorrow": "แข่งพรุ่งนี้",
+    "spotlightOpen": "ดูรายละเอียดและสมัคร",
+    "spotlightView": "ดูรายละเอียด",
+    "monthCount": "{count} รายการ",
+    "organizerTitle": "เป็นผู้จัดการแข่งขัน?",
+    "organizerBody": "สร้างรายการ เปิดรับสมัคร และบันทึกผลที่ขึ้นการ์ดนักกีฬาได้ในที่เดียว",
+    "statFee": "ค่าสมัคร",
+    "statTeams": "รับทีม",
+    "statVenue": "สนาม"
   },
   "tournamentCover": {
     "status": {

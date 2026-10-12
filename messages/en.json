@@ -59,7 +59,19 @@
     "emptyHint": "Organizing a tournament? Create it from your dashboard.",
     "emptyCta": "Go to the organizer dashboard",
     "seePast": "See finished tournaments",
-    "live": "In progress"
+    "live": "In progress",
+    "spotlightLabel": "Next up",
+    "countdownDays": "In {count} days",
+    "countdownToday": "Kicks off today",
+    "countdownTomorrow": "Kicks off tomorrow",
+    "spotlightOpen": "See details and register",
+    "spotlightView": "See details",
+    "monthCount": "{count, plural, one {# tournament} other {# tournaments}}",
+    "organizerTitle": "Running a tournament?",
+    "organizerBody": "Create it, open registration and record results that reach every player card, all in one place.",
+    "statFee": "Entry",
+    "statTeams": "Teams",
+    "statVenue": "Venue"
   },
   "tournamentCover": {
     "status": {

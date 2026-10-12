@@ -65,7 +65,13 @@ http.createServer((request, response) => {
     }
     const table = url.pathname.replace('/rest/v1/', '')
     if (table === 'profiles') return rows(me ? [{ id: me.id, role: me.role, onboarding_persona: me.persona, onboarding_completed_at: '2026-10-01', full_name: 'ผู้ทดสอบ' }] : [])
-    if (table === 'tournaments') return rows([tournament])
+    // QA_TOURNAMENTS_MANY=1: a fuller season for the /tournaments list (one open next, a
+    // paid one, a closed one next month).
+    if (table === 'tournaments') return rows(process.env.QA_TOURNAMENTS_MANY ? [
+      tournament,
+      { ...tournament, id: 't-2', name: 'โคราชยูธคัพ 2026', location: 'สนามกีฬาเทศบาลนครราชสีมา', start_date: '2026-10-31', end_date: '2026-11-01', fee: 1500, max_teams: 16 },
+      { ...tournament, id: 't-3', name: 'อีสานลีก U13 รอบคัดเลือก', location: 'สนามโรงเรียนบ้านโนน ขอนแก่น', start_date: '2026-11-14', end_date: '2026-11-14', fee: 500, max_teams: 12, status: 'closed' },
+    ] : [tournament])
     if (table === 'player_ranks') return rows([rank])
     if (table === 'player_ratings') return rows([rating])
     if (table === 'rating_events') return rows(ratingEvents)
