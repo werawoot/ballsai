@@ -6,6 +6,7 @@ import { Save, Trash2 } from 'lucide-react'
 import { NOTE_CATEGORIES, NOTE_MAX, healthWord, type NoteCategory } from '@/lib/coach-notes'
 import { eventTimeParts } from '@/lib/team-events'
 import { useApiErrorText } from '@/lib/use-api-error-text'
+import ConfirmButton from '@/components/ConfirmButton'
 
 type Member = { athleteId: string; name: string }
 export type CoachNote = { id: string; athleteId: string; category: NoteCategory; body: string; createdAt: string; expiresAt: string }
@@ -55,7 +56,7 @@ export default function CoachNotesPanel({ teamId, members, notes, ready }: { tea
     router.refresh()
   }
   const remove = async (id: string) => {
-    if (busy || !window.confirm(t('deleteConfirm'))) return
+    if (busy) return
     setBusy(`delete:${id}`); setMessage(null)
     const result = await post('delete', { id })
     setBusy(null)
@@ -90,7 +91,7 @@ export default function CoachNotesPanel({ teamId, members, notes, ready }: { tea
             <p className="tn-body">{note.body}</p>
             <div className="tn-meta">
               <span>{t('expires', { date: until(note.expiresAt) })}</span>
-              <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" disabled={Boolean(busy)} onClick={() => remove(note.id)}><Trash2 size={15} aria-hidden="true" />{t('delete')}</button>
+              <ConfirmButton label={t('delete')} question={t('deleteConfirm')} icon={<Trash2 size={15} aria-hidden="true" />} disabled={Boolean(busy)} onConfirm={() => remove(note.id)} />
             </div>
           </article>)
         : <p className="tp-empty">{t('none')}</p>}

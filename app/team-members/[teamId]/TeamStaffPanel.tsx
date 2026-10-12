@@ -2,8 +2,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { LogOut, UserMinus, UserPlus } from 'lucide-react'
-import { STAFF_MAX, cleanStaffEmail, type StaffRow } from '@/lib/team-staff'
+import { LogOut, Pencil, UserMinus, UserPlus } from 'lucide-react'
+import ConfirmButton from '@/components/ConfirmButton'
+import { STAFF_MAX, cleanDisplayName, cleanStaffEmail, type StaffRow } from '@/lib/team-staff'
 import { useApiErrorText } from '@/lib/use-api-error-text'
 
 const post = async (action: string, data: Record<string, unknown>) => {
@@ -21,6 +22,8 @@ export default function TeamStaffPanel({ teamId, rows, isHead, ready }: { teamId
   const errorText = useApiErrorText()
   const router = useRouter()
   const [email, setEmail] = useState('')
+  // The caller's own display name, as families see it (sql/76, W1 finding F3).
+  const [naming, setNaming] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
 
@@ -40,9 +43,20 @@ export default function TeamStaffPanel({ teamId, rows, isHead, ready }: { teamId
     setMessage({ tone: 'ok', text: t('invited') })
     router.refresh()
   }
+  const saveName = async () => {
+    const name = cleanDisplayName(naming)
+    if (busy || !name) return
+    setBusy('name'); setMessage(null)
+    const result = await post('name', { name })
+    setBusy(null)
+    if (!result.ok) { setMessage({ tone: 'error', text: errorText(result.body, t('actionFailed')) }); return }
+    setNaming(null)
+    setMessage({ tone: 'ok', text: t('nameSaved') })
+    router.refresh()
+  }
   const remove = async (row: StaffRow) => {
     const leaving = row.is_me
-    if (busy || !row.id || !window.confirm(leaving ? t('leaveConfirm') : t('removeConfirm'))) return
+    if (busy || !row.id) return
     setBusy(`remove:${row.id}`); setMessage(null)
     const result = await post('remove', { id: row.id })
     setBusy(null)
@@ -64,13 +78,24 @@ export default function TeamStaffPanel({ teamId, rows, isHead, ready }: { teamId
                 <b>{row.name || row.email || t('unnamed')}{row.is_me ? ` (${t('you')})` : ''}</b>
                 <small>{row.is_head ? t('head') : t('assistant')}{pending ? ` · ${t('pending')}` : ''}{row.email && row.name ? ` · ${row.email}` : ''}</small>
               </span>
-              {!row.is_head && (isHead || row.is_me) && <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" disabled={Boolean(busy)} onClick={() => remove(row)}>
-                {row.is_me ? <LogOut size={15} aria-hidden="true" /> : <UserMinus size={15} aria-hidden="true" />}
-                {row.is_me ? t('leave') : pending ? t('withdraw') : t('remove')}
-              </button>}
+              {row.is_me && naming === null && <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" disabled={Boolean(busy)} onClick={() => { setNaming(row.name); setMessage(null) }}><Pencil size={15} aria-hidden="true" />{row.name ? t('editName') : t('setName')}</button>}
+              {!row.is_head && (isHead || row.is_me) && <ConfirmButton
+                label={row.is_me ? t('leave') : pending ? t('withdraw') : t('remove')}
+                question={row.is_me ? t('leaveConfirm') : t('removeConfirm')}
+                icon={row.is_me ? <LogOut size={15} aria-hidden="true" /> : <UserMinus size={15} aria-hidden="true" />}
+                disabled={Boolean(busy)} onConfirm={() => remove(row)} />}
             </li>
           })}
         </ul>
+        {!rows.some(row => row.is_me && row.name) && naming === null && <p className="tp-alert">{t('nameMissing')}</p>}
+        {naming !== null && <div className="ts-name">
+          <label>{t('nameLabel')}<input value={naming} maxLength={60} autoComplete="name" placeholder={t('namePlaceholder')} onChange={event => { setNaming(event.target.value); setMessage(null) }} /></label>
+          <small className="tp-note">{t('nameHint')}</small>
+          <div className="ts-name-actions">
+            <button type="button" className="ui-btn ui-btn-primary ui-btn-sm" disabled={!cleanDisplayName(naming) || Boolean(busy)} onClick={saveName}>{busy === 'name' ? t('saving') : t('saveName')}</button>
+            <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => setNaming(null)}>{t('cancel')}</button>
+          </div>
+        </div>}
         {isHead && (full
           ? <p className="tp-note">{t('full')}</p>
           : <>

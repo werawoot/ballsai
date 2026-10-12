@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { BellRing, CalendarPlus, Check, MapPin, X } from 'lucide-react'
 import { bangkokIso, eventCounts, eventTimeParts, type EventKind } from '@/lib/team-events'
 import { useApiErrorText } from '@/lib/use-api-error-text'
+import ConfirmButton from '@/components/ConfirmButton'
 
 type Member = { athleteId: string; name: string }
 export type PanelEvent = {
@@ -59,7 +60,7 @@ export default function TeamEventsPanel({ teamId, members, upcoming, past, ready
     router.refresh()
   }
   const cancel = async (id: string) => {
-    if (busy || !window.confirm(t('cancelConfirm'))) return
+    if (busy) return
     setBusy(`cancel:${id}`); setMessage(null)
     const result = await post('cancel', { id })
     setBusy(null)
@@ -129,7 +130,7 @@ export default function TeamEventsPanel({ teamId, members, upcoming, past, ready
       <div className="te-actions">
         {event.attendanceOpen && members.length > 0 && checklist(event)}
         {canRemind && <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" disabled={Boolean(busy)} onClick={() => remind(event.id)}><BellRing size={15} aria-hidden="true" />{busy === `remind:${event.id}` ? t('reminding') : t('remind', { count: counts.waiting })}</button>}
-        {!isPast && <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm te-cancel" disabled={Boolean(busy)} onClick={() => cancel(event.id)}><X size={15} aria-hidden="true" />{t('cancelEvent')}</button>}
+        {!isPast && <span className="te-cancel"><ConfirmButton label={t('cancelEvent')} question={t('cancelConfirm')} icon={<X size={15} aria-hidden="true" />} disabled={Boolean(busy)} onConfirm={() => cancel(event.id)} /></span>}
       </div>
     </article>
   }

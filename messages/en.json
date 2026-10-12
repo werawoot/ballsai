@@ -577,7 +577,8 @@
     "staffInviteSelf": "You cannot invite your own account as an assistant coach.",
     "staffEmailInvalid": "Please enter a valid email address.",
     "staffInviteClosed": "This invitation is closed. Ask the head coach to send a new one.",
-    "staffAdultRequired": "Please confirm you are 18 or over before accepting."
+    "staffAdultRequired": "Please confirm you are 18 or over before accepting.",
+    "staffNameInvalid": "The display name must be 2–60 characters."
   },
   "impact": {
     "back": "Home",
@@ -2224,7 +2225,8 @@
     "myTitle": "From your team",
     "unread": "New",
     "fromTeam": "Team {team}",
-    "when": "{day}/{month} · {time}"
+    "when": "{day}/{month} · {time}",
+    "noRecipients": "No athlete has accepted yet, so an announcement would reach nobody. You can send once at least one member has accepted."
   },
   "teamTraining": {
     "title": "Team training plan",
@@ -2401,6 +2403,20 @@
     "openTeam": "Open team",
     "familyTitle": "Team staff",
     "familyNote": "Every adult who looks after this team. If you do not know someone on this list, tell the head coach or the BallDoenSai team.",
-    "fromTeam": "Team {team}"
+    "fromTeam": "Team {team}",
+    "setName": "Add my name",
+    "editName": "Edit name",
+    "nameMissing": "You have not added your name yet, so families see you as \"No name yet\". Tap \"Add my name\" on your row.",
+    "nameLabel": "Name families see",
+    "namePlaceholder": "e.g. Coach Ek",
+    "nameHint": "2–60 characters. Athletes and guardians in your teams see this name in the staff list.",
+    "saveName": "Save name",
+    "saving": "Saving…",
+    "nameSaved": "Name saved",
+    "cancel": "Cancel"
+  },
+  "confirmAction": {
+    "yes": "Yes, do it",
+    "no": "No"
   }
 }

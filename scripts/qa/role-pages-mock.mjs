@@ -142,6 +142,11 @@ http.createServer((request, response) => {
       { team_id: teams[0].id, team_name: teams[0].name, name: head.name, is_head: true }, { team_id: teams[0].id, team_name: teams[0].name, name: helper.name, is_head: false },
     ] : [])
     if (table === 'team_members' && url.searchParams.has('team_id') && (role === 'coach' || role === 'assistant')) return rows([{ id: 'tm-1', team_id: teams[0].id, athlete_id: 'u-athlete', status: 'accepted', invited_at: '2026-10-01', athlete_profiles: { display_name: athlete.display_name, position: 'FW' } }])
+    // W1 fixes: one announcement and one upcoming event on the coach's team, and member
+    // names through team_roster_names (sql/76). Writes answer 200 with nothing.
+    if (table === 'team_announcements') return rows(role === 'coach' || role === 'assistant' ? [{ id: 'd0000000-0000-4000-8000-000000000001', body: 'ทดสอบ-ลบได้', created_at: '2026-10-12T03:12:00Z', to_athletes: true, to_guardians: false }] : [])
+    if (table === 'team_events') return rows(role === 'coach' || role === 'assistant' ? [{ id: 'e0000000-0000-4000-8000-000000000001', team_id: teams[0].id, kind: 'training', title: 'ซ้อมเย็น', starts_at: new Date(Date.now() + 86400000).toISOString(), location: 'สนามโรงเรียน', cancelled_at: null }] : [])
+    if (table === 'rpc/team_roster_names') return send(200, role === 'coach' || role === 'assistant' ? [{ team_id: teams[0].id, athlete_id: 'u-athlete', display_name: 'ด.ช. ส่วนตัว ใจดี', position: 'MF' }] : [])
     if (table === 'teams') return rows(role === 'coach' ? (process.env.QA_COACH_NO_TEAM ? [] : teams.slice(0, 1)) : role === 'organizer' ? teams : [])
     send(200, [])
   })

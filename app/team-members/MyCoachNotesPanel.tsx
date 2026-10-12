@@ -6,6 +6,7 @@ import { Flag, NotebookPen, Trash2 } from 'lucide-react'
 import type { NoteCategory } from '@/lib/coach-notes'
 import { eventTimeParts } from '@/lib/team-events'
 import { useApiErrorText } from '@/lib/use-api-error-text'
+import ConfirmButton from '@/components/ConfirmButton'
 import './team-page.css'
 
 export type MyNoteRow = {
@@ -28,7 +29,7 @@ export default function MyCoachNotesPanel({ rows, viewerId }: { rows: MyNoteRow[
   // The expiry is a year away: say which year.
   const until = (iso: string) => `${when(iso)}/${new Date(Date.parse(iso) + 7 * 60 * 60 * 1000).getUTCFullYear()}`
   const act = async (action: 'delete' | 'report', id: string) => {
-    if (busy || (action === 'delete' && !window.confirm(t('deleteConfirm')))) return
+    if (busy) return
     setBusy(`${action}:${id}`); setMessage(null)
     const response = await fetch('/api/coach-notes', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, data: { id } }),
@@ -53,7 +54,7 @@ export default function MyCoachNotesPanel({ rows, viewerId }: { rows: MyNoteRow[
           <span>{row.reported ? t('reported') : t('expires', { date: until(row.expires_at) })}</span>
           <span className="te-actions">
             {!row.reported && <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" disabled={Boolean(busy)} onClick={() => act('report', row.id)}><Flag size={14} aria-hidden="true" />{t('report')}</button>}
-            <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" disabled={Boolean(busy)} onClick={() => act('delete', row.id)}><Trash2 size={14} aria-hidden="true" />{t('delete')}</button>
+            <ConfirmButton label={t('delete')} question={t('deleteConfirm')} icon={<Trash2 size={14} aria-hidden="true" />} disabled={Boolean(busy)} onConfirm={() => act('delete', row.id)} />
           </span>
         </div>
       </article>)}

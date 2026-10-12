@@ -343,3 +343,12 @@ describe('/team-members assistant coaches (sql/75)', () => {
     expect(html).not.toContain(th.teamStaff.familyTitle)
   })
 })
+
+describe('/team-members W1 fix F2 (sql/76)', () => {
+  it('names a member with a private profile on the coach\'s roster through team_roster_names', async () => {
+    db.user = 'u1'; db.failing = new Set()
+    db.tables = { teams: [team], team_members: [{ id: 'm9', team_id: 'tm1', athlete_id: 'a-9', status: 'pending', invited_at: '2026-10-02', created_at: '2026-10-02' }], coach_attestations: [], athlete_profiles: [],
+      team_roster_names: [{ team_id: 'tm1', athlete_id: 'a-9', display_name: 'น้องเก้า', position: 'MF' }] }
+    expect(await render()).toContain('น้องเก้า')
+  })
+})

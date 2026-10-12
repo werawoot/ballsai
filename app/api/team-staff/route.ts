@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { apiError, type ApiErrorCode } from '@/lib/api-error'
-import { cleanStaffEmail } from '@/lib/team-staff'
+import { cleanDisplayName, cleanStaffEmail } from '@/lib/team-staff'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -16,6 +16,7 @@ const REFUSALS: [string, ApiErrorCode, number][] = [
   ['INVALID_EMAIL', 'staffEmailInvalid', 400],
   ['STAFF_INVITE_CLOSED', 'staffInviteClosed', 409],
   ['ADULT_REQUIRED', 'staffAdultRequired', 400],
+  ['INVALID_NAME', 'staffNameInvalid', 400],
 ]
 
 // Assistant coaches (sql/75). Three actions, each one guarded SQL75 function: the head
@@ -43,6 +44,12 @@ export async function POST(request: Request) {
     if (data.accept && data.adult !== true) return apiError('staffAdultRequired', 400)
     rpc = 'respond_team_staff'
     args = { p_staff_id: data.id, p_accept: data.accept, p_adult: data.accept && data.adult === true }
+  } else if (body?.action === 'name') {
+    // The caller's own name as families see it in the staff list (sql/76).
+    const name = cleanDisplayName(data.name)
+    if (!name) return apiError('staffNameInvalid', 400)
+    rpc = 'set_my_display_name'
+    args = { p_name: name }
   } else if (body?.action === 'remove' && typeof data.id === 'string' && UUID.test(data.id)) {
     rpc = 'remove_team_staff'
     args = { p_staff_id: data.id }
