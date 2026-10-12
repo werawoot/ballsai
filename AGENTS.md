@@ -48,6 +48,25 @@ Fame. Users are minors, their guardians, coaches and tournament organizers.
 11. Do not call anything "100%" until a real closed-beta group has completed the whole
     flow on real data.
 
+## Product rule: each role can use the app on its own first (owner, 12 Oct 2026)
+
+Every role (athlete, guardian, coach, assistant coach, organizer, venue owner) must be able
+to sign up and use the features that are theirs **straight away, alone**, without waiting
+for anyone to invite them. An invitation is asked for only at the point where a feature
+truly needs another person (a coach adding a real athlete to a roster, a guardian linking
+to their own child, a head coach adding an assistant). Never put an invitation, a
+tournament registration or another person's approval in front of something one person can
+do by themselves. When a feature needs someone else, the page still shows what this person
+can do now, and the invitation appears as one clear next step, not as a wall.
+
+Known places that break this rule today (to fix, design agreed first):
+
+- A coach gets a team only by registering it in a tournament (`teams.tournament_id`,
+  `create_team_safely`). Team tools (events, news, training plans, coach notes, minutes,
+  match plan) are therefore locked until a tournament exists.
+- An athlete and a guardian see team features only after a coach's invitation.
+- `/match-plan` needs a registered team.
+
 ## Target: nationwide use
 
 The owner's goal is a system all of Thailand can use. Build every change for that, not
