@@ -23,8 +23,13 @@ import {
 } from '@/lib/coach-team-overview'
 import Link from 'next/link'
 import { rosterProfiles } from '@/lib/roster-names'
-import { ClipboardPenLine } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { BellRing, CalendarDays, ClipboardPenLine, Megaphone, ShieldHalf, Timer, Users } from 'lucide-react'
+import { teamHub, type TeamHubSection } from '@/lib/team-hub'
+import './team-hub.css'
 import PageHeader from '@/components/PageHeader'
+
+type Member = { id: string; team_id: string; athlete_id: string; status: string; invited_at: string; teams?: { name: string | null } | null }
 
 export default async function TeamMembersPage() {
   const cookieStore = await cookies()
@@ -33,7 +38,7 @@ export default async function TeamMembersPage() {
   })
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/team-members')
-  const [t, tp] = await Promise.all([getTranslations('teamRoster'), getTranslations('teamPage')])
+  const t = await getTranslations('teamRoster')
   const [{ data: teams, error: teamsError }, { data: invites, error: invitesError }] = await Promise.all([
     supabase.from('teams').select('id, name, tournament_id, status, tournaments(name, fee)').eq('created_by', user.id).order('created_at', { ascending: false }),
     supabase.from('team_members').select('id, team_id, athlete_id, status, invited_at, teams(name)').eq('athlete_id', user.id).order('created_at', { ascending: false }),
@@ -130,20 +135,92 @@ export default async function TeamMembersPage() {
   const myStaffTeams = staffTeamsError ? [] : ((staffTeamRows ?? []) as MyStaffTeamRow[])
   const myTeamStaff = teamStaffError ? [] : ((teamStaffRows ?? []) as MyTeamStaffRow[])
   const attestationState = latestAttestations(coachAttestationRows as AttestationRow[] | null)
-  return <main className="bds-page ui-matchday" style={{ minHeight: '100vh' }}><PageHeader back={{ href: '/profile', label: 'โปรไฟล์' }} /><div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px 170px' }}><h1 className="ui-h1" style={{ marginBottom: 8 }}>{t('title')}</h1><p style={{ color: 'var(--ui-mute)', marginBottom: 14 }}>เชื่อมสมาชิกทีมกับบัญชีจริง เพื่อให้ผลแข่งและเส้นทางนักกีฬาถูกต้อง</p>{teams?.length ? <Link href="/match-plan" style={{ marginBottom: 20, background: '#101827', color: 'white', borderRadius: 10, padding: '11px 13px', display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}><ClipboardPenLine size={16} color="#f5c518" /> วางแผนก่อนแข่ง</Link> : null}{attestationError
-      ? <p role="alert" style={{ margin: '0 0 16px', padding: '9px 11px', borderRadius: 9, background: 'var(--ui-sunk)', color: '#b91c1c', fontSize: 12, fontWeight: 700 }}>โหลดคำรับรองจากโค้ชไม่สำเร็จ กรุณาโหลดหน้าใหม่</p>
-      : <AthleteAttestationInbox attestations={attestations} />}
-    <StaffInvitesPanel rows={myStaffTeams} />
-    <MyNewsPanel rows={myNews} />
-    <MyCoachNotesPanel rows={coachNotes} viewerId={user.id} />
-    <MyMinutesPanel rows={myMinutes} viewerId={user.id} />
-    <MyTrainingPanel rows={myPlans} thisWeek={planDay.thisWeek} today={planDay.today} />
-    <MyEventsPanel rows={myEvents} viewerId={user.id} />
-    <AthleteSkillInbox proposals={skillProposals} />
-    <MyTeamStaffPanel rows={myTeamStaff} />
-    {teamsError || invitesError ? <p role="alert" style={{ margin: '0 0 16px', padding: '9px 11px', borderRadius: 9, background: 'var(--ui-sunk)', color: '#b91c1c', fontSize: 13, fontWeight: 700 }}>{t('loadFailed')}</p> : null}
-    {!teamsError && !invitesError && !teams?.length && !invites?.length && !myStaffTeams.length ? <NoTeamYet /> : null}
-    {/* The invitation form comes first: it is the step the coach is on (UX mockup v3-A). */}
-    {teams?.length || invites?.length ? <TeamMembersClient teams={teams ?? []} invites={(invites ?? []) as never[]} counts={rosterError ? null : countsByTeam} /> : null}
-    <div style={{ marginTop: 16 }}><CoachTeamOverview statsLabel={tp('open')} teams={overview} rosterError={Boolean(rosterError)} attestations={attestationState} attestationError={Boolean(coachAttestationError)} /></div></div></main>
+  const ownInvites = (invites ?? []) as unknown as Member[]
+  const pendingInvites = ownInvites.filter(row => row.status === 'pending')
+  const acceptedInvites = ownInvites.filter(row => row.status === 'accepted')
+  const pendingStaff = myStaffTeams.filter(row => row.status === 'pending')
+  const acceptedStaff = myStaffTeams.filter(row => row.status === 'accepted')
+  // Only a team still in draft takes new invitations; a submitted one is the organizer's.
+  const draftTeams = (teams ?? []).filter(team => team.status === 'draft')
+  const hub = teamHub({
+    coachTeams: teams?.length ?? 0,
+    pendingTeamInvites: pendingInvites.length,
+    pendingStaffInvites: pendingStaff.length,
+    pendingSkillProposals: skillProposals.length,
+    pendingAttestations: attestations.filter(row => row.status === 'pending').length,
+    unansweredEvents: myEvents.filter(row => row.answer === null).length,
+    events: myEvents.length,
+    plans: myPlans.length,
+    news: myNews.length,
+    notes: coachNotes.length,
+    minutes: myMinutes.length,
+    staff: myTeamStaff.length,
+    acceptedStaffTeams: acceptedStaff.length,
+    memberships: acceptedInvites.length,
+  })
+  const loadFailed = Boolean(teamsError || invitesError)
+  const h = await getTranslations('teamHub')
+  const head = (id: TeamHubSection, icon: ReactNode, extra?: ReactNode) => <div className="tm-section-head">
+    <h2 id={`tm-${id}-title`}>{icon}{h(`sections.${id}`)}</h2>{extra}
+  </div>
+
+  return <main className="bds-page ui-matchday tm-page">
+    <PageHeader back={{ href: '/profile', label: h('back') }} />
+    <div className="tm-wrap">
+      <div className="tm-hero">
+        <h1 className="ui-h1">{t('title')}</h1>
+        <p className="tm-lead">{hub.isCoach ? h('leadCoach') : h('leadFamily')}</p>
+        {hub.todo > 0 && <a className="tm-todo-pill" href={hub.sections.includes('todo') ? '#tm-todo' : '#tm-week'}><BellRing size={16} aria-hidden="true" />{h('todo', { count: hub.todo })}</a>}
+        {hub.sections.length > 1 && <nav className="tm-jump" aria-label={h('jumpLabel')}>
+          {hub.sections.map(id => <a key={id} href={`#tm-${id}`}>{h(`sections.${id}`)}</a>)}
+        </nav>}
+      </div>
+
+      {loadFailed && <p role="alert" className="tp-alert">{t('loadFailed')}</p>}
+      {attestationError && <p role="alert" className="tp-alert">{h('attestationsFailed')}</p>}
+
+      {hub.sections.includes('todo') && <section id="tm-todo" className="tm-section is-todo" aria-labelledby="tm-todo-title">
+        {head('todo', <BellRing size={18} aria-hidden="true" />, <span className="tm-count">{hub.waiting}</span>)}
+        {pendingInvites.length > 0 && <TeamMembersClient teams={[]} invites={pendingInvites as never[]} counts={null} />}
+        <StaffInvitesPanel rows={pendingStaff} />
+        {!attestationError && <AthleteAttestationInbox attestations={attestations} />}
+        <AthleteSkillInbox proposals={skillProposals} />
+      </section>}
+
+      {hub.sections.includes('teams') && <section id="tm-teams" className="tm-section" aria-labelledby="tm-teams-title">
+        {head('teams', <ShieldHalf size={18} aria-hidden="true" />, teams?.length ? <Link href="/match-plan" className="tm-head-link"><ClipboardPenLine size={15} aria-hidden="true" />{h('matchPlan')}</Link> : null)}
+        {/* A team in draft is mid-registration: inviting is the step the coach is on (UX mockup v3-A). */}
+        {draftTeams.length > 0 && <div className="ui-card tm-invite"><TeamMembersClient teams={draftTeams} invites={[]} counts={rosterError ? null : countsByTeam} /></div>}
+        <CoachTeamOverview statsLabel={h('openTeam')} teams={overview} rosterError={Boolean(rosterError)} attestations={attestationState} attestationError={Boolean(coachAttestationError)} />
+        <StaffInvitesPanel rows={acceptedStaff} />
+      </section>}
+
+      {hub.sections.includes('mine') && <section id="tm-mine" className="tm-section" aria-labelledby="tm-mine-title">
+        {head('mine', <Users size={18} aria-hidden="true" />)}
+        <ul className="ui-card tm-mine">
+          {acceptedInvites.map(row => <li key={row.id}><b>{row.teams?.name || h('yourTeam')}</b><span>{h('joined')}</span></li>)}
+        </ul>
+      </section>}
+
+      {hub.sections.includes('week') && <section id="tm-week" className="tm-section" aria-labelledby="tm-week-title">
+        {head('week', <CalendarDays size={18} aria-hidden="true" />)}
+        <MyEventsPanel rows={myEvents} viewerId={user.id} />
+        <MyTrainingPanel rows={myPlans} thisWeek={planDay.thisWeek} today={planDay.today} />
+      </section>}
+
+      {hub.sections.includes('news') && <section id="tm-news" className="tm-section" aria-labelledby="tm-news-title">
+        {head('news', <Megaphone size={18} aria-hidden="true" />)}
+        <MyNewsPanel rows={myNews} />
+        <MyCoachNotesPanel rows={coachNotes} viewerId={user.id} />
+      </section>}
+
+      {hub.sections.includes('season') && <section id="tm-season" className="tm-section" aria-labelledby="tm-season-title">
+        {head('season', <Timer size={18} aria-hidden="true" />)}
+        <MyMinutesPanel rows={myMinutes} viewerId={user.id} />
+        <MyTeamStaffPanel rows={myTeamStaff} />
+      </section>}
+
+      {!loadFailed && hub.empty && <NoTeamYet />}
+    </div>
+  </main>
 }

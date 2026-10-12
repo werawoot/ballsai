@@ -83,7 +83,6 @@
   "app/team-members/CoachRosterActions.tsx",
   "app/team-members/CoachTeamOverview.tsx",
   "app/team-members/TeamMembersClient.tsx",
-  "app/team-members/page.tsx",
   "app/terms/page.tsx",
   "app/venue/VenueOperations.tsx",
   "app/venues/BookingRequestClient.tsx",

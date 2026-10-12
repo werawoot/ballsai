@@ -2449,5 +2449,25 @@
   "confirmAction": {
     "yes": "Yes, do it",
     "no": "No"
+  },
+  "teamHub": {
+    "back": "Profile",
+    "leadCoach": "Your teams are below. Open a team to plan sessions, post news, take attendance and see stats.",
+    "leadFamily": "Events, news and everything your coach sends you, in one place.",
+    "todo": "{count, plural, one {# thing waits for your answer} other {# things wait for your answer}}",
+    "jumpLabel": "Jump to",
+    "attestationsFailed": "Could not load your coach's confirmations. Reload the page.",
+    "matchPlan": "Match plan",
+    "yourTeam": "Your team",
+    "joined": "Joined",
+    "sections": {
+      "todo": "Waiting for you",
+      "teams": "Teams I coach",
+      "mine": "Teams I play in",
+      "week": "Events and training",
+      "news": "From your coach",
+      "season": "Season and staff"
+    },
+    "openTeam": "Open team"
   }
 }

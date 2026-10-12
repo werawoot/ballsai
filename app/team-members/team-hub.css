@@ -1,0 +1,55 @@
+/* /team-members: one page for every role (Matchday theme). What waits on this person
+   first, then only the sections that have something, each with a plain heading. */
+
+.tm-page { min-height: 100vh; }
+.tm-wrap { margin: 0 auto; max-width: 720px; padding: 22px 16px calc(150px + env(safe-area-inset-bottom)); }
+.tm-hero { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+.tm-hero .ui-h1 { margin: 0; }
+.tm-lead { color: var(--ui-mute); font-size: 15px; line-height: 1.55; margin: 0; }
+.tm-todo-pill { align-items: center; align-self: flex-start; background: var(--ui-red); border-radius: 99px; color: #fff; display: inline-flex; font: 800 14px var(--font-sarabun), sans-serif; gap: 8px; min-height: 40px; padding: 0 16px; text-decoration: none; }
+.tm-jump { display: flex; gap: 8px; margin: 2px -16px 0; overflow-x: auto; padding: 2px 16px 4px; scrollbar-width: none; }
+.tm-jump::-webkit-scrollbar { display: none; }
+.tm-jump a { align-items: center; background: var(--ui-sunk); border: 1px solid var(--ui-line); border-radius: 99px; color: var(--ui-text); display: inline-flex; flex: none; font: 700 13.5px var(--font-sarabun), sans-serif; min-height: 40px; padding: 0 14px; text-decoration: none; white-space: nowrap; }
+.tm-jump a:hover { border-color: var(--ui-red); }
+.tm-todo-pill:focus-visible, .tm-jump a:focus-visible, .tm-head-link:focus-visible, .tm-fold summary:focus-visible { outline: 3px solid var(--ui-gold); outline-offset: 2px; }
+
+.tm-section { display: grid; gap: 12px; margin-top: 26px; scroll-margin-top: 72px; }
+.tm-section > .ui-card, .tm-section > section { margin: 0 !important; }
+.tm-section-head { align-items: center; border-bottom: 1px solid var(--ui-line); display: flex; gap: 10px; justify-content: space-between; padding-bottom: 8px; }
+.tm-section-head h2 { align-items: center; color: var(--ui-text); display: flex; font: 800 18px var(--font-sarabun), sans-serif; gap: 8px; margin: 0; }
+.tm-section-head h2 svg { color: var(--ui-red-hot); }
+.tm-section.is-todo .tm-section-head { border-bottom-color: rgba(255,59,59,.45); }
+.tm-count { background: var(--ui-red); border-radius: 99px; color: #fff; font: 800 13px/24px var(--font-sarabun), sans-serif; min-width: 24px; padding: 0 8px; text-align: center; }
+.tm-head-link { align-items: center; color: var(--ui-gold); display: inline-flex; font: 700 13.5px var(--font-sarabun), sans-serif; gap: 6px; min-height: 44px; text-decoration: none; }
+
+.tm-teams { display: grid; gap: 12px; }
+.tm-team { display: grid; gap: 12px; padding: 16px; }
+.tm-team-top { align-items: flex-start; display: flex; gap: 10px; justify-content: space-between; }
+.tm-team-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tm-team-name b { color: var(--ui-text); font: 800 19px/1.3 var(--font-sarabun), sans-serif; overflow-wrap: anywhere; }
+.tm-team-name small { color: var(--ui-mute); font-size: 13px; }
+.tm-chip { background: var(--ui-sunk); border-radius: 99px; color: var(--ui-mute); flex: none; font: 800 12px/1 var(--font-sarabun), sans-serif; padding: 6px 10px; white-space: nowrap; }
+.tm-chip.is-ok { background: rgba(74,222,128,.14); color: #4ade80; }
+.tm-chip.is-wait { background: rgba(244,185,66,.16); color: var(--ui-gold); }
+.tm-chip.is-no { background: var(--ui-red-soft); color: #ff8a8a; }
+.tm-stats { display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); margin: 0; }
+.tm-stats div { background: var(--ui-sunk); border-radius: 12px; padding: 8px 10px; }
+.tm-stats dt { color: var(--ui-mute); font-size: 12px; font-weight: 700; }
+.tm-stats dd { color: var(--ui-text); font: 800 22px/1.2 var(--font-oswald), sans-serif; margin: 2px 0 0; }
+.tm-next { color: var(--ui-text); font-size: 14px; line-height: 1.5; margin: 0; }
+.tm-next span { color: #4ade80; font-weight: 800; margin-right: 8px; }
+.tm-open { gap: 6px; justify-content: center; width: 100%; }
+.tm-fold { border-top: 1px solid var(--ui-line); padding-top: 4px; }
+.tm-fold summary { align-items: center; color: var(--ui-text); cursor: pointer; display: flex; font: 700 14px var(--font-sarabun), sans-serif; min-height: 44px; }
+.tm-fold.is-quiet summary { color: var(--ui-mute); font-size: 13px; font-weight: 600; }
+.tm-roster { display: grid; gap: 6px; list-style: none; margin: 0 0 10px; padding: 0; }
+.tm-roster li { align-items: center; display: flex; gap: 8px; justify-content: space-between; min-height: 32px; }
+.tm-roster li > span:first-child { color: var(--ui-text); font-size: 14px; min-width: 0; overflow-wrap: anywhere; }
+.tm-invite { padding: 16px; }
+.tm-mine { display: grid; gap: 0; list-style: none; margin: 0; padding: 4px 16px; }
+.tm-mine li { align-items: center; border-top: 1px solid var(--ui-line); display: flex; gap: 10px; justify-content: space-between; min-height: 52px; }
+.tm-mine li:first-child { border-top: 0; }
+.tm-mine b { color: var(--ui-text); font-size: 15px; overflow-wrap: anywhere; }
+.tm-mine span { color: #4ade80; flex: none; font-size: 13px; font-weight: 700; }
+
+@media (prefers-reduced-motion: no-preference) { html:has(.tm-page) { scroll-behavior: smooth; } }
