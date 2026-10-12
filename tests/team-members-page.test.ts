@@ -135,7 +135,7 @@ describe('/team-members: the second of the three steps (UX mockup v3-A)', () => 
     coach()
     const html = await render()
     expect(html.indexOf('type="email"')).toBeGreaterThan(-1)
-    expect(html.indexOf('type="email"')).toBeLessThan(html.indexOf('นำออกแล้ว'))
+    expect(html.indexOf('type="email"')).toBeLessThan(html.indexOf('ขั้นต่อไป'))
   })
 
   it('says why the team cannot be submitted yet, and disables the button', async () => {
