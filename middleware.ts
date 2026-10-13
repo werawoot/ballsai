@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { robotsHeader } from '@/lib/seo'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -37,10 +38,17 @@ export async function middleware(request: NextRequest) {
   if (!user && isProtectedRoute) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
-    return NextResponse.redirect(loginUrl)
+    return withRobots(NextResponse.redirect(loginUrl), pathname)
   }
 
-  return supabaseResponse
+  return withRobots(supabaseResponse, pathname)
+}
+
+// Signed-in areas and pages naming young athletes are never indexed (lib/seo.ts).
+function withRobots(response: NextResponse, pathname: string) {
+  const value = robotsHeader(pathname)
+  if (value) response.headers.set('X-Robots-Tag', value)
+  return response
 }
 
 export const config = {

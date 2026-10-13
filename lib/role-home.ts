@@ -21,7 +21,9 @@ export function homeKind({ persona, role }: { persona: string | null | undefined
 }
 
 export type HomeAction = { key: string; href: string; count?: number }
-export type RoleHome = { primary: HomeAction; rows: HomeAction[] }
+// tools: things this person can use straight away, alone (AGENTS.md product rule);
+// next: the step that needs someone else (an invitation, a tournament), shown last.
+export type RoleHome = { primary: HomeAction; rows: HomeAction[]; tools?: HomeAction[]; next?: HomeAction }
 
 // A line of numbers under the primary action's title (guardian: linked / waiting; coach: newest team).
 export type RoleStats = { key: 'guardian' | 'coach'; values: Record<string, string | number> }
@@ -44,15 +46,19 @@ function guardianHome({ accepted, pending }: HomeFacts['guardian']): RoleHome {
   return { primary, rows: without([action('findTournament', '/tournaments'), action('findAthletes', '/athletes')], primary) }
 }
 
+// A coach can work at once, with no team and no invitation (report 10, mockup v10-1): the
+// match board has a draft mode kept on this device, and the drill library, the programmes and
+// the athlete search need nobody. Registering a team for a tournament, and inviting athletes
+// into it, is the step after.
+const COACH_TOOLS = [action('drills', '/training/drills'), action('programmes', '/training'), action('findAthletes', '/athletes'), action('findTournament', '/tournaments')]
+
 function coachHome({ teams }: HomeFacts['coach']): RoleHome {
   const newest = teams[0]
-  const primary = !newest ? action('registerTeam', '/tournaments')
-    : newest.status !== 'draft' ? action('teamStatus', '/team-members')
-      : newest.accepted > 0 ? action('submitTeam', '/team-members') : action('inviteAthletes', '/team-members')
-  const rows = newest
-    ? [action('inviteAthletes', '/team-members'), action('matchPlan', '/match-plan'), action('findTournament', '/tournaments')]
-    : [action('findAthletes', '/athletes')]
-  return { primary, rows: without(rows, primary) }
+  if (!newest) return { primary: action('draftBoard', '/match-plan'), rows: [], tools: COACH_TOOLS, next: action('registerTeam', '/tournaments') }
+  const primary = newest.status !== 'draft' ? action('teamStatus', '/team-members')
+    : newest.accepted > 0 ? action('submitTeam', '/team-members') : action('inviteAthletes', '/team-members')
+  const rows = [action('inviteAthletes', '/team-members'), action('matchPlan', '/match-plan'), action('findTournament', '/tournaments')]
+  return { primary, rows: without(rows, primary), tools: COACH_TOOLS.filter(tool => tool.key !== 'findTournament') }
 }
 
 function organizerHome({ tournaments, pendingTeams }: HomeFacts['organizer']): RoleHome {

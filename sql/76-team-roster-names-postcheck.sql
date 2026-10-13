@@ -7,5 +7,5 @@ select to_regprocedure('public.team_roster_names(uuid[])') is not null and to_re
          and has_function_privilege('authenticated', 'public.set_my_display_name(text)', 'execute') as auth_calls,
        has_function_privilege('anon', 'public.team_roster_names(uuid[])', 'execute')
          or has_function_privilege('anon', 'public.set_my_display_name(text)', 'execute') as anon_calls,
-       (select left(md5(regexp_replace(regexp_replace(prosrc, '--[^\n]*', '', 'g'), '\s+', '', 'g')), 8) from pg_proc where oid = 'public.team_roster_names(uuid[])'::regprocedure) as names_fp,
-       (select left(md5(regexp_replace(regexp_replace(prosrc, '--[^\n]*', '', 'g'), '\s+', '', 'g')), 8) from pg_proc where oid = 'public.set_my_display_name(text)'::regprocedure) as name_fp;
+       (select left(md5(regexp_replace(regexp_replace(prosrc, '-' || '-[^' || chr(10) || ']{0,}', '', 'g'), '[[:space:]]+', '', 'g')), 8) from pg_proc where oid = 'public.team_roster_names(uuid[])'::regprocedure) as names_fp,
+       (select left(md5(regexp_replace(regexp_replace(prosrc, '-' || '-[^' || chr(10) || ']{0,}', '', 'g'), '[[:space:]]+', '', 'g')), 8) from pg_proc where oid = 'public.set_my_display_name(text)'::regprocedure) as name_fp;

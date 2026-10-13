@@ -27,14 +27,16 @@ export default async function MatchPlanPage(
   const scope: MatchPlanScope = searchParams.scope === 'mine' || searchParams.scope === 'organized' ? searchParams.scope : organizes ? 'organized' : 'mine'
   const page = parsePage(searchParams.page)
   const search = (searchParams.q ?? '').trim().slice(0, 80)
-  const [t, { teams, hasNext }] = await Promise.all([
+  const [t, th, { teams, hasNext }] = await Promise.all([
     getTranslations('matchPlan'),
+    getTranslations('teamHub'),
     fetchMatchPlanTeamsPage(supabase, { userId: user.id, scope, page, search }),
   ])
 
   return (
     <main className="bds-page ui-matchday" style={{ minHeight: '100vh', paddingBottom: 24 }}>
-      <PageHeader back={{ href: '/dashboard', label: tl('dashboardLabels.back') }} />
+      {/* An organizer came from the dashboard; a coach from their own home (report 10). */}
+      <PageHeader back={organizes ? { href: '/dashboard', label: tl('dashboardLabels.back') } : { href: '/profile', label: th('back') }} />
 
       <section className="mp-head">
         <p className="ui-eyebrow">{tl('matchPlanPage.eyebrow')}</p>

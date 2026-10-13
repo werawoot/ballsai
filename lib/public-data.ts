@@ -136,3 +136,28 @@ export const getPublicIdentityRankingData = unstable_cache(
   ['public-identity-ranking-data'],
   { revalidate: 60, tags: ['public-ranking', 'public-athletes'] },
 )
+
+// Tournament ids for sitemap.xml, newest first. One sitemap holds at most 50,000 URLs
+// (sitemaps.org); past that it must become a sitemap index, so reaching the limit is logged
+// rather than silently cut.
+export const SITEMAP_TOURNAMENT_LIMIT = 49_000
+export const getSitemapTournamentIds = unstable_cache(
+  async (): Promise<string[]> => {
+    try {
+      const { data, error } = await publicSupabase
+        .from('tournaments')
+        .select('id')
+        .order('start_date', { ascending: false })
+        .limit(SITEMAP_TOURNAMENT_LIMIT)
+      if (error) throw error
+      const ids = (data ?? []).map(row => String(row.id))
+      if (ids.length >= SITEMAP_TOURNAMENT_LIMIT) console.error(JSON.stringify({ level: 'warn', event: 'sitemap_tournament_limit_reached', limit: SITEMAP_TOURNAMENT_LIMIT }))
+      return ids
+    } catch (error) {
+      console.error(JSON.stringify({ level: 'error', event: 'sitemap_tournaments_fetch_failed', error: publicDataErrorDetails(error) }))
+      return []
+    }
+  },
+  ['sitemap-tournament-ids'],
+  { revalidate: 3600, tags: ['public-tournaments'] },
+)
