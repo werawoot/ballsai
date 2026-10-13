@@ -66,7 +66,8 @@ export async function loadRoleHome(client: SupabaseClient, kind: Exclude<HomeKin
   switch (kind) {
     case 'guardian': {
       const result = await guardianFacts(client, userId)
-      return result.ok ? { home: roleHome('guardian', result.facts), stats: { key: 'guardian', values: { ...result.facts } } } : null
+      // "0 linked · 0 waiting" says nothing to someone who has not linked yet.
+      return result.ok ? { home: roleHome('guardian', result.facts), stats: result.facts.accepted + result.facts.pending > 0 ? { key: 'guardian', values: { ...result.facts } } : undefined } : null
     }
     case 'coach': {
       const result = await coachFacts(client, userId)

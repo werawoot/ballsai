@@ -29,14 +29,23 @@ describe('which home a person gets', () => {
 })
 
 describe('guardian: ลูกของฉัน', () => {
-  it('asks to link a child when there is none', () => {
-    expect(roleHome('guardian', { accepted: 0, pending: 0 }).primary).toEqual({ key: 'linkChild', href: '/guardian' })
+  // AGENTS.md product rule (report 10, mockup v10-4): something to use at once, linking last.
+  it('starts with the programmes by age when no child is linked, and asks to link last', () => {
+    const home = roleHome('guardian', { accepted: 0, pending: 0 })
+    expect(home.primary).toEqual({ key: 'guardianProgrammes', href: '/training' })
+    expect(home.tools?.map(tool => tool.href)).toEqual(['/tournaments', '/training/drills', '/hall-of-fame', '/privacy'])
+    expect(home.next).toEqual({ key: 'linkChild', href: '/guardian' })
   })
-  it('shows the waiting request when the child has not answered', () => {
-    expect(roleHome('guardian', { accepted: 0, pending: 1 }).primary).toEqual({ key: 'waitingChild', href: '/guardian' })
+  it('keeps the waiting request as the next step, not a wall', () => {
+    const home = roleHome('guardian', { accepted: 0, pending: 1 })
+    expect(home.primary.key).toBe('guardianProgrammes')
+    expect(home.next).toEqual({ key: 'waitingChild', href: '/guardian' })
   })
   it('opens the linked child first', () => {
-    expect(roleHome('guardian', { accepted: 2, pending: 1 }).primary).toEqual({ key: 'viewChildren', href: '/guardian' })
+    const home = roleHome('guardian', { accepted: 2, pending: 1 })
+    expect(home.primary).toEqual({ key: 'viewChildren', href: '/guardian' })
+    expect(home.tools?.length).toBe(4)
+    expect(home.next).toBeUndefined()
   })
 })
 

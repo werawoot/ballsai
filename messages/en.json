@@ -92,7 +92,7 @@
     "starting": "Getting started...",
     "finish": {
       "athlete": "Make my card",
-      "guardian": "Link my child",
+      "guardian": "Go to my page",
       "coach": "Go to my page",
       "organizer": "Go to my page",
       "venue_owner": "Manage my venue",
@@ -148,7 +148,7 @@
     },
     "nextNote": {
       "athlete": "Next: add your name and your first card is ready",
-      "guardian": "Next: enter the email your child signed up with, then wait for them to accept",
+      "guardian": "Next: programmes by age right away, then link your child's account",
       "coach": "Next: coach tools work straight away, no team needed",
       "organizer": "Next: see what your account can do",
       "venue_owner": "Next: add a venue and open free times",
@@ -1180,7 +1180,15 @@
       "failed": "Could not share the link. Copy it from the guardian page instead",
       "how": "Your guardian signs up → chooses \"Guardian\" → enters your email, then you accept on the guardian page"
     },
-    "levelLabel": "LEVEL"
+    "levelLabel": "LEVEL",
+    "teamAsk": {
+      "title": "Which team are you in?",
+      "body": "Coaches invite you with the email you signed up with. Send it to your coach, then accept the invitation when it arrives.",
+      "button": "Send my email to my coach",
+      "text": "Coach, please invite me to the team on BallDoenSai with this email: {email}",
+      "copied": "Copied. Send it to your coach.",
+      "failed": "Could not copy. Try again."
+    }
   },
   "profileEdit": {
     "title": "Edit profile",
@@ -1850,6 +1858,19 @@
       "findTournamentTool": {
         "label": "Tournaments",
         "hint": "Open for entries"
+      },
+      "guardianProgrammes": {
+        "label": "See programmes",
+        "title": "Programmes by age",
+        "text": "U10–U13 and U14–U17. Pick one for your child's age; the schedule and session count are kept for you."
+      },
+      "hallOfFame": {
+        "label": "Hall of fame",
+        "hint": "Standout athletes"
+      },
+      "privacy": {
+        "label": "Privacy",
+        "hint": "How children's data is kept safe"
       }
     },
     "loadFailed": {
@@ -1857,7 +1878,11 @@
       "text": "Try loading this page again."
     },
     "useNow": "Use now",
-    "nextStep": "Have a real team? Enter a tournament, then invite your athletes."
+    "next": {
+      "registerTeam": "Have a real team? Enter a tournament, then invite your athletes.",
+      "linkChild": "Link your child's account to see sessions, team news and approve their profile.",
+      "waitingChild": "Request sent. Waiting for your child to accept in their account."
+    }
   },
   "loginPage": {
     "title": "Sign in or sign up",

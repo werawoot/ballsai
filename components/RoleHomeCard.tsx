@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { BookOpenCheck, CalendarRange, ChevronRight, Search, Trophy, type LucideIcon } from 'lucide-react'
+import { BookOpenCheck, CalendarRange, ChevronRight, Search, ShieldCheck, Star, Trophy, type LucideIcon } from 'lucide-react'
 import type { HomeKind, RoleHome, RoleStats } from '@/lib/role-home'
 
 
@@ -10,7 +10,7 @@ type Kind = Exclude<HomeKind, 'athlete'>
 
 // Tools reuse a few action keys that also appear as plain rows; their tile words have their own key.
 const TOOL_WORDS: Record<string, string> = { findAthletes: 'findAthletesTool', findTournament: 'findTournamentTool' }
-const TOOL_ICONS: Record<string, LucideIcon> = { drills: BookOpenCheck, programmes: CalendarRange, findAthletes: Search, findTournament: Trophy }
+const TOOL_ICONS: Record<string, LucideIcon> = { drills: BookOpenCheck, programmes: CalendarRange, findAthletes: Search, findTournament: Trophy, hallOfFame: Star, privacy: ShieldCheck }
 
 export default function RoleHomeCard({ kind, home, stats }: { kind: Kind; home: RoleHome; stats?: RoleStats }) {
   // Which messages exist depends on the action (only primary ones have a title and text), so the keys are looked up by name.
@@ -37,7 +37,7 @@ export default function RoleHomeCard({ kind, home, stats }: { kind: Kind; home: 
       })}
     </ul>}
     {home.next && <Link href={home.next.href} className="rh-next">
-      <span>{t('nextStep')}</span>
+      <span>{t(`next.${home.next.key}`)}</span>
       <b>{t(`actions.${home.next.key}.label`)}</b>
     </Link>}
     {home.rows.length > 0 && <section className="pf-card rh-rows" aria-label={t('more')}>
