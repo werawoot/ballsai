@@ -385,3 +385,19 @@ describe('/team-members/[teamId] W1 fix F3 (sql/76)', () => {
   })
 })
 
+
+describe('/team-members/[teamId]: a coach\'s own team (sql/78)', () => {
+  it('lets the head coach enter an open tournament with accepted members, told and able to withdraw (D1)', async () => {
+    seed()
+    db.tables.teams = [{ id: 'team-1', name: 'Lions', tournament_id: null, created_by: 'coach-1', tournaments: null }]
+    db.tables.tournaments = [{ id: 'cup', name: 'ศึกชิงถ้วย', start_date: '2026-10-24', location: 'ขอนแก่น', status: 'open' }]
+    const html = await render()
+    expect(html).toContain('พาทีมลงแข่ง')
+    expect(html.indexOf('พาทีมลงแข่ง')).toBeLessThan(html.indexOf('tp-stats'))
+  })
+
+  it('does not offer it on a tournament team', async () => {
+    seed()
+    expect(await render()).not.toContain('พาทีมลงแข่ง')
+  })
+})

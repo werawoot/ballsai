@@ -21,6 +21,8 @@ export type TeamHubInput = {
   staff: number
   acceptedStaffTeams: number
   memberships: number
+  // A coach who may create their own team (sql/78) always has the teams section to do it in.
+  canCreateTeam?: boolean
 }
 
 export type TeamHub = {
@@ -37,7 +39,7 @@ export function teamHub(input: TeamHubInput): TeamHub {
   // An event without an answer is waiting on this person too; it stays in "this week".
   const waiting = input.pendingTeamInvites + input.pendingStaffInvites + input.pendingSkillProposals + input.pendingAttestations
   const todo = waiting + input.unansweredEvents
-  const isCoach = input.coachTeams > 0 || input.acceptedStaffTeams > 0
+  const isCoach = input.coachTeams > 0 || input.acceptedStaffTeams > 0 || Boolean(input.canCreateTeam)
   const sections: TeamHubSection[] = []
   if (waiting > 0) sections.push('todo')
   if (isCoach) sections.push('teams')

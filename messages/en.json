@@ -609,7 +609,17 @@
     "staffEmailInvalid": "Please enter a valid email address.",
     "staffInviteClosed": "This invitation is closed. Ask the head coach to send a new one.",
     "staffAdultRequired": "Please confirm you are 18 or over before accepting.",
-    "staffNameInvalid": "The display name must be 2–60 characters."
+    "staffNameInvalid": "The display name must be 2–60 characters.",
+    "teamNameInvalid": "A team name is 2–80 characters",
+    "teamCoachRequired": "Only accounts that chose \"coach\" at sign-up can create a team",
+    "teamTooMany": "You already have 20 teams",
+    "teamTournamentClosed": "This tournament is closed for entries",
+    "teamAlreadyEntered": "You already entered a team in this tournament",
+    "teamAthleteElsewhere": "An athlete you chose is already on another roster in this tournament",
+    "teamAthleteNotOnTeam": "Choose only athletes who accepted your team's invitation",
+    "teamRosterLocked": "The coach has submitted the entry; contact the coach or the organizer to withdraw",
+    "teamRosterInvalid": "Choose 1–60 athletes",
+    "teamTournamentNotFound": "Tournament not found"
   },
   "impact": {
     "back": "Home",
@@ -1871,6 +1881,15 @@
       "privacy": {
         "label": "Privacy",
         "hint": "How children's data is kept safe"
+      },
+      "createTeam": {
+        "label": "Create my team",
+        "title": "Create your own team",
+        "text": "For every season, no tournament needed. Plan sessions and training and invite athletes right away."
+      },
+      "draftBoardTool": {
+        "label": "Match board",
+        "hint": "Try a line-up before a match"
       }
     },
     "loadFailed": {
@@ -2516,6 +2535,38 @@
       "news": "From your coach",
       "season": "Season and staff"
     },
-    "openTeam": "Open team"
+    "openTeam": "Open team",
+    "myTeam": "My team"
+  },
+  "ownTeam": {
+    "createTitle": "Create my team",
+    "createHint": "Your own team for every season, no tournament needed. Plan sessions and training and invite athletes right away.",
+    "nameLabel": "Team name",
+    "namePlaceholder": "e.g. Khon Kaen United U13",
+    "create": "Create team",
+    "creating": "Creating…",
+    "createFailed": "Could not create the team",
+    "myTeamChip": "My team",
+    "enter": "Enter a tournament",
+    "tournamentLabel": "Open tournaments",
+    "pickAthletes": "Athletes to take ({count})",
+    "enterConsent": "Athletes and their guardians are notified and may withdraw from this tournament until you submit.",
+    "enterConfirm": "Enter this tournament",
+    "entering": "Sending…",
+    "enterFailed": "Could not enter the tournament",
+    "enterNeedsMembers": "You can enter a tournament once at least one athlete has accepted your team's invitation.",
+    "enterNoTournaments": "No tournament is open for entries right now.",
+    "entriesTitle": "Tournaments your coach entered",
+    "entryFor": "Team {team}",
+    "withdraw": "Withdraw from this tournament",
+    "withdrawConfirm": "Withdraw from this tournament? Your coach will see it.",
+    "withdrawn": "Withdrawn",
+    "withdrawFailed": "Could not withdraw",
+    "entryWithdrawn": "Withdrawn",
+    "entryLocked": "The coach has submitted; contact the coach or organizer to withdraw.",
+    "keep": "Keep as my team",
+    "keeping": "Creating…",
+    "keepHint": "Creates your own team from this one; its athletes are invited again to accept.",
+    "keepFailed": "Could not keep this team"
   }
 }

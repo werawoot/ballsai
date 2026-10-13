@@ -35,4 +35,10 @@ describe('/team-members hub', () => {
     expect(teamHub({ ...none, acceptedStaffTeams: 1 }).isCoach).toBe(true)
     expect(teamHub({ ...none, pendingStaffInvites: 1 }).isCoach).toBe(false)
   })
+
+  it('gives a coach who may create their own team the teams section even with no team yet', () => {
+    const hub = teamHub({ ...none, canCreateTeam: true })
+    expect(hub.sections).toEqual(['teams'])
+    expect(hub.empty).toBe(false)
+  })
 })

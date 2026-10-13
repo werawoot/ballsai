@@ -32,7 +32,8 @@ export type CoachTeam = { id: string; name: string; status: string; accepted: nu
 export type HomeFacts = {
   guardian: { accepted: number; pending: number }
   // Newest first. Only the newest team decides the primary action.
-  coach: { teams: CoachTeam[] }
+  // ownTeams: SQL78 is in, so a coach can create their own team without a tournament.
+  coach: { teams: CoachTeam[]; ownTeams?: boolean }
   organizer: { tournaments: number; pendingTeams: number }
   venue: { venues: number; pendingRequests: number }
   sponsor: Record<string, never>
@@ -58,8 +59,11 @@ function guardianHome({ accepted, pending }: HomeFacts['guardian']): RoleHome {
 // into it, is the step after.
 const COACH_TOOLS = [action('drills', '/training/drills'), action('programmes', '/training'), action('findAthletes', '/athletes'), action('findTournament', '/tournaments')]
 
-function coachHome({ teams }: HomeFacts['coach']): RoleHome {
+function coachHome({ teams, ownTeams = false }: HomeFacts['coach']): RoleHome {
   const newest = teams[0]
+  // With SQL78 a coach's first step is their own team (docs/coach-own-team-v1.md); entering
+  // a tournament is done from that team later. Before it, the draft board, as before.
+  if (!newest && ownTeams) return { primary: action('createTeam', '/team-members#create'), rows: [], tools: [action('draftBoard', '/match-plan'), ...COACH_TOOLS.slice(0, 2), COACH_TOOLS[3]] }
   if (!newest) return { primary: action('draftBoard', '/match-plan'), rows: [], tools: COACH_TOOLS, next: action('registerTeam', '/tournaments') }
   const primary = newest.status !== 'draft' ? action('teamStatus', '/team-members')
     : newest.accepted > 0 ? action('submitTeam', '/team-members') : action('inviteAthletes', '/team-members')

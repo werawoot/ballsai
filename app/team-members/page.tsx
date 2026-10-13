@@ -15,6 +15,9 @@ import MyMinutesPanel, { type MyMinutesRow } from './MyMinutesPanel'
 import StaffInvitesPanel from './StaffInvitesPanel'
 import MyTeamStaffPanel from './MyTeamStaffPanel'
 import type { MyStaffTeamRow, MyTeamStaffRow } from '@/lib/team-staff'
+import type { EntryRosterRow } from '@/lib/own-team'
+import CreateTeamForm from './CreateTeamForm'
+import MyEntriesPanel from './MyEntriesPanel'
 import { planToday } from '@/lib/team-training'
 import { COACH_SKILL_KEYS, type CoachSkills } from '@/lib/coach-skills'
 import {
@@ -39,10 +42,23 @@ export default async function TeamMembersPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/team-members')
   const t = await getTranslations('teamRoster')
-  const [{ data: teams, error: teamsError }, { data: invites, error: invitesError }] = await Promise.all([
-    supabase.from('teams').select('id, name, tournament_id, status, tournaments(name, fee)').eq('created_by', user.id).order('created_at', { ascending: false }),
+  // Own teams (sql/78) add teams.kind; before SQL78 the column is missing, so the list is
+  // read again without it and every team is a tournament team, as before.
+  const teamsQuery = (columns: string) => supabase.from('teams').select(columns).eq('created_by', user.id).order('created_at', { ascending: false })
+  const [teamsFirst, { data: invites, error: invitesError }, { data: profileRow }, { data: entryRows, error: entriesError }] = await Promise.all([
+    teamsQuery('id, name, tournament_id, status, kind, tournaments(name, fee)'),
     supabase.from('team_members').select('id, team_id, athlete_id, status, invited_at, teams(name)').eq('athlete_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('profiles').select('role, onboarding_persona').eq('id', user.id).maybeSingle(),
+    // Tournaments a coach entered this athlete or their child in (sql/78, D1).
+    supabase.rpc('my_entry_rosters', { p_limit: 50 }),
   ])
+  const ownTeamsReady = !teamsFirst.error
+  const { data: teamsData, error: teamsError } = ownTeamsReady ? teamsFirst : await teamsQuery('id, name, tournament_id, status, tournaments(name, fee)')
+  const teams = teamsData as unknown as { id: string; name: string; tournament_id: string; status: string; kind?: 'club' | 'entry'; tournaments: { name: string | null; fee?: number | null } | null }[] | null
+  const myEntries = entriesError ? [] : ((entryRows ?? []) as EntryRosterRow[])
+  const persona = (profileRow as { role?: string; onboarding_persona?: string } | null)
+  // Who may create an own team (sql/78, D3): a coach persona, or an organizer or admin.
+  const canCreateTeam = ownTeamsReady && (persona?.onboarding_persona === 'coach_organizer' || persona?.role === 'organizer' || persona?.role === 'admin')
   // The roster of the teams this account created, which is a different question from
   // the invitations this account received. RLS scopes both; the team ids are only ever
   // the ones the query above already returned.
@@ -156,7 +172,8 @@ export default async function TeamMembersPage() {
     minutes: myMinutes.length,
     staff: myTeamStaff.length,
     acceptedStaffTeams: acceptedStaff.length,
-    memberships: acceptedInvites.length,
+    memberships: acceptedInvites.length + myEntries.length,
+    canCreateTeam,
   })
   const loadFailed = Boolean(teamsError || invitesError)
   const h = await getTranslations('teamHub')
@@ -191,15 +208,17 @@ export default async function TeamMembersPage() {
         {head('teams', <ShieldHalf size={18} aria-hidden="true" />, teams?.length ? <Link href="/match-plan" className="tm-head-link"><ClipboardPenLine size={15} aria-hidden="true" />{h('matchPlan')}</Link> : null)}
         {/* A team in draft is mid-registration: inviting is the step the coach is on (UX mockup v3-A). */}
         {draftTeams.length > 0 && <div className="ui-card tm-invite"><TeamMembersClient teams={draftTeams} invites={[]} counts={rosterError ? null : countsByTeam} /></div>}
-        <CoachTeamOverview statsLabel={h('openTeam')} teams={overview} rosterError={Boolean(rosterError)} attestations={attestationState} attestationError={Boolean(coachAttestationError)} />
+        {canCreateTeam && <CreateTeamForm />}
+        <CoachTeamOverview statsLabel={h('openTeam')} myTeamLabel={h('myTeam')} canKeep={ownTeamsReady} teams={overview} rosterError={Boolean(rosterError)} attestations={attestationState} attestationError={Boolean(coachAttestationError)} />
         <StaffInvitesPanel rows={acceptedStaff} />
       </section>}
 
       {hub.sections.includes('mine') && <section id="tm-mine" className="tm-section" aria-labelledby="tm-mine-title">
         {head('mine', <Users size={18} aria-hidden="true" />)}
-        <ul className="ui-card tm-mine">
+        {acceptedInvites.length > 0 && <ul className="ui-card tm-mine">
           {acceptedInvites.map(row => <li key={row.id}><b>{row.teams?.name || h('yourTeam')}</b><span>{h('joined')}</span></li>)}
-        </ul>
+        </ul>}
+        <MyEntriesPanel rows={myEntries} viewerId={user.id} />
       </section>}
 
       {hub.sections.includes('week') && <section id="tm-week" className="tm-section" aria-labelledby="tm-week-title">

@@ -58,6 +58,12 @@ describe('coach: ทีมของฉัน', () => {
     expect(home.tools?.map(tool => tool.href)).toEqual(['/training/drills', '/training', '/athletes', '/tournaments'])
     expect(home.next).toEqual({ key: 'registerTeam', href: '/tournaments' })
   })
+  it('once own teams exist (sql/78), starts with creating my team and keeps the draft board as a tool', () => {
+    const home = roleHome('coach', { teams: [], ownTeams: true })
+    expect(home.primary).toEqual({ key: 'createTeam', href: '/team-members#create' })
+    expect(home.tools?.map(tool => tool.key)).toEqual(['draftBoard', 'drills', 'programmes', 'findTournament'])
+    expect(home.next).toBeUndefined()
+  })
   it('keeps the tools once there is a team, without repeating a shortcut', () => {
     const home = roleHome('coach', { teams: [team('draft', 0, 2)] })
     const tools = (home.tools ?? []).map(tool => tool.key)

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import type { AttestationState, CoachTeamView } from '@/lib/coach-team-overview'
 import CoachRosterActions from './CoachRosterActions'
+import KeepTeamButton from './KeepTeamButton'
 
 const badge: Record<string, { label: string; tone: string }> = {
   pending: { label: 'รอตอบรับ', tone: 'is-wait' },
@@ -14,7 +15,7 @@ const badge: Record<string, { label: string; tone: string }> = {
 // roster actions fold away so the card stays short. Every roster mutation stays in
 // TeamMembersClient and CoachRosterActions, which call the guarded RPCs.
 export default function CoachTeamOverview({
-  teams, rosterError = false, attestations = {}, attestationError = false, statsLabel,
+  teams, rosterError = false, attestations = {}, attestationError = false, statsLabel, myTeamLabel, canKeep = false,
 }: {
   teams: CoachTeamView[]
   /** The roster query failed. An empty roster and a failed lookup must not look alike. */
@@ -24,6 +25,10 @@ export default function CoachTeamOverview({
   attestationError?: boolean
   /** Label of the link to the team page (/team-members/[teamId]). */
   statsLabel?: string
+  /** Chip on a coach's own team (sql/78). */
+  myTeamLabel?: string
+  /** SQL78 is in: a tournament team can be kept as my team (D2). */
+  canKeep?: boolean
 }) {
   if (teams.length === 0) return null
 
@@ -34,7 +39,9 @@ export default function CoachTeamOverview({
           <b>{team.name}</b>
           {team.tournamentName && <small>{team.tournamentName}</small>}
         </div>
-        <span className={`tm-chip ${team.canManageRoster ? 'is-wait' : 'is-ok'}`}>{team.canManageRoster ? 'กำลังรวมรายชื่อ' : 'ส่งรายชื่อแล้ว'}</span>
+        {team.isClub
+          ? <span className="tm-chip is-club">{myTeamLabel}</span>
+          : <span className={`tm-chip ${team.canManageRoster ? 'is-wait' : 'is-ok'}`}>{team.canManageRoster ? 'กำลังรวมรายชื่อ' : 'ส่งรายชื่อแล้ว'}</span>}
       </div>
 
       <dl className="tm-stats">
@@ -52,6 +59,7 @@ export default function CoachTeamOverview({
       </p>}
 
       {statsLabel && <Link href={`/team-members/${team.id}`} className="ui-btn ui-btn-primary tm-open">{statsLabel}<ChevronRight size={18} aria-hidden="true" /></Link>}
+      {canKeep && !team.isClub && <div className="tm-keep"><KeepTeamButton teamId={team.id} /></div>}
 
       {!rosterError && <details className="tm-fold">
         <summary>รายชื่อนักกีฬา ({team.members.length})</summary>
@@ -69,10 +77,10 @@ export default function CoachTeamOverview({
 
       {/* Stated rather than offered: these belong to the tournament organizer, and a
           coach pressing a control for them would only be refused. */}
-      <details className="tm-fold is-quiet">
+      {!team.isClub && <details className="tm-fold is-quiet">
         <summary>งานที่ผู้จัดรายการทำ ไม่ใช่โค้ช</summary>
         <p className="tp-note">{team.organizerOnly.join(' · ')}</p>
-      </details>
+      </details>}
     </article>)}
   </div>
 }

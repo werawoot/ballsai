@@ -19,6 +19,7 @@ function fakeClient() {
       in: (column: string, values: unknown[]) => { rows = rows.filter(row => values.includes(row[column])); return builder },
       order: () => builder,
       limit: () => builder,
+      maybeSingle: async () => ({ data: rows[0] ?? null, error: null }),
       then: (resolve: (value: unknown) => unknown) => Promise.resolve(embedError ? { data: null, error: { code: 'PGRST200', message: "Could not find a relationship between 'team_members' and 'athlete_profiles'" } } : db.failing.has(table) ? { data: null, error: { message: 'boom' } } : { data: rows, error: null }).then(resolve),
     }
     return builder
@@ -350,5 +351,45 @@ describe('/team-members W1 fix F2 (sql/76)', () => {
     db.tables = { teams: [team], team_members: [{ id: 'm9', team_id: 'tm1', athlete_id: 'a-9', status: 'pending', invited_at: '2026-10-02', created_at: '2026-10-02' }], coach_attestations: [], athlete_profiles: [],
       team_roster_names: [{ team_id: 'tm1', athlete_id: 'a-9', display_name: 'น้องเก้า', position: 'MF' }] }
     expect(await render()).toContain('น้องเก้า')
+  })
+})
+
+describe('/team-members: a coach\'s own team (sql/78, docs/coach-own-team-v1.md)', () => {
+  const club = { id: 'c1', name: 'Lions', tournament_id: null, status: 'draft', kind: 'club', created_by: 'u1', created_at: '2026-10-13', tournaments: null }
+
+  it('offers a coach with no team to create one, not "find a tournament"', async () => {
+    db.user = 'u1'; db.failing = new Set()
+    db.tables = { teams: [], team_members: [], coach_attestations: [], profiles: [{ id: 'u1', role: 'user', onboarding_persona: 'coach_organizer' }] }
+    const html = await render()
+    expect(html).toContain('สร้างทีมของฉัน')
+    expect(html).not.toContain('ยังไม่มีทีม')
+  })
+
+  it('shows an own team as "my team" with invitations but no registration steps', async () => {
+    db.user = 'u1'; db.failing = new Set()
+    db.tables = { teams: [club], team_members: [], coach_attestations: [], profiles: [{ id: 'u1', role: 'user', onboarding_persona: 'coach_organizer' }] }
+    const html = await render()
+    expect(html).toContain('tm-chip is-club')
+    expect(html).toContain('type="email"')
+    expect(html).not.toContain('ส่งสมัครรายการ')
+    expect(html).not.toContain('เก็บเป็นทีมของฉัน')
+  })
+
+  it('offers to keep an old tournament team as my team', async () => {
+    db.user = 'u1'; db.failing = new Set()
+    db.tables = { teams: [{ ...team, status: 'confirmed', kind: 'entry' }], team_members: [], coach_attestations: [], profiles: [{ id: 'u1', role: 'user', onboarding_persona: 'coach_organizer' }] }
+    expect(await render()).toContain('เก็บเป็นทีมของฉัน')
+  })
+
+  it('shows an athlete the tournaments their coach entered them in, with a way out until submitted', async () => {
+    db.user = 'u1'; db.failing = new Set()
+    db.tables = {
+      teams: [], team_members: [], coach_attestations: [],
+      my_entry_rosters: [{ member_id: 'm1', team_id: 'e1', team_name: 'Lions', tournament_name: 'ศึกชิงถ้วย', start_date: '2026-10-24', athlete_id: 'u1', athlete_name: 'A', status: 'accepted', can_withdraw: true }],
+    }
+    const html = await render()
+    expect(html).toContain('รายการที่โค้ชพาลงแข่ง')
+    expect(html).toContain('ถอนตัวจากรายการนี้')
+    expect(html).not.toContain('ยังไม่มีทีม')
   })
 })

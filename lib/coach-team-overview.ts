@@ -32,6 +32,8 @@ export type CoachTeamRow = {
   status: string
   tournament_id: string | null
   tournaments: { name: string } | null
+  // sql/78: 'club' is a coach's own team (no tournament); absent before SQL78 = 'entry'.
+  kind?: 'club' | 'entry'
 }
 
 export type RosterRow = {
@@ -48,6 +50,7 @@ export type CoachTeamView = {
   name: string
   status: string
   tournamentName: string | null
+  isClub: boolean
   members: { id: string; athleteId: string; name: string; status: RosterStatus; invitedAt: string }[]
   counts: Record<RosterStatus, number>
   canManageRoster: boolean
@@ -81,15 +84,17 @@ export function coachTeamOverview(teams: CoachTeamRow[], roster: RosterRow[]): C
       }))
 
     const canManageRoster = team.status === 'draft'
+    const isClub = team.kind === 'club'
     return {
       id: team.id,
       name: team.name,
       status: team.status,
       tournamentName: team.tournaments?.name ?? null,
+      isClub,
       members,
       counts,
       canManageRoster,
-      nextAction: nextAction(canManageRoster, counts),
+      nextAction: isClub ? clubNextAction(counts) : nextAction(canManageRoster, counts),
       organizerOnly: ORGANIZER_ONLY,
     }
   })
@@ -187,4 +192,11 @@ export function attestationGate(
 // or declined invitation carries no such decision.
 export function removeNeedsConfirmation(memberStatus: RosterStatus) {
   return memberStatus === 'accepted'
+}
+
+// A coach's own team (sql/78) is never submitted; its next step is about the team itself.
+function clubNextAction(counts: Record<RosterStatus, number>) {
+  if (counts.accepted === 0 && counts.pending === 0) return 'เชิญนักกีฬาคนแรกเข้าทีม'
+  if (counts.accepted === 0) return 'รอนักกีฬาตอบรับคำเชิญ ระหว่างนี้นัดซ้อมหรือวางแผนซ้อมได้เลย'
+  return 'นัดซ้อม ส่งประกาศ หรือพาทีมลงแข่งเมื่อพร้อม'
 }

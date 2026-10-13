@@ -14,16 +14,25 @@ const db = vi.hoisted(() => ({
   counts: {} as Record<string, number>,
   private: null as null | { birth_date: string | null; guardian_consent_at: string | null },
   failing: [] as string[],
+  // Before SQL78 teams has no kind column: a select naming it fails the way PostgREST does.
+  noKindColumn: false,
 }))
 function fakeClient() {
   const from = (table: string) => {
     let head = false
+    let missingColumn = false
     const builder: Record<string, unknown> = {}
     for (const name of ['eq', 'order', 'limit', 'in', 'gte']) builder[name] = () => builder
-    builder.select = (_columns: string, options?: { head?: boolean }) => { head = Boolean(options?.head); return builder }
+    builder.select = (columns: string, options?: { head?: boolean }) => {
+      head = Boolean(options?.head)
+      missingColumn = db.noKindColumn && table === 'teams' && /(^|[ ,])kind([ ,]|$)/.test(columns)
+      return builder
+    }
     builder.maybeSingle = async () => ({ data: db.tables[table] ?? null, error: null })
     builder.single = builder.maybeSingle
-    builder.then = (resolve: (value: unknown) => unknown) => Promise.resolve(db.failing.includes(table)
+    builder.then = (resolve: (value: unknown) => unknown) => Promise.resolve(missingColumn
+      ? { data: null, count: null, error: { code: '42703', message: 'column teams.kind does not exist' } }
+      : db.failing.includes(table)
       ? { data: null, count: null, error: { code: 'XX000', message: 'boom' } }
       : head
         ? { data: null, count: db.counts[table] ?? 0, error: null }
@@ -231,6 +240,7 @@ describe('/profile is "ของฉัน": it opens on the work of each role (U
     db.counts = {}
     db.private = null
     db.failing = []
+    db.noKindColumn = false
   }
 
   it('shows a coach their team and one primary button, never the organizer dashboard', async () => {
@@ -250,14 +260,25 @@ describe('/profile is "ของฉัน": it opens on the work of each role (U
     expect(primaries(html)).toBe(1)
   })
 
-  it('gives a coach with no team something to use at once, and registering a team last', async () => {
+  it('gives a coach with no team something to use at once, and registering a team last (before SQL78)', async () => {
     as('coach_organizer')
+    db.noKindColumn = true
     const html = await render(ProfilePage as never)
     // AGENTS.md product rule (report 10): the draft board needs no team and no invitation.
     expect(anchor(html, '/match-plan')).toContain('pf-btn-primary')
     expect(anchor(html, '/training/drills')).toContain('rh-tool')
     expect(text(html)).toContain('สมัครทีมเข้ารายการ')
     expect(html.indexOf('/match-plan')).toBeLessThan(html.indexOf('rh-next'))
+  })
+
+  it('lets a coach with no team create their own team at once, with no tournament in the way (SQL78)', async () => {
+    as('coach_organizer')
+    const html = await render(ProfilePage as never)
+    expect(anchor(html, '/team-members#create')).toContain('pf-btn-primary')
+    expect(primaries(html)).toBe(1)
+    expect(anchor(html, '/match-plan')).toContain('rh-tool')
+    expect(anchor(html, '/training/drills')).toContain('rh-tool')
+    expect(text(html)).not.toContain('สมัครทีมเข้ารายการ')
   })
 
   it('gives a guardian with no linked child something to use at once, and linking last', async () => {
@@ -329,7 +350,7 @@ describe('/profile is "ของฉัน": it opens on the work of each role (U
     as('coach_organizer')
     const html = await render(ProfilePage as never, 'en')
     const beforeDeletion = text(withoutSwitch(html.slice(0, html.indexOf('ลบข้อมูลของฉัน'))))
-    expect(beforeDeletion).toContain('Register a team')
+    expect(beforeDeletion).toContain('Create my team')
     expect(beforeDeletion).not.toMatch(/[ก-ฺเ-๛]/)
   })
 })
@@ -343,6 +364,7 @@ describe('/profile for an athlete: training first, then the card (owner, report 
     }
     db.counts = {}
     db.failing = []
+    db.noKindColumn = false
     db.private = { birth_date: '2013-06-01', guardian_consent_at: '2026-01-01T00:00:00Z' }
   }
 
