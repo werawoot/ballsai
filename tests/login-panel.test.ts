@@ -73,3 +73,30 @@ describe('/login in English', () => {
     expect(page).toContain('Continue with Facebook')
   })
 })
+
+// Owner, 13 Oct 2026: signing in is hard when the email code does not arrive. The code
+// step says where to look and offers Google as the way out, in both languages.
+import { OtpHelp } from '@/app/login/OtpHelp'
+const help = (locale: 'th' | 'en') => text(renderToStaticMarkup(createElement(NextIntlClientProvider as ComponentType<never>, { locale, messages: locale === 'th' ? th : en, timeZone: 'Asia/Bangkok' } as never,
+  createElement(OtpHelp, { onUseGoogle: () => {} }))))
+
+describe('/login code step: when the email does not come', () => {
+  it('says how long to wait and where to look, in Thai', () => {
+    const page = help('th')
+    expect(page).toContain('ไม่เห็นอีเมล?')
+    expect(page).toContain('Spam')
+    expect(page).toContain('เข้าด้วย Google แทน')
+  })
+
+  it('says the same in English with no Thai', () => {
+    const page = help('en')
+    expect(page).toContain('No email?')
+    expect(page).toContain('Use Google instead')
+    expect(page).not.toMatch(/[ก-๛]/)
+  })
+
+  it('offers Google when codes are asked for too often', () => {
+    expect(th.loginOtp.errors.rateLimited).toContain('Google')
+    expect(en.loginOtp.errors.rateLimited).toContain('Google')
+  })
+})

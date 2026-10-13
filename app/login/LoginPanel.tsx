@@ -7,6 +7,7 @@ import { ArrowLeft, Check, ChevronRight, Facebook, Mail, Shield } from "lucide-r
 import { createClient } from "@/lib/supabase";
 import { OTP_MAX_LENGTH, canSubmitOtp, normalizeEmail, normalizeOtp, otpErrorKey, resendWaitSeconds } from "@/lib/otp";
 import { captchaSiteKey, withCaptcha } from "@/lib/captcha";
+import { OtpHelp } from "./OtpHelp";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import BrandMark from "@/components/BrandMark";
 import "./login.css";
@@ -234,6 +235,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
               {resendWait === 0 && captcha}
               <button className="lg-resend" disabled={loading || resendWait > 0 || captchaMissing} onClick={() => sendOtp(true)} type="button">{resendWait > 0 ? t("resendIn", { seconds: resendWait }) : t("resend")}</button>
               <p className="lg-note" role="status">{resent ? t("resent") : t("onlyLatest")}</p>
+              <OtpHelp onUseGoogle={() => go("start")} />
             </>
           )}
 
