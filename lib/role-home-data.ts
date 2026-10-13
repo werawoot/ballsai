@@ -26,16 +26,20 @@ export async function guardianFacts(client: SupabaseClient, userId: string): Pro
 
 export async function coachFacts(client: SupabaseClient, userId: string): Promise<FactsResult<'coach'>> {
   // Only the newest team decides what to do next, so one row is read, not the whole list.
-  const { data, error } = await client.from('teams').select('id, name, status').eq('created_by', userId)
+  // teams.kind exists once SQL78 is in: then a coach can create their own team.
+  const newestOf = (columns: string) => client.from('teams').select(columns).eq('created_by', userId)
     .order('created_at', { ascending: false }).order('id', { ascending: true }).limit(1)
+  const first = await newestOf('id, name, status, kind')
+  const ownTeams = !first.error
+  const { data, error } = ownTeams ? first : await newestOf('id, name, status')
   if (error) return { ok: false }
-  const newest = ((data ?? []) as Row[])[0]
-  if (!newest) return { ok: true, facts: { teams: [] } }
+  const newest = ((data ?? []) as unknown as Row[])[0]
+  if (!newest) return { ok: true, facts: { teams: [], ownTeams } }
   const byStatus = (status: string) => client.from('team_members').select('id', { count: 'exact', head: true }).eq('team_id', newest.id).eq('status', status)
   const result = await counts(byStatus('accepted'), byStatus('pending'))
   if (!result) return { ok: false }
   const team: CoachTeam = { id: newest.id, name: newest.name, status: newest.status, accepted: result[0], pending: result[1] }
-  return { ok: true, facts: { teams: [team] } }
+  return { ok: true, facts: { teams: [team], ownTeams } }
 }
 
 export async function organizerFacts(client: SupabaseClient, userId: string): Promise<FactsResult<'organizer'>> {

@@ -69,10 +69,12 @@ export default function TeamMembersClient({ teams, invites, counts }: { teams: T
   const selectedTournamentName = selectedTournamentRow?.name
   // Same rule as tournamentFee(): no fee above zero means a free entry with no slip step.
   const selectedFree = !(Number(selectedTournamentRow?.fee) > 0)
+  const registering = selected?.status === 'draft' && Boolean(selected?.tournament_id)
 
   return <div style={{ display: 'grid', gap: 16 }}>
     {teams.length > 0 && <section aria-label={t('invite')} style={{ display: 'grid', gap: 12 }}>
-      {selected?.status === 'draft' && <RegisterSteps current={2} free={selectedFree} />}
+      {/* A coach's own team (sql/78, no tournament) is never submitted: no registration steps. */}
+      {registering && <RegisterSteps current={2} free={selectedFree} />}
       <p className="ui-eyebrow" style={{ letterSpacing: 0, textTransform: 'none', fontSize: 13, margin: 0 }}>{selected?.name}{selectedTournamentName ? ` · ${selectedTournamentName}` : ''}</p>
       <h2 className="ui-h1" style={{ margin: 0 }}>{(counts?.[selectedTeam]?.accepted ?? 0) + (counts?.[selectedTeam]?.pending ?? 0) === 0 ? t('inviteFirst') : t('invite')}</h2>
       {teams.length > 1 && <select aria-label={t('team')} value={selectedTeam} onChange={e => setSelectedTeam(e.target.value)} style={{ width: '100%', padding: 11, borderRadius: 10, border: '1px solid var(--ui-line)' }}>
@@ -86,7 +88,7 @@ export default function TeamMembersClient({ teams, invites, counts }: { teams: T
       {message && <p role={inviteOk ? 'status' : 'alert'} style={{ margin: 0, color: inviteOk ? '#15803d' : '#b91c1c', fontSize: 14 }}>{message}</p>}
       <p style={{ margin: 0, color: 'var(--ui-mute)', fontSize: 13, lineHeight: 1.55 }}>{t('hint')}</p>
       {counts && selected && <p style={{ margin: 0, color: 'var(--ui-mute)', fontSize: 13, fontWeight: 700 }}>{t('counts', { accepted: counts[selected.id]?.accepted ?? 0, pending: counts[selected.id]?.pending ?? 0 })}</p>}
-      {selected?.status === 'draft' && <div className="tn-dock"><div className="tn-dock-inner">
+      {registering && <div className="tn-dock"><div className="tn-dock-inner">
         {counts && (counts[selected.id]?.accepted ?? 0) < 1 && <p style={{ margin: '0 0 8px', textAlign: 'center', color: 'var(--ui-mute)', fontSize: 13 }}>{t('needAccepted', { count: counts[selected.id]?.accepted ?? 0 })}</p>}
         <button className="ui-btn ui-btn-primary" disabled={busy || Boolean(counts && (counts[selected.id]?.accepted ?? 0) < 1)} onClick={submitTeam} type="button">{busy ? t('submitting') : t(selectedFree ? 'submitFree' : 'submit')}</button>
       </div></div>}

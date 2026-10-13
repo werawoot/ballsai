@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { BarChart3, CalendarDays, ClipboardList, Dumbbell, Gauge, Megaphone, NotebookPen, Timer, UsersRound } from 'lucide-react'
+import { BarChart3, CalendarDays, ClipboardList, Dumbbell, Gauge, Megaphone, NotebookPen, Timer, Trophy, UsersRound } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { teamMatchIds, teamSeasonStats, teamSheet, type MatchRow, type PerformanceRow, type RankLink, type TeamMember } from '@/lib/team-stats'
@@ -17,6 +17,7 @@ import TeamStaffPanel from './TeamStaffPanel'
 import type { StaffRow } from '@/lib/team-staff'
 import { minutesTotals, type MinuteEntry } from '@/lib/match-minutes'
 import { rosterProfiles } from '@/lib/roster-names'
+import EnterTournamentPanel, { type OpenTournament } from './EnterTournamentPanel'
 import { eventTimeParts } from '@/lib/team-events'
 import { addWeeks, libraryDrills, weekStartOf, weekdayOf, type PlanDay } from '@/lib/team-training'
 import { attendanceOpen, attendanceRates, splitEvents, type EventKind } from '@/lib/team-events'
@@ -183,6 +184,13 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     skills: Object.fromEntries(COACH_SKILL_KEYS.map(key => [key, row[key] ?? null])) as CoachSkills,
   }]))
   const [ts, te, tn, tt, tc, tm, tf] = await Promise.all([getTranslations('coachSkills'), getTranslations('teamEvents'), getTranslations('teamNews'), getTranslations('teamTraining'), getTranslations('coachNotes'), getTranslations('matchMinutes'), getTranslations('teamStaff')])
+  // A coach's own team (sql/78) has no tournament: the head coach can enter one from here.
+  // Open tournaments are few at a time; the soonest 50 are offered.
+  const isOwnTeam = isHead && !typedTeam.tournament_id
+  const { data: openRows } = isOwnTeam
+    ? await supabase.from('tournaments').select('id, name, start_date, location').eq('status', 'open').order('start_date', { ascending: true }).limit(50)
+    : { data: [] }
+  const to = await getTranslations('ownTeam')
   const showSkills = isHead && roster.length > 0
   const showNotes = isHead && roster.length > 0
 
@@ -193,6 +201,10 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
         <p className="ui-eyebrow">{tournamentName ?? t('noTournament')}</p>
         <h1 className="tp-title">{typedTeam.name}</h1>
         {failed && <p className="tp-alert" role="alert">{t('loadFailed')}</p>}
+        {isOwnTeam && <section className="tp-section" aria-labelledby="tp-enter">
+          <div className="tp-head"><h2 id="tp-enter"><Trophy size={18} aria-hidden="true" />{to('enter')}</h2></div>
+          <EnterTournamentPanel teamId={teamId} members={roster.map(member => ({ id: member.athleteId, name: member.name }))} tournaments={(openRows ?? []) as OpenTournament[]} />
+        </section>}
 
         <section className="tp-section" aria-labelledby="tp-stats">
           <div className="tp-head"><h2 id="tp-stats"><BarChart3 size={18} aria-hidden="true" />{t('statsTitle')}</h2><span className="ui-chip is-performance">{t('statsSource')}</span></div>
