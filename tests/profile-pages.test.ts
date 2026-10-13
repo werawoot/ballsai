@@ -106,6 +106,20 @@ describe('/profile', () => {
     expect(html).toContain('action="/auth/signout"')
   })
 
+  it('shows an athlete with no team how to get into one, after their own things, without a second primary button', async () => {
+    const html = await render(ProfilePage as never)
+    // AGENTS.md product rule (report 10, mockup v10-3): the team is the step that needs a coach.
+    expect(text(html)).toContain('อยู่ทีมไหน?')
+    expect(html).toContain('pf-team-ask')
+    expect(html.indexOf('pf-team-ask')).toBeGreaterThan(html.indexOf('href="/card"'))
+  })
+
+  it('does not ask an athlete who is already in a team', async () => {
+    db.tables.team_members = [{ status: 'accepted', teams: { id: 't1', name: 'Lions', status: 'confirmed', tournaments: [] } }]
+    const html = await render(ProfilePage as never)
+    expect(html).not.toContain('pf-team-ask')
+  })
+
   it('shows a public athlete their rating, where it comes from, and their public page', async () => {
     db.tables = {
       profiles: { full_name: 'Niran', role: 'organizer', onboarding_persona: 'athlete' },
@@ -244,6 +258,18 @@ describe('/profile is "ของฉัน": it opens on the work of each role (U
     expect(anchor(html, '/training/drills')).toContain('rh-tool')
     expect(text(html)).toContain('สมัครทีมเข้ารายการ')
     expect(html.indexOf('/match-plan')).toBeLessThan(html.indexOf('rh-next'))
+  })
+
+  it('gives a guardian with no linked child something to use at once, and linking last', async () => {
+    as('guardian')
+    db.counts = { guardian_links: 0 }
+    const html = await render(ProfilePage as never)
+    expect(anchor(html, '/training')).toContain('pf-btn-primary')
+    expect(anchor(html, '/hall-of-fame')).toContain('rh-tool')
+    expect(text(html)).toContain('เชื่อมบัญชีลูก')
+    expect(html.indexOf('href="/training"')).toBeLessThan(html.indexOf('rh-next'))
+    expect(primaries(html)).toBe(1)
+    expect(html).not.toContain('rh-stats')
   })
 
   it('shows a guardian their children', async () => {

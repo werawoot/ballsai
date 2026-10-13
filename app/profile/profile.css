@@ -291,3 +291,7 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .rh-next b { color: #CC0001; font-size: 15px; }
 .rh-next:hover { border-color: #CC0001; }
 @media (prefers-reduced-motion: reduce) { .rh-tool { transition: none; } }
+/* An athlete with no team: the coach's invitation is the next step (report 10, v10-3). */
+.pf-team-ask { border: 1.5px dashed #d6cfc4 !important; box-shadow: none !important; display: flex; flex-direction: column; gap: 10px; }
+.pf-team-ask .pf-card-desc { margin: 0; }
+.pf-team-ask .pf-btn { align-self: flex-start; }

@@ -41,9 +41,15 @@ export type HomeFacts = {
 const action = (key: string, href: string, count?: number): HomeAction => count === undefined ? { key, href } : { key, href, count }
 const without = (rows: HomeAction[], primary: HomeAction) => rows.filter(row => row.key !== primary.key).slice(0, 3)
 
+// A guardian can use the site before any child is linked (report 10, mockup v10-4): the
+// programmes by age, the drill library, tournaments, the hall of fame and how children's data
+// is kept. Linking a child needs the child's answer, so it is the step after, never a wall.
+const GUARDIAN_TOOLS = [action('findTournament', '/tournaments'), action('drills', '/training/drills'), action('hallOfFame', '/hall-of-fame'), action('privacy', '/privacy')]
+
 function guardianHome({ accepted, pending }: HomeFacts['guardian']): RoleHome {
-  const primary = accepted > 0 ? action('viewChildren', '/guardian') : pending > 0 ? action('waitingChild', '/guardian') : action('linkChild', '/guardian')
-  return { primary, rows: without([action('findTournament', '/tournaments'), action('findAthletes', '/athletes')], primary) }
+  if (accepted > 0) return { primary: action('viewChildren', '/guardian'), rows: [], tools: GUARDIAN_TOOLS }
+  const next = pending > 0 ? action('waitingChild', '/guardian') : action('linkChild', '/guardian')
+  return { primary: action('guardianProgrammes', '/training'), rows: [], tools: GUARDIAN_TOOLS, next }
 }
 
 // A coach can work at once, with no team and no invitation (report 10, mockup v10-1): the

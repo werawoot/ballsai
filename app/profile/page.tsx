@@ -11,6 +11,7 @@ import {
 import PublicProfileShare from './PublicProfileShare'
 import DeleteMyDataSection from './DeleteMyDataSection'
 import GuardianInviteButton from './GuardianInviteButton'
+import TeamAskButton from './TeamAskButton'
 import TrainingCard from './TrainingCard'
 import PageHeader from '@/components/PageHeader'
 import RoleHomeCard, { RoleLoadFailed } from '@/components/RoleHomeCard'
@@ -317,6 +318,13 @@ export default async function ProfilePage() {
                 </li>
               })}
             </ul>
+          </section>}
+
+          {/* No team yet: the coach's invitation is the step after, not a wall (AGENTS.md product rule). */}
+          {athlete && memberships.length === 0 && <section className="pf-card pf-team-ask" aria-labelledby="pf-team-ask">
+            <h2 id="pf-team-ask" className="pf-card-title">{t('teamAsk.title')}</h2>
+            <p className="pf-card-desc">{t('teamAsk.body')}</p>
+            <TeamAskButton email={user.email ?? ''} />
           </section>}
 
           </>}
