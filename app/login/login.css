@@ -32,7 +32,13 @@ body:has(.lg) { background: var(--ui-ink); }
 .lg-google::after { background: #fff; border-radius: 50%; content: ''; inset: 5px; position: absolute; }
 .lg-or { align-items: center; color: var(--ui-mute-d); display: flex; font-size: 12.5px; gap: 10px; margin: 0; }
 .lg-or::before, .lg-or::after { background: var(--ui-line-d); content: ''; flex: 1; height: 1px; }
-.lg-quiet { font-size: 14.5px; min-height: 48px; opacity: .85; }
+.lg-consent.is-missing { border-color: rgba(224,23,29,.75); box-shadow: 0 0 0 3px rgba(224,23,29,.18); }
+.lg-consent.is-missing i { border-color: #ff8a8a; }
+.lg-consent-help { color: #ffb3b3; font-size: 13px; line-height: 1.5; margin: -6px 2px 0; min-height: 0; }
+.lg-consent-help:empty { display: none; }
+.lg-link { align-items: center; align-self: center; background: none; border: 0; color: var(--ui-mute-d); cursor: pointer; display: inline-flex; font: 600 14px var(--font-sarabun), sans-serif; gap: 7px; min-height: 44px; padding: 0 10px; text-decoration: underline; text-underline-offset: 3px; }
+.lg-link:hover:not(:disabled) { color: #fff; }
+.lg-link:disabled { cursor: default; opacity: .6; }
 .lg-next { color: var(--ui-mute-d); font-size: 13px; line-height: 1.5; margin: 2px 0 0; text-align: center; }
 .lg-trust { align-items: center; color: var(--ui-mute-d); display: flex; font-size: 12.5px; gap: 7px; justify-content: center; line-height: 1.5; margin: auto 0 0; padding-top: 12px; text-align: center; }
 .lg-trust svg { flex: none; }

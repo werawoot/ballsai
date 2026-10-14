@@ -1914,9 +1914,10 @@
     "email": "Email me a code",
     "facebook": "Continue with Facebook",
     "facebookLoading": "Taking you to Facebook...",
-    "next": "Next: answer two quick questions, then make your first player card",
+    "next": "Next: tell us whether you are an athlete, a parent, a coach or an organizer, and start right away.",
     "lead": "Results the organizer confirms become your player card, your Power Rating and your rank across Thailand",
-    "adminEyebrow": "Admins only"
+    "adminEyebrow": "Admins only",
+    "consentNeeded": "Tick the box above first, then press the button again."
   },
   "guardianPage": {
     "title": "Link to your child’s account",

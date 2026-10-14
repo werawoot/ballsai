@@ -20,6 +20,14 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  // Pressing a way in before ticking consent points at the consent row itself, right where
+  // the eye is, instead of a message at the bottom of the panel.
+  const [consentMissing, setConsentMissing] = useState(false);
+  const askConsent = () => {
+    setConsentMissing(true);
+    setMessage("");
+    document.getElementById("login-consent")?.focus();
+  };
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const t = useTranslations("loginOtp");
@@ -52,7 +60,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
 
   const signInWithGoogle = async () => {
     if (!acceptedTerms) {
-      setMessage("กรุณายอมรับข้อกำหนดและนโยบายความเป็นส่วนตัวก่อน");
+      askConsent();
       return;
     }
 
@@ -70,7 +78,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
 
   const signInWithFacebook = async () => {
     if (!acceptedTerms) {
-      setMessage("กรุณายอมรับข้อกำหนดและนโยบายความเป็นส่วนตัวก่อน");
+      askConsent();
       return;
     }
 
@@ -90,7 +98,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
   // resend is offered only after the wait and says the old code no longer works.
   const sendOtp = async (resend = false) => {
     if (!acceptedTerms) {
-      setMessage("กรุณายอมรับข้อกำหนดและนโยบายความเป็นส่วนตัวก่อน");
+      askConsent();
       return;
     }
     if (loading) return;
@@ -182,11 +190,12 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
             <>
               <h1 className="ui-h1 lg-title">{tp("title")}</h1>
               <p className="lg-sub">{tp("sub")}</p>
-              <label className={`lg-consent${acceptedTerms ? " is-checked" : ""}`}>
-                <input checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} type="checkbox" />
+              <label className={`lg-consent${acceptedTerms ? " is-checked" : ""}${consentMissing && !acceptedTerms ? " is-missing" : ""}`}>
+                <input aria-describedby="login-consent-help" aria-invalid={consentMissing && !acceptedTerms} checked={acceptedTerms} id="login-consent" onChange={(event) => { setAcceptedTerms(event.target.checked); if (event.target.checked) setConsentMissing(false); }} type="checkbox" />
                 <i aria-hidden="true">{acceptedTerms && <Check size={14} strokeWidth={3.5} />}</i>
                 <span>ฉันยอมรับ <Link href="/terms">ข้อกำหนดการใช้งาน</Link> และ <Link href="/privacy">นโยบายความเป็นส่วนตัว (PDPA)</Link></span>
               </label>
+              <p className="lg-consent-help" id="login-consent-help" role={consentMissing && !acceptedTerms ? "alert" : undefined}>{consentMissing && !acceptedTerms ? tp("consentNeeded") : ""}</p>
               <button className="ui-btn ui-btn-white" disabled={loading} onClick={signInWithGoogle} type="button">
                 <span className="lg-google" aria-hidden="true" />
                 {loading ? tp("googleLoading") : tp("google")}
@@ -195,7 +204,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
               <button className="ui-btn ui-btn-ghost-d" onClick={() => go("email")} type="button">
                 <Mail size={18} /> {tp("email")}
               </button>
-              <button className="ui-btn ui-btn-ghost-d lg-quiet" disabled={loading} onClick={signInWithFacebook} type="button">
+              <button className="lg-link" disabled={loading} onClick={signInWithFacebook} type="button">
                 <Facebook size={16} fill="currentColor" /> {loading ? tp("facebookLoading") : tp("facebook")}
               </button>
               <p className="lg-next">{tp("next")}</p>
