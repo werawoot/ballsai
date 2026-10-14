@@ -18,7 +18,7 @@
 ## ขั้น 1: เปิด Google ให้ทุกคนใช้ (ได้ผลมากที่สุด)
 
 > **เสร็จแล้ว 14 ต.ค. 2026:** โปรเจกต์ Google Cloud `BallDoenSai` เปลี่ยนเป็น In production แล้ว Scopes มีแค่ openid, email, profile ลิงก์ Privacy และ Terms ตรง Google ไม่ขอตรวจสอบแอป ไม่ได้แตะ Client secret, API key หรือ redirect URIs (เจ้าของทำผ่าน ChatGPT)
-> ยังต้องทำ: ลองเข้าด้วย Gmail ที่ไม่ใช่ Test user ในหน้าต่าง Incognito
+> ทดสอบแล้ว 14 ต.ค. 2026: บัญชี Gmail ที่ไม่ใช่ Test user (ก่อนเผยแพร่มี Test users 0 คน) ล็อกอินบน Production ในหน้าต่างส่วนตัวสำเร็จ และกลับมาที่ `/profile` ไม่มีคำเตือน "unverified" หรือ "Access blocked" หน้า Google แสดงโดเมน `hivedzrwrrcnjrlirhtv.supabase.co` ซึ่งจะเปลี่ยนเป็นชื่อเราได้เมื่อมีโดเมนของเราและผูกเข้ากับ Supabase
 
 1. Google Cloud Console → เลือกโปรเจกต์ที่ใช้กับ Supabase → **Google Auth Platform** (หรือ APIs & Services → OAuth consent screen)
 2. **Branding:** ตรวจชื่อแอป อีเมลติดต่อ โลโก้ และลิงก์หน้า `/privacy` กับ `/terms` ของโดเมนจริง
