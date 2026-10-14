@@ -8,7 +8,7 @@
 
 | ทางเข้า | ใครใช้ได้ | ปัญหา |
 |---|---|---|
-| Google | เฉพาะ Test user ใน Google Cloud | OAuth ยังอยู่ Testing mode |
+| Google | ทุกคน (Publish แล้ว 14 ต.ค. 2026) | หน้าเลือกบัญชีอาจขึ้นชื่อโดเมน Supabase จนกว่าจะมีโดเมนของเราและยืนยันแบรนด์ |
 | อีเมล + รหัส | ทุกคน | ใช้ระบบส่งอีเมลในตัวของ Supabase ซึ่งจำกัดจำนวนต่อชั่วโมง รหัสมาช้าหรือไม่มา |
 | รหัสผ่าน `/login?admin=1` | แอดมิน | ซ่อนไว้ตามกฎ AGENTS.md ไม่ใช่ทางเข้าของผู้ใช้ |
 
@@ -16,6 +16,9 @@
 ข้อความ "ขอรหัสถี่เกินไป" ก็ชี้ไปที่ Google ด้วย
 
 ## ขั้น 1: เปิด Google ให้ทุกคนใช้ (ได้ผลมากที่สุด)
+
+> **เสร็จแล้ว 14 ต.ค. 2026:** โปรเจกต์ Google Cloud `BallDoenSai` เปลี่ยนเป็น In production แล้ว Scopes มีแค่ openid, email, profile ลิงก์ Privacy และ Terms ตรง Google ไม่ขอตรวจสอบแอป ไม่ได้แตะ Client secret, API key หรือ redirect URIs (เจ้าของทำผ่าน ChatGPT)
+> ยังต้องทำ: ลองเข้าด้วย Gmail ที่ไม่ใช่ Test user ในหน้าต่าง Incognito
 
 1. Google Cloud Console → เลือกโปรเจกต์ที่ใช้กับ Supabase → **Google Auth Platform** (หรือ APIs & Services → OAuth consent screen)
 2. **Branding:** ตรวจชื่อแอป อีเมลติดต่อ โลโก้ และลิงก์หน้า `/privacy` กับ `/terms` ของโดเมนจริง
