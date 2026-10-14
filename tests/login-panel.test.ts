@@ -28,7 +28,9 @@ describe('/login in Thai', () => {
     expect(page).toContain('เข้าด้วย Google')
     expect(page).toContain('ส่งรหัสเข้าอีเมลของฉัน')
     expect(page).toContain('เข้าด้วย Facebook')
-    expect(page).toContain('ต่อไป: ตอบคำถามสั้น ๆ แล้วสร้างการ์ดนักกีฬาใบแรกของคุณ')
+    // Owner, 14 Oct 2026: every role signs up here, so the next step names them all.
+    expect(page).toContain('ต่อไป: บอกเราว่าคุณเป็นนักกีฬา ผู้ปกครอง โค้ช หรือผู้จัด แล้วเริ่มใช้ได้ทันที')
+    expect(page).not.toContain('สร้างการ์ดนักกีฬาใบแรกของคุณ')
   })
 
   it('no longer uses the slogan heading, the vague button or the old product words', () => {
@@ -98,5 +100,19 @@ describe('/login code step: when the email does not come', () => {
   it('offers Google when codes are asked for too often', () => {
     expect(th.loginOtp.errors.rateLimited).toContain('Google')
     expect(en.loginOtp.errors.rateLimited).toContain('Google')
+  })
+})
+
+describe('/login first screen: two clear ways in (owner, 14 Oct 2026)', () => {
+  const html = render()
+  it('keeps Google and email as the two buttons and Facebook as a quiet link below them', () => {
+    expect(html.indexOf('lg-google')).toBeLessThan(html.indexOf('ส่งรหัสเข้าอีเมลของฉัน'))
+    expect(html.indexOf('ส่งรหัสเข้าอีเมลของฉัน')).toBeLessThan(html.indexOf('lg-link'))
+    expect(html).toMatch(/class="lg-link"[^>]*>[\s\S]*?เข้าด้วย Facebook/)
+  })
+  it('has a place for the consent reminder right under the consent row', () => {
+    expect(html).toContain('id="login-consent-help"')
+    expect(html.indexOf('lg-consent')).toBeLessThan(html.indexOf('login-consent-help'))
+    expect(html.indexOf('login-consent-help')).toBeLessThan(html.indexOf('lg-google'))
   })
 })
