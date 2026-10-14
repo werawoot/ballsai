@@ -46,6 +46,9 @@ body:has(.lg) { background: var(--ui-ink); }
 .lg-resend { background: none; border: 0; color: #fff; cursor: pointer; font: 700 14px var(--font-sarabun), sans-serif; min-height: 44px; text-decoration: underline; text-underline-offset: 3px; }
 .lg-resend:disabled { color: var(--ui-mute-d); cursor: default; text-decoration: none; }
 .lg-note { color: var(--ui-mute-d); font-size: 12.5px; line-height: 1.5; margin: 0; text-align: center; }
+.lg-help { border-top: 1px solid rgba(255,255,255,.08); display: grid; gap: 6px; margin-top: 4px; padding-top: 14px; text-align: center; }
+.lg-help p { color: var(--ui-mute-d); font-size: 13px; line-height: 1.55; margin: 0; }
+.lg-help b { color: #fff; }
 .lg-message { background: rgba(224,23,29,.14); border: 1px solid rgba(224,23,29,.45); border-radius: var(--ui-r-md); color: #ffd6d6; font-size: 14px; line-height: 1.5; margin: 4px 0 0; padding: 11px 14px; }
 
 @media (min-width: 900px) {
