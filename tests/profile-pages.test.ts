@@ -246,7 +246,8 @@ describe('/profile is "ของฉัน": it opens on the work of each role (U
   it('shows a coach their team and one primary button, never the organizer dashboard', async () => {
     as('coach_organizer')
     db.tables.teams = [{ id: 't1', name: 'Lions U13', status: 'draft' }]
-    db.counts = { team_members: 2 }
+    // Member rows are counted per team (lib/role-home-data coachFacts, report 11).
+    db.tables.team_members = [...Array(2)].map(() => ({ team_id: 't1', status: 'accepted' })).concat([...Array(2)].map(() => ({ team_id: 't1', status: 'pending' })))
     const html = await render(ProfilePage as never)
     const page = text(html)
     expect(page).toContain('ทีมของฉัน')

@@ -789,9 +789,10 @@
   "teamMembersEmpty": {
     "eyebrow": "My teams",
     "title": "No team yet",
-    "text": "Start by choosing a tournament that is open for registration, then name your team.",
-    "cta": "See all tournaments",
-    "athleteHint": "If you are an athlete, your coach's invitation will appear here."
+    "text": "When a coach invites you to a team, the invitation appears here. Meanwhile, train on your own with a programme for your age.",
+    "cta": "See training programmes",
+    "athleteHint": "Your coach's invitation will appear here. There is nothing else to do.",
+    "coachHint": "A coach? See tournaments open for entries"
   },
   "teamInvite": {
     "join": "Join the team",
@@ -1906,6 +1907,11 @@
       "createTeamTool": {
         "label": "Create my team",
         "hint": "A team for every season, no tournament needed"
+      },
+      "openTeam": {
+        "label": "Open team page",
+        "title": "Your team is ready",
+        "text": "Plan sessions, send news, set the training plan or enter a tournament from the team page."
       }
     },
     "loadFailed": {

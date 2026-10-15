@@ -57,7 +57,11 @@ describe('/team-members for someone with no team and no invitation', () => {
     db.user = 'u1'; db.tables = { teams: [], team_members: [], coach_attestations: [] }
     const html = await render()
     expect(html).toContain('ยังไม่มีทีม')
+    // Report 11, Phase 2: the main button is something this person can do now, alone
+    // (AGENTS.md product rule); the tournaments stay as the coach's way in.
+    expect(html).toMatch(/class="[^"]*ui-btn-primary[^"]*"[^>]*href="\/training"|href="\/training"[^>]*class="[^"]*ui-btn-primary/)
     expect(hrefs(html)).toContain('/tournaments')
+    expect(html).not.toContain('เริ่มจากเลือกรายการที่เปิดรับสมัคร')
     expect(html).not.toContain('คำเชิญของฉัน')
     expect(html).not.toContain('เชิญนักกีฬา')
   })

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { roleHome, type CoachTeam, type HomeFacts, type HomeKind, type RoleHome, type RoleStats } from './role-home'
+import { roleHome, urgentTeamFirst, type CoachTeam, type HomeFacts, type HomeKind, type RoleHome, type RoleStats } from './role-home'
 
 // The facts "ของฉัน" needs for each role (lib/role-home.ts). Every read is a head count or a
 // one-row lookup scoped by RLS to the signed-in person, so the page costs the same for a
@@ -9,6 +9,11 @@ import { roleHome, type CoachTeam, type HomeFacts, type HomeKind, type RoleHome,
 
 type Counted = PromiseLike<{ count: number | null; error: unknown }>
 type Row = { id: string; name: string; status: string }
+
+// A coach's teams read for the home card, and the member rows counted for them
+// (an entry holds at most 60 athletes, sql/78).
+const COACH_TEAMS_READ = 25
+const COACH_MEMBERS_READ = COACH_TEAMS_READ * 60
 
 async function counts(...queries: Counted[]): Promise<number[] | null> {
   const results = await Promise.all(queries)
@@ -25,21 +30,30 @@ export async function guardianFacts(client: SupabaseClient, userId: string): Pro
 }
 
 export async function coachFacts(client: SupabaseClient, userId: string): Promise<FactsResult<'coach'>> {
-  // Only the newest team decides what to do next, so one row is read, not the whole list.
-  // teams.kind exists once SQL78 is in: then a coach can create their own team.
-  const newestOf = (columns: string) => client.from('teams').select(columns).eq('created_by', userId)
-    .order('created_at', { ascending: false }).order('id', { ascending: true }).limit(1)
-  const first = await newestOf('id, name, status, kind')
+  // The card is about the team that needs the coach most (urgentTeamFirst, report 11), so the
+  // newest COACH_TEAMS_READ teams are read, then their accepted and pending members in one
+  // query. A coach has at most 20 own teams (sql/78) plus one entry per tournament, so this
+  // stays bounded. teams.kind exists once SQL78 is in: then a coach can create their own team.
+  const newest = (columns: string) => client.from('teams').select(columns).eq('created_by', userId)
+    .order('created_at', { ascending: false }).order('id', { ascending: true }).limit(COACH_TEAMS_READ)
+  const first = await newest('id, name, status, kind')
   const ownTeams = !first.error
-  const { data, error } = ownTeams ? first : await newestOf('id, name, status')
+  const { data, error } = ownTeams ? first : await newest('id, name, status')
   if (error) return { ok: false }
-  const newest = ((data ?? []) as unknown as Row[])[0]
-  if (!newest) return { ok: true, facts: { teams: [], ownTeams } }
-  const byStatus = (status: string) => client.from('team_members').select('id', { count: 'exact', head: true }).eq('team_id', newest.id).eq('status', status)
-  const result = await counts(byStatus('accepted'), byStatus('pending'))
-  if (!result) return { ok: false }
-  const team: CoachTeam = { id: newest.id, name: newest.name, status: newest.status, accepted: result[0], pending: result[1] }
-  return { ok: true, facts: { teams: [team], ownTeams } }
+  const rows = (data ?? []) as unknown as (Row & { kind?: 'club' | 'entry' })[]
+  if (rows.length === 0) return { ok: true, facts: { teams: [], ownTeams } }
+  const { data: memberRows, error: memberError } = await client.from('team_members').select('team_id, status')
+    .in('team_id', rows.map(row => row.id)).in('status', ['accepted', 'pending']).limit(COACH_MEMBERS_READ)
+  if (memberError) return { ok: false }
+  const tally = new Map<string, { accepted: number; pending: number }>()
+  for (const member of (memberRows ?? []) as { team_id: string; status: string }[]) {
+    const entry = tally.get(member.team_id) ?? { accepted: 0, pending: 0 }
+    if (member.status === 'accepted') entry.accepted += 1
+    else entry.pending += 1
+    tally.set(member.team_id, entry)
+  }
+  const teams: CoachTeam[] = rows.map(row => ({ id: row.id, name: row.name, status: row.status, kind: row.kind, ...(tally.get(row.id) ?? { accepted: 0, pending: 0 }) }))
+  return { ok: true, facts: { teams: urgentTeamFirst(teams), ownTeams } }
 }
 
 export async function organizerFacts(client: SupabaseClient, userId: string): Promise<FactsResult<'organizer'>> {

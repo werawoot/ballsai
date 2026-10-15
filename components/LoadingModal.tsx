@@ -1,6 +1,6 @@
 'use client'
 
-import { Loader2 } from 'lucide-react'
+import BallLoader from '@/components/BallLoader'
 import { useTranslations } from 'next-intl'
 
 interface LoadingModalProps {
@@ -15,6 +15,8 @@ export default function LoadingModal({ isOpen, message, subMessage }: LoadingMod
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       style={{
         position: 'fixed',
         inset: 0,
@@ -65,14 +67,7 @@ export default function LoadingModal({ isOpen, message, subMessage }: LoadingMod
             justifyContent: 'center',
           }}
         >
-          <Loader2
-            size={64}
-            color="#CC0001"
-            strokeWidth={3}
-            style={{
-              animation: 'spin 1s linear infinite',
-            }}
-          />
+          <BallLoader size={64} />
         </div>
 
         <div

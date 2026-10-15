@@ -53,3 +53,18 @@ describe('/team-members: a coach names themselves before inviting', () => {
     expect(text(render(null, 'en'))).not.toMatch(/[ก-๛]/)
   })
 })
+
+// Report 11, Phase 2: a football that turns while something loads, still when motion is reduced.
+import BallLoader from '@/components/BallLoader'
+describe('BallLoader', () => {
+  const ui = readFileSync(new URL('../app/ui.css', import.meta.url), 'utf8')
+  it('draws a football in the brand red, hidden from screen readers', () => {
+    const html = renderToStaticMarkup(createElement(BallLoader, { size: 48 }))
+    expect(html).toContain('class="ui-ball"')
+    expect(html).toContain('aria-hidden="true"')
+    expect(html).toContain('width="48"')
+  })
+  it('stops turning when the device asks for reduced motion', () => {
+    expect(ui).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[^}]*\.ui-ball \{ animation: none/)
+  })
+})
