@@ -48,7 +48,7 @@ export default async function TeamMembersPage() {
   const [teamsFirst, { data: invites, error: invitesError }, { data: profileRow }, { data: entryRows, error: entriesError }] = await Promise.all([
     teamsQuery('id, name, tournament_id, status, kind, tournaments(name, fee)'),
     supabase.from('team_members').select('id, team_id, athlete_id, status, invited_at, teams(name)').eq('athlete_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('profiles').select('role, onboarding_persona').eq('id', user.id).maybeSingle(),
+    supabase.from('profiles').select('role, onboarding_persona, full_name').eq('id', user.id).maybeSingle(),
     // Tournaments a coach entered this athlete or their child in (sql/78, D1).
     supabase.rpc('my_entry_rosters', { p_limit: 50 }),
   ])
@@ -56,7 +56,9 @@ export default async function TeamMembersPage() {
   const { data: teamsData, error: teamsError } = ownTeamsReady ? teamsFirst : await teamsQuery('id, name, tournament_id, status, tournaments(name, fee)')
   const teams = teamsData as unknown as { id: string; name: string; tournament_id: string; status: string; kind?: 'club' | 'entry'; tournaments: { name: string | null; fee?: number | null } | null }[] | null
   const myEntries = entriesError ? [] : ((entryRows ?? []) as EntryRosterRow[])
-  const persona = (profileRow as { role?: string; onboarding_persona?: string } | null)
+  const persona = (profileRow as { role?: string; onboarding_persona?: string; full_name?: string | null } | null)
+  // The name families see in a team's staff list (sql/76); asked for before the first invite.
+  const myName = profileRow ? (persona?.full_name?.trim() || null) : undefined
   // Who may create an own team (sql/78, D3): a coach persona, or an organizer or admin.
   const canCreateTeam = ownTeamsReady && (persona?.onboarding_persona === 'coach_organizer' || persona?.role === 'organizer' || persona?.role === 'admin')
   // The roster of the teams this account created, which is a different question from
@@ -207,7 +209,7 @@ export default async function TeamMembersPage() {
       {hub.sections.includes('teams') && <section id="tm-teams" className="tm-section" aria-labelledby="tm-teams-title">
         {head('teams', <ShieldHalf size={18} aria-hidden="true" />, teams?.length ? <Link href="/match-plan" className="tm-head-link"><ClipboardPenLine size={15} aria-hidden="true" />{h('matchPlan')}</Link> : null)}
         {/* A team in draft is mid-registration: inviting is the step the coach is on (UX mockup v3-A). */}
-        {draftTeams.length > 0 && <div className="ui-card tm-invite"><TeamMembersClient teams={draftTeams} invites={[]} counts={rosterError ? null : countsByTeam} /></div>}
+        {draftTeams.length > 0 && <div className="ui-card tm-invite"><TeamMembersClient teams={draftTeams} invites={[]} counts={rosterError ? null : countsByTeam} myName={myName} /></div>}
         {canCreateTeam && <CreateTeamForm />}
         <CoachTeamOverview statsLabel={h('openTeam')} myTeamLabel={h('myTeam')} canKeep={ownTeamsReady} teams={overview} rosterError={Boolean(rosterError)} attestations={attestationState} attestationError={Boolean(coachAttestationError)} />
         <StaffInvitesPanel rows={acceptedStaff} />

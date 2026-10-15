@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, ArrowUpRight, Eye, PlayCircle, Sparkles, Trophy, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ArrowUpRight, Eye, Pause, Play, PlayCircle, Sparkles, Trophy, Zap } from 'lucide-react'
 import { TouchEvent, useEffect, useState } from 'react'
 
 const slides = [
@@ -10,14 +10,32 @@ const slides = [
   { label: 'THE IMPACT · 02 / 03', title: <>จากสนามเล็ก<br />ไปสู่<br /><em>โอกาสใหญ่</em></>, description: <>ทุกแมตช์ ทุก Highlight และทุกความพยายาม คือประตูบานใหม่ของน้อง</> },
 ]
 
+// Moving content must be possible to stop (report 11): the slides advance by themselves only
+// while not paused and while the device does not ask for reduced motion.
+export function autoAdvances({ paused, reducedMotion }: { paused: boolean; reducedMotion: boolean }) {
+  return !paused && !reducedMotion
+}
+
 export default function HomeHeroCarousel() {
   const [active, setActive] = useState(0)
   const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [paused, setPaused] = useState(false)
+  const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
+    const query = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+    if (!query) return
+    const update = () => setReducedMotion(query.matches)
+    update()
+    query.addEventListener?.('change', update)
+    return () => query.removeEventListener?.('change', update)
+  }, [])
+
+  useEffect(() => {
+    if (!autoAdvances({ paused, reducedMotion })) return
     const timer = window.setInterval(() => setActive(current => (current + 1) % slides.length), 7500)
     return () => window.clearInterval(timer)
-  }, [])
+  }, [paused, reducedMotion])
 
   const swipe = (event: TouchEvent<HTMLElement>) => {
     if (touchStart === null) return
@@ -60,7 +78,7 @@ export default function HomeHeroCarousel() {
           </div>
         </article>
       </div>
-      <div className="home-carousel-controls"><button type="button" className="home-carousel-arrow home-carousel-prev" aria-label="สไลด์ก่อนหน้า" onClick={() => setActive(current => (current - 1 + slides.length) % slides.length)}><ArrowLeft size={22} /><span>ก่อนหน้า</span></button><div className="home-carousel-dots">{slides.map((slide, index) => <button key={slide.label} type="button" aria-label={`ไปสไลด์ ${index + 1}`} aria-current={active === index} className={active === index ? 'is-active' : ''} onClick={() => setActive(index)} />)}</div><button type="button" className="home-carousel-arrow home-carousel-next" aria-label="สไลด์ถัดไป" onClick={() => setActive(current => (current + 1) % slides.length)}><span>ถัดไป</span><ArrowRight size={22} /></button></div>
+      <div className="home-carousel-controls"><button type="button" className="home-carousel-arrow home-carousel-prev" aria-label="สไลด์ก่อนหน้า" onClick={() => setActive(current => (current - 1 + slides.length) % slides.length)}><ArrowLeft size={22} /><span>ก่อนหน้า</span></button><button type="button" className="home-carousel-pause" aria-pressed={paused} aria-label={paused ? 'เล่นสไลด์อัตโนมัติต่อ' : 'หยุดเลื่อนสไลด์อัตโนมัติ'} onClick={() => setPaused(value => !value)}>{paused ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}</button><div className="home-carousel-dots">{slides.map((slide, index) => <button key={slide.label} type="button" aria-label={`ไปสไลด์ ${index + 1}`} aria-current={active === index} className={active === index ? 'is-active' : ''} onClick={() => setActive(index)} />)}</div><button type="button" className="home-carousel-arrow home-carousel-next" aria-label="สไลด์ถัดไป" onClick={() => setActive(current => (current + 1) % slides.length)}><span>ถัดไป</span><ArrowRight size={22} /></button></div>
       <div className="home-scroll-cue"><span /> ปัดเพื่อดูว่า BallDoenSai.com ช่วยอะไร</div>
     </section>
   )

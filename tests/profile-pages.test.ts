@@ -250,7 +250,10 @@ describe('/profile is "ของฉัน": it opens on the work of each role (U
     const html = await render(ProfilePage as never)
     const page = text(html)
     expect(page).toContain('ทีมของฉัน')
-    expect(page).toContain('ส่งสมัครทีม')
+    // Report 11 (15 Oct 2026): the card names what it does, sending a tournament team's roster
+    // to the organizer, so it is not read as creating a team.
+    expect(page).toContain('ส่งรายชื่อทีมให้ผู้จัด')
+    expect(page).not.toContain('ส่งสมัครทีมเข้ารายการ')
     expect(page).toContain('Lions U13 · ตอบรับ 2 · รอตอบ 2')
     expect(html).toContain('href="/team-members"')
     expect(html).not.toMatch(/href="\/dashboard/)
