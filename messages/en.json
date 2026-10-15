@@ -1795,9 +1795,9 @@
         "text": "Enter the email each athlete signed up with. Each athlete accepts for themselves."
       },
       "submitTeam": {
-        "label": "Send roster to organizer",
-        "title": "Send your team roster to the organizer",
-        "text": "This team entered a tournament and an athlete has accepted, so the organizer can check the roster now. The others can answer later."
+        "label": "Submit team",
+        "title": "Your team is ready to submit",
+        "text": "An athlete has accepted, so you can press \"Submit team\" on the team page now. The others can answer later."
       },
       "teamStatus": {
         "label": "See team status",
