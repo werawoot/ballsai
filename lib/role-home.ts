@@ -68,7 +68,9 @@ function coachHome({ teams, ownTeams = false }: HomeFacts['coach']): RoleHome {
   const primary = newest.status !== 'draft' ? action('teamStatus', '/team-members')
     : newest.accepted > 0 ? action('submitTeam', '/team-members') : action('inviteAthletes', '/team-members')
   const rows = [action('inviteAthletes', '/team-members'), action('matchPlan', '/match-plan'), action('findTournament', '/tournaments')]
-  return { primary, rows: without(rows, primary), tools: COACH_TOOLS.filter(tool => tool.key !== 'findTournament') }
+  // A coach whose team came from a tournament can still start their own team (owner, 15 Oct 2026).
+  const tools = COACH_TOOLS.filter(tool => tool.key !== 'findTournament')
+  return { primary, rows: without(rows, primary), tools: ownTeams ? [action('createTeam', '/team-members#create'), ...tools] : tools }
 }
 
 function organizerHome({ tournaments, pendingTeams }: HomeFacts['organizer']): RoleHome {

@@ -286,6 +286,7 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .rh-tool-icon.is-drills { background: #e8f5ee; color: #149a5a; }
 .rh-tool-icon.is-programmes { background: #e9f0fc; color: #2869d8; }
 .rh-tool-icon.is-findAthletes { background: #fdf3dc; color: #b7791f; }
+.rh-tool-icon.is-createTeam { background: #fde8e8; color: #cc0001; }
 .rh-next { border: 1.5px dashed #d6cfc4; border-radius: 18px; color: var(--pf-ink); display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: 64px; padding: 14px; text-decoration: none; }
 .rh-next span { color: var(--pf-muted); font-size: 13px; line-height: 1.5; }
 .rh-next b { color: #CC0001; font-size: 15px; }
