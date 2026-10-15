@@ -106,8 +106,9 @@ function nextAction(canManageRoster: boolean, counts: Record<RosterStatus, numbe
   if (counts.accepted === 0) return `รอนักกีฬาตอบรับคำเชิญ ${counts.pending} คน`
   // One acceptance is enough to send; the rest may still answer afterwards, because
   // respond_team_invite does not look at the team status (sql/18).
-  if (counts.pending > 0) return `ส่งรายชื่อทีมให้ผู้จัดรายการได้แล้ว · อีก ${counts.pending} คนตอบทีหลังได้`
-  return 'ส่งรายชื่อทีมให้ผู้จัดรายการ'
+  // Worded as the button that does it, "ส่งสมัครรายการ" (production test, 15 Oct 2026).
+  if (counts.pending > 0) return `กด "ส่งสมัครรายการ" ได้แล้ว · อีก ${counts.pending} คนตอบทีหลังได้`
+  return 'กด "ส่งสมัครรายการ" ได้แล้ว'
 }
 
 // --- Coach attestation state -------------------------------------------------------

@@ -178,7 +178,7 @@ describe('coachTeamOverview', () => {
   it('says the roster can be sent once one athlete accepted, even with answers outstanding', () => {
     const [view] = coachTeamOverview([team()], [roster({ id: 'm1', status: 'accepted' }), roster({ id: 'm2', status: 'pending' })])
 
-    expect(view.nextAction).toContain('ส่งรายชื่อ')
+    expect(view.nextAction).toContain('ส่งสมัครรายการ')
     expect(view.nextAction).not.toContain('รอนักกีฬาตอบรับ')
     expect(view.nextAction).toContain('1 คน')
   })
@@ -198,7 +198,8 @@ describe('coachTeamOverview', () => {
   it('asks the coach to submit the roster once members have accepted', () => {
     const [view] = coachTeamOverview([team()], [roster({ id: 'm1', status: 'accepted' })])
 
-    expect(view.nextAction).toContain('ส่งรายชื่อ')
+    // The same words as the button that does it (production test, 15 Oct 2026).
+    expect(view.nextAction).toContain('ส่งสมัครรายการ')
   })
 
   it('says the roster is locked once the team is submitted, with nothing left to do', () => {
