@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --red: #d71920;
+  --red: #CC0001;
   --red2: #ef3138;
   --white: #ffffff;
   --offwhite: #f8f5ef;
@@ -18,7 +18,7 @@
 }
 
 /* BallDoenSai.com — Thai Youth Football Showcase */
-.home-page { --ink: #111827; --red-hot: #d71920; --red-light: #f14e52; --pitch: #147a47; --gold: #f4b942; --paper: #f8f5ef; background: var(--paper); color: var(--ink); min-height: 100vh; overflow: hidden; }
+.home-page { --ink: #111827; --red-hot: #CC0001; --red-light: #f14e52; --pitch: #147a47; --gold: #f4b942; --paper: #f8f5ef; background: var(--paper); color: var(--ink); min-height: 100vh; overflow: hidden; }
 .home-header { align-items: center; background: rgba(17,24,39,.96); display: flex; height: 64px; justify-content: space-between; padding: 0 clamp(16px,4vw,48px); position: relative; z-index: 10; }
 .home-logo { align-items: center; color: white; display: flex; font-family: var(--font-oswald); font-size: 25px; font-weight: 700; gap: 8px; letter-spacing: 1.8px; text-decoration: none; }
 .home-logo-mark { align-items: center; background: var(--red-hot); display: inline-flex; height: 28px; justify-content: center; transform: skew(-10deg); width: 28px; }
@@ -400,3 +400,8 @@ body:has(.card-page) { background: #070d18; }
 /* A text link that must be easy to tap: its tap area is at least 44px tall, and padding
    cancelled by a negative margin keeps the text where it was (Chrome test, 8 Oct 2026). */
 .tap-44 { box-sizing:border-box; display:inline-block; margin-block:-12px; min-height:44px; padding-block:12px; }
+/* Report 11 (owner approved, 15 Oct 2026): the home slides can be stopped. Top right of the
+   hero, where only the decorative number sits; 44px to tap. */
+.home-carousel-pause { align-items:center; background:rgba(17,24,39,.78); border:1px solid rgba(255,255,255,.5); border-radius:50%; color:#fff; cursor:pointer; display:flex; height:44px; justify-content:center; pointer-events:auto; position:absolute; right:clamp(12px,3vw,42px); top:14px; width:44px; }
+.home-carousel-pause:hover { background:var(--red-hot); }
+.home-carousel-pause:focus-visible { outline:3px solid var(--gold); outline-offset:2px; }

@@ -7,12 +7,14 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { RegisterSteps } from '@/app/tournaments/[id]/RegisterSteps'
 import '@/app/tournaments/tournaments.css'
+import { NameFirst } from './NameFirst'
 
 type TournamentRelation = { name: string | null; fee?: number | null } | { name: string | null; fee?: number | null }[] | null
 type Team = { id: string; name: string; tournament_id: string; status: string; tournaments?: TournamentRelation }
 type Member = { id: string; team_id: string; athlete_id: string; status: string; invited_at: string; teams?: { name: string | null } | null }
 
-export default function TeamMembersClient({ teams, invites, counts }: { teams: Team[]; invites: Member[]; counts: Record<string, { accepted: number; pending: number }> | null }) {
+// myName: the coach's own name as families see it; null when not set yet, undefined when unknown.
+export default function TeamMembersClient({ teams, invites, counts, myName }: { teams: Team[]; invites: Member[]; counts: Record<string, { accepted: number; pending: number }> | null; myName?: string | null }) {
   const tl = useTranslations('labels')
   const tInvite = useTranslations('teamInvite')
   const t = useTranslations('teamRoster')
@@ -80,6 +82,7 @@ export default function TeamMembersClient({ teams, invites, counts }: { teams: T
       {teams.length > 1 && <select aria-label={t('team')} value={selectedTeam} onChange={e => setSelectedTeam(e.target.value)} style={{ width: '100%', padding: 11, borderRadius: 10, border: '1px solid var(--ui-line)' }}>
         {teams.map(team => <option key={team.id} value={team.id}>{team.name}</option>)}
       </select>}
+      {myName === null && <NameFirst />}
       <label className="ui-field">
         <span>{t('emailLabel')}</span>
         <input autoComplete="off" inputMode="email" onChange={e => setEmail(e.target.value)} placeholder="name@example.com" type="email" value={email} />

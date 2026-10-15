@@ -63,3 +63,8 @@
 .tm-pick-row { align-items: center; color: var(--ui-text); display: flex; gap: 10px; min-height: 40px; }
 .tm-pick-row input { height: 20px; width: 20px; }
 .tm-keep { display: grid; gap: 4px; }
+/* Report 11: the coach's name before the first invite. */
+.tm-name-first { background: var(--ui-sunk, #f3efe8); border: 1px solid var(--ui-line, #e3ddd2); border-radius: 12px; display: grid; gap: 10px; padding: 14px; }
+.tm-name-first p { font-size: 14px; line-height: 1.55; margin: 0; }
+.tm-name-ok { color: #15803d; }
+.tm-name-error { color: #b91c1c; }
