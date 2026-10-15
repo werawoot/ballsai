@@ -9,6 +9,8 @@
   --ui-paper: #f6f3ee; --ui-sunk: #f4f1ec; --ui-ok: #166534; --ui-card: #ffffff; --ui-line: #e7e2da; --ui-text: #111827; --ui-mute: #5b6472;
   --ui-gold: #f4b942; --ui-green: #149a5a; --ui-blue: #2869d8;
   --ui-r-sm: 10px; --ui-r-md: 14px; --ui-r-lg: 20px;
+  /* Spacing (report 11, Phase 2): use these instead of new inline pixel values. */
+  --ui-s1: 4px; --ui-s2: 8px; --ui-s3: 12px; --ui-s4: 16px; --ui-s5: 24px; --ui-s6: 32px;
 }
 
 .bds-brand-mark { align-items: center; background: var(--ui-red-hot); color: #fff; display: inline-flex; flex: none; justify-content: center; transform: skew(-10deg); }
@@ -91,3 +93,8 @@ body:has(.bds-page.ui-matchday) { background: #07090f; }
 
 /* The shared page header keeps its gold hover; the mark inside stays white on red. */
 .bds-page-header-brand .bds-brand-mark svg { color: #fff; }
+
+/* Report 11, Phase 2: the loading football (components/BallLoader.tsx). */
+.ui-ball { animation: ui-ball-roll 1.1s linear infinite; display: block; }
+@keyframes ui-ball-roll { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ui-ball { animation: none; } }

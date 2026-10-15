@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { homeKind, roleHome } from '@/lib/role-home'
+import { homeKind, roleHome, urgentTeamFirst } from '@/lib/role-home'
 
 // UX report 9: "ของฉัน" opens on the person's own work and shows one primary button.
 // profiles.onboarding_persona is what the person chose in /welcome; profiles.role is what an
@@ -136,5 +136,27 @@ describe('every home', () => {
   })
   it('does not list the primary action again as a shortcut', () => {
     for (const home of homes) expect(home.rows.map(row => row.key)).not.toContain(home.primary.key)
+  })
+})
+
+// Report 11, Phase 2 (owner: "เริ่มพัฒนา A", 15 Oct 2026): the card leads with the team that
+// needs the coach most, not just the newest one, and an own team is never "submitted".
+describe('coach: which team the card is about', () => {
+  const t = (id: string, status: string, accepted: number, pending: number, kind: 'club' | 'entry') => ({ id, name: id, status, accepted, pending, kind })
+  it('puts a tournament team ready to send ahead of a newer empty own team', () => {
+    const newestFirst = [t('club-new', 'draft', 0, 0, 'club'), t('entry-ready', 'draft', 1, 1, 'entry')]
+    expect(urgentTeamFirst(newestFirst).map(team => team.id)).toEqual(['entry-ready', 'club-new'])
+    expect(roleHome('coach', { teams: urgentTeamFirst(newestFirst), ownTeams: true }).primary.key).toBe('submitTeam')
+  })
+  it('keeps the newest first when nothing is more urgent', () => {
+    const newestFirst = [t('a', 'confirmed', 9, 0, 'entry'), t('b', 'confirmed', 9, 0, 'entry')]
+    expect(urgentTeamFirst(newestFirst).map(team => team.id)).toEqual(['a', 'b'])
+  })
+  it('asks an own team with nobody yet to invite athletes', () => {
+    expect(roleHome('coach', { teams: [t('c', 'draft', 0, 0, 'club')], ownTeams: true }).primary).toEqual({ key: 'inviteAthletes', href: '/team-members' })
+  })
+  it('never asks to send an own team to an organizer: it opens the team instead', () => {
+    const home = roleHome('coach', { teams: [t('c', 'draft', 3, 0, 'club')], ownTeams: true })
+    expect(home.primary).toEqual({ key: 'openTeam', href: '/team-members/c' })
   })
 })

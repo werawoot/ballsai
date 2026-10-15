@@ -68,3 +68,12 @@
 .tm-name-first p { font-size: 14px; line-height: 1.55; margin: 0; }
 .tm-name-ok { color: #15803d; }
 .tm-name-error { color: #b91c1c; }
+/* "No team yet" (NoTeamYet.tsx), on the spacing tokens of app/ui.css. */
+.tm-empty { display: grid; gap: var(--ui-s2); justify-items: center; padding: var(--ui-s6) var(--ui-s5); text-align: center; }
+.tm-empty .ui-h1 { margin: 0; }
+.tm-empty-eyebrow { font-size: 13px; letter-spacing: 0; text-transform: none; }
+.tm-empty-text { color: var(--ui-mute); font-size: 15px; line-height: 1.6; margin: 0 0 var(--ui-s3); max-width: 380px; }
+.tm-empty-cta { max-width: 360px; width: 100%; }
+.tm-empty-hint { color: var(--ui-mute); font-size: 13px; margin: var(--ui-s1) 0 0; }
+.tm-empty-link { color: var(--ui-red); font-weight: 700; }
+.tm-name-first { gap: var(--ui-s3); padding: var(--ui-s4); }
