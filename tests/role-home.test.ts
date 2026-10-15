@@ -71,6 +71,12 @@ describe('coach: ทีมของฉัน', () => {
     expect(home.rows.map(row => row.key).some(key => tools.includes(key))).toBe(false)
     expect(home.next).toBeUndefined()
   })
+  it('lets a coach who already has a tournament team create their own team too (owner, 15 Oct 2026)', () => {
+    const home = roleHome('coach', { teams: [team('draft', 1, 1)], ownTeams: true })
+    expect(home.primary.key).toBe('submitTeam')
+    expect(home.tools?.[0]).toEqual({ key: 'createTeam', href: '/team-members#create' })
+    expect(home.tools?.map(tool => tool.key)).toEqual(['createTeam', 'drills', 'programmes', 'findAthletes'])
+  })
   it('invites athletes while nobody has accepted', () => {
     expect(roleHome('coach', { teams: [team('draft', 0, 2)] }).primary).toEqual({ key: 'inviteAthletes', href: '/team-members' })
   })

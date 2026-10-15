@@ -1893,6 +1893,10 @@
       "draftBoardTool": {
         "label": "Match board",
         "hint": "Try a line-up before a match"
+      },
+      "createTeamTool": {
+        "label": "Create my team",
+        "hint": "A team for every season, no tournament needed"
       }
     },
     "loadFailed": {
