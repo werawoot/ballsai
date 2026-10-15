@@ -116,3 +116,13 @@ describe('/login first screen: two clear ways in (owner, 14 Oct 2026)', () => {
     expect(html.indexOf('login-consent-help')).toBeLessThan(html.indexOf('lg-google'))
   })
 })
+
+// Owner, 15 Oct 2026: a password field should let you see what you typed. The admin form
+// (/login?admin=1) starts hidden, with a labelled toggle that says whether it is showing.
+describe('/login?admin=1 password field', () => {
+  const html = render('th', true)
+  it('starts hidden, with a show-password button that says its state', () => {
+    expect(html).toMatch(/id="admin-password"[^>]*type="password"|type="password"[^>]*id="admin-password"/)
+    expect(html).toMatch(/<button[^>]*aria-controls="admin-password"[^>]*aria-label="แสดงรหัสผ่าน"[^>]*aria-pressed="false"|<button[^>]*aria-label="แสดงรหัสผ่าน"[^>]*aria-pressed="false"[^>]*aria-controls="admin-password"/)
+  })
+})

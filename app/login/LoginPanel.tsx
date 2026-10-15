@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeft, Check, ChevronRight, Facebook, Mail, Shield } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Eye, EyeOff, Facebook, Mail, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { OTP_MAX_LENGTH, canSubmitOtp, normalizeEmail, normalizeOtp, otpErrorKey, resendWaitSeconds } from "@/lib/otp";
 import { captchaSiteKey, withCaptcha } from "@/lib/captcha";
@@ -19,6 +19,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   // Pressing a way in before ticking consent points at the consent row itself, right where
   // the eye is, instead of a message at the bottom of the panel.
@@ -254,7 +255,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
               <p className="ui-eyebrow">{tp("adminEyebrow")}</p>
               <h2 className="ui-h1 lg-title">เข้าสู่ระบบผู้ดูแล</h2>
               <label className="ui-field" htmlFor="admin-email"><span>อีเมลผู้ดูแล</span><input autoComplete="email" id="admin-email" onChange={(event) => setEmail(event.target.value)} type="email" value={email} /></label>
-              <label className="ui-field" htmlFor="admin-password"><span>รหัสผ่าน</span><input autoComplete="current-password" id="admin-password" onChange={(event) => setPassword(event.target.value)} type="password" value={password} /></label>
+              <label className="ui-field" htmlFor="admin-password"><span>รหัสผ่าน</span><span className="lg-password"><input autoComplete="current-password" id="admin-password" onChange={(event) => setPassword(event.target.value)} type={showPassword ? "text" : "password"} value={password} /><button aria-controls="admin-password" aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"} aria-pressed={showPassword} className="lg-password-toggle" onClick={() => setShowPassword((shown) => !shown)} type="button">{showPassword ? <EyeOff aria-hidden="true" size={20} /> : <Eye aria-hidden="true" size={20} />}</button></span></label>
               {captcha}
               <button className="ui-btn ui-btn-primary" disabled={loading || !email || !password || captchaMissing} onClick={adminLogin} type="button">{loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ Dashboard"}<ChevronRight size={18} /></button>
             </>
