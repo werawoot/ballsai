@@ -29,12 +29,13 @@ import { rosterProfiles } from '@/lib/roster-names'
 import type { ReactNode } from 'react'
 import { BellRing, CalendarDays, ClipboardPenLine, Megaphone, ShieldHalf, Timer, Users } from 'lucide-react'
 import { teamHub, type TeamHubSection } from '@/lib/team-hub'
+import { urgentTeamFirst } from '@/lib/role-home'
 import './team-hub.css'
 import PageHeader from '@/components/PageHeader'
 
 type Member = { id: string; team_id: string; athlete_id: string; status: string; invited_at: string; teams?: { name: string | null } | null }
 
-export default async function TeamMembersPage() {
+export default async function TeamMembersPage(props: { searchParams?: Promise<{ team?: string | string[] }> }) {
   const cookieStore = await cookies()
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: { getAll: () => cookieStore.getAll(), setAll: values => values.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) },
@@ -160,6 +161,12 @@ export default async function TeamMembersPage() {
   const acceptedStaff = myStaffTeams.filter(row => row.status === 'accepted')
   // Only a team still in draft takes new invitations; a submitted one is the organizer's.
   const draftTeams = (teams ?? []).filter(team => team.status === 'draft')
+  // Open on the team the profile card named (?team=), else on the one that needs the coach
+  // most, by the card's own rule, so a ready roster is never behind the team picker.
+  const requested = (await props.searchParams)?.team
+  const firstTeam = typeof requested === 'string' && draftTeams.some(team => team.id === requested)
+    ? requested
+    : urgentTeamFirst(draftTeams.map(team => ({ ...team, accepted: countsByTeam[team.id]?.accepted ?? 0, pending: countsByTeam[team.id]?.pending ?? 0 })))[0]?.id
   const hub = teamHub({
     coachTeams: teams?.length ?? 0,
     pendingTeamInvites: pendingInvites.length,
@@ -209,7 +216,7 @@ export default async function TeamMembersPage() {
       {hub.sections.includes('teams') && <section id="tm-teams" className="tm-section" aria-labelledby="tm-teams-title">
         {head('teams', <ShieldHalf size={18} aria-hidden="true" />, teams?.length ? <Link href="/match-plan" className="tm-head-link"><ClipboardPenLine size={15} aria-hidden="true" />{h('matchPlan')}</Link> : null)}
         {/* A team in draft is mid-registration: inviting is the step the coach is on (UX mockup v3-A). */}
-        {draftTeams.length > 0 && <div className="ui-card tm-invite"><TeamMembersClient teams={draftTeams} invites={[]} counts={rosterError ? null : countsByTeam} myName={myName} /></div>}
+        {draftTeams.length > 0 && <div className="ui-card tm-invite"><TeamMembersClient teams={draftTeams} firstTeam={firstTeam} invites={[]} counts={rosterError ? null : countsByTeam} myName={myName} /></div>}
         {canCreateTeam && <CreateTeamForm />}
         <CoachTeamOverview statsLabel={h('openTeam')} myTeamLabel={h('myTeam')} canKeep={ownTeamsReady} teams={overview} rosterError={Boolean(rosterError)} attestations={attestationState} attestationError={Boolean(coachAttestationError)} />
         <StaffInvitesPanel rows={acceptedStaff} />

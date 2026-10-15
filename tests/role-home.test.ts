@@ -78,10 +78,10 @@ describe('coach: ทีมของฉัน', () => {
     expect(home.tools?.map(tool => tool.key)).toEqual(['createTeam', 'drills', 'programmes', 'findAthletes'])
   })
   it('invites athletes while nobody has accepted', () => {
-    expect(roleHome('coach', { teams: [team('draft', 0, 2)] }).primary).toEqual({ key: 'inviteAthletes', href: '/team-members' })
+    expect(roleHome('coach', { teams: [team('draft', 0, 2)] }).primary).toEqual({ key: 'inviteAthletes', href: '/team-members?team=t#tm-teams' })
   })
   it('submits as soon as one athlete accepted, without waiting for the rest', () => {
-    expect(roleHome('coach', { teams: [team('draft', 1, 4)] }).primary).toEqual({ key: 'submitTeam', href: '/team-members' })
+    expect(roleHome('coach', { teams: [team('draft', 1, 4)] }).primary).toEqual({ key: 'submitTeam', href: '/team-members?team=t#tm-teams' })
   })
   it('shows the team status once submitted', () => {
     expect(roleHome('coach', { teams: [team('pending', 3)] }).primary).toEqual({ key: 'teamStatus', href: '/team-members' })
@@ -153,10 +153,24 @@ describe('coach: which team the card is about', () => {
     expect(urgentTeamFirst(newestFirst).map(team => team.id)).toEqual(['a', 'b'])
   })
   it('asks an own team with nobody yet to invite athletes', () => {
-    expect(roleHome('coach', { teams: [t('c', 'draft', 0, 0, 'club')], ownTeams: true }).primary).toEqual({ key: 'inviteAthletes', href: '/team-members' })
+    expect(roleHome('coach', { teams: [t('c', 'draft', 0, 0, 'club')], ownTeams: true }).primary).toEqual({ key: 'inviteAthletes', href: '/team-members?team=c#tm-teams' })
   })
   it('never asks to send an own team to an organizer: it opens the team instead', () => {
     const home = roleHome('coach', { teams: [t('c', 'draft', 3, 0, 'club')], ownTeams: true })
     expect(home.primary).toEqual({ key: 'openTeam', href: '/team-members/c' })
+  })
+})
+
+// Production test, 15 Oct 2026: the card said "send liverpool's roster" but /team-members
+// opened on a newer own team, so the send button was not on the screen. The card names the
+// team it is about, and the page opens on it.
+describe('coach: the card opens the page on its own team', () => {
+  const t = (id: string, accepted: number, pending: number, kind: 'club' | 'entry') => ({ id, name: id, status: 'draft', accepted, pending, kind })
+  it('sends the coach to the team whose roster is ready', () => {
+    const teams = urgentTeamFirst([t('club-new', 0, 0, 'club'), t('liverpool', 1, 1, 'entry')])
+    expect(roleHome('coach', { teams, ownTeams: true }).primary).toEqual({ key: 'submitTeam', href: '/team-members?team=liverpool#tm-teams' })
+  })
+  it('keeps an id that is not URL-safe intact', () => {
+    expect(roleHome('coach', { teams: [t('a b&c', 0, 1, 'entry')] }).primary.href).toBe('/team-members?team=a%20b%26c#tm-teams')
   })
 })

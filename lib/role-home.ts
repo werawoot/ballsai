@@ -56,6 +56,9 @@ export type HomeFacts = {
 
 const action = (key: string, href: string, count?: number): HomeAction => count === undefined ? { key, href } : { key, href, count }
 const without = (rows: HomeAction[], primary: HomeAction) => rows.filter(row => row.key !== primary.key).slice(0, 3)
+// /team-members opens on the team this card is about, so its send or invite form is the one
+// on screen (production test, 15 Oct 2026).
+const teamForm = (id: string) => `/team-members?team=${encodeURIComponent(id)}#tm-teams`
 
 // A guardian can use the site before any child is linked (report 10, mockup v10-4): the
 // programmes by age, the drill library, tournaments, the hall of fame and how children's data
@@ -82,9 +85,9 @@ function coachHome({ teams, ownTeams = false }: HomeFacts['coach']): RoleHome {
   if (!newest) return { primary: action('draftBoard', '/match-plan'), rows: [], tools: COACH_TOOLS, next: action('registerTeam', '/tournaments') }
   // An own team (sql/78) is never submitted: once someone has joined, the team page is the place.
   const primary = newest.kind === 'club'
-    ? (newest.accepted + newest.pending === 0 ? action('inviteAthletes', '/team-members') : action('openTeam', `/team-members/${newest.id}`))
+    ? (newest.accepted + newest.pending === 0 ? action('inviteAthletes', teamForm(newest.id)) : action('openTeam', `/team-members/${newest.id}`))
     : newest.status !== 'draft' ? action('teamStatus', '/team-members')
-    : newest.accepted > 0 ? action('submitTeam', '/team-members') : action('inviteAthletes', '/team-members')
+    : newest.accepted > 0 ? action('submitTeam', teamForm(newest.id)) : action('inviteAthletes', teamForm(newest.id))
   const rows = [action('inviteAthletes', '/team-members'), action('matchPlan', '/match-plan'), action('findTournament', '/tournaments')]
   // A coach whose team came from a tournament can still start their own team (owner, 15 Oct 2026).
   const tools = COACH_TOOLS.filter(tool => tool.key !== 'findTournament')

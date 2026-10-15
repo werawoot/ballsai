@@ -44,9 +44,9 @@ vi.mock('next-intl/server', () => ({
 
 import TeamMembersPage from '@/app/team-members/page'
 
-const render = async () =>
+const render = async (searchParams?: Record<string, string>) =>
   renderToStaticMarkup(createElement(NextIntlClientProvider as ComponentType<never>, { locale: 'th', messages: th, timeZone: 'Asia/Bangkok' } as never,
-    await (TeamMembersPage as () => Promise<ReactElement>)()))
+    await (TeamMembersPage as (props: { searchParams?: Promise<Record<string, string>> }) => Promise<ReactElement>)({ searchParams: searchParams && Promise.resolve(searchParams) })))
 const hrefs = (html: string) => [...html.matchAll(/href="([^"]+)"/g)].map(match => match[1])
 
 const team = { id: 'tm1', name: 'ขอนแก่น U13', tournament_id: 't1', status: 'draft', created_by: 'u1', created_at: '2026-10-01', tournaments: { name: 'ศึกชิงถ้วย', fee: 1500 } }
@@ -395,5 +395,41 @@ describe('/team-members: a coach\'s own team (sql/78, docs/coach-own-team-v1.md)
     expect(html).toContain('รายการที่โค้ชพาลงแข่ง')
     expect(html).toContain('ถอนตัวจากรายการนี้')
     expect(html).not.toContain('ยังไม่มีทีม')
+  })
+})
+
+// Production test, 15 Oct 2026: the profile card said "send liverpool's roster", but the page
+// opened on a newer own team with no send button, so the coach could not find it.
+describe('/team-members opens on the team that needs the coach', () => {
+  const ownTeam = { id: 'own1', name: 'TEST ทีมแรก', tournament_id: null, status: 'draft', kind: 'club', created_by: 'u1', created_at: '2026-10-14', tournaments: null }
+  const entry = { ...team, id: 'lfc', name: 'liverpool', kind: 'entry', created_at: '2026-10-01' }
+  const members = [
+    { id: 'm1', team_id: 'lfc', athlete_id: 'a1', status: 'accepted', invited_at: '2026-10-02', created_at: '2026-10-02' },
+    { id: 'm2', team_id: 'lfc', athlete_id: 'a2', status: 'pending', invited_at: '2026-10-02', created_at: '2026-10-02' },
+  ]
+  const seed = () => {
+    db.user = 'u1'; db.failing = new Set()
+    db.tables = { teams: [ownTeam, entry], team_members: members, coach_attestations: [], athlete_profiles: [] }
+  }
+  const selected = (html: string) => html.match(/<option[^>]*selected[^>]*>([^<]*)</)?.[1]
+
+  it('opens on the team the card named', async () => {
+    seed()
+    const html = await render({ team: 'lfc' })
+    expect(selected(html)).toBe('liverpool')
+    expect(html).toContain('ส่งสมัครรายการ')
+  })
+
+  it('without a team named, opens on the roster ready to send rather than the newest team', async () => {
+    seed()
+    const html = await render()
+    expect(selected(html)).toBe('liverpool')
+    expect(html).toContain('ส่งสมัครรายการ')
+  })
+
+  it('ignores a team id that is not one of this coach\'s teams', async () => {
+    seed()
+    const html = await render({ team: 'someone-else' })
+    expect(selected(html)).toBe('liverpool')
   })
 })

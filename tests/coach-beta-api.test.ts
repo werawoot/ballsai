@@ -172,6 +172,17 @@ describe('coachTeamOverview', () => {
     expect(view.tournamentName).toBe('BDS Cup')
   })
 
+  // Production test, 15 Oct 2026: one athlete had accepted and one had not; the profile card
+  // said send now while this line said wait. Sending only needs one acceptance, and the rest
+  // can still answer afterwards (respond_team_invite does not look at the team status).
+  it('says the roster can be sent once one athlete accepted, even with answers outstanding', () => {
+    const [view] = coachTeamOverview([team()], [roster({ id: 'm1', status: 'accepted' }), roster({ id: 'm2', status: 'pending' })])
+
+    expect(view.nextAction).toContain('ส่งรายชื่อ')
+    expect(view.nextAction).not.toContain('รอนักกีฬาตอบรับ')
+    expect(view.nextAction).toContain('1 คน')
+  })
+
   it('asks for a first member when the roster is empty', () => {
     const [view] = coachTeamOverview([team()], [])
 
