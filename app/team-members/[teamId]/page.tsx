@@ -18,6 +18,7 @@ import type { StaffRow } from '@/lib/team-staff'
 import { minutesTotals, type MinuteEntry } from '@/lib/match-minutes'
 import { rosterProfiles } from '@/lib/roster-names'
 import EnterTournamentPanel, { type OpenTournament } from './EnterTournamentPanel'
+import DeleteTeamPanel from './DeleteTeamPanel'
 import { eventTimeParts } from '@/lib/team-events'
 import { addWeeks, libraryDrills, weekStartOf, weekdayOf, type PlanDay } from '@/lib/team-training'
 import { attendanceOpen, attendanceRates, splitEvents, type EventKind } from '@/lib/team-events'
@@ -30,7 +31,7 @@ import '../team-page.css'
 // (match_player_performances_match_idx). A team plays in one tournament, so this stays a
 // few hundred rows however many teams the country has.
 
-type TeamRow = { id: string; name: string; tournament_id: string | null; tournaments: { name: string; start_date: string | null } | null }
+type TeamRow = { id: string; name: string; tournament_id: string | null; status?: string; tournaments: { name: string; start_date: string | null } | null }
 type EventRow = { id: string; kind: EventKind; title: string; starts_at: string; location: string | null; cancelled_at: string | null }
 
 export default async function TeamPage(props: { params: Promise<{ teamId: string }> }) {
@@ -40,7 +41,7 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
   if (!user) redirect(`/login?next=/team-members/${encodeURIComponent(teamId)}`)
   const t = await getTranslations('teamPage')
 
-  const { data: team } = await supabase.from('teams').select('id, name, tournament_id, tournaments(name, start_date)').eq('id', teamId).eq('created_by', user.id).maybeSingle()
+  const { data: team } = await supabase.from('teams').select('id, name, tournament_id, status, tournaments(name, start_date)').eq('id', teamId).eq('created_by', user.id).maybeSingle()
   // The head coach reads their own team row. An accepted assistant (sql/75) cannot read
   // teams and gets the same fields through team_for_staff; before SQL75 that is missing
   // and only the head coach gets in.
@@ -271,6 +272,11 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
                 <TeamSheetActions teamName={typedTeam.name} tournamentName={tournamentName} rows={sheet} />
               </>}
         </section>
+
+        {/* Delete my team (sql/79): the head coach only, and only while the team is a draft. */}
+        {isHead && (typedTeam.status === 'draft'
+          ? <DeleteTeamPanel teamId={teamId} teamName={typedTeam.name} />
+          : <p className="tp-note tp-danger-locked">{to('deleteLocked')}</p>)}
       </div>
     </main>
   )

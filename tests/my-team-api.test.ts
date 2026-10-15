@@ -65,4 +65,31 @@ describe('/api/my-team (sql/78)', () => {
       expect([message, response.status, (await response.json()).code]).toEqual([message, status, apiCode])
     }
   })
+
+  // Delete my team (sql/79, docs/delete-team-v1.md). The name typed to confirm (D3) goes
+  // to the database, which checks it again.
+  it('deletes a team with the name typed to confirm, tidied', async () => {
+    rpc.mockResolvedValueOnce({ data: 'deleted', error: null })
+    const response = await call({ action: 'delete', data: { teamId: T, name: '  Lions   U13 ' } })
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({ ok: true, data: 'deleted' })
+    expect(rpc).toHaveBeenCalledWith('delete_my_team', { p_team_id: T, p_confirm_name: 'Lions U13' })
+  })
+
+  it('words each reason a team cannot be deleted', async () => {
+    const cases: [string, string, number, string][] = [
+      ['22023', 'TEAM_NAME_MISMATCH', 400, 'teamDeleteNameMismatch'],
+      ['55000', 'TEAM_SUBMITTED', 409, 'teamDeleteSubmitted'],
+      ['55000', 'TEAM_HAS_PAYMENT', 409, 'teamDeletePaid'],
+      ['55000', 'TEAM_HAS_RESULTS', 409, 'teamDeleteResults'],
+      ['55000', 'TEAM_HAS_VERIFIED_FIELDS', 409, 'teamDeleteVerified'],
+      ['42501', 'NOT_ALLOWED', 403, 'notAllowed'],
+      ['PGRST202', 'missing', 503, 'featureNotReady'],
+    ]
+    for (const [code, message, status, apiCode] of cases) {
+      rpc.mockResolvedValueOnce({ data: null, error: { code, message } })
+      const response = await call({ action: 'delete', data: { teamId: T, name: 'Lions' } })
+      expect([message, response.status, (await response.json()).code]).toEqual([message, status, apiCode])
+    }
+  })
 })

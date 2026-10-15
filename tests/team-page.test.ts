@@ -401,3 +401,36 @@ describe('/team-members/[teamId]: a coach\'s own team (sql/78)', () => {
     expect(await render()).not.toContain('พาทีมลงแข่ง')
   })
 })
+
+// Delete my team (sql/79, owner decisions 15 Oct 2026, docs/delete-team-v1.md).
+describe('/team-members/[teamId]: delete the team (sql/79)', () => {
+  it('offers the head coach of a team still in draft to delete it, typing its name first (D3)', async () => {
+    seed()
+    db.tables.teams = [{ id: 'team-1', name: 'Lions', tournament_id: null, status: 'draft', created_by: 'coach-1', tournaments: null }]
+    const html = await render()
+    expect(html).toContain(th.ownTeam.deleteTitle)
+    expect(html).toContain('id="tp-delete-name"')
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>[^<]*ลบทีมนี้ถาวร/)
+    // What goes and who is told (D1), before anything is typed.
+    expect(html).toContain('ผลแข่ง การ์ด และประวัติของนักกีฬาไม่หาย')
+    expect(html).toContain('แจ้งเตือน')
+  })
+
+  it('says a team already sent to the organizer cannot be deleted, with no form', async () => {
+    seed()
+    db.tables.teams = [{ ...db.tables.teams[0], status: 'pending' }]
+    const html = await render()
+    expect(html).toContain(th.ownTeam.deleteLocked)
+    expect(html).not.toContain('id="tp-delete-name"')
+  })
+
+  it('never offers it to an assistant coach', async () => {
+    seed()
+    db.user = 'assist-1'
+    db.rpcs.team_for_staff = [{ id: 'team-1', name: 'ขอนแก่น U13', tournament_id: 'cup', tournament_name: 'Cup', start_date: '2026-10-24', is_head: false }]
+    db.rpcs.team_staff_list = []
+    const html = await render()
+    expect(html).not.toContain(th.ownTeam.deleteTitle)
+  })
+})
+

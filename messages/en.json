@@ -619,7 +619,12 @@
     "teamAthleteNotOnTeam": "Choose only athletes who accepted your team's invitation",
     "teamRosterLocked": "The coach has submitted the entry; contact the coach or the organizer to withdraw",
     "teamRosterInvalid": "Choose 1–60 athletes",
-    "teamTournamentNotFound": "Tournament not found"
+    "teamTournamentNotFound": "Tournament not found",
+    "teamDeleteNameMismatch": "The name you typed does not match. Type the team name exactly before deleting.",
+    "teamDeleteSubmitted": "This team has been sent to the organizer and cannot be deleted. Contact the organizer to withdraw it.",
+    "teamDeletePaid": "This team has a payment or slip and cannot be deleted. Contact the organizer.",
+    "teamDeleteResults": "This team has match results or is in a fixture, so it cannot be deleted; athletes would lose their results and history.",
+    "teamDeleteVerified": "A coach has verified a position for an athlete on this team, so it cannot be deleted; the athlete would lose that verification."
   },
   "impact": {
     "back": "Home",
@@ -2590,6 +2595,15 @@
     "keep": "Keep as my team",
     "keeping": "Creating…",
     "keepHint": "Creates your own team from this one; its athletes are invited again to accept.",
-    "keepFailed": "Could not keep this team"
+    "keepFailed": "Could not keep this team",
+    "deleteTitle": "Delete team",
+    "deleteIntro": "This cannot be undone. The events, announcements, training plans, coach notes, minutes, staff and roster of this team are deleted with it.",
+    "deleteKept": "Athletes keep their match results, cards and history.",
+    "deleteTold": "Athletes on the team or invited, their guardians and the assistant coaches are notified that the team was deleted.",
+    "deleteLabel": "Type the team name \"{name}\" to confirm",
+    "deleteConfirm": "Delete this team for good",
+    "deleting": "Deleting…",
+    "deleteFailed": "Could not delete the team",
+    "deleteLocked": "This team has been sent to the organizer, so it cannot be deleted. Contact the organizer to withdraw it."
   }
 }

@@ -19,13 +19,20 @@ const REFUSALS: [string, ApiErrorCode, number][] = [
   ['ROSTER_LOCKED', 'teamRosterLocked', 409],
   ['INVALID_ROSTER', 'teamRosterInvalid', 400],
   ['TOURNAMENT_NOT_FOUND', 'teamTournamentNotFound', 404],
+  ['TEAM_NAME_MISMATCH', 'teamDeleteNameMismatch', 400],
+  ['TEAM_SUBMITTED', 'teamDeleteSubmitted', 409],
+  ['TEAM_HAS_PAYMENT', 'teamDeletePaid', 409],
+  ['TEAM_HAS_RESULTS', 'teamDeleteResults', 409],
+  ['TEAM_HAS_VERIFIED_FIELDS', 'teamDeleteVerified', 409],
 ]
 
-// A coach's own team (sql/78). Four actions, each one guarded SQL78 function: create my
+// A coach's own team (sql/78). Five actions, each one guarded SQL function: create my
 // team (the page chooses the id, so a retry is the same team); enter a tournament with
 // chosen accepted members (D1: they are told and may withdraw until the coach submits);
 // withdraw from an entry (the athlete or their guardian); keep an old tournament team as
-// my team (D2: its members are asked again). Who may do which is decided by auth.uid().
+// my team (D2: its members are asked again). Delete my team (sql/79): the coach types the
+// team's name to confirm, and the database checks it again and refuses a team that was
+// submitted, paid, played or holds a verified position. Who may do which is auth.uid().
 export async function POST(request: Request) {
   const rateLimit = await checkRateLimit(request, { scope: 'my-team', limit: 30, windowSeconds: 5 * 60 })
   if (!rateLimit.allowed) return apiError('tooManyRequests', 429, { retryAfter: String(rateLimit.retryAfterSeconds) })
@@ -53,6 +60,9 @@ export async function POST(request: Request) {
   } else if (body?.action === 'keep' && isId(data.teamId)) {
     rpc = 'keep_as_my_team'
     args = { p_team_id: data.teamId }
+  } else if (body?.action === 'delete' && isId(data.teamId) && typeof data.name === 'string' && data.name.trim()) {
+    rpc = 'delete_my_team'
+    args = { p_team_id: data.teamId, p_confirm_name: data.name.trim().replace(/\s+/g, ' ').slice(0, 200) }
   } else {
     return apiError('requestInvalid', 400)
   }
