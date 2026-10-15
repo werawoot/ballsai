@@ -14,11 +14,12 @@ type Team = { id: string; name: string; tournament_id: string; status: string; t
 type Member = { id: string; team_id: string; athlete_id: string; status: string; invited_at: string; teams?: { name: string | null } | null }
 
 // myName: the coach's own name as families see it; null when not set yet, undefined when unknown.
-export default function TeamMembersClient({ teams, invites, counts, myName }: { teams: Team[]; invites: Member[]; counts: Record<string, { accepted: number; pending: number }> | null; myName?: string | null }) {
+// firstTeam: the team to open on; the page picks it, falling back to the first one.
+export default function TeamMembersClient({ teams, invites, counts, myName, firstTeam }: { teams: Team[]; invites: Member[]; counts: Record<string, { accepted: number; pending: number }> | null; myName?: string | null; firstTeam?: string }) {
   const tl = useTranslations('labels')
   const tInvite = useTranslations('teamInvite')
   const t = useTranslations('teamRoster')
-  const [selectedTeam, setSelectedTeam] = useState(teams[0]?.id ?? '')
+  const [selectedTeam, setSelectedTeam] = useState(teams.some(team => team.id === firstTeam) ? firstTeam! : teams[0]?.id ?? '')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [inviteMessage, setInviteMessage] = useState('')

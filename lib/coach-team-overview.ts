@@ -103,7 +103,10 @@ export function coachTeamOverview(teams: CoachTeamRow[], roster: RosterRow[]): C
 function nextAction(canManageRoster: boolean, counts: Record<RosterStatus, number>) {
   if (!canManageRoster) return 'ส่งรายชื่อแล้ว รอผู้จัดรายการตรวจและยืนยันทีม'
   if (counts.accepted === 0 && counts.pending === 0) return 'เชิญสมาชิกคนแรกเข้าทีม'
-  if (counts.pending > 0) return `รอนักกีฬาตอบรับคำเชิญ ${counts.pending} คน`
+  if (counts.accepted === 0) return `รอนักกีฬาตอบรับคำเชิญ ${counts.pending} คน`
+  // One acceptance is enough to send; the rest may still answer afterwards, because
+  // respond_team_invite does not look at the team status (sql/18).
+  if (counts.pending > 0) return `ส่งรายชื่อทีมให้ผู้จัดรายการได้แล้ว · อีก ${counts.pending} คนตอบทีหลังได้`
   return 'ส่งรายชื่อทีมให้ผู้จัดรายการ'
 }
 
