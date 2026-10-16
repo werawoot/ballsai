@@ -1,7 +1,7 @@
 # โค้ชลบทีมของตัวเองได้ (v1, 15 ต.ค. 2026)
 
 > **สถานะ:** เจ้าของเลือกแบบแล้ว 15 ต.ค. 2026 ทั้ง 3 ข้อตามที่แนะนำ (D1–D3 ด้านล่าง)
-> SQL79 ทดสอบในฐานข้อมูลจำลองแล้ว **ลง Staging แล้ว 15 ต.ค. 2026** (postcheck ตรงทุกค่า fingerprint `delete_my_team:9a74c3d8`) **ยังไม่ได้ลง Production** (runbook แถว 79)
+> SQL79 ทดสอบในฐานข้อมูลจำลองแล้ว **ลง Staging แล้ว 15 ต.ค. 2026 และ Production แล้ว 16 ต.ค. 2026** (หลัง SQL80 ซึ่งเพิ่ม index กันทีมเดียวมีการจ่ายเงิน 2 รายการ; postcheck ตรงทุกค่า fingerprint `delete_my_team:9a74c3d8`) (runbook แถว 79–80)
 > ไฟล์: `sql/79-delete-team-v1.sql` (precheck, postcheck, down อยู่คู่กัน) · แอป `app/team-members/[teamId]/DeleteTeamPanel.tsx`, `app/api/my-team/route.ts` (action `delete`)
 
 ## ทำไมต้องมี
