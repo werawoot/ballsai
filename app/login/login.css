@@ -67,3 +67,10 @@ body:has(.lg) { background: var(--ui-ink); }
 }
 
 
+
+/* Show or hide the admin password (owner, 15 Oct 2026): a 44px eye button inside the field. */
+.lg-password { display: block; position: relative; }
+.lg-password input { padding-right: 52px; width: 100%; }
+.lg-password-toggle { align-items: center; background: transparent; border: 0; border-radius: 10px; color: var(--ui-mute); cursor: pointer; display: inline-flex; height: 44px; justify-content: center; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; }
+.lg-password-toggle:hover, .lg-password-toggle[aria-pressed="true"] { color: inherit; }
+.lg-password-toggle:focus-visible { outline: 2px solid #CC0001; outline-offset: 2px; }

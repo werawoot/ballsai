@@ -172,3 +172,11 @@
 .ts-name { border-top: 1px solid var(--ui-line); display: grid; gap: 6px; padding-top: 10px; }
 .ts-name-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .ts-list .ui-btn, .ts-list .cf-ask { flex: none; white-space: nowrap; }
+
+/* Delete my team (sql/79): closed by default, at the end of the page, red only on the final button. */
+.tp-danger { border: 1px solid var(--ui-line); border-radius: 14px; display: grid; gap: 10px; margin-top: 28px; padding: 12px 14px; }
+.tp-danger summary { align-items: center; color: var(--ui-mute); cursor: pointer; display: flex; font-size: 14px; font-weight: 800; gap: 8px; min-height: 44px; }
+.tp-danger[open] summary { color: inherit; }
+.tp-danger .ui-field { margin: 4px 0 0; }
+.tp-danger-btn { background: #CC0001; border-color: #CC0001; color: #fff; min-height: 44px; }
+.tp-danger-btn:disabled { background: transparent; border-color: var(--ui-line); color: var(--ui-mute); }
