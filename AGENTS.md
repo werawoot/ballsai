@@ -102,6 +102,23 @@ implementation:
 - `research` — architecture, vendor/API, security, legal/PDPA, or other fact-dependent
   decisions: use primary sources and save a cited finding before committing to a design.
 
+The owner asked (18 Oct 2026) that Matt Pocock's skills be used alongside development from
+now on. `.claude/settings.json` enables the `mattpocock-skills@mattpocock` plugin
+(GitHub `mattpocock/skills`) for every session of this repo. Use, where they fit:
+
+- `grill-me` / `grill-with-docs` — before any design that must be agreed first (the team
+  roster rewrite, own teams without a tournament): interview the owner one question at a
+  time until the plan has no open gaps.
+- `code-review` — on every PR before asking the owner to merge.
+- `prototype` — a throwaway page to try a UX change before building it.
+- `wizard` — step-by-step scripts for steps only the owner can do (SMTP, dashboards).
+- `to-questionnaire` — questions for real beta coaches, guardians or organizers.
+- `handoff` — hand work to another agent or session.
+
+The tracker-based skills (`setup-matt-pocock-skills`, `to-spec`, `to-tickets`,
+`wayfinder`, `triage`, `implement-spec`) write tracker files: ask the owner before setting
+them up; the task list stays in `docs/national-readiness.md` until then.
+
 The agent must state which of these skills it is applying in commentary. A small,
 obvious edit may skip them, but must say why. These skills never override the hard rules
 above: in particular they do not authorize secret access, production changes, SQL apply,
