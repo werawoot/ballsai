@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { OTP_MAX_LENGTH, OTP_MIN_LENGTH, canSubmitOtp, normalizeEmail, normalizeOtp, otpErrorKey, resendWaitSeconds } from '@/lib/otp'
+import { OTP_MAX_LENGTH, OTP_MIN_LENGTH, canSubmitOtp, normalizeEmail, normalizeOtp, otpErrorKey, resendWaitSeconds, otpSlotCount } from '@/lib/otp'
 
 // T16: the login page said "6 digits" while Staging sends 8, and showed Supabase's raw
 // English error. The code length is a project setting (Auth: MAILER_OTP_LENGTH), so the
@@ -45,5 +45,19 @@ describe('email one-time code', () => {
     expect(resendWaitSeconds(sentAt, sentAt + 59_001)).toBe(1)
     expect(resendWaitSeconds(sentAt, sentAt + 60_000)).toBe(0)
     expect(resendWaitSeconds(null, sentAt)).toBe(0)
+  })
+})
+
+// Owner, 18 Oct 2026: with all 8 digits typed the page drew a ninth empty box, so it looked
+// unfinished. Production and Staging send 8 digits; a longer code pasted still fits.
+describe('how many code boxes the page draws', () => {
+  it('draws 8 boxes for the code our projects send, never an extra empty one', () => {
+    expect(otpSlotCount(0)).toBe(8)
+    expect(otpSlotCount(7)).toBe(8)
+    expect(otpSlotCount(8)).toBe(8)
+  })
+  it('grows only to fit a longer code, up to the most Supabase sends', () => {
+    expect(otpSlotCount(9)).toBe(9)
+    expect(otpSlotCount(12)).toBe(10)
   })
 })

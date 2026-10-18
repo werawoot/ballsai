@@ -3,16 +3,19 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeft, Check, ChevronRight, Eye, EyeOff, Facebook, Mail, Shield } from "lucide-react";
+import { ArrowLeft, ChevronRight, Eye, EyeOff, Facebook, Mail, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase";
-import { OTP_MAX_LENGTH, canSubmitOtp, normalizeEmail, normalizeOtp, otpErrorKey, resendWaitSeconds } from "@/lib/otp";
+import { OTP_MAX_LENGTH, canSubmitOtp, otpSlotCount, normalizeEmail, normalizeOtp, otpErrorKey, resendWaitSeconds } from "@/lib/otp";
 import { captchaSiteKey, withCaptcha } from "@/lib/captcha";
 import { OtpHelp } from "./OtpHelp";
+import { LoginConsent } from "./LoginConsent";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import BrandMark from "@/components/BrandMark";
 import "./login.css";
 
 type LoginStep = "start" | "email" | "otp" | "admin";
+
+const consentText = <>ฉันยอมรับ <Link href="/terms">ข้อกำหนดการใช้งาน</Link> และ <Link href="/privacy">นโยบายความเป็นส่วนตัว (PDPA)</Link></>;
 
 export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boolean; nextPath: string }) {
   const [step, setStep] = useState<LoginStep>(adminEntry ? "admin" : "start");
@@ -171,7 +174,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
     setMessage("");
   };
 
-  const otpSlots = Math.min(OTP_MAX_LENGTH, Math.max(8, otp.length + (otp.length < OTP_MAX_LENGTH ? 1 : 0)));
+  const otpSlots = otpSlotCount(otp.length);
 
   return (
     <main className="lg ui-dark">
@@ -191,12 +194,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
             <>
               <h1 className="ui-h1 lg-title">{tp("title")}</h1>
               <p className="lg-sub">{tp("sub")}</p>
-              <label className={`lg-consent${acceptedTerms ? " is-checked" : ""}${consentMissing && !acceptedTerms ? " is-missing" : ""}`}>
-                <input aria-describedby="login-consent-help" aria-invalid={consentMissing && !acceptedTerms} checked={acceptedTerms} id="login-consent" onChange={(event) => { setAcceptedTerms(event.target.checked); if (event.target.checked) setConsentMissing(false); }} type="checkbox" />
-                <i aria-hidden="true">{acceptedTerms && <Check size={14} strokeWidth={3.5} />}</i>
-                <span>ฉันยอมรับ <Link href="/terms">ข้อกำหนดการใช้งาน</Link> และ <Link href="/privacy">นโยบายความเป็นส่วนตัว (PDPA)</Link></span>
-              </label>
-              <p className="lg-consent-help" id="login-consent-help" role={consentMissing && !acceptedTerms ? "alert" : undefined}>{consentMissing && !acceptedTerms ? tp("consentNeeded") : ""}</p>
+              <LoginConsent accepted={acceptedTerms} missing={consentMissing} missingText={tp("consentNeeded")} onChange={(accepted) => { setAcceptedTerms(accepted); if (accepted) setConsentMissing(false); }}>{consentText}</LoginConsent>
               <button className="ui-btn ui-btn-white" disabled={loading} onClick={signInWithGoogle} type="button">
                 <span className="lg-google" aria-hidden="true" />
                 {loading ? tp("googleLoading") : tp("google")}
@@ -223,6 +221,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
                 <span>อีเมล</span>
                 <input autoComplete="email" id="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} placeholder="you@email.com" type="email" value={email} />
               </label>
+              <LoginConsent accepted={acceptedTerms} missing={consentMissing} missingText={tp("consentNeeded")} onChange={(accepted) => { setAcceptedTerms(accepted); if (accepted) setConsentMissing(false); }}>{consentText}</LoginConsent>
               {captcha}
               <button className="ui-btn ui-btn-primary" disabled={loading || !email || captchaMissing} onClick={() => sendOtp()} type="button">{loading ? "กำลังส่ง..." : "ส่งรหัสให้ฉัน"}<ChevronRight size={18} /></button>
             </>

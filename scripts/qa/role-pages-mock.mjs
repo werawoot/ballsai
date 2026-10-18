@@ -35,7 +35,7 @@ const teams = [
 
 // One public athlete for /players/p-1: a rank row, this season's verified numbers and the
 // rating events behind them (form and match-by-match tabs). PAC and DEF are not assessed.
-const athlete = { user_id: 'u-athlete', display_name: 'ด.ช. ทดสอบ ใจสู้', position: 'FW', province: 'ขอนแก่น', height_cm: 152, weight_kg: 41, current_team: 'ขอนแก่น U13', bio: null, profile_image_url: null, verification_level: 'performance_verified' }
+const athlete = { user_id: 'u-athlete', created_at: '2026-09-01T03:00:00Z', display_name: 'ด.ช. ทดสอบ ใจสู้', position: 'FW', province: 'ขอนแก่น', height_cm: 152, weight_kg: 41, current_team: 'ขอนแก่น U13', bio: null, profile_image_url: null, verification_level: 'performance_verified' }
 const rank = { id: 'p-1', player_id: 'u-athlete', player_name: athlete.display_name, team: athlete.current_team, province: 'ขอนแก่น', position: 'FW', sport: 'football', season: '2026', ovr: 68, pts: 1046, pac: null, sho: 71, pas: 64, dri: 69, def: null }
 const rating = { id: 'r-1', power_rating: 1046, matches_played: 5, wins: 3, draws: 1, losses: 1, goals: 6, assists: 2, clean_sheets: 0, mvps: 1 }
 const ratingEvents = [
