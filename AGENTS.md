@@ -162,8 +162,10 @@ Known manual seams, by design for now:
   them at `/admin/create`. After it, an athlete's first verified match creates the row (only
   for a public profile, because a rank row is public); PAC/SHO/PAS/DRI/DEF stay NULL (not
   assessed) until a coach or admin assesses them, and the UI shows them as a dash.
-- Team rosters are free text, so the athlete list in `/dashboard/results` is the whole
-  season and is searched by name/team.
+- Team rosters are `team_members` rows (invitation or join request, then accepted); the
+  athlete list in `/dashboard/results` is the accepted roster of the chosen tournament's
+  teams. The old free-text `teams.members` is cleared by sql/83 (ADR-011). A child without
+  their own account is ADR-011 phase 2, not built yet.
 - Removing an auth account is a human step: the app holds no service role key on purpose,
   so `delete_my_athlete_data()` erases the athlete's data and files a request in
   `account_deletion_requests` for an admin to close. Do not add a service role key to the

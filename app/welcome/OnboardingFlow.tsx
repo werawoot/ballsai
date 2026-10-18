@@ -74,7 +74,8 @@ export default function OnboardingFlow({ nextPath, userId }: { email: string; ne
       }
     }
 
-    router.replace(skip || !choice ? nextPath : destinationFor(choice));
+    // A team join link (ADR-011) brings the person back to send their request.
+    router.replace(skip || !choice || nextPath.startsWith("/join/") ? nextPath : destinationFor(choice));
     router.refresh();
   };
 

@@ -180,3 +180,21 @@
 .tp-danger .ui-field { margin: 4px 0 0; }
 .tp-danger-btn { background: #CC0001; border-color: #CC0001; color: #fff; min-height: 44px; }
 .tp-danger-btn:disabled { background: transparent; border-color: var(--ui-line); color: var(--ui-mute); }
+
+/* Join link, requests and the join page (ADR-011). */
+.tj-card { display: grid; gap: 10px; padding: 14px; }
+.tj-url { background: var(--ui-sunk); border: 1px solid var(--ui-line); border-radius: 10px; color: var(--ui-text); font: 600 13px/1.4 ui-monospace, monospace; min-height: 44px; padding: 10px 12px; width: 100%; }
+.tj-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.tj-actions .ui-btn { min-height: 44px; }
+.tj-line { background: #06c755; border-color: #06c755; color: #fff; }
+.tj-manage { border-top: 1px solid var(--ui-line); padding-top: 10px; }
+.tj-qr { background: #fff; border-radius: 12px; justify-self: start; margin: 0; padding: 10px; }
+.tj-qr img { display: block; height: auto; max-width: 100%; }
+.tj-qr figcaption { color: #444; }
+.tj-requests { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
+.tj-requests li { align-items: center; border-top: 1px solid var(--ui-line); display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; padding-top: 10px; }
+.tj-requests li:first-child { border-top: 0; padding-top: 0; }
+.tj-requests b { color: var(--ui-text); display: block; }
+.tj-facts { list-style: none; margin: 0 0 14px; }
+.tj-facts li { align-items: center; color: var(--ui-mute); display: flex; gap: 8px; }
+.tj-facts b { color: var(--ui-text); }

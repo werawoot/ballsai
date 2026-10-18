@@ -202,7 +202,6 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--ui-text)', marginBottom: 3 }}>{team.name}</div>
                           <div style={{ fontSize: 12, color: 'var(--ui-mute)', marginBottom: 4 }}>{team.tournaments?.name}</div>
-                          <div style={{ fontSize: 12, color: 'var(--ui-mute)', lineHeight: 1.6 }}>{team.members}</div>
                         </div>
                         <div style={{ background: '#fef9c3', color: '#854d0e', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 20, flexShrink: 0 }}>
                           รอยืนยัน

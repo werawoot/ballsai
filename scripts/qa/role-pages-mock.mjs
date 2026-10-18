@@ -148,6 +148,12 @@ http.createServer((request, response) => {
     if (table === 'team_events') return rows(role === 'coach' || role === 'assistant' ? [{ id: 'e0000000-0000-4000-8000-000000000001', team_id: teams[0].id, kind: 'training', title: 'ซ้อมเย็น', starts_at: new Date(Date.now() + 86400000).toISOString(), location: 'สนามโรงเรียน', cancelled_at: null }] : [])
     // The athlete's own memberships with team names (sql/82).
     if (table === 'rpc/my_team_memberships') return send(200, role === 'athlete' ? [{ member_id: 'm-athlete', team_id: teams[0].id, status: 'accepted', invited_at: '2026-10-01T03:00:00Z', created_at: '2026-10-01T03:00:00Z', team_name: teams[0].name, team_status: 'draft', team_kind: 'club', tournament_name: null, tournament_location: null }] : [])
+    // Join links and requests (ADR-011, sql/83).
+    if (table === 'rpc/my_team_join_link') return send(200, role === 'coach' ? [{ token: '0123456789abcdef0123456789abcdef', open: true }] : [])
+    if (table === 'rpc/team_join_requests_for') return send(200, role === 'coach' ? [{ request_id: 'b0000000-0000-4000-8000-000000000001', display_name: 'ด.ญ. ฟ้า ใสใจ', athlete_position: 'MF', birth_year: 2013, created_at: '2026-10-18T03:00:00Z' }] : [])
+    if (table === 'rpc/team_join_preview') return send(200, [{ team_name: teams[0].name, coach_name: 'โค้ชท็อป', province: 'ขอนแก่น', open: true }])
+    if (table === 'rpc/request_to_join_team') return send(200, 'requested')
+    if (table === 'rpc/my_children_team_memberships') return send(200, role === 'guardian' ? [{ member_id: 'm-child', athlete_name: athlete.display_name, team_name: teams[0].name, status: 'accepted' }] : [])
     if (table === 'rpc/team_roster_names') return send(200, role === 'coach' || role === 'assistant' ? [{ team_id: teams[0].id, athlete_id: 'u-athlete', display_name: 'ด.ช. ส่วนตัว ใจดี', position: 'MF' }] : [])
     // /notifications: the athlete has a few of each kind over the last ten days, three
     // unread. `read_at=is.null` (the unread tab and the count) filters them.
@@ -163,7 +169,9 @@ http.createServer((request, response) => {
       ] : []
       return rows(url.searchParams.get('read_at') === 'is.null' ? list.filter(item => !item.read_at) : list)
     }
-    if (table === 'teams') return rows(role === 'coach' ? (process.env.QA_COACH_NO_TEAM ? [] : teams.slice(0, 1)) : role === 'organizer' ? teams : [])
+    // QA_COACH_CLUB=1: the coach's team is an own (club) team with no tournament (sql/78).
+    const coachTeams = process.env.QA_COACH_CLUB ? [{ ...teams[0], tournament_id: null, status: 'draft', kind: 'club', tournaments: null }] : teams.slice(0, 1)
+    if (table === 'teams') return rows(role === 'coach' ? (process.env.QA_COACH_NO_TEAM ? [] : coachTeams) : role === 'organizer' ? teams : [])
     send(200, [])
   })
 }).listen(54322, '127.0.0.1', () => console.log('role pages mock on http://127.0.0.1:54322'))

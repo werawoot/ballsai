@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { BarChart3, CalendarDays, ClipboardList, Dumbbell, Gauge, Megaphone, NotebookPen, Timer, Trophy, UsersRound } from 'lucide-react'
+import { BarChart3, CalendarDays, ClipboardList, Dumbbell, Gauge, Link2, Megaphone, NotebookPen, Timer, Trophy, UserPlus, UsersRound } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { teamMatchIds, teamSeasonStats, teamSheet, type MatchRow, type PerformanceRow, type RankLink, type TeamMember } from '@/lib/team-stats'
@@ -19,6 +19,10 @@ import { minutesTotals, type MinuteEntry } from '@/lib/match-minutes'
 import { rosterProfiles } from '@/lib/roster-names'
 import EnterTournamentPanel, { type OpenTournament } from './EnterTournamentPanel'
 import DeleteTeamPanel from './DeleteTeamPanel'
+import JoinLinkPanel from './JoinLinkPanel'
+import JoinRequestsPanel from './JoinRequestsPanel'
+import { joinPath, type JoinRequestRow } from '@/lib/team-join'
+import { siteUrl } from '@/lib/seo'
 import { eventTimeParts } from '@/lib/team-events'
 import { addWeeks, libraryDrills, weekStartOf, weekdayOf, type PlanDay } from '@/lib/team-training'
 import { attendanceOpen, attendanceRates, splitEvents, type EventKind } from '@/lib/team-events'
@@ -192,6 +196,17 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
     ? await supabase.from('tournaments').select('id, name, start_date, location').eq('status', 'open').order('start_date', { ascending: true }).limit(50)
     : { data: [] }
   const to = await getTranslations('ownTeam')
+  // Join link and open requests for an own team (ADR-011, sql/83). Before SQL83 the
+  // functions are missing: the link card says the feature is not on yet.
+  const [{ data: linkRows, error: linkError }, { data: requestRows }] = isOwnTeam
+    ? await Promise.all([
+      supabase.rpc('my_team_join_link', { p_team_id: teamId }),
+      supabase.rpc('team_join_requests_for', { p_team_id: teamId }),
+    ])
+    : [{ data: null, error: null }, { data: null }]
+  const link = linkError ? null : ((linkRows ?? []) as { token: string; open: boolean }[])[0] ?? null
+  const joinRequests = (requestRows ?? []) as JoinRequestRow[]
+  const tj = await getTranslations('teamJoin')
   const showSkills = isHead && roster.length > 0
   const showNotes = isHead && roster.length > 0
 
@@ -202,6 +217,14 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
         <p className="ui-eyebrow">{tournamentName ?? t('noTournament')}</p>
         <h1 className="tp-title">{typedTeam.name}</h1>
         {failed && <p className="tp-alert" role="alert">{t('loadFailed')}</p>}
+        {isOwnTeam && link && <section className="tp-section" aria-labelledby="tp-requests">
+          <div className="tp-head"><h2 id="tp-requests"><UserPlus size={18} aria-hidden="true" />{tj('requestsTitle', { count: joinRequests.length })}</h2></div>
+          <JoinRequestsPanel rows={joinRequests} />
+        </section>}
+        {isOwnTeam && <section className="tp-section" aria-labelledby="tp-join">
+          <div className="tp-head"><h2 id="tp-join"><Link2 size={18} aria-hidden="true" />{tj('linkTitle')}</h2></div>
+          <JoinLinkPanel teamId={teamId} teamName={typedTeam.name} url={link ? `${siteUrl()}${joinPath(link.token)}` : null} open={link?.open ?? false} />
+        </section>}
         {isOwnTeam && <section className="tp-section" aria-labelledby="tp-enter">
           <div className="tp-head"><h2 id="tp-enter"><Trophy size={18} aria-hidden="true" />{to('enter')}</h2></div>
           <EnterTournamentPanel teamId={teamId} members={roster.map(member => ({ id: member.athleteId, name: member.name }))} tournaments={(openRows ?? []) as OpenTournament[]} />
