@@ -13,6 +13,8 @@ const db = vi.hoisted(() => ({
   tables: {} as Record<string, unknown>,
   counts: {} as Record<string, number>,
   private: null as null | { birth_date: string | null; guardian_consent_at: string | null },
+  // my_team_memberships rows (sql/82); null: the function is missing, the old read is used.
+  memberships: null as null | Record<string, unknown>[],
   failing: [] as string[],
   // Before SQL78 teams has no kind column: a select naming it fails the way PostgREST does.
   noKindColumn: false,
@@ -41,7 +43,9 @@ function fakeClient() {
   }
   return {
     from,
-    rpc: async () => ({ data: db.private ? [db.private] : [], error: null }),
+    rpc: async (fn: string) => fn === 'my_team_memberships'
+      ? (db.memberships ? { data: db.memberships, error: null } : { data: null, error: { code: 'PGRST202' } })
+      : { data: db.private ? [db.private] : [], error: null },
     auth: { getUser: async () => ({ data: { user: { id: 'me', email: 'athlete@example.com' } } }) },
   }
 }
@@ -121,6 +125,15 @@ describe('/profile', () => {
     expect(text(html)).toContain('อยู่ทีมไหน?')
     expect(html).toContain('pf-team-ask')
     expect(html.indexOf('pf-team-ask')).toBeGreaterThan(html.indexOf('href="/card"'))
+  })
+
+  it('names the team an athlete joined, which RLS hides from the old read (sql/82)', async () => {
+    db.tables.team_members = [{ status: 'accepted', teams: null }]
+    db.memberships = [{ member_id: 'm1', team_id: 't1', status: 'accepted', invited_at: null, created_at: '2026-10-18T01:00:00Z', team_name: 'QA ทดสอบ 18ตค', team_status: 'draft', team_kind: 'club', tournament_name: null, tournament_location: null }]
+    const page = text(await render(ProfilePage as never))
+    db.memberships = null
+    expect(page).toContain('QA ทดสอบ 18ตค')
+    expect(page).toContain('ดูทีมของฉัน')
   })
 
   it('does not ask an athlete who is already in a team', async () => {

@@ -1145,7 +1145,8 @@
         "confirmed": "Confirmed to play",
         "teamPending": "Organizer reviewing team",
         "forming": "Team forming"
-      }
+      },
+      "viewTeams": "See my teams"
     },
     "shortcuts": {
       "title": "Shortcuts",
@@ -2232,7 +2233,10 @@
     "savePdf": "Print / save PDF",
     "imageFailed": "Could not save the image. Try the print button instead",
     "open": "Stats and team sheet",
-    "coachChip": "Coach assessed"
+    "coachChip": "Coach assessed",
+    "notFoundTitle": "This page is for the team's coaches",
+    "notFoundBody": "Athletes and guardians find the team's sessions, news and training plans on My teams. If you coach this team, it may have been deleted.",
+    "notFoundBack": "Go to My teams"
   },
   "coachSkills": {
     "title": "Skill assessment",
@@ -2604,6 +2608,7 @@
     "deleteConfirm": "Delete this team for good",
     "deleting": "Deleting…",
     "deleteFailed": "Could not delete the team",
-    "deleteLocked": "This team has been sent to the organizer, so it cannot be deleted. Contact the organizer to withdraw it."
+    "deleteLocked": "This team has been sent to the organizer, so it cannot be deleted. Contact the organizer to withdraw it.",
+    "withdrawHint": "Not going to this tournament? You can withdraw until your coach submits the entry. Your coach will see it; the organizer sees no names until the coach submits."
   }
 }

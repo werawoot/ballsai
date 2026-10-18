@@ -30,6 +30,7 @@ import type { ReactNode } from 'react'
 import { BellRing, CalendarDays, ClipboardPenLine, Megaphone, ShieldHalf, Timer, Users } from 'lucide-react'
 import { teamHub, type TeamHubSection } from '@/lib/team-hub'
 import { urgentTeamFirst } from '@/lib/role-home'
+import { MY_TEAM_MEMBERSHIPS_LIMIT, fetchMyTeamMemberships, teamNamesById } from '@/lib/my-team-memberships'
 import './team-hub.css'
 import PageHeader from '@/components/PageHeader'
 
@@ -46,9 +47,10 @@ export default async function TeamMembersPage(props: { searchParams?: Promise<{ 
   // Own teams (sql/78) add teams.kind; before SQL78 the column is missing, so the list is
   // read again without it and every team is a tournament team, as before.
   const teamsQuery = (columns: string) => supabase.from('teams').select(columns).eq('created_by', user.id).order('created_at', { ascending: false })
-  const [teamsFirst, { data: invites, error: invitesError }, { data: profileRow }, { data: entryRows, error: entriesError }] = await Promise.all([
+  const [teamsFirst, { memberships: invites, failed: invitesError }, { data: profileRow }, { data: entryRows, error: entriesError }] = await Promise.all([
     teamsQuery('id, name, tournament_id, status, kind, tournaments(name, fee)'),
-    supabase.from('team_members').select('id, team_id, athlete_id, status, invited_at, teams(name)').eq('athlete_id', user.id).order('created_at', { ascending: false }),
+    // The athlete's own invitations and teams, with names (sql/82, lib/my-team-memberships).
+    fetchMyTeamMemberships(supabase as never, user.id, MY_TEAM_MEMBERSHIPS_LIMIT),
     supabase.from('profiles').select('role, onboarding_persona, full_name').eq('id', user.id).maybeSingle(),
     // Tournaments a coach entered this athlete or their child in (sql/78, D1).
     supabase.rpc('my_entry_rosters', { p_limit: 50 }),
@@ -92,14 +94,17 @@ export default async function TeamMembersPage(props: { searchParams?: Promise<{ 
   // No join from coach_id: PostgREST needs a proven, RLS-safe relationship for that,
   // and a coach's name, email or phone is not the athlete's to read. The team is the
   // identifier the athlete already knows, because they accepted its invitation.
+  // The coach's id is not joined, and the team row is the coach's: the name comes from the
+  // athlete's own memberships (sql/82).
+  const myTeamNames = teamNamesById(invites)
   const { data: attestationRows, error: attestationError } = await supabase
     .from('coach_attestations')
-    .select('id, field, claimed_value, status, created_at, teams(name)')
+    .select('id, team_id, field, claimed_value, status, created_at, teams(name)')
     .eq('athlete_id', user.id)
     .order('created_at', { ascending: false })
   const attestations = (attestationRows ?? []).map(row => ({
     id: row.id as string,
-    teamName: (row.teams as { name?: string } | null)?.name ?? '',
+    teamName: (row.teams as { name?: string } | null)?.name ?? myTeamNames.get(row.team_id as string) ?? '',
     field: 'playing_position',
     claimedValue: row.claimed_value,
     status: row.status,
@@ -118,15 +123,15 @@ export default async function TeamMembersPage(props: { searchParams?: Promise<{ 
   // table is missing: there is nothing to answer, so nothing is shown.
   const { data: skillRows } = await supabase
     .from('coach_skill_assessments')
-    .select('id, created_at, speed, stamina, strength, technique, vision, teams(name)')
+    .select('id, team_id, created_at, speed, stamina, strength, technique, vision, teams(name)')
     .eq('athlete_id', user.id)
     .eq('status', 'pending')
     .order('created_at', { ascending: false })
     .limit(20)
-  const skillProposals: SkillProposal[] = ((skillRows ?? []) as unknown as (Record<string, unknown> & { id: string; created_at: string; teams: { name?: string } | null })[]).map(row => ({
+  const skillProposals: SkillProposal[] = ((skillRows ?? []) as unknown as (Record<string, unknown> & { id: string; team_id: string; created_at: string; teams: { name?: string } | null })[]).map(row => ({
     id: row.id,
     createdAt: row.created_at,
-    teamName: row.teams?.name ?? '',
+    teamName: row.teams?.name ?? myTeamNames.get(row.team_id) ?? '',
     skills: Object.fromEntries(COACH_SKILL_KEYS.map(key => [key, (row[key] as number | null) ?? null])) as CoachSkills,
   }))
   // Upcoming team events for this athlete and any child they guard (sql/70). Before SQL70
