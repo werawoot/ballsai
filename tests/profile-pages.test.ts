@@ -134,6 +134,8 @@ describe('/profile', () => {
     db.memberships = null
     expect(page).toContain('QA ทดสอบ 18ตค')
     expect(page).toContain('ดูทีมของฉัน')
+    // A coach's own team is in no tournament yet: it says so, not a bare "รายการแข่ง".
+    expect(page).toContain('QA ทดสอบ 18ตค ยังไม่ได้ลงรายการแข่ง')
   })
 
   it('does not ask an athlete who is already in a team', async () => {
