@@ -13,3 +13,9 @@ id = "supabase-secret-key"
 description = "Supabase secret API key (sb_secret_...), which bypasses RLS"
 regex = '''\bsb_secret_[A-Za-z0-9_-]{20,}'''
 keywords = ["sb_secret_"]
+
+# The fixed fake join-link token used by tests and the QA mock (ADR-011). It is the hex
+# digits in order, never a real link; matched exactly so nothing else is let through.
+[[allowlists]]
+description = "Fake team join-link token in tests and the QA mock"
+regexes = ['''\b0123456789abcdef0123456789abcdef\b''']
