@@ -36,19 +36,19 @@ export default function CoachRosterActions({
     return <p style={{ margin: '9px 0 0', fontSize: 11, color: 'var(--ui-mute)' }}>ส่งรายชื่อแล้ว แก้รายชื่อไม่ได้จนกว่าผู้จัดรายการจะเปิดให้แก้</p>
   }
 
-  const call = async (key: string, url: string, body: unknown, done: string) => {
+  const call = async (key: string, url: string, body: unknown, done: string | ((data: { reasonSent?: boolean } | null) => string)) => {
     if (!shouldStartAction(pending)) return
     setPending(key); setFeedback(null)
     const response = await fetch(url, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     }).catch(() => null)
-    const data = response ? await response.json().catch(() => null) as { error?: string } | null : null
+    const data = response ? await response.json().catch(() => null) as { error?: string; reasonSent?: boolean } | null : null
     setPending(null)
     if (!response?.ok) {
       setFeedback({ tone: 'error', text: data?.error ?? 'ทำรายการไม่สำเร็จ กรุณาลองใหม่' })
       return
     }
-    setFeedback({ tone: 'success', text: done })
+    setFeedback({ tone: 'success', text: typeof done === 'function' ? done(data) : done })
     router.refresh()
   }
 
@@ -86,7 +86,7 @@ export default function CoachRosterActions({
                 setConfirming(null)
                 void call(`remove:${member.id}`, '/api/team-join',
                   { action: 'remove', data: { memberId: member.id, teamId, reason: form.get('reason'), note: form.get('note') } },
-                  tj('removed', { name: member.name }))
+                  data => tj(data?.reasonSent === false ? 'removedNoReason' : 'removed', { name: member.name }))
               }}
               style={{ display: 'grid', gap: 6 }}
             >
@@ -119,7 +119,7 @@ export default function CoachRosterActions({
             </form>
           : <button
               type="button"
-              aria-label={`นำ${member.name}ออกจากทีม ต้องเลือกเหตุผลก่อน`}
+              aria-label={tj('removeOpenLabel', { name: member.name })}
               aria-busy={remove['aria-busy']}
               disabled={remove.disabled}
               onClick={() => { setReason('moved_team'); setConfirming(member.id) }}

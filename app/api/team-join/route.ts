@@ -14,6 +14,7 @@ const REFUSALS: [string, ApiErrorCode, number][] = [
   ['LINK_CLOSED', 'joinLinkClosed', 409],
   ['OWN_TEAM', 'joinOwnTeam', 400],
   ['ATHLETE_PROFILE_REQUIRED', 'joinProfileRequired', 409],
+  ['ATHLETE_NAME_REQUIRED', 'joinNameRequired', 409],
   ['TEAM_REQUESTS_FULL', 'joinTeamFull', 409],
   ['TOO_MANY_REQUESTS', 'joinTooMany', 429],
   ['NOT_CLUB_TEAM', 'joinNotClubTeam', 400],
@@ -66,7 +67,9 @@ export async function POST(request: Request) {
   }
 
   let { data: result, error } = await db.rpc(rpc, args)
-  if (error && fallback && MISSING.includes(error.code ?? '')) ({ data: result, error } = await db.rpc(fallback[0], fallback[1]))
+  // The fallback cannot keep a reason; the page is told so it does not promise one.
+  const usedFallback = Boolean(error && fallback && MISSING.includes(error.code ?? ''))
+  if (usedFallback && fallback) ({ data: result, error } = await db.rpc(fallback[0], fallback[1]))
   if (error) {
     if (MISSING.includes(error.code ?? '')) return apiError('featureNotReady', 503)
     const refusal = REFUSALS.find(([message]) => error.message?.includes(message))
@@ -74,5 +77,5 @@ export async function POST(request: Request) {
     if (error.code === '42501') return apiError('notAllowed', 403)
     return apiError('actionFailed', 400)
   }
-  return NextResponse.json({ ok: true, data: result }, { headers: { 'Cache-Control': 'no-store' } })
+  return NextResponse.json({ ok: true, data: result, ...(usedFallback ? { reasonSent: false } : {}) }, { headers: { 'Cache-Control': 'no-store' } })
 }

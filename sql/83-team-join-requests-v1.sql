@@ -29,6 +29,7 @@
 --     that is not submitted, with a reason from a fixed list ('other' needs a note of 1-200
 --     characters). The athlete and guardians see the reason. manage_coach_beta (sql/47),
 --     which removed without a reason, is no longer callable by signed-in users.
+--   * Every leave and removal is also kept in team_member_history, so a rejoin keeps the past.
 --   * teams.members is cleared and must stay empty.
 -- Writes go through these functions only: no grant on the new tables, RLS on.
 
@@ -65,6 +66,22 @@ alter table public.team_members add constraint team_members_removal_note_check
 update public.teams set members = '' where members is distinct from '';
 alter table public.teams drop constraint if exists teams_members_cleared_check;
 alter table public.teams add constraint teams_members_cleared_check check (members = '');
+
+-- Every leave and removal is kept here, so a rejoin does not erase why someone left before.
+create table if not exists public.team_member_history (
+  id uuid primary key default gen_random_uuid(),
+  team_id uuid not null references public.teams(id) on delete cascade,
+  athlete_id uuid not null references public.athlete_profiles(user_id) on delete cascade,
+  status text not null check (status in ('left', 'removed', 'declined')),
+  removal_reason text check (removal_reason is null or removal_reason in ('moved_team', 'asked_to_leave', 'inactive', 'other')),
+  removal_note text check (removal_note is null or char_length(removal_note) between 1 and 200),
+  ended_by uuid references auth.users(id) on delete set null,
+  ended_at timestamptz not null default now()
+);
+alter table public.team_member_history enable row level security;
+revoke all on table public.team_member_history from public, anon, authenticated;
+create index if not exists team_member_history_team_idx on public.team_member_history (team_id, ended_at desc);
+create index if not exists team_member_history_athlete_idx on public.team_member_history (athlete_id);
 
 create table if not exists public.team_join_links (
   team_id uuid primary key references public.teams(id) on delete cascade,
@@ -209,9 +226,10 @@ begin
   if not v_link.open then raise exception 'LINK_CLOSED' using errcode = '55000'; end if;
   if v_team.created_by = v_user then raise exception 'OWN_TEAM' using errcode = '22023'; end if;
   if v_team.status <> 'draft' then raise exception 'ROSTER_LOCKED' using errcode = '55000'; end if;
-  if not exists (select 1 from public.athlete_profiles where user_id = v_user) then
-    raise exception 'ATHLETE_PROFILE_REQUIRED' using errcode = '22023';
-  end if;
+  select nullif(btrim(display_name), '') into v_name from public.athlete_profiles where user_id = v_user;
+  if not found then raise exception 'ATHLETE_PROFILE_REQUIRED' using errcode = '22023'; end if;
+  -- The coach decides by name: a request without one would read "athlete" and nothing else.
+  if v_name is null then raise exception 'ATHLETE_NAME_REQUIRED' using errcode = '22023'; end if;
 
   select * into v_member from public.team_members where team_id = v_team.id and athlete_id = v_user for update;
   if found and v_member.status = 'accepted' then return 'already_member'; end if;
@@ -219,6 +237,8 @@ begin
     update public.team_members set status = 'accepted', responded_at = now() where id = v_member.id;
     update public.team_join_requests set status = 'accepted', decided_at = now()
     where team_id = v_team.id and athlete_id = v_user and status = 'pending';
+    perform public.create_notification(v_team.created_by, 'team_status', v_name || ' เข้าทีม ' || v_team.name || ' แล้ว',
+      'นักกีฬาตอบรับคำเชิญของคุณผ่านลิงก์ขอเข้าทีม', '/team-members/' || v_team.id::text, 'team_joined:' || v_member.id::text);
     return 'joined';
   end if;
 
@@ -235,7 +255,6 @@ begin
   end if;
 
   insert into public.team_join_requests (team_id, athlete_id) values (v_team.id, v_user) returning id into v_request;
-  select coalesce(nullif(btrim(display_name), ''), 'นักกีฬา') into v_name from public.athlete_profiles where user_id = v_user;
   perform public.create_notification(v_team.created_by, 'team_invite', 'มีคนขอเข้าทีม ' || v_team.name,
     v_name || ' ขอเข้าทีม กดเพื่อรับเข้าทีมหรือไม่รับ', '/team-members/' || v_team.id::text, 'join_request:' || v_request::text);
   -- The athlete's own copy is skipped: they just pressed the button.
@@ -249,7 +268,7 @@ $$;
 
 -- The head coach's open requests: display name, position and birth year only.
 create or replace function public.team_join_requests_for(p_team_id uuid)
-returns table (request_id uuid, athlete_id uuid, display_name text, athlete_position text, birth_year integer, created_at timestamptz)
+returns table (request_id uuid, display_name text, athlete_position text, birth_year integer, created_at timestamptz)
 language plpgsql
 security definer
 set search_path = ''
@@ -263,7 +282,7 @@ begin
   end if;
   perform public.expire_team_join_requests(p_team_id);
   return query
-    select r.id, r.athlete_id, a.display_name, a.position, extract(year from a.birth_date)::integer, r.created_at
+    select r.id, a.display_name, a.position, extract(year from a.birth_date)::integer, r.created_at
     from public.team_join_requests r
     join public.athlete_profiles a on a.user_id = r.athlete_id
     where r.team_id = p_team_id and r.status = 'pending'
@@ -327,8 +346,8 @@ begin
 end;
 $$;
 
--- The athlete, or an accepted guardian, leaves an own team. Returns 'left' (also when
--- already left).
+-- The athlete, or an accepted guardian, leaves an own team. Returns 'left', or 'declined' for
+-- an invitation never accepted (also when already done).
 create or replace function public.leave_team(p_member_id uuid)
 returns text
 language plpgsql
@@ -353,18 +372,22 @@ begin
   -- A tournament entry is left through withdraw_from_entry (sql/78), which knows its lock.
   if v_team.kind is distinct from 'club' then raise exception 'NOT_CLUB_TEAM' using errcode = '22023'; end if;
   select * into v_member from public.team_members where id = p_member_id for update;
-  if v_member.status = 'left' then return 'left'; end if;
+  if v_member.status in ('left', 'declined') then return v_member.status; end if;
   if v_member.status not in ('pending', 'accepted') then raise exception 'NOT_A_MEMBER' using errcode = '22023'; end if;
-  update public.team_members set status = 'left', responded_at = now(), ended_by = v_user,
-    removal_reason = null, removal_note = null
+  -- Leaving before ever joining is turning the invitation down.
+  update public.team_members set status = case when v_member.status = 'pending' then 'declined' else 'left' end,
+    responded_at = now(), ended_by = v_user, removal_reason = null, removal_note = null
   where id = p_member_id;
+  insert into public.team_member_history (team_id, athlete_id, status, ended_by)
+  values (v_member.team_id, v_member.athlete_id, case when v_member.status = 'pending' then 'declined' else 'left' end, v_user);
   if v_member.status = 'accepted' then
     select coalesce(nullif(btrim(display_name), ''), 'นักกีฬา') into v_name from public.athlete_profiles where user_id = v_member.athlete_id;
     perform public.create_notification(v_team.created_by, 'team_status', v_name || ' ออกจากทีม ' || v_team.name,
       case when v_member.athlete_id = v_user then 'นักกีฬาออกจากทีมเอง' else 'ผู้ปกครองให้นักกีฬาออกจากทีม' end,
       '/team-members/' || v_team.id::text, 'team_left:' || p_member_id::text || ':' || extract(epoch from now())::bigint::text);
+    return 'left';
   end if;
-  return 'left';
+  return 'declined';
 end;
 $$;
 
@@ -399,12 +422,15 @@ begin
   update public.team_members set status = 'removed', responded_at = now(), ended_by = v_user,
     removal_reason = p_reason, removal_note = v_note
   where id = p_member_id;
+  insert into public.team_member_history (team_id, athlete_id, status, removal_reason, removal_note, ended_by)
+  values (v_member.team_id, v_member.athlete_id, 'removed', p_reason, v_note, v_user);
   v_reason_text := case p_reason
     when 'moved_team' then 'ย้ายทีม'
     when 'asked_to_leave' then 'ขอออกเอง'
     when 'inactive' then 'ไม่ได้มาซ้อมนาน'
     else 'อื่น ๆ: ' || v_note end;
-  perform public.notify_athlete_and_guardians(v_member.athlete_id, 'โค้ชนำออกจากทีม ' || v_team.name,
+  perform public.notify_athlete_and_guardians(v_member.athlete_id,
+    case when v_member.status = 'pending' then 'โค้ชยกเลิกคำเชิญเข้าทีม ' else 'โค้ชนำออกจากทีม ' end || v_team.name,
     'เหตุผล: ' || v_reason_text || ' ผลแข่ง การ์ด และประวัติของคุณยังอยู่ครบ', '/team-members',
     'team_removed:' || p_member_id::text || ':' || extract(epoch from now())::bigint::text);
   return 'removed';
@@ -414,13 +440,13 @@ $$;
 -- A guardian's view of their children's own-team memberships, to leave on a child's behalf.
 -- A guardian cannot read team_members; this returns only accepted children's open rows.
 create or replace function public.my_children_team_memberships()
-returns table (member_id uuid, athlete_id uuid, athlete_name text, team_name text, status text)
+returns table (member_id uuid, athlete_name text, team_name text, status text)
 language sql
 stable
 security definer
 set search_path = ''
 as $$
-  select m.id, m.athlete_id, a.display_name, t.name, m.status
+  select m.id, a.display_name, t.name, m.status
   from public.guardian_links g
   join public.team_members m on m.athlete_id = g.athlete_id and m.status in ('pending', 'accepted')
   join public.teams t on t.id = m.team_id and t.kind = 'club'
@@ -460,7 +486,8 @@ begin
      or has_function_privilege('authenticated', 'public.notify_athlete_and_guardians(uuid,text,text,text,text)', 'execute')
      or has_function_privilege('authenticated', 'public.manage_coach_beta(text,uuid,jsonb)', 'execute')
      or has_table_privilege('authenticated', 'public.team_join_requests', 'select')
-     or has_table_privilege('authenticated', 'public.team_join_links', 'select') then
+     or has_table_privilege('authenticated', 'public.team_join_links', 'select')
+     or has_table_privilege('authenticated', 'public.team_member_history', 'select') then
     raise exception 'SQL83 privileges are wider than intended';
   end if;
 end;

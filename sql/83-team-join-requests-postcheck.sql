@@ -4,8 +4,9 @@
 -- precheck; fingerprints equal on Staging and Production to runbook row 83.
 -- No backslash or asterisk, so it survives copy and paste from chat.
 
-select to_regclass('public.team_join_requests') is not null and to_regclass('public.team_join_links') is not null as tables,
-       (select bool_and(c.relrowsecurity) from pg_class c where c.oid in ('public.team_join_requests'::regclass, 'public.team_join_links'::regclass)) as rls,
+select to_regclass('public.team_join_requests') is not null and to_regclass('public.team_join_links') is not null
+         and to_regclass('public.team_member_history') is not null as tables,
+       (select bool_and(c.relrowsecurity) from pg_class c where c.oid in ('public.team_join_requests'::regclass, 'public.team_join_links'::regclass, 'public.team_member_history'::regclass)) as rls,
        to_regprocedure('public.request_to_join_team(text)') is not null
          and to_regprocedure('public.decide_join_request(uuid,boolean)') is not null
          and to_regprocedure('public.leave_team(uuid)') is not null
@@ -18,7 +19,8 @@ select to_regclass('public.team_join_requests') is not null and to_regclass('pub
        has_function_privilege('anon', 'public.request_to_join_team(text)', 'execute') as anon_request,
        has_function_privilege('anon', 'public.decide_join_request(uuid,boolean)', 'execute') as anon_decide,
        has_table_privilege('authenticated', 'public.team_join_requests', 'select')
-         or has_table_privilege('authenticated', 'public.team_join_links', 'select') as member_read_tables,
+         or has_table_privilege('authenticated', 'public.team_join_links', 'select')
+         or has_table_privilege('authenticated', 'public.team_member_history', 'select') as member_read_tables,
        has_function_privilege('authenticated', 'public.manage_coach_beta(text,uuid,jsonb)', 'execute') as old_remove,
        (select count(id) from public.teams where members is distinct from '') as members_text,
        (select count(id) from public.teams) as teams,

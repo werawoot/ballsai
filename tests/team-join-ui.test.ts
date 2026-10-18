@@ -54,7 +54,7 @@ describe('the coach\'s join link', () => {
 
 describe('requests to join', () => {
   it('shows only name, position and birth year, with accept and decline', () => {
-    const page = text(intl(createElement(JoinRequestsPanel, { rows: [{ request_id: 'r', athlete_id: 'a', display_name: 'ด.ช. ต้น', athlete_position: 'MF', birth_year: 2013, created_at: '2026-10-18T00:00:00Z' }] })))
+    const page = text(intl(createElement(JoinRequestsPanel, { rows: [{ request_id: 'r', display_name: 'ด.ช. ต้น', athlete_position: 'MF', birth_year: 2013, created_at: '2026-10-18T00:00:00Z' }] })))
     expect(page).toContain('ด.ช. ต้น')
     expect(page).toContain('MF · เกิดปี 2013')
     expect(page).toContain(th.teamJoin.accept)

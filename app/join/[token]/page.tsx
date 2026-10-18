@@ -42,7 +42,7 @@ export default async function JoinTeamPage(props: { params: Promise<{ token: str
             {!team.open
               ? <p className="tp-alert" role="status">{t('closed')}</p>
               : user
-                ? <JoinRequestButton token={token} auto={ask === '1'} welcomePath={`/welcome?again=1&next=${encodeURIComponent(back)}`} />
+                ? <JoinRequestButton token={token} auto={ask === '1'} userId={user.id} welcomePath={`/welcome?again=1&next=${encodeURIComponent(back)}`} />
                 : <>
                     <Link className="ui-btn ui-btn-primary" href={`/login?next=${encodeURIComponent(back)}`}>{t('signIn')}</Link>
                     <p className="tp-note">{t('signInHint')}</p>

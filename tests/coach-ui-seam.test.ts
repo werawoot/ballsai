@@ -85,7 +85,7 @@ describe('CoachRosterActions rendering', () => {
     const markup = html(CoachRosterActions, props)
 
     // Every removal asks for a reason first (ADR-011), which is also the confirmation.
-    for (const name of ['น้องเอ', 'น้องบี', 'น้องซี']) expect(markup).toContain(`aria-label="นำ${name}ออกจากทีม ต้องเลือกเหตุผลก่อน"`)
+    for (const name of ['น้องเอ', 'น้องบี', 'น้องซี']) expect(markup).toContain(`aria-label="${th.teamJoin.removeOpenLabel.replace('{name}', name)}"`)
   })
 
   it('offers the structured position attestation with only the allowed values', () => {
@@ -158,7 +158,7 @@ describe('CoachRosterActions rendering', () => {
     // ADR-011: the first tap opens the reason form; nothing is removed by one tap.
     const markup = html(CoachRosterActions, props)
 
-    expect(markup).toContain('aria-label="นำน้องเอออกจากทีม ต้องเลือกเหตุผลก่อน"')
+    expect(markup).toContain(`aria-label="${th.teamJoin.removeOpenLabel.replace('{name}', 'น้องเอ')}"`)
     expect(markup).not.toContain('name="reason"')
   })
 

@@ -89,3 +89,15 @@ describe('/api/team-join (sql/83)', () => {
     expect(rpc.mock.calls[1]).toEqual(['manage_coach_beta', { p_action: 'remove', p_id: T, p_data: { memberId: M } }])
   })
 })
+
+describe('/api/team-join: what the database refuses and the fallback tells', () => {
+  it('asks for a name before a request, and says when a removal kept no reason', async () => {
+    rpc.mockResolvedValueOnce({ data: null, error: { code: '22023', message: 'ATHLETE_NAME_REQUIRED' } })
+    const named = await call({ action: 'request', data: { token: TOKEN } })
+    expect([named.status, (await named.json()).code]).toEqual([409, 'joinNameRequired'])
+    rpc.mockResolvedValueOnce({ data: null, error: { code: 'PGRST202', message: 'missing' } })
+    rpc.mockResolvedValueOnce({ data: { status: 'removed' }, error: null })
+    expect((await (await call({ action: 'remove', data: { memberId: M, teamId: T, reason: 'inactive' } })).json()).reasonSent).toBe(false)
+    expect((await (await call({ action: 'remove', data: { memberId: M, teamId: T, reason: 'inactive' } })).json()).reasonSent).toBeUndefined()
+  })
+})

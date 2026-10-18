@@ -632,7 +632,8 @@
     "joinTeamFull": "This team has many requests waiting for the coach. Try again later.",
     "joinTooMany": "You already have many requests waiting. Wait for coaches to answer first.",
     "joinNotClubTeam": "Only a coach’s own team works this way; for a tournament entry use withdraw.",
-    "memberNotFound": "This athlete is not on the team. Refresh the page and try again."
+    "memberNotFound": "This athlete is not on the team. Refresh the page and try again.",
+    "joinNameRequired": "Add your name first so the coach knows who is asking."
   },
   "impact": {
     "back": "Home",
@@ -2675,7 +2676,9 @@
     "leaving": "Leaving…",
     "leaveQuestion": "Leave {team}? The coach will see you left. You can ask to join again later.",
     "leaveChildQuestion": "Take {name} out of {team}? The coach will see a guardian did it.",
-    "leaveFailed": "Could not leave the team. Try again."
+    "leaveFailed": "Could not leave the team. Try again.",
+    "removeOpenLabel": "Remove {name} from the team: choose a reason first",
+    "removedNoReason": "{name} was removed (this system does not send the reason to athletes yet)"
   },
   "joinPage": {
     "home": "Home",
@@ -2700,6 +2703,9 @@
       "already_requested": "You already asked to join this team. Waiting for the coach.",
       "joined": "The coach had invited you. You are on the team now.",
       "already_member": "You are already on this team."
-    }
+    },
+    "nameLabel": "Name the coach will see",
+    "nameSave": "Save name and ask to join",
+    "nameFailed": "Could not save the name. Try again."
   }
 }

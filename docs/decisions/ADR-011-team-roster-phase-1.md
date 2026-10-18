@@ -90,3 +90,23 @@ Clear `teams.members` and stop anyone reading it. Only test data exists today.
 - No manual step per athlete or team: links, expiry and limits run by themselves.
 - The `/dashboard/results` note in `AGENTS.md` ("rosters are free text") is out of date and
   is corrected in the same change.
+
+## Implementation notes (sql/83, code review 18 Oct 2026)
+
+Added while building, each in service of a decision above; none changes one:
+
+- An athlete may hold at most 20 open requests across teams, so one account cannot spam
+  coaches nationwide (the 50 per team cap protects a team, not the coaches).
+- A request needs a display name: the coach decides by name (Q10). The join page asks for
+  one when the profile has none.
+- Opening the link with a pending email invitation accepts that invitation (Q17), and the
+  coach is told. Leaving an invitation never accepted records it as declined.
+- The coach is told when an athlete leaves, so the roster never changes silently.
+- Leaves and removals are also written to `team_member_history`, so a rejoin keeps why
+  someone left before ("membership history is kept").
+- Until sql/83 is applied, a removal goes through sql/47 without a reason and the page says
+  the reason was not sent.
+
+Known limits, left for later: a guardian's child list shows up to 100 teams; after a
+declined request the athlete may ask again at once (the coach can stop the link); the
+coach's name in the preview is `profiles.full_name`, the name families see (sql/76).

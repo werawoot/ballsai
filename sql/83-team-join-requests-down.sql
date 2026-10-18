@@ -16,6 +16,7 @@ drop function if exists public.expire_team_join_requests(uuid);
 drop function if exists public.notify_athlete_and_guardians(uuid, text, text, text, text);
 drop table if exists public.team_join_requests;
 drop table if exists public.team_join_links;
+drop table if exists public.team_member_history;
 update public.team_members set status = 'removed' where status = 'left';
 alter table public.team_members drop constraint if exists team_members_status_check;
 alter table public.team_members add constraint team_members_status_check

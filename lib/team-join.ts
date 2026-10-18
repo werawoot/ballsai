@@ -23,17 +23,18 @@ export const lineShareUrl = (text: string) => `https://line.me/R/share?text=${en
 
 export type JoinRequestRow = {
   request_id: string
-  athlete_id: string
   display_name: string | null
   athlete_position: string | null
   birth_year: number | null
   created_at: string
 }
 
-export type ChildTeamRow = { member_id: string; athlete_id: string; athlete_name: string | null; team_name: string; status: string }
+export type ChildTeamRow = { member_id: string; athlete_name: string | null; team_name: string; status: string }
 
 // One call to /api/team-join; `body` carries the error code a page words with useApiErrorText.
-export async function postTeamJoin(action: string, data: Record<string, unknown>) {
+export type TeamJoinAction = 'link' | 'rotate' | 'open' | 'request' | 'decide' | 'leave' | 'remove'
+
+export async function postTeamJoin(action: TeamJoinAction, data: Record<string, unknown>) {
   const response = await fetch('/api/team-join', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, data }),
   }).catch(() => null)
