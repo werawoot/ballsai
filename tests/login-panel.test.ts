@@ -7,6 +7,8 @@ import en from '@/messages/en.json'
 
 vi.mock('@/lib/supabase', () => ({ createClient: () => ({}) }))
 import LoginPanel from '@/app/login/LoginPanel'
+import { LoginConsent } from '@/app/login/LoginConsent'
+import { readFileSync } from 'node:fs'
 
 // UX report 8, mockup 1: the first screen says what it is and which button to press, and shows
 // no number that is not a real result. The consent row keeps its place and its exact words
@@ -124,5 +126,30 @@ describe('/login?admin=1 password field', () => {
   it('starts hidden, with a show-password button that says its state', () => {
     expect(html).toMatch(/id="admin-password"[^>]*type="password"|type="password"[^>]*id="admin-password"/)
     expect(html).toMatch(/<button[^>]*aria-controls="admin-password"[^>]*aria-label="แสดงรหัสผ่าน"[^>]*aria-pressed="false"|<button[^>]*aria-label="แสดงรหัสผ่าน"[^>]*aria-pressed="false"[^>]*aria-controls="admin-password"/)
+  })
+})
+
+// Owner, 18 Oct 2026: the consent row was only on the first screen. Choosing "email" without
+// ticking it led to a send button that did nothing, because the row it pointed at was gone.
+// The same row, same words (AGENTS.md: consent wording is never edited), on every screen that
+// sends a code or signs in.
+describe('/login consent row on each screen that signs in', () => {
+  const source = readFileSync('app/login/LoginPanel.tsx', 'utf8')
+  const branch = (step: string) => source.slice(source.indexOf(`{step === "${step}" && (`), source.indexOf('</>', source.indexOf(`{step === "${step}" && (`)))
+  it('is on the first screen and on the email screen', () => {
+    expect(branch('start')).toContain('<LoginConsent')
+    expect(branch('email')).toContain('<LoginConsent')
+  })
+  it('keeps its exact words and its links on the first screen', () => {
+    const html = render()
+    expect(text(html)).toContain('ฉันยอมรับ ข้อกำหนดการใช้งาน และ นโยบายความเป็นส่วนตัว (PDPA)')
+    expect(html).toContain('href="/terms"')
+    expect(html).toContain('href="/privacy"')
+  })
+  it('names the missing tick for screen readers', () => {
+    const html = renderToStaticMarkup(createElement(LoginConsent, { accepted: false, missing: true, missingText: 'x', onChange: () => {} }, 'terms'))
+    expect(html).toContain('id="login-consent"')
+    expect(html).toContain('role="alert"')
+    expect(html).toContain('aria-invalid="true"')
   })
 })

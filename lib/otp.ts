@@ -7,6 +7,14 @@ export const OTP_MAX_LENGTH = 10
 // Supabase's default wait between two code requests for one address.
 export const OTP_RESEND_SECONDS = 60
 
+// Production and Staging send 8 digits (owner's screenshot, 18 Oct 2026). The page draws
+// that many boxes and adds one only when a longer code is typed or pasted, so a full code
+// never shows an empty box asking for more.
+export const OTP_EXPECTED_LENGTH = 8
+export function otpSlotCount(length: number) {
+  return Math.min(OTP_MAX_LENGTH, Math.max(OTP_EXPECTED_LENGTH, length))
+}
+
 export const normalizeOtp = (value: string) => value.replace(/\D/g, '').slice(0, OTP_MAX_LENGTH)
 export const canSubmitOtp = (code: string) => code.length >= OTP_MIN_LENGTH && code.length <= OTP_MAX_LENGTH
 export const normalizeEmail = (value: string) => value.trim().toLowerCase()
