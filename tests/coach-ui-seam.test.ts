@@ -1,6 +1,8 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { NextIntlClientProvider } from 'next-intl'
 import { describe, expect, it, vi } from 'vitest'
+import th from '@/messages/th.json'
 
 // A bare server render has no app-router context. The router is not what these
 // assertions are about, so stand it in.
@@ -21,7 +23,8 @@ import { COACH_VERIFIED_FIELD_LABEL, POSITION_LABELS, attestationKey, type Coach
 //   * Real interaction remains a manual Closed Beta gate until a DOM/browser test is
 //     added. Do not read a passing suite here as proof that a button works.
 const html = (component: Parameters<typeof createElement>[0], props: Record<string, unknown>) =>
-  renderToStaticMarkup(createElement(component as never, props as never))
+  renderToStaticMarkup(createElement(NextIntlClientProvider as never, { locale: 'th', messages: th, timeZone: 'Asia/Bangkok' } as never,
+    createElement(component as never, props as never)))
 
 const view = (over: Partial<CoachTeamView> = {}): CoachTeamView => ({
   id: 'team-1', name: 'ทีมลุงหมี', status: 'draft', tournamentName: 'BDS Cup',
@@ -81,10 +84,8 @@ describe('CoachRosterActions rendering', () => {
   it('offers a remove control for every member, each with an accessible name', () => {
     const markup = html(CoachRosterActions, props)
 
-    // An accepted member's control says it will ask first (see the confirmation test).
-    expect(markup).toContain('aria-label="นำน้องเอออกจากทีม ต้องยืนยันก่อน"')
-    expect(markup).toContain('aria-label="นำน้องบีออกจากทีม"')
-    expect(markup).toContain('aria-label="นำน้องซีออกจากทีม"')
+    // Every removal asks for a reason first (ADR-011), which is also the confirmation.
+    for (const name of ['น้องเอ', 'น้องบี', 'น้องซี']) expect(markup).toContain(`aria-label="นำ${name}ออกจากทีม ต้องเลือกเหตุผลก่อน"`)
   })
 
   it('offers the structured position attestation with only the allowed values', () => {
@@ -153,12 +154,12 @@ describe('CoachRosterActions rendering', () => {
     expect(markup).toContain('name="position"')
   })
 
-  it('warns that removing an accepted member needs confirming', () => {
-    // The accepted member's control asks first; an unanswered invitation does not.
+  it('asks for a reason before any removal, which the athlete and guardians will see', () => {
+    // ADR-011: the first tap opens the reason form; nothing is removed by one tap.
     const markup = html(CoachRosterActions, props)
 
-    expect(markup).toContain('aria-label="นำน้องเอออกจากทีม ต้องยืนยันก่อน"')
-    expect(markup).toContain('aria-label="นำน้องบีออกจากทีม"')
+    expect(markup).toContain('aria-label="นำน้องเอออกจากทีม ต้องเลือกเหตุผลก่อน"')
+    expect(markup).not.toContain('name="reason"')
   })
 
   it('reports a failed attestation lookup instead of offering a stale form', () => {

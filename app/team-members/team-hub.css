@@ -77,3 +77,8 @@
 .tm-empty-hint { color: var(--ui-mute); font-size: 13px; margin: var(--ui-s1) 0 0; }
 .tm-empty-link { color: var(--ui-red); font-weight: 700; }
 .tm-name-first { gap: var(--ui-s3); padding: var(--ui-s4); }
+/* Leaving a team (ADR-011): the question takes its own line under the team name. */
+.tm-mine li { flex-wrap: wrap; padding: 8px 0; }
+.tm-mine li .cf-ask { flex: 1 1 100%; justify-content: flex-start; }
+.tm-mine li .cf-ask span, .tm-mine li .cf-question { color: var(--ui-text); flex: 1 1 100%; text-align: left; }
+.tm-mine li .tm-child { color: var(--ui-mute); }

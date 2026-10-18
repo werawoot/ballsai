@@ -30,7 +30,9 @@ import type { ReactNode } from 'react'
 import { BellRing, CalendarDays, ClipboardPenLine, Megaphone, ShieldHalf, Timer, Users } from 'lucide-react'
 import { teamHub, type TeamHubSection } from '@/lib/team-hub'
 import { urgentTeamFirst } from '@/lib/role-home'
-import { MY_TEAM_MEMBERSHIPS_LIMIT, fetchMyTeamMemberships, teamNamesById } from '@/lib/my-team-memberships'
+import { MY_TEAM_MEMBERSHIPS_LIMIT, fetchMyTeamMemberships, teamNamesById, type MyTeamMembership } from '@/lib/my-team-memberships'
+import LeaveTeamButton from './LeaveTeamButton'
+import type { ChildTeamRow } from '@/lib/team-join'
 import './team-hub.css'
 import PageHeader from '@/components/PageHeader'
 
@@ -138,6 +140,10 @@ export default async function TeamMembersPage(props: { searchParams?: Promise<{ 
   // the function is missing: there is nothing to answer, so nothing is shown.
   const { data: myEventRows, error: myEventsError } = await supabase.rpc('my_upcoming_team_events', { p_limit: 30 })
   const myEvents = myEventsError ? [] : ((myEventRows ?? []) as MyEventRow[])
+  // A guardian's children's own teams, to leave on a child's behalf (ADR-011, sql/83).
+  // Before SQL83 the function is missing and nothing is shown.
+  const { data: childTeamRows, error: childTeamsError } = await supabase.rpc('my_children_team_memberships')
+  const childTeams = childTeamsError ? [] : ((childTeamRows ?? []) as ChildTeamRow[])
   // Announcements from the athlete's teams (sql/71); nothing before SQL71.
   const { data: newsRows, error: newsError } = await supabase.rpc('my_team_announcements', { p_limit: 10 })
   const myNews = newsError ? [] : ((newsRows ?? []) as MyAnnouncementRow[])
@@ -186,7 +192,7 @@ export default async function TeamMembersPage(props: { searchParams?: Promise<{ 
     minutes: myMinutes.length,
     staff: myTeamStaff.length,
     acceptedStaffTeams: acceptedStaff.length,
-    memberships: acceptedInvites.length + myEntries.length,
+    memberships: acceptedInvites.length + myEntries.length + childTeams.length,
     canCreateTeam,
   })
   const loadFailed = Boolean(teamsError || invitesError)
@@ -230,7 +236,15 @@ export default async function TeamMembersPage(props: { searchParams?: Promise<{ 
       {hub.sections.includes('mine') && <section id="tm-mine" className="tm-section" aria-labelledby="tm-mine-title">
         {head('mine', <Users size={18} aria-hidden="true" />)}
         {acceptedInvites.length > 0 && <ul className="ui-card tm-mine">
-          {acceptedInvites.map(row => <li key={row.id}><b>{row.teams?.name || h('yourTeam')}</b><span>{h('joined')}</span></li>)}
+          {acceptedInvites.map(row => {
+            const team = (row as unknown as MyTeamMembership).teams
+            return <li key={row.id}><b>{team?.name || h('yourTeam')}</b><span>{h('joined')}</span>
+              {team?.kind === 'club' && <LeaveTeamButton memberId={row.id} teamName={team.name} />}</li>
+          })}
+        </ul>}
+        {childTeams.length > 0 && <ul className="ui-card tm-mine" aria-label={h('childTeams')}>
+          {childTeams.map(row => <li key={row.member_id}><b>{row.team_name}</b><span className="tm-child">{row.athlete_name?.trim() || h('yourChild')}</span>
+            <LeaveTeamButton memberId={row.member_id} teamName={row.team_name} childName={row.athlete_name?.trim() || h('yourChild')} /></li>)}
         </ul>}
         <MyEntriesPanel rows={myEntries} viewerId={user.id} />
       </section>}
