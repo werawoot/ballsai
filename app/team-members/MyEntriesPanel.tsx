@@ -39,7 +39,7 @@ export default function MyEntriesPanel({ rows, viewerId }: { rows: EntryRosterRo
       {row.status === 'declined'
         ? <span className="me-for">{t('entryWithdrawn')}</span>
         : row.can_withdraw
-          ? <ConfirmButton label={t('withdraw')} question={t('withdrawConfirm')} disabled={Boolean(busy)} onConfirm={() => withdraw(row)} />
+          ? <><span className="me-for">{t('withdrawHint')}</span><ConfirmButton label={t('withdraw')} question={t('withdrawConfirm')} disabled={Boolean(busy)} onConfirm={() => withdraw(row)} /></>
           : <span className="me-for">{t('entryLocked')}</span>}
     </article>)}
   </section>

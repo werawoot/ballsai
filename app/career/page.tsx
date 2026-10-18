@@ -6,12 +6,12 @@ import { Award, ChevronRight, CircleDot, Crown, Footprints, Medal, Play, ShieldC
 import { getLocale, getTranslations } from 'next-intl/server'
 import { IDENTITY_BADGES, calculateLevel, identityTierKey, levelProgress, unlockedBadgeKeys } from '@/lib/digital-identity'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
+import { fetchMyTeamMemberships } from '@/lib/my-team-memberships'
 
 type AthleteProfile = { display_name: string; created_at: string; verification_level: string }
 type Rating = { id: string; power_rating: number; matches_played: number; wins: number; goals: number; assists: number; clean_sheets: number; mvps: number; confidence: string }
 type RatingEvent = { id: string; created_at: string; rating_change: number; goals: number; assists: number; mvp: boolean; result: string }
 type Achievement = { id: number; title: string; event_name: string | null; verification_status: string; created_at: string }
-type Membership = { status: string; created_at: string; teams: { id: string; name: string; status: string; tournaments: { name: string | null }[] | null } | null }
 type IdentityProgress = { xp_total: number; current_level: number }
 type Video = { id: number; title: string; video_url: string; video_type: string; created_at: string }
 type UploadedHighlight = { id: number; title: string; media_type: 'image' | 'video'; created_at: string }
@@ -32,11 +32,12 @@ export default async function CareerPage() {
   if (!user) redirect('/login?next=/career')
   const [t, tHome, locale] = await Promise.all([getTranslations('careerPage'), getTranslations('profileHome'), getLocale()])
 
-  const [{ data: athlete }, { data: rating }, { data: achievements }, { data: memberships }, { data: progress }, { data: videos }, { data: highlights }, { data: earnedBadges }] = await Promise.all([
+  const [{ data: athlete }, { data: rating }, { data: achievements }, { memberships }, { data: progress }, { data: videos }, { data: highlights }, { data: earnedBadges }] = await Promise.all([
     supabase.from('athlete_profiles').select('display_name, created_at, verification_level').eq('user_id', user.id).maybeSingle(),
     supabase.from('player_ratings').select('id, power_rating, matches_played, wins, goals, assists, clean_sheets, mvps, confidence').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).maybeSingle(),
     supabase.from('athlete_achievements').select('id, title, event_name, verification_status, created_at').eq('athlete_id', user.id).order('created_at', { ascending: false }).limit(12),
-    supabase.from('team_members').select('status, created_at, teams(id, name, status, tournaments(name))').eq('athlete_id', user.id).order('created_at', { ascending: false }).limit(12),
+    // Team names through sql/82: the teams row itself is hidden from a member by RLS.
+    fetchMyTeamMemberships(supabase as never, user.id, 12),
     supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', user.id).maybeSingle(),
     supabase.from('athlete_videos').select('id, title, video_url, video_type, created_at').eq('athlete_id', user.id).order('created_at', { ascending: false }).limit(6),
     supabase.from('athlete_highlights').select('id, title, media_type, created_at').eq('athlete_id', user.id).order('created_at', { ascending: false }).limit(6),
@@ -46,7 +47,7 @@ export default async function CareerPage() {
   const typedAthlete = athlete as AthleteProfile | null
   const typedRating = rating as Rating | null
   const typedAchievements = (achievements ?? []) as Achievement[]
-  const typedMemberships = (memberships ?? []) as unknown as Membership[]
+  const typedMemberships = memberships
   const typedProgress = progress as IdentityProgress | null
   const typedVideos = (videos ?? []) as Video[]
   const typedHighlights = (highlights ?? []) as UploadedHighlight[]
@@ -81,7 +82,7 @@ export default async function CareerPage() {
   const eventDetail = (event: RatingEvent) => event.goals > 0 ? t('eventGoals', { count: event.goals }) : event.assists > 0 ? t('eventAssists', { count: event.assists }) : event.mvp ? t('eventMvp') : t('eventRecorded')
   const events = [
     ...(typedAthlete ? [{ id: 'profile', at: typedAthlete.created_at, icon: <UserRound />, title: t('eventStart'), detail: t('eventWelcome', { name }) }] : []),
-    ...confirmedTeams.map(membership => ({ id: `team-${membership.teams?.id}`, at: membership.created_at, icon: <ShieldCheck />, title: t('eventJoined', { tournament: membership.teams?.tournaments?.[0]?.name || t('eventJoinedFallback') }), detail: t('eventTeam', { team: membership.teams?.name || t('eventTeamFallback') }) })),
+    ...confirmedTeams.map(membership => ({ id: `team-${membership.teams?.id}`, at: membership.created_at, icon: <ShieldCheck />, title: t('eventJoined', { tournament: membership.teams?.tournaments?.name || t('eventJoinedFallback') }), detail: t('eventTeam', { team: membership.teams?.name || t('eventTeamFallback') }) })),
     ...typedEvents.map(event => ({ id: `rating-${event.id}`, at: event.created_at, icon: <Sparkles />, title: t('eventRating', { change: `${event.rating_change >= 0 ? '+' : ''}${event.rating_change}` }), detail: `${resultWord(event.result)} · ${eventDetail(event)}` })),
     ...verifiedAchievements.map(item => ({ id: `achievement-${item.id}`, at: item.created_at, icon: <Award />, title: item.title, detail: item.event_name || t('eventAchievement') })),
   ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())

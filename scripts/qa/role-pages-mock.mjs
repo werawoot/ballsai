@@ -146,6 +146,8 @@ http.createServer((request, response) => {
     // names through team_roster_names (sql/76). Writes answer 200 with nothing.
     if (table === 'team_announcements') return rows(role === 'coach' || role === 'assistant' ? [{ id: 'd0000000-0000-4000-8000-000000000001', body: 'ทดสอบ-ลบได้', created_at: '2026-10-12T03:12:00Z', to_athletes: true, to_guardians: false }] : [])
     if (table === 'team_events') return rows(role === 'coach' || role === 'assistant' ? [{ id: 'e0000000-0000-4000-8000-000000000001', team_id: teams[0].id, kind: 'training', title: 'ซ้อมเย็น', starts_at: new Date(Date.now() + 86400000).toISOString(), location: 'สนามโรงเรียน', cancelled_at: null }] : [])
+    // The athlete's own memberships with team names (sql/82).
+    if (table === 'rpc/my_team_memberships') return send(200, role === 'athlete' ? [{ member_id: 'm-athlete', team_id: teams[0].id, status: 'accepted', invited_at: '2026-10-01T03:00:00Z', created_at: '2026-10-01T03:00:00Z', team_name: teams[0].name, team_status: 'draft', team_kind: 'club', tournament_name: null, tournament_location: null }] : [])
     if (table === 'rpc/team_roster_names') return send(200, role === 'coach' || role === 'assistant' ? [{ team_id: teams[0].id, athlete_id: 'u-athlete', display_name: 'ด.ช. ส่วนตัว ใจดี', position: 'MF' }] : [])
     // /notifications: the athlete has a few of each kind over the last ten days, three
     // unread. `read_at=is.null` (the unread tab and the count) filters them.

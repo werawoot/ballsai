@@ -27,6 +27,7 @@ import { homeKind, type HomeKind } from '@/lib/role-home'
 import { loadRoleHome } from '@/lib/role-home-data'
 import type messagesTh from '@/messages/th.json'
 import './profile.css'
+import { fetchMyTeamMemberships } from '@/lib/my-team-memberships'
 
 // /profile is "ของฉัน": it opens on the person's own work for their role (lib/role-home.ts)
 // with one primary button. For an athlete that is training first, then what is left before
@@ -93,7 +94,8 @@ export default async function ProfilePage() {
   const [athleteResult, rankResult, membershipResult, progressResult, highlightCount, videoCount, pendingGuardian] = athleteHome ? await Promise.all([
     supabase.from('athlete_profiles').select(PUBLIC_PROFILE_COLUMNS).eq('user_id', user.id).maybeSingle(),
     supabase.from('player_ranks').select('id, player_name, position, ovr, pts').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).maybeSingle(),
-    supabase.from('team_members').select('status, teams(id, name, status, tournaments(name, location))').eq('athlete_id', user.id).order('created_at', { ascending: false }).limit(5),
+    // Team names through sql/82: the teams row itself is hidden from a member by RLS.
+    fetchMyTeamMemberships(supabase as never, user.id, 5),
     supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', user.id).maybeSingle(),
     count(supabase.from('athlete_highlights').select('id', { count: 'exact', head: true }).eq('athlete_id', user.id)),
     count(supabase.from('athlete_videos').select('id', { count: 'exact', head: true }).eq('athlete_id', user.id)),
@@ -101,7 +103,7 @@ export default async function ProfilePage() {
   ]) : [null, null, null, null, 0, 0, 0] as const
   const athleteRow = athleteResult?.data ?? null
   const rankRow = rankResult?.data ?? null
-  const membershipRows = membershipResult?.data ?? null
+  const membershipRows = membershipResult?.memberships ?? null
   const progressRow = progressResult?.data ?? null
   const roleKind = athleteHome ? null : kind
   const [loaded, hasAthleteProfile] = roleKind ? await Promise.all([
@@ -112,6 +114,7 @@ export default async function ProfilePage() {
   const athlete = athleteRow as AthleteProfile | null
   const rank = rankRow as PlayerRank | null
   const memberships = (membershipRows ?? []) as unknown as Membership[]
+  const pendingTeamInvites = memberships.filter(membership => membership.status === 'pending').length
   // The birth date and consent time come only through my_athlete_private (sql/58).
   const [athletePrivate, avatarUrls, training] = await Promise.all([
     athlete ? fetchMyAthletePrivate(supabase, user.id).catch(error => {
@@ -299,7 +302,7 @@ export default async function ProfilePage() {
           {memberships.length > 0 && <section className="pf-card" aria-labelledby="pf-teams">
             <div className="pf-card-head">
               <h2 id="pf-teams" className="pf-card-title">{t('teams.title')}</h2>
-              <Link href="/team-members" className="pf-card-meta tap-44" style={{ textDecoration: 'none' }}>{t('teams.viewAll')}</Link>
+              <Link href="/team-members" className="pf-card-meta tap-44" style={{ textDecoration: 'none' }}>{pendingTeamInvites > 0 ? t('teams.viewAll') : t('teams.viewTeams')}</Link>
             </div>
             <ul className="pf-list">
               {memberships.map((membership, index) => {
