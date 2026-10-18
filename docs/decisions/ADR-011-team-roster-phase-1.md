@@ -1,8 +1,7 @@
 # ADR-011 - Team Roster, Phase 1: Join Links, Leaving and Removal
 
-**Status:** Proposed. The owner agreed every answer below on 18 Oct 2026 in a design
-interview (the `grilling` skill, 17 questions over three rounds). It becomes Accepted when the
-owner confirms this summary.
+**Status:** Accepted (owner confirmed "ยืนยัน ADR-011", 18 Oct 2026). The owner agreed every answer below in a design
+interview on 18 Oct 2026 (the `grilling` skill, 17 questions over three rounds).
 **Builds on:** ADR-010 (roster locks on submission, one team per athlete per tournament),
 `sql/18` (team_members), `sql/78` (own teams), `sql/82` (my_team_memberships).
 
