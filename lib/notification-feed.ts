@@ -15,7 +15,7 @@ export function parseNotificationFilter(value: string | string[] | undefined): N
 
 // Which picture a notification gets. A type this build does not know yet (a newer SQL
 // file can add one) falls back to the plain bell rather than guessing.
-export type NotificationKind = 'result' | 'badge' | 'team' | 'family' | 'venue' | 'news' | 'event' | 'training' | 'other'
+export type NotificationKind = 'result' | 'badge' | 'hall' | 'team' | 'family' | 'venue' | 'news' | 'event' | 'training' | 'other'
 
 const KINDS: Record<string, NotificationKind> = {
   match_result: 'result',
@@ -27,6 +27,7 @@ const KINDS: Record<string, NotificationKind> = {
   team_announcement: 'news',
   team_event_reminder: 'event',
   team_training_plan: 'training',
+  hall_of_fame: 'hall',
 }
 
 export function notificationKind(type: string | null | undefined): NotificationKind {

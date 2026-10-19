@@ -178,8 +178,9 @@ Known manual seams, by design for now:
 
 ## Next tasks, in order
 
-Before expanding past 5 testers: real team roster linking members to accounts
-(`team_members`, new migration); in-app notifications.
+Before expanding past 5 testers: real team roster linking members to accounts (done:
+ADR-011 phase 1, sql/83 on both projects); in-app notifications for athletes and guardians
+(sql/86, runbook row 86).
 
 Before public launch: RLS tests with real JWTs; load and rate-limit testing; Google OAuth
 published and a custom SMTP sender configured in Supabase Auth so email OTP is not
