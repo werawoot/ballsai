@@ -168,7 +168,7 @@ declare
     when 'road_warrior' then 'นักสู้ 10 นัด'
     when 'rising_star' then 'ดาวรุ่ง'
     else replace(new.badge_key, '_', ' ') end;
-  v_key text := 'badge_earned:' || new.badge_key || ':' || (extract(epoch from new.awarded_at) * 1000000)::bigint::text;
+  v_key text := 'badge_earned:' || new.badge_key || ':' || to_char(new.awarded_at at time zone 'UTC', 'YYYYMMDDHH24MISSUS');
 begin
   if new.badge_key = 'rookie' then
     perform public.create_notification(new.athlete_id, 'badge_earned', 'ได้เหรียญใหม่: ' || v_name,
