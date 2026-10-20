@@ -1,8 +1,8 @@
 # ADR-013 - Organizer Access: Request in the App, Draft First, Admin Approves
 
-**Status:** Proposed. The owner agreed every answer below in a design interview on
-20 Oct 2026 (the `grilling` skill, 14 questions over three rounds, each "ใช่ทั้งหมด ตามที่แนะนำ").
-It becomes Accepted when the owner confirms the summary ("ยืนยัน ADR-013").
+**Status:** Accepted (owner confirmed "ยืนยัน ADR-013", 20 Oct 2026). The owner agreed every
+answer below in a design interview on 20 Oct 2026 (the `grilling` skill, 14 questions over
+three rounds, each "ใช่ทั้งหมด ตามที่แนะนำ").
 **Builds on:** ADR-012 (prerequisite 2: organizer access in the app before any payment),
 `sql/77` (only an admin may change `profiles.role`), sql/86 and sql/88 (notifications).
 **Task:** T53 in `docs/national-readiness.md`.
