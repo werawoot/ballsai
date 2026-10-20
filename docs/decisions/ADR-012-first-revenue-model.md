@@ -1,8 +1,8 @@
 # ADR-012 - First Revenue Model: Organizers Pay per Tournament
 
-**Status:** Proposed. The owner agreed every answer below in a design interview on
-20 Oct 2026 (the `grilling` skill, 20 questions over four rounds, each "ใช่ทั้งหมด ตามที่แนะนำ").
-It becomes Accepted when the owner confirms the summary ("ยืนยัน ADR-012").
+**Status:** Accepted (owner confirmed "ยืนยัน ADR-012", 20 Oct 2026). The owner agreed every
+answer below in a design interview on 20 Oct 2026 (the `grilling` skill, 20 questions over
+four rounds, each "ใช่ทั้งหมด ตามที่แนะนำ").
 **Builds on:** `docs/research/revenue-options-2026-10.md` (facts from search extracts of the
 owners' pages; not opened in full; not legal, tax or financial advice).
 
