@@ -75,19 +75,18 @@ export default function HomeCardRing({ cards, labels, ctaHref }: { cards: RingCa
           <ul className="hm-fut-facts gl-num">{card.facts.map(fact => <li key={fact.label}><small>{fact.label}</small><b>{fact.value}</b></li>)}</ul>
         </article>)}
       </div>
-    </div>
-
-    <div className="hm-ring-caption" aria-live={paused || reducedMotion ? 'polite' : 'off'}>
-      <span className="hm-ring-step">{current.step}</span>
-      <h2>{current.title}</h2>
-      <p>{current.body}</p>
-    </div>
-
-    <div className="hm-ring-controls">
-      <button type="button" className="hm-ring-btn" aria-label={labels.previous} onClick={() => setTurn(value => value - 1)}><ChevronLeft size={18} aria-hidden="true" /></button>
       <span className="hm-ring-dots" aria-hidden="true">{cards.map((card, index) => <i key={card.tier} className={index === active ? 'is-on' : ''} />)}</span>
+      {!reducedMotion && <button type="button" className="hm-ring-btn hm-ring-pause" aria-label={paused ? labels.play : labels.pause} aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}</button>}
+    </div>
+
+    <div className="hm-ring-row">
+      <button type="button" className="hm-ring-btn" aria-label={labels.previous} onClick={() => setTurn(value => value - 1)}><ChevronLeft size={18} aria-hidden="true" /></button>
+      <div className="hm-ring-caption" aria-live={paused || reducedMotion ? 'polite' : 'off'}>
+        <span className="hm-ring-step">{current.step}</span>
+        <h2>{current.title}</h2>
+        <p>{current.body}</p>
+      </div>
       <button type="button" className="hm-ring-btn" aria-label={labels.next} onClick={() => setTurn(value => value + 1)}><ChevronRight size={18} aria-hidden="true" /></button>
-      {!reducedMotion && <button type="button" className="hm-ring-btn" aria-label={paused ? labels.play : labels.pause} aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}</button>}
     </div>
     <Link href={ctaHref} className="gl-btn gl-btn-primary hm-ring-cta">{labels.cta}<ArrowRight size={18} aria-hidden="true" /></Link>
   </section>
