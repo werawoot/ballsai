@@ -83,3 +83,38 @@ body:has(.gl) { background: #F3F6F9; }
 .gl .gl-on-photo a:focus-visible, .gl .gl-on-photo button:focus-visible { outline-color: var(--gl-green); }
 
 @media (prefers-reduced-motion: reduce) { .gl .gl-btn { transition: none; } }
+
+/* Shared bars on an opted-in page. The top bar is glass over the page head; the bottom
+   bar (SiteNav, outside the page root) turns light glass with navy text and a green pill
+   for the current page. Pages not yet moved keep the dark bars. */
+.gl .bds-page-header {
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  background: rgba(11, 18, 32, .28);
+  border-bottom: 1px solid rgba(255, 255, 255, .16);
+  --ph-gold: var(--gl-green);
+}
+.gl .bds-page-header-brand, .gl .bds-page-header-back { color: #fff; }
+.gl .bds-page-header-brand:hover, .gl .bds-page-header-back:hover { color: var(--gl-green); }
+.gl .bds-lang-switch { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .55); color: #fff; }
+.gl .bds-lang-switch:hover { border-color: var(--gl-green); }
+
+body:has(.gl) .bds-nav {
+  --nav-gold: #0F7A3F;
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  background: rgba(255, 255, 255, .82);
+  border-top: 1px solid rgba(11, 18, 32, .08);
+  box-shadow: 0 -8px 24px rgba(11, 18, 32, .08);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body:has(.gl) .bds-nav { background: rgba(255, 255, 255, .97); }
+}
+body:has(.gl) .bds-nav-item { color: #5B6475; }
+body:has(.gl) .bds-nav-item:hover { color: #0B1220; }
+body:has(.gl) .bds-nav-item.is-active { color: #0B1220; }
+body:has(.gl) .bds-nav-item.is-active .bds-nav-icon { background: #16E06E; color: #0B1220; }
+body:has(.gl) .bds-nav-item.is-pending { color: #0B1220; }
+body:has(.gl) .bds-nav-item.is-pending .bds-nav-icon { background: rgba(22, 224, 110, .25); color: #0B1220; }
+body:has(.gl) .bds-nav-item:focus-visible { outline-color: #0B1220; }
+body:has(.gl) .bds-nav-badge { background: #DC2626; box-shadow: 0 0 0 2px #fff; }

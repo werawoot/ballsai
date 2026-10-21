@@ -5,6 +5,10 @@
 
 /* /tournaments list: the light glass design (ADR-014, app/glass.css). */
 .bds-page.tn-page.tn-list { background: var(--gl-canvas) !important; color: var(--gl-text); font-family: var(--gl-font); }
+/* The glass top bar lies over the stadium head, so the head runs up behind it. */
+.tn-list { position: relative; }
+.tn-list > .bds-page-header { left: 0; position: absolute; right: 0; top: 0; z-index: 2; }
+.tn-list .tn-stadium { padding-top: calc(56px + env(safe-area-inset-top)); }
 
 /* Stadium head: the licensed stadium photo when one is set, else a plain pitch green, with
    a navy shade on the text side so white text keeps its contrast over any photo. */
