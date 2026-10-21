@@ -71,7 +71,11 @@
     "organizerBody": "Create it, open registration and record results that reach every player card, all in one place.",
     "statFee": "Entry",
     "statTeams": "Teams",
-    "statVenue": "Venue"
+    "statVenue": "Venue",
+    "byMonth": "Tournaments by month",
+    "monthsLabel": "Jump to month",
+    "startsIn": "Kick-off",
+    "createCta": "Create a tournament"
   },
   "tournamentCover": {
     "status": {

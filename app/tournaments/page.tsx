@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { ArrowRight, ChevronRight, ClipboardPlus, MapPin, Trophy, Users } from 'lucide-react'
+import { ArrowRight, CalendarDays, ClipboardPlus, MapPin, Trophy, Users } from 'lucide-react'
 import { sampleTournaments, isSampleId, showDemoData } from '@/lib/sample-data'
 import { getPublicTournamentsPage } from '@/lib/public-data'
 import { bangkokToday, groupTournamentsByMonth, parseTournamentView, TOURNAMENT_VIEWS, type PublicTournament } from '@/lib/public-tournaments'
 import { tournamentCoverSport, tournamentCoverStatus } from '@/lib/tournament-cover'
-import { tournamentCountdown, tournamentDayBox, tournamentFee, tournamentMonthLabel, type TournamentCountdown } from '@/lib/tournament-dates'
+import { tournamentCountdown, tournamentDateRange, tournamentDayBox, tournamentFee, tournamentMonthLabel, type TournamentCountdown } from '@/lib/tournament-dates'
 import { parsePage } from '@/lib/pagination'
 import { ACTIVE_SEASON } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
@@ -13,10 +13,10 @@ import Pagination from '@/components/Pagination'
 import '../glass.css'
 import './tournaments.css'
 
-// The light glass design (ADR-014, app/glass.css): a stadium head with the next
-// tournament on a glass panel as the one thing to act on, how far off it is and one way
-// in. Below it, the rest by month as cards on the light canvas. Three tabs, so finished
-// tournaments never crowd page 1. A card shows only what the row holds: a missing sport or
+// The light glass design (ADR-014, app/glass.css): a stadium head, then one white board
+// that rises over it with the tabs, the next tournament as the one thing to act on (how
+// far off it is and one way in) and the rest by month as cards, with a jump to each month.
+// Three tabs, so finished tournaments never crowd page 1. A card shows only what the row holds: a missing sport or
 // status says nothing rather than guessing, and its cover is a brand graphic, never a
 // stock photo that would pass for the venue (lib/tournament-cover.ts).
 
@@ -50,95 +50,118 @@ export default async function TournamentsPage(props: { searchParams: Promise<{ p
   const nextHref = next ? (isSampleId(next.id) ? '/login' : `/tournaments/${next.id}`) : ''
   const nextLive = nextCountdown?.kind === 'live'
 
+  const tabs = <nav className="tn-tabs" aria-label={t('tabsLabel')}>
+    {TOURNAMENT_VIEWS.map(item => <Link aria-current={item === view ? 'page' : undefined} className={item === view ? 'is-on' : ''} href={item === 'upcoming' ? '/tournaments' : `/tournaments?view=${item}`} key={item}>{t(`tabs.${item}`)}</Link>)}
+  </nav>
+
   return (
     <main className="bds-page tn-page tn-list gl">
       <PageHeader />
       <div className="tn-stadium gl-on-photo">
         <div className="tn-stadium-inner">
-          <div className="tn-top">
-            <p className="tn-eyebrow">{t('eyebrow', { season: ACTIVE_SEASON })}</p>
-            <h1 className="tn-title">{t('title')}</h1>
-            <p className="tn-intro">{t('intro')}</p>
-            <nav className="tn-tabs" aria-label={t('tabsLabel')}>
-              {TOURNAMENT_VIEWS.map(item => <Link aria-current={item === view ? 'page' : undefined} className={item === view ? 'is-on' : ''} href={item === 'upcoming' ? '/tournaments' : `/tournaments?view=${item}`} key={item}>{t(`tabs.${item}`)}</Link>)}
-            </nav>
-          </div>
-
-          {next && nextBox && nextCountdown && <section className="tn-next gl-panel" id="tn-next" aria-labelledby="tn-next-name">
-            <p className="tn-next-label"><span className={`tn-next-count gl-status ${nextLive ? 'is-live' : 'is-open'}`}>{nextLive && <i aria-hidden="true" />}{countdownText(nextCountdown)}</span><span>{t('spotlightLabel')}</span></p>
-            <div className="tn-next-main">
-              <span className="tn-next-date" aria-hidden="true"><b>{nextBox.day}</b><small>{nextBox.month}</small></span>
-              <div className="tn-next-text">
-                <h2 className="tn-next-name" id="tn-next-name">{next.name}</h2>
-                {next.location && <p className="tn-next-venue"><MapPin size={14} aria-hidden="true" /><span>{next.location}</span></p>}
-              </div>
-            </div>
-            <dl className="tn-next-stats">
-              <div><dt>{t('statFee')}</dt><dd>{nextFee ?? t('free')}{nextFee && <small>{t('perTeam')}</small>}</dd></div>
-              {Number(next.max_teams) > 0 && <div><dt>{t('statTeams')}</dt><dd><Users size={15} aria-hidden="true" />{Number(next.max_teams)}</dd></div>}
-              {nextStatus && <div><dt>&nbsp;</dt><dd><span className={`gl-status ${nextOpen ? 'is-open' : 'is-muted'}`}>{cover(`status.${nextStatus}`)}</span></dd></div>}
-            </dl>
-            <Link className="gl-btn gl-btn-primary tn-next-cta" href={nextHref}>{nextOpen ? t('spotlightOpen') : t('spotlightView')}<ArrowRight size={18} aria-hidden="true" /></Link>
-          </section>}
+          <p className="tn-eyebrow">{t('eyebrow', { season: ACTIVE_SEASON })}</p>
+          <h1 className="tn-title">{t('title')}</h1>
+          <p className="tn-intro">{t('intro')}</p>
         </div>
       </div>
 
       <div className="tn-wrap">
+        <div className="tn-board">
+          {tabs}
 
-        {groups.length > 0
-          ? groups.map(group => <section className="tn-month" key={group.month}>
-              <h2 className="tn-month-label">{tournamentMonthLabel(locale, group.month)}<span>{t('monthCount', { count: group.tournaments.length })}</span></h2>
-              <div className="tn-grid">
-                {group.tournaments.map(item => {
-                  const box = tournamentDayBox(locale, item.start_date)
-                  const status = tournamentCoverStatus(item.status)
-                  const sport = tournamentCoverSport((item as { sport?: unknown }).sport)
-                  const fee = tournamentFee(item.fee)
-                  const sample = isSampleId(item.id)
-                  // Started already but not over (a league, a two-day cup): say so, so a
-                  // date box in the past does not read as a mistake.
-                  const live = view !== 'past' && item.start_date < today
-                  return <Link className={`tn-card${view === 'past' ? ' is-past' : ''}`} href={sample ? '/login' : `/tournaments/${item.id}`} key={item.id}>
-                    <span className="tn-cover" aria-hidden="true">
-                      <Trophy className="tn-cover-mark" size={52} strokeWidth={1.2} />
-                      <span className="tn-cover-date gl-num"><b>{box.day}</b><small>{box.month}</small></span>
-                    </span>
-                    <span className="tn-body">
-                      <span className="tn-chips">
-                        {live && <span className="gl-status is-live">{t('live')}</span>}
-                        {status && <span className={`gl-status ${status === 'open' ? 'is-open' : 'is-muted'}`}>{cover(`status.${status}`)}</span>}
-                        {sport && <span className="gl-status is-muted">{cover(`sport.${sport}`)}</span>}
-                        {sample && <span className="gl-status is-warn">{t('sample')}</span>}
-                      </span>
-                      <b className="tn-name">{item.name}</b>
-                      {item.location && <span className="tn-venue"><MapPin size={14} aria-hidden="true" /><span>{item.location}</span></span>}
-                      <span className="tn-foot gl-num">
-                        <span className="tn-fee">{fee ?? t('free')}{fee && <small>{t('perTeam')}</small>}</span>
-                        {Number(item.max_teams) > 0 && <span className="tn-teams"><Users size={14} aria-hidden="true" />{t('maxTeams', { count: Number(item.max_teams) })}</span>}
-                      </span>
-                      <span className="tn-more">{t('spotlightView')}<ChevronRight size={16} aria-hidden="true" /></span>
-                    </span>
-                  </Link>
-                })}
+          {next && nextBox && nextCountdown && <section className="tn-next" id="tn-next" aria-labelledby="tn-next-name">
+            <div className="tn-next-cover" aria-hidden="true">
+              <Trophy className="tn-cover-mark" size={64} strokeWidth={1.2} />
+              <span className="tn-next-tag">{t('spotlightLabel')}</span>
+              <span className="tn-next-date gl-num"><b>{nextBox.day}</b><small>{nextBox.month}</small></span>
+            </div>
+            <div className="tn-next-text">
+              <p className="tn-next-chips">
+                {nextStatus && <span className={`gl-status ${nextOpen ? 'is-open' : 'is-muted'}`}>{cover(`status.${nextStatus}`)}</span>}
+                {isSampleId(next.id) && <span className="gl-status is-warn">{t('sample')}</span>}
+              </p>
+              <h2 className="tn-next-name" id="tn-next-name">{next.name}</h2>
+              <ul className="tn-next-facts">
+                {next.location && <li><MapPin size={16} aria-hidden="true" /><span>{next.location}</span></li>}
+                <li><CalendarDays size={16} aria-hidden="true" /><span>{tournamentDateRange(locale, next.start_date, next.end_date)}</span></li>
+              </ul>
+              <dl className="tn-next-stats gl-num">
+                <div><dt>{t('statFee')}</dt><dd>{nextFee ?? t('free')}{nextFee && <small>{t('perTeam')}</small>}</dd></div>
+                {Number(next.max_teams) > 0 && <div><dt>{t('statTeams')}</dt><dd><Users size={16} aria-hidden="true" />{Number(next.max_teams)}</dd></div>}
+              </dl>
+            </div>
+            <div className="tn-next-side">
+              <div className="tn-next-countdown">
+                <small>{t('startsIn')}</small>
+                <span className={`tn-next-count${nextLive ? ' is-live' : ''}`}>{nextLive && <i aria-hidden="true" />}{countdownText(nextCountdown)}</span>
               </div>
-            </section>)
-          : !next && <div className="tn-empty gl-panel">
-              <Trophy size={40} strokeWidth={1.4} aria-hidden="true" />
-              <p className="ui-h2">{t(`empty.${view}`)}</p>
-              {view !== 'past' && <p className="tn-empty-hint">{t('emptyHint')}</p>}
-              <div className="tn-empty-actions">
-                {view !== 'past' && <Link className="gl-btn gl-btn-secondary" href="/dashboard">{t('emptyCta')}</Link>}
-                {view !== 'past' && <Link className="gl-btn gl-btn-secondary" href="/tournaments?view=past">{t('seePast')}</Link>}
-              </div>
-            </div>}
+              <Link className="gl-btn gl-btn-primary tn-next-cta" href={nextHref}>{nextOpen ? t('spotlightOpen') : t('spotlightView')}<ArrowRight size={18} aria-hidden="true" /></Link>
+            </div>
+          </section>}
 
-        <Pagination basePath="/tournaments" page={page} hasNext={hasNext} params={params} />
+          {groups.length > 0 && <>
+            <h2 className="tn-by-month">{t('byMonth')}</h2>
+            {groups.length > 1 && <nav className="tn-months" aria-label={t('monthsLabel')}>
+              {groups.map((group, index) => <a className={index === 0 ? 'is-on' : ''} href={`#tn-month-${group.month}`} key={group.month}>{tournamentMonthLabel(locale, group.month)}</a>)}
+            </nav>}
+          </>}
 
-        {(next || groups.length > 0) && view !== 'past' && <Link className="tn-organizer" href="/dashboard">
+          {groups.length > 0
+            ? groups.map(group => <section className="tn-month" id={`tn-month-${group.month}`} key={group.month}>
+                <h3 className="tn-month-label">{tournamentMonthLabel(locale, group.month)}<span>{t('monthCount', { count: group.tournaments.length })}</span></h3>
+                <div className="tn-grid">
+                  {group.tournaments.map(item => {
+                    const box = tournamentDayBox(locale, item.start_date)
+                    const status = tournamentCoverStatus(item.status)
+                    const sport = tournamentCoverSport((item as { sport?: unknown }).sport)
+                    const fee = tournamentFee(item.fee)
+                    const sample = isSampleId(item.id)
+                    // Started already but not over (a league, a two-day cup): say so, so a
+                    // date box in the past does not read as a mistake.
+                    const live = view !== 'past' && item.start_date < today
+                    return <Link className={`tn-card${view === 'past' ? ' is-past' : ''}`} href={sample ? '/login' : `/tournaments/${item.id}`} key={item.id}>
+                      <span className="tn-cover" aria-hidden="true">
+                        <Trophy className="tn-cover-mark" size={52} strokeWidth={1.2} />
+                        <span className="tn-cover-date gl-num"><b>{box.day}</b><small>{box.month}</small></span>
+                      </span>
+                      <span className="tn-body">
+                        <span className="tn-chips">
+                          {live && <span className="gl-status is-live">{t('live')}</span>}
+                          {status && <span className={`gl-status ${status === 'open' ? 'is-open' : 'is-muted'}`}>{cover(`status.${status}`)}</span>}
+                          {sport && <span className="gl-status is-muted">{cover(`sport.${sport}`)}</span>}
+                          {sample && <span className="gl-status is-warn">{t('sample')}</span>}
+                        </span>
+                        <b className="tn-name">{item.name}</b>
+                        {item.location && <span className="tn-meta"><MapPin size={14} aria-hidden="true" /><span>{item.location}</span></span>}
+                        <span className="tn-meta"><CalendarDays size={14} aria-hidden="true" /><span>{tournamentDateRange(locale, item.start_date, item.end_date)}</span></span>
+                        <span className="tn-foot gl-num">
+                          <span className="tn-fee">{fee ?? t('free')}{fee && <small>{t('perTeam')}</small>}</span>
+                          {Number(item.max_teams) > 0 && <span className="tn-teams"><Users size={14} aria-hidden="true" />{t('maxTeams', { count: Number(item.max_teams) })}</span>}
+                        </span>
+                        <span className="tn-more">{t('spotlightView')}<ArrowRight size={16} aria-hidden="true" /></span>
+                      </span>
+                    </Link>
+                  })}
+                </div>
+              </section>)
+            : !next && <div className="tn-empty">
+                <Trophy size={40} strokeWidth={1.4} aria-hidden="true" />
+                <p className="ui-h2">{t(`empty.${view}`)}</p>
+                {view !== 'past' && <p className="tn-empty-hint">{t('emptyHint')}</p>}
+                <div className="tn-empty-actions">
+                  {view !== 'past' && <Link className="gl-btn gl-btn-secondary" href="/dashboard">{t('emptyCta')}</Link>}
+                  {view !== 'past' && <Link className="gl-btn gl-btn-secondary" href="/tournaments?view=past">{t('seePast')}</Link>}
+                </div>
+              </div>}
+
+          <Pagination basePath="/tournaments" page={page} hasNext={hasNext} params={params} />
+        </div>
+
+        {(next || groups.length > 0) && view !== 'past' && <div className="tn-organizer">
           <span className="tn-organizer-icon"><ClipboardPlus size={22} aria-hidden="true" /></span>
           <span className="tn-organizer-text"><b>{t('organizerTitle')}</b><small>{t('organizerBody')}</small></span>
-          <ChevronRight size={18} aria-hidden="true" />
-        </Link>}
+          <Link className="gl-btn gl-btn-primary tn-organizer-cta" href="/dashboard">{t('createCta')}<ArrowRight size={18} aria-hidden="true" /></Link>
+        </div>}
       </div>
     </main>
   )

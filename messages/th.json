@@ -71,7 +71,11 @@
     "organizerBody": "สร้างรายการ เปิดรับสมัคร และบันทึกผลที่ขึ้นการ์ดนักกีฬาได้ในที่เดียว",
     "statFee": "ค่าสมัคร",
     "statTeams": "รับทีม",
-    "statVenue": "สนาม"
+    "statVenue": "สนาม",
+    "byMonth": "รายการแข่งแบ่งตามเดือน",
+    "monthsLabel": "ไปที่เดือน",
+    "startsIn": "เริ่มแข่ง",
+    "createCta": "สร้างรายการแข่ง"
   },
   "tournamentCover": {
     "status": {

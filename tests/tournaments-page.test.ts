@@ -56,4 +56,14 @@ describe('/tournaments', () => {
     expect(html).toContain(th.tournaments.organizerTitle)
     expect(html).toContain('href="/dashboard"')
   })
+
+  it('jumps to each month on the page, and links each month pill to its section', async () => {
+    db.rows = [cup('t1', 'ศึกเยาวชนขอนแก่น', '2026-10-24'), cup('t2', 'โคราชคัพ', '2026-11-09'), cup('t3', 'อุดรคัพ', '2026-12-05')]
+    const html = await render()
+    expect(html).toContain(th.tournaments.byMonth)
+    expect(html).toContain('href="#tn-month-2026-11"')
+    expect(html).toContain('id="tn-month-2026-11"')
+    expect(html).toContain('href="#tn-month-2026-12"')
+    expect(html).toContain('id="tn-month-2026-12"')
+  })
 })
