@@ -74,6 +74,14 @@ describe('home page', () => {
     expect(html).not.toMatch(/<a[^>]*>[^<]*ฟุตซอล/)
   })
 
+  it('lists every other sport behind "กีฬาอื่น ๆ", all marked as coming and none linked', async () => {
+    const html = await render()
+    const panel = html.slice(html.indexOf('class="hm-more"'), html.indexOf('</details>'))
+    expect(panel).toContain('กำลังจะมาทุกกีฬา')
+    for (const sport of ['เซปักตะกร้อ', 'มวยไทย', 'กรีฑา', 'ว่ายน้ำ']) expect(panel).toContain(`<li>${sport}</li>`)
+    expect(panel).not.toContain('<a ')
+  })
+
   it('counts open tournaments on the football chip only once there are a few', async () => {
     data.counts = { tournaments: 3, openTournaments: 2, athletes: 0, results: 0 }
     expect(await render()).not.toContain('hm-sport-count')

@@ -5,7 +5,7 @@
 .hm-sr { clip: rect(0 0 0 0); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
 
 /* Stage: the stadium photo behind the bar, the hero and the numbers. */
-.hm-stage { overflow: hidden; position: relative; background-color: var(--gl-pitch); background-image: linear-gradient(100deg, rgba(11,18,32,.78) 0%, rgba(11,18,32,.5) 50%, rgba(11,18,32,.25) 100%), var(--gl-stadium-photo); background-position: center; background-size: cover; color: #fff; padding: 12px 16px 72px; }
+.hm-stage { position: relative; background-color: var(--gl-pitch); background-image: linear-gradient(100deg, rgba(11,18,32,.78) 0%, rgba(11,18,32,.5) 50%, rgba(11,18,32,.25) 100%), var(--gl-stadium-photo); background-position: center; background-size: cover; color: #fff; padding: 12px 16px 72px; }
 
 .hm-bar, .hm-hero, .hm-stats { position: relative; z-index: 1; }
 .hm-bar { align-items: center; display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 0 auto; max-width: 1280px; }
@@ -157,8 +157,10 @@
   .hm-foot { grid-column: 1 / -1; }
 }
 
-/* Floodlight: a soft beam that sweeps slowly across the pitch, behind everything. */
-.hm-stage::before { animation: hm-sweep 14s ease-in-out infinite alternate; background: radial-gradient(ellipse 38% 70% at 50% 0%, rgba(255,255,240,.20), rgba(255,255,240,0) 70%); content: ''; inset: -10% -30%; mix-blend-mode: screen; pointer-events: none; position: absolute; z-index: 0; }
+/* Floodlight: a soft beam that sweeps slowly across the pitch, behind everything. Its
+   own clipping box, so the stage itself can let the sports panel hang below it. */
+.hm-beam { inset: 0; overflow: hidden; pointer-events: none; position: absolute; z-index: 0; }
+.hm-beam::before { animation: hm-sweep 14s ease-in-out infinite alternate; background: radial-gradient(ellipse 38% 70% at 50% 0%, rgba(255,255,240,.20), rgba(255,255,240,0) 70%); content: ''; inset: -10% -30%; mix-blend-mode: screen; pointer-events: none; position: absolute; z-index: 0; }
 @keyframes hm-sweep { from { transform: translateX(-28%) rotate(-6deg); } to { transform: translateX(28%) rotate(6deg); } }
 
 /* The headline rises in line by line when the page opens. */
@@ -184,5 +186,26 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hm-stage::before, .hm-line, .hm-hero p, .hm-how-steps li { animation: none; }
+  .hm-beam::before, .hm-line, .hm-hero p, .hm-how-steps li { animation: none; }
 }
+
+/* "กีฬาอื่น ๆ": a chip that opens a glass panel listing every sport still to come. A plain
+   <details>, so it opens without JavaScript and with the keyboard. */
+.hm-more { position: relative; }
+.hm-more summary { cursor: pointer; list-style: none; }
+.hm-more summary::-webkit-details-marker { display: none; }
+.hm-sport.is-more { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); background: rgba(255,255,255,.12); border: 1px dashed rgba(255,255,255,.6); color: #fff; }
+.hm-sport.is-more:hover, .hm-more[open] .hm-sport.is-more { background: rgba(255,255,255,.24); }
+.hm-more[open] .hm-sport.is-more svg { transform: rotate(45deg); }
+.hm-sport.is-more svg { transition: transform .25s ease; }
+.hm-more-count { background: rgba(255,255,255,.9); border-radius: 999px; color: var(--gl-navy); font: 700 11px/1 var(--gl-font); padding: 3px 7px; }
+.hm-more-panel { animation: hm-pop .22s ease-out both; color: var(--gl-text); left: 0; margin-top: 10px; padding: 14px; position: absolute; top: 100%; width: min(560px, calc(100vw - 32px)); z-index: 5; }
+.hm-stage .hm-more-panel.gl-panel { background: var(--gl-glass-bg-strong); }
+.hm-more-panel p { display: flex; flex-direction: column; gap: 2px; margin: 0 0 10px; }
+.hm-more-panel p b { color: var(--gl-navy); font-size: 15px; }
+.hm-more-panel p small { color: var(--gl-text-2); font-size: 13px; }
+.hm-more-panel ul { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.hm-more-panel li { background: rgba(232,249,238,.8); border: 1px solid rgba(22,224,110,.35); border-radius: 999px; color: var(--gl-navy); font: 500 13px var(--gl-font); padding: 6px 12px; }
+@keyframes hm-pop { from { opacity: 0; transform: translateY(-6px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (max-width: 759px) { .hm-more { flex-basis: 100%; } .hm-more-panel { position: static; width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .hm-more-panel { animation: none; } .hm-sport.is-more svg { transition: none; } }

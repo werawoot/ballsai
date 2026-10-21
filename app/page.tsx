@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { getLocale } from 'next-intl/server'
-import { ArrowRight, Bell, BarChart3, CalendarDays, ClipboardList, Crown, IdCard, MapPin, Search, Sparkles, Trophy, Users, UserSearch } from 'lucide-react'
+import { ArrowRight, Bell, BarChart3, CalendarDays, ClipboardList, Crown, IdCard, MapPin, Plus, Search, Sparkles, Trophy, Users, UserSearch } from 'lucide-react'
 import BrandMark from '@/components/BrandMark'
 import { isSampleId, samplePlayerRanks, sampleTournaments, showDemoData } from '@/lib/sample-data'
 import { getPublicOpenTournaments, getPublicPlatformCounts, getPublicRankings } from '@/lib/public-data'
@@ -40,6 +40,14 @@ const SPORTS = [
   { key: 'basketball', label: 'บาสเกตบอล', ready: false },
   { key: 'volleyball', label: 'วอลเลย์บอล', ready: false },
   { key: 'badminton', label: 'แบดมินตัน', ready: false },
+]
+
+// Every other sport a Thai school or club competes in, for the "กีฬาอื่น ๆ" panel. None is
+// built yet; the panel says so once, at its top, instead of a badge on each.
+const MORE_SPORTS = [
+  'เซปักตะกร้อ', 'มวยไทย', 'กรีฑา', 'ว่ายน้ำ', 'เทนนิส', 'เทเบิลเทนนิส', 'เปตอง', 'แฮนด์บอล',
+  'บีชวอลเลย์บอล', 'รักบี้', 'ฮอกกี้', 'ซอฟต์บอล', 'เบสบอล', 'กอล์ฟ', 'จักรยาน', 'ยิมนาสติก',
+  'เทควันโด', 'ยูโด', 'คาราเต้', 'มวยสากล', 'ยิงธนู', 'ฟันดาบ', 'ยกน้ำหนัก', 'หมากรุก', 'อีสปอร์ต',
 ]
 
 const HOW_STEPS = [
@@ -103,6 +111,7 @@ export default async function Home() {
   return (
     <main className="hm gl gl-scene" style={BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } as React.CSSProperties : undefined}>
       <div className="hm-stage" style={STADIUM ? { '--gl-stadium-photo': `url(${STADIUM.src})` } as React.CSSProperties : undefined}>
+        <span className="hm-beam" aria-hidden="true" />
         <header className="hm-bar">
           <Link href="/" className="hm-logo" aria-label="BallDoenSai.com หน้าหลัก">
             <BrandMark size={28} />
@@ -141,6 +150,13 @@ export default async function Home() {
               {SPORTS.map(sport => sport.ready
                 ? <Link key={sport.key} href="/tournaments" className="hm-sport is-on">{sportIcon(sport.key)}<span>{sport.label}</span>{footballOpen !== null && <span className="hm-sport-count gl-num">· {footballOpen} รายการ</span>}</Link>
                 : <span key={sport.key} className="hm-sport is-soon">{sportIcon(sport.key)}<span>{sport.label}</span><small className="hm-soon">เร็ว ๆ นี้</small></span>)}
+              <details className="hm-more">
+                <summary className="hm-sport is-more"><Plus size={16} aria-hidden="true" /><span>กีฬาอื่น ๆ</span><span className="hm-more-count gl-num">{MORE_SPORTS.length}</span></summary>
+                <div className="hm-more-panel gl-panel">
+                  <p><b>กำลังจะมาทุกกีฬา</b><small>เราเริ่มจากฟุตบอล แล้วจะเปิดกีฬาอื่นตามลำดับ</small></p>
+                  <ul>{MORE_SPORTS.map(name => <li key={name}>{name}</li>)}</ul>
+                </div>
+              </details>
             </div>
           </div>
 
