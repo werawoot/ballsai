@@ -7,7 +7,7 @@ import BrandMark from '@/components/BrandMark'
 import { isSampleId, samplePlayerRanks, sampleTournaments, showDemoData } from '@/lib/sample-data'
 import { getPublicOpenTournaments, getPublicPlatformCounts, getPublicRankings } from '@/lib/public-data'
 import { bangkokToday } from '@/lib/public-tournaments'
-import { homeStatsVisible } from '@/lib/home-stats'
+import { homeStatsVisible, sportOpenCount } from '@/lib/home-stats'
 import { BACKDROP, coverDetailFor, STADIUM } from '@/lib/stock-photos'
 import { tournamentCountdown, tournamentDateRange, tournamentDayBox, tournamentFee } from '@/lib/tournament-dates'
 import { provinceName } from '@/lib/thai-provinces'
@@ -25,6 +25,15 @@ import './home-glass.css'
 type Tournament = { id: string; name: string; location: string | null; start_date: string; end_date?: string | null; fee: number; max_teams?: number | null; status: string | null }
 type Rank = { id: string; player_name: string; team?: string | null; province?: string | null; position?: string | null; pts: number }
 
+// Line icons for the sport chips, drawn here: no icon set has all five balls.
+const SPORT_ICONS: Record<string, React.ReactNode> = {
+  football: <><circle cx="12" cy="12" r="9" /><path d="m12 7 4 3-1.5 4.5h-5L8 10Z" /><path d="M12 3v4M16 10l4.5-1.5M14.5 14.5 17 19M9.5 14.5 7 19M8 10 3.5 8.5" /></>,
+  futsal: <><circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 1 0 18M3.5 9h17M3.5 15h17" /></>,
+  basketball: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3v18M5.6 5.6a9 9 0 0 1 0 12.8M18.4 5.6a9 9 0 0 0 0 12.8" /></>,
+  volleyball: <><circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0-3 8.5L12 12M12 12l7.8-4.5M12 12l-1 9M9 11.5a9 9 0 0 1-6 2.5M19.8 7.5A9 9 0 0 1 21 13" /></>,
+  badminton: <><path d="M6 18 3 21M6 18a3 3 0 1 0 4.2-4.2" /><path d="m10.2 13.8 6.5-9.3 3.8 3.8-9.3 6.5" /><path d="m13.5 9 3 3M15 6.8l2.2 2.2" /></>,
+}
+
 const SPORTS = [
   { key: 'football', label: 'ฟุตบอล', ready: true },
   { key: 'futsal', label: 'ฟุตซอล', ready: false },
@@ -32,6 +41,8 @@ const SPORTS = [
   { key: 'volleyball', label: 'วอลเลย์บอล', ready: false },
   { key: 'badminton', label: 'แบดมินตัน', ready: false },
 ]
+
+const sportIcon = (key: string) => <svg className="hm-sport-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{SPORT_ICONS[key]}</svg>
 
 const FEATURES = [
   { icon: ClipboardList, title: 'จัดการแข่งขันง่าย', body: 'รับสมัคร ตรวจสลิป บันทึกผลแข่ง', ready: true },
@@ -75,6 +86,7 @@ export default async function Home() {
     const photo = coverDetailFor(id)
     return photo ? { backgroundImage: `url(${photo.src})` } : undefined
   }
+  const footballOpen = sportOpenCount(stats)
   const statItems = homeStatsVisible(stats) ? [
     { icon: Trophy, label: 'รายการแข่งทั้งหมด', value: stats.tournaments },
     { icon: CalendarDays, label: 'เปิดรับสมัครตอนนี้', value: stats.openTournaments },
@@ -121,8 +133,8 @@ export default async function Home() {
             <div className="hm-sports" aria-label="กีฬาในระบบ">
               <span>กีฬา:</span>
               {SPORTS.map(sport => sport.ready
-                ? <Link key={sport.key} href="/tournaments" className="hm-sport is-on">{sport.label}</Link>
-                : <span key={sport.key} className="hm-sport is-soon">{sport.label} <small>เร็ว ๆ นี้</small></span>)}
+                ? <Link key={sport.key} href="/tournaments" className="hm-sport is-on">{sportIcon(sport.key)}<span>{sport.label}</span>{footballOpen !== null && <span className="hm-sport-count gl-num">· {footballOpen} รายการ</span>}</Link>
+                : <span key={sport.key} className="hm-sport is-soon">{sportIcon(sport.key)}<span>{sport.label}</span><small className="hm-soon">เร็ว ๆ นี้</small></span>)}
             </div>
           </div>
 

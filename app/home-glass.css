@@ -32,12 +32,20 @@
 .hm-cta { flex: 1 1 220px; max-width: 280px; min-height: 54px; font-size: 17px; }
 .hm-cta-ghost { -webkit-backdrop-filter: blur(14px); align-items: center; backdrop-filter: blur(14px); background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.55); border-radius: 999px; color: #fff; display: inline-flex; flex: 1 1 200px; font: 600 17px var(--gl-font); justify-content: center; max-width: 260px; min-height: 54px; text-decoration: none; }
 .hm-cta-ghost:hover { background: rgba(255,255,255,.26); }
-.hm-sports { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
+.hm-sports { align-items: center; display: flex; flex-wrap: wrap; gap: 14px 10px; padding-top: 8px; }
 .hm-sports > span:first-child { color: rgba(255,255,255,.9); font-size: 13px; }
-.hm-sport { align-items: center; border-radius: 999px; display: inline-flex; font: 600 13px var(--gl-font); gap: 4px; min-height: 36px; padding: 0 14px; text-decoration: none; }
-.hm-sport.is-on { background: var(--gl-green); color: var(--gl-navy); }
-.hm-sport.is-soon { background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.4); color: rgba(255,255,255,.92); }
-.hm-sport small { font-size: 11px; font-weight: 500; opacity: .85; }
+.hm-sport { align-items: center; border-radius: 999px; display: inline-flex; font: 600 14px var(--gl-font); gap: 7px; min-height: 40px; padding: 0 16px 0 12px; position: relative; text-decoration: none; transition: transform .25s ease, background-color .2s, box-shadow .25s; }
+.hm-sport-icon { flex: none; transition: transform .6s cubic-bezier(.3,.7,.4,1); }
+.hm-sport.is-on { background: var(--gl-green); box-shadow: 0 6px 18px rgba(22,224,110,.35); color: var(--gl-navy); }
+.hm-sport.is-on:hover { box-shadow: 0 10px 24px rgba(22,224,110,.5); transform: translateY(-2px); }
+.hm-sport-count { font-weight: 500; opacity: .85; }
+.hm-sport.is-soon { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.38); color: rgba(255,255,255,.88); cursor: default; }
+.hm-sport.is-soon:hover { background: rgba(255,255,255,.2); transform: translateY(-2px); }
+/* The ball rolls a turn when pointed at or tapped. */
+.hm-sport:hover .hm-sport-icon, .hm-sport:active .hm-sport-icon { transform: translateX(2px) rotate(300deg); }
+/* "Coming soon" as a small tag on the chip's corner, like a badge on an app icon. */
+.hm-soon { background: #FDE68A; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,.25); color: #713F12; font: 700 10px/1 var(--gl-font); padding: 3px 7px; position: absolute; right: -6px; top: -9px; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .hm-sport, .hm-sport-icon { transition: none; } .hm-sport:hover, .hm-sport:hover .hm-sport-icon, .hm-sport:active .hm-sport-icon { transform: none; } }
 
 .hm-next { align-self: center; color: var(--gl-text); display: flex; flex-direction: column; gap: 14px; padding: 18px; }
 .hm-stage .hm-next.gl-panel { background: var(--gl-glass-bg-strong); }

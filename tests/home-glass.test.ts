@@ -55,8 +55,16 @@ describe('home page', () => {
 
   it('marks every sport but football as coming soon, with no link', async () => {
     const html = await render()
-    expect(html).toMatch(/<a[^>]*class="hm-sport is-on"[^>]*>ฟุตบอล<\/a>/)
-    expect(html).toMatch(/<span class="hm-sport is-soon">ฟุตซอล <small>เร็ว ๆ นี้<\/small><\/span>/)
+    expect(html).toMatch(/<a[^>]*class="hm-sport is-on"[^>]*>[\s\S]*?<span>ฟุตบอล<\/span>[\s\S]*?<\/a>/)
+    expect(html).toMatch(/<span class="hm-sport is-soon">[\s\S]*?<span>ฟุตซอล<\/span><small class="hm-soon">เร็ว ๆ นี้<\/small><\/span>/)
+    expect(html).not.toMatch(/<a[^>]*>[^<]*ฟุตซอล/)
+  })
+
+  it('counts open tournaments on the football chip only once there are a few', async () => {
+    data.counts = { tournaments: 3, openTournaments: 2, athletes: 0, results: 0 }
+    expect(await render()).not.toContain('hm-sport-count')
+    data.counts = { tournaments: 3, openTournaments: 7, athletes: 0, results: 0 }
+    expect(await render()).toContain('· 7 รายการ')
   })
 
   it('says how the ranking is earned, and shows nothing invented when it is empty', async () => {

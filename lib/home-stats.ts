@@ -11,3 +11,11 @@ export function homeStatsVisible(stats: HomeStats | null, min: HomeStats = HOME_
   if (!stats) return false
   return (Object.keys(min) as Array<keyof HomeStats>).every(key => Number.isFinite(stats[key]) && stats[key] >= min[key])
 }
+
+/** The open-tournament count on the football chip shows only from this many up. */
+export const SPORT_COUNT_MIN = 3
+
+export function sportOpenCount(stats: HomeStats | null, min = SPORT_COUNT_MIN): number | null {
+  const value = stats?.openTournaments
+  return typeof value === 'number' && Number.isFinite(value) && value >= min ? value : null
+}
