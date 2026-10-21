@@ -4,14 +4,14 @@
 .bds-page.tn-page { background: var(--ui-paper) !important; color: var(--ui-text); font-family: var(--font-sarabun), sans-serif; }
 
 /* /tournaments list: the light glass design (ADR-014, app/glass.css). */
-.bds-page.tn-page.tn-list { background: var(--gl-canvas) !important; color: var(--gl-text); font-family: var(--gl-font); }
+.bds-page.tn-page.tn-list, .bds-page.tn-page.tn-glass { background: var(--gl-canvas) !important; color: var(--gl-text); font-family: var(--gl-font); }
 /* The glass top bar lies over the stadium head, so the head runs up behind it. */
-.tn-list { position: relative; }
-.tn-list > .bds-page-header { left: 0; position: absolute; right: 0; top: 0; z-index: 2; }
+.tn-list, .tn-glass { position: relative; }
+.tn-list > .bds-page-header, .tn-glass > .bds-page-header { left: 0; position: absolute; right: 0; top: 0; z-index: 2; }
 
 /* Stadium head: the licensed stadium photo when one is set, else a plain pitch green, with
    a navy shade on the text side so white text keeps its contrast over any photo. */
-.tn-stadium { background-color: var(--gl-pitch); background-image: linear-gradient(100deg, rgba(11,18,32,.72) 0%, rgba(11,18,32,.45) 55%, rgba(11,18,32,.15) 100%), var(--gl-stadium-photo); background-position: center; background-size: cover; color: #fff; padding-top: calc(56px + env(safe-area-inset-top)); }
+.tn-stadium { position: relative; background-color: var(--gl-pitch); background-image: linear-gradient(100deg, rgba(11,18,32,.72) 0%, rgba(11,18,32,.45) 55%, rgba(11,18,32,.15) 100%), var(--gl-stadium-photo); background-position: center; background-size: cover; color: #fff; padding-top: calc(56px + env(safe-area-inset-top)); }
 .tn-stadium-inner { display: flex; flex-direction: column; gap: 10px; margin: 0 auto; max-width: 1280px; padding: 22px 16px 64px; }
 .tn-eyebrow { align-self: flex-start; background: rgba(22,224,110,.16); border: 1px solid rgba(22,224,110,.55); border-radius: 999px; color: #fff; font: 600 13px var(--gl-font); margin: 0; padding: 4px 12px; }
 .tn-title { font: 700 clamp(34px, 9vw, 60px)/1.15 var(--gl-font); margin: 0; text-shadow: 0 4px 24px rgba(0,0,0,.35); }
@@ -166,6 +166,72 @@
   .tn-next { grid-template-columns: 300px minmax(0, 1fr) 280px; }
   .tn-next-text { padding: 20px 22px; }
   .tn-next-side { grid-column: auto; padding: 20px; }
+}
+
+/* /tournaments/[id] on the glass design: head with facts and a glass call to action,
+   then a white board with the overview, how to enter and the venue. */
+.tn-stadium .tn-hero-photo { z-index: 0; }
+.tn-d-head { display: grid; gap: 20px; margin: 0 auto; max-width: 1280px; padding: 20px 16px 64px; position: relative; z-index: 1; }
+.tn-d-intro { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.tn-d-crumbs { align-items: center; color: rgba(255,255,255,.85); display: flex; flex-wrap: wrap; font-size: 14px; gap: 6px; }
+.tn-d-crumbs a { color: #fff; font-weight: 600; min-height: 32px; display: inline-flex; align-items: center; }
+.tn-d-crumbs span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60vw; }
+.tn-d-title { font: 700 clamp(30px, 7vw, 54px)/1.15 var(--gl-font); margin: 0; overflow-wrap: anywhere; text-shadow: 0 4px 24px rgba(0,0,0,.4); }
+.tn-d-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.tn-d-meta { display: flex; flex-direction: column; gap: 8px; list-style: none; margin: 4px 0 0; padding: 0; }
+.tn-d-meta li { align-items: flex-start; color: rgba(255,255,255,.95); display: flex; font-size: 16px; gap: 10px; line-height: 1.45; text-shadow: 0 1px 8px rgba(0,0,0,.45); }
+.tn-d-meta svg { color: var(--gl-green); flex: none; margin-top: 2px; }
+.tn-d-meta span { overflow-wrap: anywhere; }
+.tn-d-cta { align-self: center; display: flex; flex-direction: column; gap: 12px; padding: 18px; }
+.tn-stadium .tn-d-cta.gl-panel { background: var(--gl-glass-bg-strong); }
+.tn-d-count { align-items: center; background: var(--gl-white); border-radius: 14px; display: flex; flex-direction: column; gap: 4px; padding: 12px; text-align: center; }
+.tn-d-count small { color: var(--gl-text-2); font: 500 13px var(--gl-font); }
+.tn-d-count b { color: var(--gl-navy); font: 700 28px/1.2 var(--gl-font); }
+.tn-d-count b.is-live { color: var(--gl-error); }
+.tn-d-register { width: 100%; }
+.tn-d-closed { align-items: center; background: #EEF2F6; border-radius: 999px; color: #334155; display: flex; font-weight: 700; justify-content: center; margin: 0; min-height: 48px; }
+.tn-d-cta-row { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+.tn-d-cta-row .gl-btn { font-size: 14px; gap: 6px; min-height: 44px; padding: 0 10px; }
+
+.tn-d-tabs { border-bottom: 1px solid var(--gl-line); display: flex; gap: 4px; overflow-x: auto; }
+.tn-d-tabs a { border-bottom: 3px solid transparent; color: var(--gl-text-2); flex: none; font: 600 15px var(--gl-font); min-height: 48px; display: flex; align-items: center; padding: 0 14px; text-decoration: none; }
+.tn-d-tabs a:hover { color: var(--gl-navy); }
+.tn-d-tabs a.is-on { border-bottom-color: var(--gl-green); color: var(--gl-navy); }
+.tn-d-grid { display: grid; gap: 20px; margin-top: 18px; }
+.tn-d-main, .tn-d-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.tn-d-section { scroll-margin-top: 16px; }
+.tn-d-section > h2, .tn-d-card > h2 { color: var(--gl-navy); font: 700 20px var(--gl-font); margin: 0 0 10px; }
+.tn-d-muted { color: var(--gl-text-2); font-size: 14.5px; margin: 0; }
+.tn-d-facts { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); margin: 16px 0 0; }
+.tn-d-facts > div { background: var(--gl-canvas); border: 1px solid var(--gl-line); border-radius: 14px; display: grid; gap: 2px 10px; grid-template-columns: auto 1fr; padding: 12px 14px; }
+.tn-d-facts svg { color: var(--gl-green-ink); grid-row: span 2; margin-top: 2px; }
+.tn-d-facts dt { color: var(--gl-text-2); font: 500 12.5px var(--gl-font); }
+.tn-d-facts dd { color: var(--gl-navy); font: 600 15px/1.4 var(--gl-font); margin: 0; overflow-wrap: anywhere; }
+.tn-d-steps { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
+.tn-d-steps li { align-items: flex-start; background: var(--gl-green-surface); border-radius: 14px; display: flex; gap: 12px; padding: 14px; }
+.tn-d-steps i { align-items: center; background: var(--gl-green); border-radius: 50%; color: var(--gl-navy); display: flex; flex: 0 0 30px; font: 700 15px var(--gl-font); font-style: normal; height: 30px; justify-content: center; }
+.tn-d-steps b { color: var(--gl-navy); display: block; font-size: 15px; }
+.tn-d-steps small { color: var(--gl-text-2); font-size: 13.5px; }
+.tn-d-card { background: var(--gl-white); border: 1px solid var(--gl-line); border-radius: var(--gl-radius); box-shadow: 0 4px 14px rgba(11,18,32,.05); margin: 0; padding: 16px; scroll-margin-top: 16px; }
+.tn-d-venue { align-items: flex-start; color: var(--gl-text); display: flex; font-size: 15px; gap: 8px; line-height: 1.5; margin: 0 0 12px; }
+.tn-d-venue svg { color: var(--gl-green-ink); flex: none; margin-top: 3px; }
+.tn-d-map { width: 100%; }
+.tn-d-linkcard { align-items: center; color: inherit; display: flex; gap: 12px; text-decoration: none; }
+.tn-d-linkcard .tn-link-icon { background: var(--gl-green-surface); color: var(--gl-green-ink); }
+.tn-d-linkcard:hover { border-color: var(--gl-green); }
+.tn-d-athlete { color: var(--gl-text-2); font-size: 14px; }
+.tn-d-athlete a { color: var(--gl-navy); font-weight: 700; }
+.tn-d-dock { background: linear-gradient(to top, var(--gl-canvas) 70%, rgba(243,246,249,0)); }
+.tn-d-dock .gl-btn { width: 100%; }
+.bds-page.tn-detail.tn-glass:not(:has(.tn-d-dock)) { padding-bottom: 40px !important; }
+@media (min-width: 760px) {
+  .tn-d-head { padding: 32px 24px 80px; }
+}
+@media (min-width: 960px) {
+  .tn-d-head { align-items: center; gap: 40px; grid-template-columns: minmax(0, 1fr) 380px; padding: 40px 24px 88px; }
+  .tn-d-grid { grid-template-columns: minmax(0, 1fr) 340px; }
+  .tn-d-dock { display: none; }
+  .bds-page.tn-detail.tn-glass { padding-bottom: 40px !important; }
 }
 
 /* Date box in the register flow summary (RegisterSteps), still on the Paper design. */
