@@ -12,9 +12,15 @@
 
 export type StockPhoto = { src: string; credit: string }
 
-export const STADIUM: StockPhoto | null = null
+export const STADIUM: StockPhoto | null = { src: '/photos/stadium-aerial-night.webp', credit: 'Unsplash, photo-1556056504-5c7696c4c28d' }
 
-export const COVER_DETAILS: readonly StockPhoto[] = []
+// Close crops of pitch markings and grass: lines, a circle, an arc. No goal, stand or
+// sign that could tell one ground from another.
+export const COVER_DETAILS: readonly StockPhoto[] = [
+  { src: '/photos/cover-grass-line.webp', credit: 'Sandro Schuh, Unsplash, photo-1459865264687-595d652de67e' },
+  { src: '/photos/cover-centre-circle.webp', credit: 'Unsplash, photo-1556056504-5c7696c4c28d (crop)' },
+  { src: '/photos/cover-penalty-arc.webp', credit: 'Unsplash, photo-1556056504-5c7696c4c28d (crop)' },
+]
 
 /**
  * The cover detail for one tournament: the same photo for the same tournament on every

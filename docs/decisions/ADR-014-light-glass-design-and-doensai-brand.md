@@ -43,9 +43,10 @@ copyright we may not use.**
 - A stock photo of a **place** (a stadium or pitch) is atmosphere only, behind a page head.
   It is never a tournament or venue cover, because it would pass itself off as the real
   venue (`lib/tournament-cover.ts`).
-- A tournament card with no photo of its own may show a stock **close-up of a thing**: a
-  ball on grass, a goal net, a trophy (owner, 21 Oct 2026, "ครับเอาเลย"). It names no place,
-  so it cannot be mistaken for the venue. The organizer's own photo replaces it once T57
+- A tournament card with no photo of its own may show a stock **close-up**: a ball on
+  grass, a trophy, or a close crop of grass and pitch markings that shows no goal, stand or
+  sign (owner, 21 Oct 2026, "ครับเอาเลย"). It names no place, so it cannot be mistaken for
+  the venue. The organizer's own photo replaces it once T57
   lets organizers upload one. `lib/stock-photos.ts` keeps the two kinds apart, and
   `tests/stock-photos.test.ts` fails a photo without a file or a credits row.
 - No stock photo shows an identifiable child, and no photo shows a club crest or brand logo.
