@@ -5,8 +5,9 @@
 .hm-sr { clip: rect(0 0 0 0); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
 
 /* Stage: the stadium photo behind the bar, the hero and the numbers. */
-.hm-stage { background-color: var(--gl-pitch); background-image: linear-gradient(100deg, rgba(11,18,32,.78) 0%, rgba(11,18,32,.5) 50%, rgba(11,18,32,.25) 100%), var(--gl-stadium-photo); background-position: center; background-size: cover; color: #fff; padding: 12px 16px 72px; }
+.hm-stage { overflow: hidden; position: relative; background-color: var(--gl-pitch); background-image: linear-gradient(100deg, rgba(11,18,32,.78) 0%, rgba(11,18,32,.5) 50%, rgba(11,18,32,.25) 100%), var(--gl-stadium-photo); background-position: center; background-size: cover; color: #fff; padding: 12px 16px 72px; }
 
+.hm-bar, .hm-hero, .hm-stats { position: relative; z-index: 1; }
 .hm-bar { align-items: center; display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 0 auto; max-width: 1280px; }
 .hm-logo { align-items: center; color: #fff; display: inline-flex; font: 700 22px var(--gl-font); gap: 8px; min-height: 44px; text-decoration: none; }
 .hm-logo em { color: var(--gl-green); font-style: normal; }
@@ -26,7 +27,8 @@
 .hm-hero { display: grid; gap: 24px; margin: 28px auto 0; max-width: 1280px; }
 .hm-hero-text { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .hm-hero h1 { font: 700 clamp(34px, 8.6vw, 64px)/1.12 var(--gl-font); margin: 0; text-shadow: 0 4px 24px rgba(0,0,0,.45); }
-.hm-hero h1 span { display: block; font-size: .62em; font-weight: 600; margin-top: 6px; }
+.hm-line { display: block; }
+.hm-line-2 { font-size: .62em; font-weight: 600; margin-top: 6px; }
 .hm-hero p { color: rgba(255,255,255,.95); font-size: 17px; line-height: 1.6; margin: 0; max-width: 640px; text-shadow: 0 2px 12px rgba(0,0,0,.5); }
 .hm-ctas { display: flex; flex-wrap: wrap; gap: 12px; }
 .hm-cta { flex: 1 1 220px; max-width: 280px; min-height: 54px; font-size: 17px; }
@@ -153,4 +155,34 @@
   .hm-body { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); }
   .hm-features { grid-column: 1 / -1; }
   .hm-foot { grid-column: 1 / -1; }
+}
+
+/* Floodlight: a soft beam that sweeps slowly across the pitch, behind everything. */
+.hm-stage::before { animation: hm-sweep 14s ease-in-out infinite alternate; background: radial-gradient(ellipse 38% 70% at 50% 0%, rgba(255,255,240,.20), rgba(255,255,240,0) 70%); content: ''; inset: -10% -30%; mix-blend-mode: screen; pointer-events: none; position: absolute; z-index: 0; }
+@keyframes hm-sweep { from { transform: translateX(-28%) rotate(-6deg); } to { transform: translateX(28%) rotate(6deg); } }
+
+/* The headline rises in line by line when the page opens. */
+.hm-line { animation: hm-rise .8s cubic-bezier(.2,.7,.2,1) both; }
+.hm-line-2 { animation-delay: .18s; }
+.hm-hero p { animation: hm-rise .8s .32s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes hm-rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+/* Three steps for a site with no open tournament yet; each lights up in turn. */
+.hm-how { align-self: center; color: var(--gl-text); display: flex; flex-direction: column; gap: 14px; padding: 20px; }
+.hm-stage .hm-how.gl-panel { background: var(--gl-glass-bg-strong); }
+.hm-how h2 { color: var(--gl-navy); font: 700 20px var(--gl-font); margin: 0; }
+.hm-how-steps { display: flex; flex-direction: column; gap: 10px; list-style: none; margin: 0; padding: 0; }
+.hm-how-steps li { align-items: center; animation: hm-step 7.5s ease-in-out infinite; animation-delay: calc(var(--i) * 2.5s); background: rgba(255,255,255,.6); border: 1px solid rgba(11,18,32,.06); border-radius: 14px; display: flex; gap: 12px; padding: 12px; }
+.hm-how-icon { align-items: center; background: var(--gl-green-surface); border-radius: 50%; color: var(--gl-green-ink); display: flex; flex: none; height: 44px; justify-content: center; width: 44px; }
+.hm-how-steps b { align-items: center; color: var(--gl-navy); display: flex; font-size: 15px; gap: 8px; }
+.hm-how-steps i { align-items: center; background: var(--gl-navy); border-radius: 50%; color: #fff; display: inline-flex; font: 700 12px var(--gl-font); font-style: normal; height: 20px; justify-content: center; width: 20px; }
+.hm-how-steps small { color: var(--gl-text-2); display: block; font-size: 13px; line-height: 1.45; margin-top: 2px; }
+.hm-how-cta { width: 100%; }
+@keyframes hm-step {
+  0%, 30%, 100% { background: rgba(255,255,255,.6); box-shadow: none; transform: none; }
+  8%, 22% { background: #fff; box-shadow: 0 8px 22px rgba(22,224,110,.28), inset 3px 0 0 var(--gl-green); transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-stage::before, .hm-line, .hm-hero p, .hm-how-steps li { animation: none; }
 }

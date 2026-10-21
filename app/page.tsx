@@ -42,6 +42,12 @@ const SPORTS = [
   { key: 'badminton', label: 'แบดมินตัน', ready: false },
 ]
 
+const HOW_STEPS = [
+  { icon: Users, title: 'สร้างทีม', body: 'โค้ชสร้างทีมและส่งลิงก์ชวนนักกีฬา' },
+  { icon: Trophy, title: 'ลงแข่ง', body: 'พาทีมสมัครรายการที่เปิดรับ' },
+  { icon: IdCard, title: 'ผลขึ้นการ์ดนักกีฬา', body: 'ผลที่ผู้จัดยืนยันเปลี่ยนเป็นคะแนนฝีมือ แต้ม และเหรียญ' },
+]
+
 const sportIcon = (key: string) => <svg className="hm-sport-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{SPORT_ICONS[key]}</svg>
 
 const FEATURES = [
@@ -124,7 +130,7 @@ export default async function Home() {
 
         <section className="hm-hero">
           <div className="hm-hero-text">
-            <h1>ฟุตบอลเดินสาย<br /><span>มากกว่าการแข่งขัน คือโอกาสของทุกคน</span></h1>
+            <h1><span className="hm-line">ฟุตบอลเดินสาย</span><span className="hm-line hm-line-2">มากกว่าการแข่งขัน คือโอกาสของทุกคน</span></h1>
             <p>จัดการแข่งขัน · เชื่อมทีม · สร้างนักกีฬา · พัฒนาวงการกีฬาไทยด้วยข้อมูล</p>
             <div className="hm-ctas">
               <Link href="/tournaments" className="gl-btn gl-btn-primary hm-cta">ค้นหารายการแข่ง<ArrowRight size={18} aria-hidden="true" /></Link>
@@ -156,6 +162,19 @@ export default async function Home() {
               <div><dt>วันแข่ง</dt><dd>{tournamentDateRange(locale, next.start_date, next.end_date)}</dd></div>
             </dl>
             <Link href={tournamentHref(next.id)} className="gl-btn gl-btn-primary hm-next-cta">ดูรายละเอียดและสมัคร<ArrowRight size={18} aria-hidden="true" /></Link>
+          </aside>}
+
+          {/* No open tournament yet: the space explains the platform in three steps instead
+              of standing empty. The steps light up one after another. */}
+          {!next && <aside className="hm-how gl-panel" aria-labelledby="hm-how-title">
+            <h2 id="hm-how-title">เริ่มต้นใน 3 ขั้น</h2>
+            <ol className="hm-how-steps">
+              {HOW_STEPS.map((step, index) => <li key={step.title} style={{ '--i': index } as React.CSSProperties}>
+                <span className="hm-how-icon"><step.icon size={22} aria-hidden="true" /></span>
+                <span><b><i className="gl-num">{index + 1}</i>{step.title}</b><small>{step.body}</small></span>
+              </li>)}
+            </ol>
+            <Link href={user ? '/team-members' : '/login'} className="gl-btn gl-btn-primary hm-how-cta">เริ่มเลย<ArrowRight size={18} aria-hidden="true" /></Link>
           </aside>}
         </section>
 

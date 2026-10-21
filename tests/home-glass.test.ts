@@ -38,6 +38,20 @@ describe('home page', () => {
     expect(html).toContain('href="/tournaments/t1"')
   })
 
+  it('explains the platform in three steps when no tournament is open, instead of an empty space', async () => {
+    data.tournaments = []
+    const html = await render()
+    expect(html).not.toContain('id="hm-next-name"')
+    expect(html).toContain('เริ่มต้นใน 3 ขั้น')
+    expect(html).toMatch(/สร้างทีม[\s\S]*ลงแข่ง[\s\S]*ผลขึ้นการ์ดนักกีฬา/)
+    expect(html).toContain('href="/login"')
+  })
+
+  it('shows the three steps only when there is no next tournament to show', async () => {
+    data.tournaments = [cup('t1', 'ศึกเยาวชนขอนแก่น', '2026-10-24')]
+    expect(await render()).not.toContain('เริ่มต้นใน 3 ขั้น')
+  })
+
   it('hides the platform numbers while they are small, and shows real ones once they are not', async () => {
     data.counts = { tournaments: 3, openTournaments: 1, athletes: 12, results: 2 }
     expect(await render()).not.toContain('ตัวเลขของระบบ')
