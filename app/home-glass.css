@@ -12,7 +12,7 @@
 .hm-logo { align-items: center; color: #fff; display: inline-flex; font: 700 22px var(--gl-font); gap: 8px; min-height: 44px; text-decoration: none; }
 .hm-logo em { color: var(--gl-green); font-style: normal; }
 .hm-nav { border-radius: 999px; display: none; gap: 2px; padding: 4px; }
-.hm-nav a { border-radius: 999px; color: var(--gl-text); font: 500 14px var(--gl-font); min-height: 40px; display: flex; align-items: center; padding: 0 16px; text-decoration: none; }
+.hm-nav a { border-radius: 999px; color: var(--gl-text); font: 500 14px var(--gl-font); min-height: 44px; display: flex; align-items: center; padding: 0 16px; text-decoration: none; }
 .hm-nav a:hover { background: rgba(255,255,255,.7); }
 .hm-nav a.is-on { background: #fff; box-shadow: inset 0 -3px 0 var(--gl-green); color: var(--gl-navy); font-weight: 700; }
 .hm-bar-end { align-items: center; display: flex; flex: 1; gap: 8px; justify-content: flex-end; min-width: 0; }
@@ -36,7 +36,7 @@
 .hm-cta-ghost:hover { background: rgba(255,255,255,.26); }
 .hm-sports { align-items: center; display: flex; flex-wrap: wrap; gap: 14px 10px; padding-top: 8px; }
 .hm-sports > span:first-child { color: rgba(255,255,255,.9); font-size: 13px; }
-.hm-sport { align-items: center; border-radius: 999px; display: inline-flex; font: 600 14px var(--gl-font); gap: 7px; min-height: 40px; padding: 0 16px 0 12px; position: relative; text-decoration: none; transition: transform .25s ease, background-color .2s, box-shadow .25s; }
+.hm-sport { align-items: center; border-radius: 999px; display: inline-flex; font: 600 14px var(--gl-font); gap: 7px; min-height: 44px; padding: 0 16px 0 12px; position: relative; text-decoration: none; transition: transform .25s ease, background-color .2s, box-shadow .25s; }
 .hm-sport-icon { flex: none; transition: transform .6s cubic-bezier(.3,.7,.4,1); }
 .hm-sport.is-on { background: var(--gl-green); box-shadow: 0 6px 18px rgba(22,224,110,.35); color: var(--gl-navy); }
 .hm-sport.is-on:hover { box-shadow: 0 10px 24px rgba(22,224,110,.5); transform: translateY(-2px); }
@@ -121,6 +121,7 @@
 .hm-rank-av { align-items: center; background: var(--gl-green-surface); border: 2px solid #fff; border-radius: 50%; color: var(--gl-navy); display: flex; font: 700 16px var(--gl-font); height: 40px; justify-content: center; width: 40px; }
 .hm-rank-name { display: flex; flex-direction: column; min-width: 0; }
 .hm-rank-name b { color: var(--gl-navy); font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hm-rank-sample { margin-left: 6px; min-height: 20px; vertical-align: middle; }
 .hm-rank-name small { color: var(--gl-text-2); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hm-rank-pts { color: var(--gl-navy); font: 700 18px var(--gl-font); }
 
@@ -138,7 +139,6 @@
 .hm-foot { color: var(--gl-text-2); display: flex; flex-wrap: wrap; font-size: 13px; gap: 8px 16px; justify-content: space-between; padding: 6px 4px; }
 .hm-foot a { color: var(--gl-text); }
 
-.hm a:focus-visible, .hm button:focus-visible { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
 .hm-stage a:focus-visible { outline-color: var(--gl-green); }
 @media (prefers-reduced-motion: reduce) { .hm-card { transition: none; } }
 

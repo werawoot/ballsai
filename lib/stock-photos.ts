@@ -3,13 +3,14 @@
 // photographer, licence); tests/stock-photos.test.ts fails a build that adds one without
 // the other.
 //
-// Two kinds, kept apart on purpose:
+// Three kinds, kept apart on purpose:
 // - STADIUM: atmosphere behind a page head. An empty stadium or pitch, no people.
 // - BACKDROP: a heavily blurred texture behind the whole page, for the glass to show.
-// - COVER_DETAILS: a close-up of a thing (a ball on grass, a goal net, a trophy) for a
-//   tournament card that has no photo of its own. Never a pitch or a stadium: a card must
-//   not pass a stock place off as the tournament's venue (lib/tournament-cover.ts).
-// Neither ever shows an identifiable person, a child, or a club or brand logo.
+// - COVER_DETAILS: a close crop (grass and a line, a centre circle, a penalty arc) for a
+//   tournament card that has no photo of its own. Never a whole pitch, a stand or a
+//   stadium: a card must not pass a stock place off as the tournament's venue
+//   (lib/tournament-cover.ts).
+// None ever shows an identifiable person, a child, or a club or brand logo.
 
 export type StockPhoto = { src: string; credit: string }
 

@@ -166,6 +166,7 @@ export default async function Home() {
           {next && nextBox && <aside className="hm-next gl-panel" aria-labelledby="hm-next-name">
             <div className="hm-next-top">
               <span className="gl-status is-open">รายการถัดไป</span>
+              {isSampleId(next.id) && <span className="gl-status is-warn">ตัวอย่าง</span>}
               {nextCountdown && <span className={`hm-next-count${nextCountdown.kind === 'live' ? ' is-live' : ''}`}>{countdownText}</span>}
             </div>
             <div className="hm-next-main">
@@ -185,7 +186,7 @@ export default async function Home() {
 
           {/* No open tournament yet: three sample cards on a turning ring tell the three
               steps instead of an empty space (owner, 21 Oct 2026). */}
-          {!next && <HomeCardRing cards={RING_CARDS} ctaHref={user ? '/team-members' : '/login'} labels={{ sample: 'การ์ดตัวอย่าง', region: 'การ์ดนักกีฬาตัวอย่าง 3 ขั้น', previous: 'การ์ดก่อนหน้า', next: 'การ์ดถัดไป', pause: 'หยุดหมุนการ์ด', play: 'หมุนการ์ดต่อ', cta: 'เริ่มสร้างการ์ดของคุณ', slide: 'การ์ด' }} />}
+          {!next && <HomeCardRing cards={RING_CARDS} ctaHref={user ? '/card' : '/login'} labels={{ sample: 'การ์ดตัวอย่าง', region: 'การ์ดนักกีฬาตัวอย่าง 3 ขั้น', previous: 'การ์ดก่อนหน้า', next: 'การ์ดถัดไป', pause: 'หยุดหมุนการ์ด', play: 'หมุนการ์ดต่อ', cta: 'เริ่มสร้างการ์ดของคุณ', slide: 'การ์ด' }} />}
         </section>
 
         {statItems.length > 0 && <section className="hm-stats" aria-label="ตัวเลขของระบบ">
@@ -233,7 +234,7 @@ export default async function Home() {
               <Link href={isSampleId(player.id) ? '/ranking' : `/players/${player.id}`}>
                 <span className={`hm-rank-pos gl-num is-${index + 1}`}>{index + 1}</span>
                 <span className="hm-rank-av" aria-hidden="true">{player.player_name.trim().charAt(0)}{index === 0 && <Crown className="hm-rank-crown" size={16} />}</span>
-                <span className="hm-rank-name"><b>{player.player_name}</b><small>{[player.team, player.province ? provinceName(player.province, locale === 'en' ? 'en' : 'th') : null].filter(Boolean).join(' · ')}</small></span>
+                <span className="hm-rank-name"><b>{player.player_name}{isSampleId(player.id) && <span className="gl-status is-warn hm-rank-sample">ตัวอย่าง</span>}</b><small>{[player.team, player.province ? provinceName(player.province, locale === 'en' ? 'en' : 'th') : null].filter(Boolean).join(' · ')}</small></span>
                 <span className="hm-rank-pts gl-num">{player.pts.toLocaleString('en-US')}</span>
               </Link>
             </li>)}

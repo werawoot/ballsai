@@ -4,7 +4,7 @@
 .bds-page.tn-page { background: var(--ui-paper) !important; color: var(--ui-text); font-family: var(--font-sarabun), sans-serif; }
 
 /* /tournaments list: the light glass design (ADR-014, app/glass.css). */
-.bds-page.tn-page.tn-list, .bds-page.tn-page.tn-glass { background: transparent !important; color: var(--gl-text); font-family: var(--gl-font); }
+.bds-page.tn-page.tn-list, .bds-page.tn-page.tn-glass, .bds-page.tn-page.tn-missing { background: transparent !important; color: var(--gl-text); font-family: var(--gl-font); }
 /* The glass top bar lies over the stadium head, so the head runs up behind it. */
 .tn-list, .tn-glass { position: relative; }
 .tn-list > .bds-page-header, .tn-glass > .bds-page-header { left: 0; position: absolute; right: 0; top: 0; z-index: 2; }
@@ -27,7 +27,7 @@
 .tn-search-go { min-height: 52px; }
 .tn-search-clear { align-items: center; color: #fff; display: inline-flex; font: 600 14px var(--gl-font); gap: 4px; min-height: 44px; padding: 0 6px; text-decoration: underline; }
 .tn-sort { -webkit-backdrop-filter: blur(14px); align-items: center; backdrop-filter: blur(14px); background: rgba(255,255,255,.96); border: 1px solid rgba(255,255,255,.7); border-radius: 999px; color: var(--gl-text-2); display: inline-flex; font: 500 13px var(--gl-font); gap: 6px; min-height: 44px; padding: 0 6px 0 16px; }
-.tn-sort select { background: transparent; border: 0; color: var(--gl-navy); cursor: pointer; font: 600 14px var(--gl-font); min-height: 40px; padding: 0 8px; }
+.tn-sort select { background: transparent; border: 0; color: var(--gl-navy); cursor: pointer; font: 600 14px var(--gl-font); min-height: 44px; padding: 0 8px; }
 .tn-sort:focus-within { outline: 3px solid var(--gl-green); outline-offset: 2px; }
 
 /* One white board rises over the head and holds the whole list. */
@@ -40,7 +40,7 @@
 .tn-tabs-pill { background: var(--gl-green); border-radius: 999px; box-shadow: 0 6px 16px rgba(22,224,110,.35); height: 44px; left: 0; position: absolute; top: 0; transition: transform .35s cubic-bezier(.3,.7,.3,1), width .35s cubic-bezier(.3,.7,.3,1); z-index: 0; }
 .tn-tabs a { position: relative; z-index: 1; }
 .tn-layout { background: rgba(255,255,255,.6); border-radius: 999px; display: flex; gap: 2px; padding: 3px; }
-.tn-layout a { align-items: center; border-radius: 999px; color: var(--gl-text); display: flex; font: 600 13px var(--gl-font); gap: 6px; min-height: 40px; padding: 0 14px; text-decoration: none; }
+.tn-layout a { align-items: center; border-radius: 999px; color: var(--gl-text); display: flex; font: 600 13px var(--gl-font); gap: 6px; min-height: 44px; padding: 0 14px; text-decoration: none; }
 .tn-layout a.is-on { background: var(--gl-green); color: var(--gl-navy); }
 .tn-search-for { color: var(--gl-text-2); font-size: 14px; margin: 12px 2px 0; }
 .tn-tabs a { align-items: center; background: rgba(255,255,255,.6); border-radius: 999px; color: var(--gl-text); display: flex; flex: 1 0 auto; font: 600 14px var(--gl-font); justify-content: center; min-height: 44px; padding: 0 18px; text-decoration: none; transition: background-color .15s; white-space: nowrap; }
@@ -148,6 +148,11 @@
 .tn-empty .ui-h2 { color: var(--gl-navy); font-family: var(--gl-font); }
 .tn-empty-hint { font-size: 14px; margin: 0; }
 .tn-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 6px; }
+/* A tournament that is not found: the same glass page with no stadium head, so the top
+   bar keeps a solid navy behind its white text. */
+.tn-missing > .bds-page-header { background: rgba(11,18,32,.92); }
+.tn-missing .tn-wrap { max-width: 640px; padding-top: 24px; }
+.tn-missing .tn-empty { border-radius: 20px; }
 
 /* For organizers: where tournaments come from, with one button to start. */
 .tn-organizer { align-items: center; border-radius: var(--gl-radius); display: flex; flex-wrap: wrap; gap: 12px 14px; margin: 16px 0 8px; padding: 16px; }

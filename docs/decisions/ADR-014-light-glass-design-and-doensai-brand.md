@@ -72,7 +72,8 @@ Until then the product name in the app stays BallDoenSai.com.
 ## Consequences
 
 - Hard rule 7 now reads: the light glass design of this ADR, page by page.
-- `/tournaments` is the first page on it. Its header bar and bottom bar are still the old
-  shared components; they move with the home page.
+- `/tournaments` is the first page on it. Its header bar and bottom bar first stayed the old
+  shared components; since commit e9238d8 (21 Oct 2026) both turn to glass on any page
+  that opts in (`app/glass.css`), and stay dark on pages not yet moved.
 - Real photos need the cloud environment to allow `images.unsplash.com` and
   `images.pexels.com`, or the owner to send the files.

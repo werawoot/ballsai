@@ -23,8 +23,8 @@ import './tournaments.css'
 // cards or rows, with a jump to each month. A search by name or venue and the order live
 // in the URL, so a filtered list can be shared and paged. Three tabs, so finished
 // tournaments never crowd page 1. A card shows only what the row holds: a missing sport or
-// status says nothing rather than guessing, and its cover is a brand graphic, never a
-// stock photo that would pass for the venue (lib/tournament-cover.ts).
+// status says nothing rather than guessing, and its cover is a licensed close crop of pitch
+// markings, never a whole ground that would pass for the venue (lib/stock-photos.ts).
 
 // How many of the soonest tournaments the lead card's arrows step through.
 const SPOTLIGHT_MAX = 5
@@ -83,8 +83,8 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
 
   // A tab keeps the search and the view, not the order: each tab has its own default.
   const tabs = <TabPills label={t('tabsLabel')} items={TOURNAMENT_VIEWS.map(item => ({ href: link({ view: item === 'upcoming' ? undefined : item, sort: undefined }), text: t(`tabs.${item}`), active: item === view }))} />
-  // A licensed close-up (ball, net, trophy) behind a card's date, never a place
-  // (lib/stock-photos.ts); none yet, the brand graphic shows instead.
+  // A licensed close crop of pitch markings behind a card's date, never a whole ground
+  // (lib/stock-photos.ts); with none set, the brand graphic shows instead.
   const coverStyle = (id: string) => {
     const photo = coverDetailFor(id)
     return photo ? { backgroundImage: `url(${photo.src})` } : undefined

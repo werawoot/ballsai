@@ -51,9 +51,9 @@ export default async function TournamentPage(props: { params: Promise<{ id: stri
   const tournament = (data ?? (showDemoData ? sampleTournaments.find(item => item.id === id) : null)) as Tournament | null
 
   if (!tournament) {
-    return <main className="bds-page tn-page">
+    return <main className="bds-page tn-page tn-missing gl gl-scene" style={BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } as React.CSSProperties : undefined}>
       <PageHeader back={{ href: '/tournaments', label: t('back') }} />
-      <div className="tn-wrap"><div className="tn-empty ui-card" role="status">
+      <div className="tn-wrap"><div className="tn-empty gl-card" role="status">
         <SearchX size={40} strokeWidth={1.4} aria-hidden="true" />
         <h1 className="ui-h2">{t('notFound')}</h1>
         <p className="tn-empty-hint">{t('notFoundHint')}</p>
