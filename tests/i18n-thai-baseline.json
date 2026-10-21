@@ -1,6 +1,4 @@
 [
-  "app/HomeHeroCarousel.tsx",
-  "app/HomeHighlightsRail.tsx",
   "app/admin/DeletePlayerButton.tsx",
   "app/admin/EditPlayerButton.tsx",
   "app/admin/_components/AdminNavigation.tsx",

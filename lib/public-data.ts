@@ -5,6 +5,7 @@ import { fetchPublicTournamentsPage, type TournamentSort, type TournamentView } 
 import { fetchIdentityRanking, type IdentityRanking } from './public-identity-ranking'
 import { fetchRankingProvinces } from './ranking-provinces'
 import { fetchRankingPage } from './public-ranking-page'
+import type { HomeStats } from './home-stats'
 
 const publicSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -161,4 +162,29 @@ export const getSitemapTournamentIds = unstable_cache(
   },
   ['sitemap-tournament-ids'],
   { revalidate: 3600, tags: ['public-tournaments'] },
+)
+
+// The home page platform numbers (lib/home-stats.ts). Head-only counts of public rows,
+// cached for ten minutes, so a busy home page counts each table six times an hour at
+// most, whatever its traffic. A count that fails comes back as NaN and hides the block.
+export const getPublicPlatformCounts = unstable_cache(
+  async (today: string): Promise<HomeStats> => {
+    const count = async (query: PromiseLike<{ count: number | null; error: unknown }>) => {
+      const { count: value, error } = await query
+      if (error) {
+        console.error(JSON.stringify({ level: 'error', event: 'public_platform_count_failed', error: publicDataErrorDetails(error) }))
+        return Number.NaN
+      }
+      return value ?? 0
+    }
+    const [tournaments, openTournaments, athletes, results] = await Promise.all([
+      count(publicSupabase.from('tournaments').select('id', { count: 'exact', head: true })),
+      count(publicSupabase.from('tournaments').select('id', { count: 'exact', head: true }).eq('status', 'open').gte('end_date', today)),
+      count(publicSupabase.from('player_ranks').select('id', { count: 'exact', head: true }).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON)),
+      count(publicSupabase.from('match_results').select('id', { count: 'exact', head: true }).eq('status', 'confirmed')),
+    ])
+    return { tournaments, openTournaments, athletes, results }
+  },
+  ['public-platform-counts'],
+  { revalidate: 600, tags: ['public-tournaments', 'public-ranking'] },
 )
