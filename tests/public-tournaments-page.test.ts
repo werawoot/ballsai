@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { bangkokToday, fetchPublicTournamentsPage, groupTournamentsByMonth, parseTournamentView, TOURNAMENTS_PAGE_SIZE } from '@/lib/public-tournaments'
+import { bangkokToday, fetchPublicTournamentsPage, groupTournamentsByMonth, parseTournamentQuery, parseTournamentSort, parseTournamentView, TOURNAMENTS_PAGE_SIZE } from '@/lib/public-tournaments'
 
-type Row = { id: string; start_date: string; end_date: string | null; status: string | null }
+type Row = { id: string; start_date: string; end_date: string | null; status: string | null; name?: string; location?: string | null; fee?: number }
 
 // Only the database boundary is faked: a table that answers the filters and order the
 // page asks for, so a test sees which rows each tab would really get back.
@@ -14,12 +14,19 @@ function fakeSupabase(table: Row[]) {
     gte: (column: keyof Row, value: string) => { calls.push(`${column}>=${value}`); rows = rows.filter(row => String(row[column]) >= value); return builder },
     lt: (column: keyof Row, value: string) => { calls.push(`${column}<${value}`); rows = rows.filter(row => String(row[column]) < value); return builder },
     eq: (column: keyof Row, value: string) => { calls.push(`${column}=${value}`); rows = rows.filter(row => row[column] === value); return builder },
+    // PostgREST "or" of ilike filters, the shape the search sends: name.ilike.*x*,location.ilike.*x*
+    or: (filter: string) => {
+      calls.push(`or ${filter}`)
+      const parts = filter.split(',').map(part => { const [column, , ...rest] = part.split('.'); return { column: column as keyof Row, needle: new RegExp(rest.join('.').replaceAll('*', '').replaceAll('_', '.'), 'i') } })
+      rows = rows.filter(row => parts.some(({ column, needle }) => needle.test(String(row[column] ?? ''))))
+      return builder
+    },
     order: (column: keyof Row, { ascending }: { ascending: boolean }) => {
       calls.push(`order ${column} ${ascending ? 'asc' : 'desc'}`)
       // The first order decides; the id tiebreak after it only matters for equal dates.
       if (sorted) return builder
       sorted = true
-      rows = [...rows].sort((a, b) => String(a[column]).localeCompare(String(b[column])) * (ascending ? 1 : -1))
+      rows = [...rows].sort((a, b) => (typeof a[column] === 'number' ? Number(a[column]) - Number(b[column]) : String(a[column]).localeCompare(String(b[column]))) * (ascending ? 1 : -1))
       return builder
     },
     range: async (from: number, to: number) => ({ data: rows.slice(from, to + 1), error: null }),
@@ -85,5 +92,49 @@ describe('dates in Thailand', () => {
       ['2026-10', ['a', 'b']],
       ['2026-11', ['c']],
     ])
+  })
+})
+
+describe('search and sort', () => {
+  const cups = [
+    { ...row('khon', '2026-10-20'), name: 'ศึกเยาวชนขอนแก่น', location: 'สนามกีฬากลาง', fee: 800 },
+    { ...row('korat', '2026-10-10'), name: 'โคราชคัพ', location: 'สนามกีฬา อบจ.', fee: 300 },
+    { ...row('kk-venue', '2026-11-01'), name: 'ลีกเด็กอีสาน', location: 'ขอนแก่น อารีนา', fee: 0 },
+  ]
+
+  it('matches an abbreviation with a dot, and sends the dot as a wildcard, not as filter syntax', async () => {
+    const { client, calls } = fakeSupabase([{ ...row('sao', '2026-10-15'), name: 'สระบุรีลีก', location: 'สนามฟุตบอล อ.เสาไห้', fee: 0 }, ...cups])
+    const page = await fetchPublicTournamentsPage(client, { page: 1, view: 'upcoming', today, query: 'อ.เสาไห้' })
+    expect(page.tournaments.map(item => item.id)).toEqual(['sao'])
+    expect(calls).toContain('or name.ilike.*อ_เสาไห้*,location.ilike.*อ_เสาไห้*')
+  })
+
+  it('finds a tournament by its name or its venue, without caring about case', async () => {
+    const { client } = fakeSupabase(cups)
+    const page = await fetchPublicTournamentsPage(client, { page: 1, view: 'upcoming', today, query: 'ขอนแก่น' })
+    expect(page.tournaments.map(item => item.id)).toEqual(['khon', 'kk-venue'])
+  })
+
+  it('sorts by start date either way, or by the lowest fee first', async () => {
+    const ids = async (sort: 'soonest' | 'latest' | 'fee') => (await fetchPublicTournamentsPage(fakeSupabase(cups).client, { page: 1, view: 'upcoming', today, sort })).tournaments.map(item => item.id)
+    expect(await ids('soonest')).toEqual(['korat', 'khon', 'kk-venue'])
+    expect(await ids('latest')).toEqual(['kk-venue', 'khon', 'korat'])
+    expect(await ids('fee')).toEqual(['kk-venue', 'korat', 'khon'])
+  })
+
+  it('keeps a search to plain words: nothing that could change the filter reaches the database', () => {
+    expect(parseTournamentQuery('  โคราช  คัพ ')).toBe('โคราช คัพ')
+    expect(parseTournamentQuery('a,b(c)*d%e\\f"g')).toBe('a b c d e f g')
+    expect(parseTournamentQuery('อ.เสาไห้')).toBe('อ.เสาไห้')
+    expect(parseTournamentQuery(['x', 'y'])).toBe('x')
+    expect(parseTournamentQuery(undefined)).toBe('')
+    expect(parseTournamentQuery('ก'.repeat(200))).toHaveLength(60)
+  })
+
+  it('reads the sort from the URL, each tab with its own default', () => {
+    expect(parseTournamentSort('fee', 'upcoming')).toBe('fee')
+    expect(parseTournamentSort(undefined, 'upcoming')).toBe('soonest')
+    expect(parseTournamentSort(undefined, 'past')).toBe('latest')
+    expect(parseTournamentSort('cheapest', 'open')).toBe('soonest')
   })
 })

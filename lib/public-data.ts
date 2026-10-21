@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { unstable_cache } from 'next/cache'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from './season'
-import { fetchPublicTournamentsPage, type TournamentView } from './public-tournaments'
+import { fetchPublicTournamentsPage, type TournamentSort, type TournamentView } from './public-tournaments'
 import { fetchIdentityRanking, type IdentityRanking } from './public-identity-ranking'
 import { fetchRankingProvinces } from './ranking-provinces'
 import { fetchRankingPage } from './public-ranking-page'
@@ -37,12 +37,13 @@ function publicDataErrorDetails(error: unknown) {
 }
 
 // One page of one tab of the public tournament list. unstable_cache keys on the
-// arguments, so each tab, page and day is cached on its own: `today` in the key turns the
-// cache over at midnight Bangkok time, when a finished tournament moves to "past".
+// arguments, so each tab, page, search, order and day is cached on its own: `today` in the
+// key turns the cache over at midnight Bangkok time, when a finished tournament moves to
+// "past".
 export const getPublicTournamentsPage = unstable_cache(
-  async (page: number, view: TournamentView, today: string) => {
+  async (page: number, view: TournamentView, today: string, query = '', sort?: TournamentSort) => {
     try {
-      return await fetchPublicTournamentsPage(publicSupabase, { page, view, today })
+      return await fetchPublicTournamentsPage(publicSupabase, { page, view, today, query, sort })
     } catch (error) {
       console.error(JSON.stringify({ level: 'error', event: 'public_tournaments_fetch_failed', page, view, error: publicDataErrorDetails(error) }))
       return { tournaments: [], hasNext: false }

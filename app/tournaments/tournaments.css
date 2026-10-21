@@ -15,19 +15,43 @@
 .tn-stadium-inner { display: flex; flex-direction: column; gap: 10px; margin: 0 auto; max-width: 1280px; padding: 22px 16px 64px; }
 .tn-eyebrow { align-self: flex-start; background: rgba(22,224,110,.16); border: 1px solid rgba(22,224,110,.55); border-radius: 999px; color: #fff; font: 600 13px var(--gl-font); margin: 0; padding: 4px 12px; }
 .tn-title { font: 700 clamp(34px, 9vw, 60px)/1.15 var(--gl-font); margin: 0; text-shadow: 0 4px 24px rgba(0,0,0,.35); }
-.tn-intro { color: rgba(255,255,255,.92); font-size: 16px; line-height: 1.6; margin: 0; max-width: 600px; }
+.tn-intro { color: rgba(255,255,255,.95); font: 500 clamp(16px, 2.4vw, 22px)/1.5 var(--gl-font); margin: 0; max-width: 760px; text-shadow: 0 2px 12px rgba(0,0,0,.35); }
+.tn-sr { clip: rect(0 0 0 0); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
+
+/* Search on the head: a glass bar, the button, and the order. */
+.tn-search { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; max-width: 980px; }
+.tn-search-box { -webkit-backdrop-filter: blur(14px); align-items: center; backdrop-filter: blur(14px); background: rgba(255,255,255,.96); border: 1px solid rgba(255,255,255,.7); border-radius: 999px; box-shadow: 0 8px 24px rgba(11,18,32,.18); color: var(--gl-text-2); display: flex; flex: 1 1 320px; gap: 10px; min-height: 52px; padding: 0 18px; }
+.tn-search-box input { background: transparent; border: 0; color: var(--gl-navy); flex: 1; font: 500 16px var(--gl-font); min-width: 0; outline: none; }
+.tn-search-box input::placeholder { color: var(--gl-text-2); }
+.tn-search-box:focus-within { outline: 3px solid var(--gl-green); outline-offset: 2px; }
+.tn-search-go { min-height: 52px; }
+.tn-search-clear { align-items: center; color: #fff; display: inline-flex; font: 600 14px var(--gl-font); gap: 4px; min-height: 44px; padding: 0 6px; text-decoration: underline; }
+.tn-sort { -webkit-backdrop-filter: blur(14px); align-items: center; backdrop-filter: blur(14px); background: rgba(255,255,255,.96); border: 1px solid rgba(255,255,255,.7); border-radius: 999px; color: var(--gl-text-2); display: inline-flex; font: 500 13px var(--gl-font); gap: 6px; min-height: 44px; padding: 0 6px 0 16px; }
+.tn-sort select { background: transparent; border: 0; color: var(--gl-navy); cursor: pointer; font: 600 14px var(--gl-font); min-height: 40px; padding: 0 8px; }
+.tn-sort:focus-within { outline: 3px solid var(--gl-green); outline-offset: 2px; }
 
 /* One white board rises over the head and holds the whole list. */
 .tn-wrap { margin: 0 auto; max-width: 1280px; padding: 0 12px calc(96px + env(safe-area-inset-bottom)); }
 .tn-board { background: var(--gl-white); border: 1px solid var(--gl-line); border-radius: 20px; box-shadow: 0 16px 40px rgba(11,18,32,.10); margin-top: -40px; padding: 14px; position: relative; }
 
-.tn-tabs { display: flex; gap: 6px; overflow-x: auto; }
+.tn-toolbar { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
+.tn-tabs { display: flex; flex: 1 1 auto; gap: 6px; overflow-x: auto; }
+.tn-layout { background: #EEF2F6; border-radius: 999px; display: flex; gap: 2px; padding: 3px; }
+.tn-layout a { align-items: center; border-radius: 999px; color: var(--gl-text); display: flex; font: 600 13px var(--gl-font); gap: 6px; min-height: 40px; padding: 0 14px; text-decoration: none; }
+.tn-layout a.is-on { background: var(--gl-green); color: var(--gl-navy); }
+.tn-search-for { color: var(--gl-text-2); font-size: 14px; margin: 12px 2px 0; }
 .tn-tabs a { align-items: center; background: #EEF2F6; border-radius: 999px; color: var(--gl-text); display: flex; flex: 1 0 auto; font: 600 14px var(--gl-font); justify-content: center; min-height: 44px; padding: 0 18px; text-decoration: none; transition: background-color .15s; white-space: nowrap; }
 .tn-tabs a:hover { background: #E2E8F0; }
 .tn-tabs a.is-on { background: var(--gl-green); color: var(--gl-navy); font-weight: 700; }
 
 /* The next tournament: cover, facts, and a side with the countdown and the one way in. */
-.tn-next { border: 1px solid var(--gl-line); border-radius: var(--gl-radius); box-shadow: 0 6px 20px rgba(11,18,32,.06); display: grid; margin-top: 14px; overflow: hidden; }
+.tn-next { border: 1px solid var(--gl-line); border-radius: var(--gl-radius); box-shadow: 0 6px 20px rgba(11,18,32,.06); display: grid; margin-top: 14px; overflow: hidden; position: relative; }
+.tn-spot { align-items: center; background: var(--gl-white); border: 1px solid var(--gl-line); border-radius: 50%; box-shadow: 0 4px 12px rgba(11,18,32,.15); color: var(--gl-navy); display: flex; height: 44px; justify-content: center; position: absolute; width: 44px; z-index: 1; }
+.tn-spot:hover { background: var(--gl-green); }
+/* On a phone both arrows sit top right, clear of the tag and the date box. */
+.tn-spot { top: 10px; }
+.tn-spot-prev { right: 60px; }
+.tn-spot-next { right: 10px; }
 .tn-next-cover { align-items: center; background: var(--gl-pitch); background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 40px, rgba(255,255,255,0) 40px 80px); display: flex; justify-content: center; min-height: 150px; position: relative; }
 .tn-next-tag { background: var(--gl-green); border-radius: 999px; color: var(--gl-navy); font: 700 13px var(--gl-font); left: 12px; padding: 5px 12px; position: absolute; top: 12px; }
 .tn-next-date { align-items: center; background: var(--gl-white); border-radius: 14px; bottom: 12px; box-shadow: 0 6px 16px rgba(11,18,32,.25); color: var(--gl-navy); display: flex; flex-direction: column; height: 76px; justify-content: center; left: 12px; position: absolute; width: 68px; }
@@ -56,7 +80,11 @@
 
 /* By month: a row of month pills that jump to each month, then the cards. */
 .tn-by-month { color: var(--gl-navy); font: 700 20px var(--gl-font); margin: 24px 2px 10px; }
-.tn-months { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.tn-months { align-items: center; display: flex; gap: 8px; }
+.tn-months-row { display: flex; flex: 1; gap: 8px; min-width: 0; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.tn-months-row::-webkit-scrollbar { display: none; }
+.tn-months-more { align-items: center; background: var(--gl-white); border: 1px solid var(--gl-line); border-radius: 50%; color: var(--gl-navy); cursor: pointer; display: flex; flex: none; height: 44px; justify-content: center; width: 44px; }
+.tn-months-more:hover { background: var(--gl-green-surface); }
 .tn-months a { align-items: center; background: #EEF2F6; border-radius: 999px; color: var(--gl-text); display: flex; flex: none; font: 600 14px var(--gl-font); min-height: 40px; padding: 0 16px; text-decoration: none; }
 .tn-months a:hover { background: #E2E8F0; }
 .tn-months a.is-on { background: var(--gl-green); color: var(--gl-navy); }
@@ -85,6 +113,19 @@
 .tn-more { align-items: center; background: var(--gl-green-surface); border: 1px solid rgba(22,224,110,.5); border-radius: 999px; color: var(--gl-navy); display: flex; font: 600 14px var(--gl-font); gap: 6px; justify-content: center; min-height: 44px; }
 .tn-card:hover .tn-more { background: var(--gl-green); }
 
+/* List view: one row per tournament, the cover shrinks to its date. */
+.tn-grid.is-rows { grid-template-columns: 1fr; }
+.tn-grid.is-rows .tn-card { flex-direction: row; }
+.tn-grid.is-rows .tn-cover { flex: 0 0 84px; height: auto; min-height: 96px; }
+.tn-grid.is-rows .tn-cover-mark { display: none; }
+.tn-grid.is-rows .tn-cover-date { left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.tn-grid.is-rows .tn-more { display: none; }
+@media (min-width: 900px) {
+  .tn-grid.is-rows .tn-body { align-items: center; display: grid; gap: 4px 24px; grid-template-columns: minmax(0, 1fr) auto; }
+  .tn-grid.is-rows .tn-chips, .tn-grid.is-rows .tn-name, .tn-grid.is-rows .tn-meta { grid-column: 1; }
+  .tn-grid.is-rows .tn-foot { border: 0; flex-direction: column; grid-column: 2; grid-row: 1 / span 4; margin: 0; padding: 0; text-align: right; }
+}
+
 .tn-board .bds-pagination { margin-top: 18px; }
 
 .tn-empty { align-items: center; color: var(--gl-text-2); display: flex; flex-direction: column; gap: 8px; padding: 36px 16px; text-align: center; }
@@ -107,6 +148,9 @@
   .tn-board { padding: 20px; }
   .tn-tabs a { flex: 0 0 auto; }
   .tn-next { grid-template-columns: minmax(0, 260px) minmax(0, 1fr); }
+  .tn-spot { top: calc(50% - 22px); }
+  .tn-spot-prev { left: 8px; right: auto; }
+  .tn-spot-next { right: 8px; }
   .tn-next-cover { min-height: 0; }
   .tn-next-side { grid-column: 1 / -1; }
   .tn-organizer-cta { flex: 0 0 auto; }

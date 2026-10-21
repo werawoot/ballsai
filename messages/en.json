@@ -75,7 +75,30 @@
     "byMonth": "Tournaments by month",
     "monthsLabel": "Jump to month",
     "startsIn": "Kick-off",
-    "createCta": "Create a tournament"
+    "createCta": "Create a tournament",
+    "introLine1": "Find youth football tournaments across Thailand",
+    "introLine2": "Enter your team, play, and keep every result on the athlete profile",
+    "searchLabel": "Search tournaments",
+    "searchPlaceholder": "Tournament or venue name…",
+    "searchButton": "Search",
+    "searchClear": "Clear search",
+    "searchFor": "Search “{query}”",
+    "searchEmpty": "No tournament matches “{query}”",
+    "searchEmptyHint": "Try a shorter word, or the venue name",
+    "sortLabel": "Sort by",
+    "sort": {
+      "soonest": "Date, soonest first",
+      "latest": "Date, latest first",
+      "fee": "Fee, lowest first"
+    },
+    "layoutLabel": "View",
+    "layout": {
+      "cards": "Cards",
+      "rows": "List"
+    },
+    "spotPrev": "Previous tournament",
+    "spotNext": "Next tournament",
+    "monthsMore": "Scroll to later months"
   },
   "tournamentCover": {
     "status": {

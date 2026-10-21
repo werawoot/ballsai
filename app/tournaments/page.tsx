@@ -1,43 +1,72 @@
 import Link from 'next/link'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { ArrowRight, CalendarDays, ClipboardPlus, MapPin, Trophy, Users } from 'lucide-react'
+import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, ClipboardPlus, LayoutGrid, List, MapPin, Search, Trophy, Users, X } from 'lucide-react'
 import { sampleTournaments, isSampleId, showDemoData } from '@/lib/sample-data'
 import { getPublicTournamentsPage } from '@/lib/public-data'
-import { bangkokToday, groupTournamentsByMonth, parseTournamentView, TOURNAMENT_VIEWS, type PublicTournament } from '@/lib/public-tournaments'
+import { bangkokToday, groupTournamentsByMonth, parseTournamentQuery, parseTournamentSort, parseTournamentView, TOURNAMENT_SORTS, TOURNAMENT_VIEWS, type PublicTournament } from '@/lib/public-tournaments'
 import { tournamentCoverSport, tournamentCoverStatus } from '@/lib/tournament-cover'
 import { tournamentCountdown, tournamentDateRange, tournamentDayBox, tournamentFee, tournamentMonthLabel, type TournamentCountdown } from '@/lib/tournament-dates'
 import { parsePage } from '@/lib/pagination'
 import { ACTIVE_SEASON } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
 import Pagination from '@/components/Pagination'
+import MonthPills from './MonthPills'
+import SortSelect from './SortSelect'
 import '../glass.css'
 import './tournaments.css'
 
 // The light glass design (ADR-014, app/glass.css): a stadium head, then one white board
 // that rises over it with the tabs, the next tournament as the one thing to act on (how
-// far off it is and one way in) and the rest by month as cards, with a jump to each month.
-// Three tabs, so finished tournaments never crowd page 1. A card shows only what the row holds: a missing sport or
+// far off it is and one way in, with arrows to the next few) and the rest by month as
+// cards or rows, with a jump to each month. A search by name or venue and the order live
+// in the URL, so a filtered list can be shared and paged. Three tabs, so finished
+// tournaments never crowd page 1. A card shows only what the row holds: a missing sport or
 // status says nothing rather than guessing, and its cover is a brand graphic, never a
 // stock photo that would pass for the venue (lib/tournament-cover.ts).
 
-export default async function TournamentsPage(props: { searchParams: Promise<{ page?: string | string[]; view?: string | string[] }> }) {
+// How many of the soonest tournaments the lead card's arrows step through.
+const SPOTLIGHT_MAX = 5
+
+type Search = { page?: string | string[]; view?: string | string[]; q?: string | string[]; sort?: string | string[]; layout?: string | string[]; spot?: string | string[] }
+
+export default async function TournamentsPage(props: { searchParams: Promise<Search> }) {
   const searchParams = await props.searchParams
   const page = parsePage(searchParams?.page)
   const view = parseTournamentView(searchParams?.view)
+  const query = parseTournamentQuery(searchParams?.q)
+  const sort = parseTournamentSort(searchParams?.sort, view)
+  const defaultSort = parseTournamentSort(undefined, view)
+  const layout = (Array.isArray(searchParams?.layout) ? searchParams.layout[0] : searchParams?.layout) === 'rows' ? 'rows' : 'cards'
   const today = bangkokToday()
   const [{ tournaments, hasNext }, t, cover, locale] = await Promise.all([
-    getPublicTournamentsPage(page, view, today),
+    getPublicTournamentsPage(page, view, today, query, sort === defaultSort ? undefined : sort),
     getTranslations('tournaments'),
     getTranslations('tournamentCover'),
     getLocale(),
   ])
-  // Demo rows stand in only for an empty first page, never for a page past the end.
-  const demo = tournaments.length === 0 && showDemoData && page === 1 && view !== 'past'
+  // Demo rows stand in only for an empty, unsearched first page, never for a page past
+  // the end or a search that found nothing.
+  const demo = tournaments.length === 0 && showDemoData && page === 1 && view !== 'past' && !query
   const rows: PublicTournament[] = tournaments.length > 0 ? tournaments : demo ? sampleTournaments : []
-  const params: Record<string, string> = view === 'upcoming' ? {} : { view }
-  // The soonest tournament leads the page on the first page of a tab that looks ahead.
-  const next = view !== 'past' && page === 1 ? rows[0] : undefined
-  const groups = groupTournamentsByMonth(next ? rows.slice(1) : rows)
+  // Everything that shapes the list, kept in every link that changes one part of it.
+  const state: Record<string, string> = {
+    ...(view === 'upcoming' ? {} : { view }),
+    ...(query ? { q: query } : {}),
+    ...(sort === defaultSort ? {} : { sort }),
+    ...(layout === 'rows' ? { layout } : {}),
+  }
+  const link = (change: Record<string, string | undefined>) => {
+    const next = new URLSearchParams(Object.entries({ ...state, ...change }).filter((entry): entry is [string, string] => Boolean(entry[1])))
+    const text = next.toString()
+    return text ? `/tournaments?${text}` : '/tournaments'
+  }
+  // The soonest tournament leads the first page of a tab that looks ahead, in its usual
+  // order; its arrows step through the next few, which then leave the list below.
+  const spotlight = view !== 'past' && page === 1 && sort === 'soonest' && !query ? rows.slice(0, SPOTLIGHT_MAX) : []
+  const rawSpot = Number(Array.isArray(searchParams?.spot) ? searchParams.spot[0] : searchParams?.spot)
+  const spot = Number.isInteger(rawSpot) && rawSpot > 0 && rawSpot < spotlight.length ? rawSpot : 0
+  const next = spotlight[spot]
+  const groups = groupTournamentsByMonth(next ? rows.filter(row => row !== next) : rows)
   const countdownText = (countdown: TournamentCountdown) =>
     countdown.kind === 'days' ? t('countdownDays', { count: countdown.count })
       : countdown.kind === 'today' ? t('countdownToday')
@@ -50,9 +79,11 @@ export default async function TournamentsPage(props: { searchParams: Promise<{ p
   const nextHref = next ? (isSampleId(next.id) ? '/login' : `/tournaments/${next.id}`) : ''
   const nextLive = nextCountdown?.kind === 'live'
 
+  // A tab keeps the search and the view, not the order: each tab has its own default.
   const tabs = <nav className="tn-tabs" aria-label={t('tabsLabel')}>
-    {TOURNAMENT_VIEWS.map(item => <Link aria-current={item === view ? 'page' : undefined} className={item === view ? 'is-on' : ''} href={item === 'upcoming' ? '/tournaments' : `/tournaments?view=${item}`} key={item}>{t(`tabs.${item}`)}</Link>)}
+    {TOURNAMENT_VIEWS.map(item => <Link aria-current={item === view ? 'page' : undefined} className={item === view ? 'is-on' : ''} href={link({ view: item === 'upcoming' ? undefined : item, sort: undefined })} key={item}>{t(`tabs.${item}`)}</Link>)}
   </nav>
+  const spotStep = (step: number) => link({ spot: String((spot + step + spotlight.length) % spotlight.length) })
 
   return (
     <main className="bds-page tn-page tn-list gl">
@@ -61,15 +92,38 @@ export default async function TournamentsPage(props: { searchParams: Promise<{ p
         <div className="tn-stadium-inner">
           <p className="tn-eyebrow">{t('eyebrow', { season: ACTIVE_SEASON })}</p>
           <h1 className="tn-title">{t('title')}</h1>
-          <p className="tn-intro">{t('intro')}</p>
+          <p className="tn-intro">{t('introLine1')}<br />{t('introLine2')}</p>
+          <form className="tn-search" action="/tournaments" role="search">
+            {view !== 'upcoming' && <input type="hidden" name="view" value={view} />}
+            {layout === 'rows' && <input type="hidden" name="layout" value="rows" />}
+            <label className="tn-search-box">
+              <Search size={20} aria-hidden="true" />
+              <span className="tn-sr">{t('searchLabel')}</span>
+              <input type="search" name="q" defaultValue={query} placeholder={t('searchPlaceholder')} maxLength={60} enterKeyHint="search" />
+            </label>
+            <button className="gl-btn gl-btn-primary tn-search-go" type="submit">{t('searchButton')}</button>
+            {query && <Link className="tn-search-clear" href={link({ q: undefined })}><X size={16} aria-hidden="true" />{t('searchClear')}</Link>}
+            <SortSelect id="tn-sort" label={t('sortLabel')} value={sort} options={TOURNAMENT_SORTS.map(item => ({ value: item, label: t(`sort.${item}`) }))} />
+          </form>
         </div>
       </div>
 
       <div className="tn-wrap">
         <div className="tn-board">
-          {tabs}
+          <div className="tn-toolbar">
+            {tabs}
+            <nav className="tn-layout" aria-label={t('layoutLabel')}>
+              <Link aria-current={layout === 'cards' ? 'true' : undefined} className={layout === 'cards' ? 'is-on' : ''} href={link({ layout: undefined, spot: undefined })}><LayoutGrid size={16} aria-hidden="true" />{t('layout.cards')}</Link>
+              <Link aria-current={layout === 'rows' ? 'true' : undefined} className={layout === 'rows' ? 'is-on' : ''} href={link({ layout: 'rows', spot: undefined })}><List size={16} aria-hidden="true" />{t('layout.rows')}</Link>
+            </nav>
+          </div>
+          {query && <p className="tn-search-for">{t('searchFor', { query })}</p>}
 
           {next && nextBox && nextCountdown && <section className="tn-next" id="tn-next" aria-labelledby="tn-next-name">
+            {spotlight.length > 1 && <>
+              <Link className="tn-spot tn-spot-prev" href={spotStep(-1)} aria-label={t('spotPrev')} scroll={false}><ChevronLeft size={20} aria-hidden="true" /></Link>
+              <Link className="tn-spot tn-spot-next" href={spotStep(1)} aria-label={t('spotNext')} scroll={false}><ChevronRight size={20} aria-hidden="true" /></Link>
+            </>}
             <div className="tn-next-cover" aria-hidden="true">
               <Trophy className="tn-cover-mark" size={64} strokeWidth={1.2} />
               <span className="tn-next-tag">{t('spotlightLabel')}</span>
@@ -101,15 +155,13 @@ export default async function TournamentsPage(props: { searchParams: Promise<{ p
 
           {groups.length > 0 && <>
             <h2 className="tn-by-month">{t('byMonth')}</h2>
-            {groups.length > 1 && <nav className="tn-months" aria-label={t('monthsLabel')}>
-              {groups.map((group, index) => <a className={index === 0 ? 'is-on' : ''} href={`#tn-month-${group.month}`} key={group.month}>{tournamentMonthLabel(locale, group.month)}</a>)}
-            </nav>}
+            {groups.length > 1 && <MonthPills label={t('monthsLabel')} moreLabel={t('monthsMore')} months={groups.map(group => ({ id: `tn-month-${group.month}`, label: tournamentMonthLabel(locale, group.month) }))} />}
           </>}
 
           {groups.length > 0
             ? groups.map(group => <section className="tn-month" id={`tn-month-${group.month}`} key={group.month}>
                 <h3 className="tn-month-label">{tournamentMonthLabel(locale, group.month)}<span>{t('monthCount', { count: group.tournaments.length })}</span></h3>
-                <div className="tn-grid">
+                <div className={`tn-grid${layout === 'rows' ? ' is-rows' : ''}`}>
                   {group.tournaments.map(item => {
                     const box = tournamentDayBox(locale, item.start_date)
                     const status = tournamentCoverStatus(item.status)
@@ -144,6 +196,12 @@ export default async function TournamentsPage(props: { searchParams: Promise<{ p
                   })}
                 </div>
               </section>)
+            : !next && query ? <div className="tn-empty">
+                <Search size={40} strokeWidth={1.4} aria-hidden="true" />
+                <p className="ui-h2">{t('searchEmpty', { query })}</p>
+                <p className="tn-empty-hint">{t('searchEmptyHint')}</p>
+                <div className="tn-empty-actions"><Link className="gl-btn gl-btn-secondary" href={link({ q: undefined })}>{t('searchClear')}</Link></div>
+              </div>
             : !next && <div className="tn-empty">
                 <Trophy size={40} strokeWidth={1.4} aria-hidden="true" />
                 <p className="ui-h2">{t(`empty.${view}`)}</p>
@@ -154,7 +212,7 @@ export default async function TournamentsPage(props: { searchParams: Promise<{ p
                 </div>
               </div>}
 
-          <Pagination basePath="/tournaments" page={page} hasNext={hasNext} params={params} />
+          <Pagination basePath="/tournaments" page={page} hasNext={hasNext} params={state} />
         </div>
 
         {(next || groups.length > 0) && view !== 'past' && <div className="tn-organizer">

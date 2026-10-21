@@ -14,8 +14,8 @@ vi.mock('next-intl/server', () => ({ getLocale: async () => 'th', getTranslation
 
 import TournamentsPage from '@/app/tournaments/page'
 
-const render = async (view?: string) => renderToStaticMarkup(createElement(NextIntlClientProvider as ComponentType<never>, { locale: 'th', messages: th, timeZone: 'Asia/Bangkok' } as never,
-  await (TournamentsPage as (props: never) => Promise<ReactElement>)({ searchParams: Promise.resolve(view ? { view } : {}) } as never)))
+const render = async (view?: string, extra: Record<string, string> = {}) => renderToStaticMarkup(createElement(NextIntlClientProvider as ComponentType<never>, { locale: 'th', messages: th, timeZone: 'Asia/Bangkok' } as never,
+  await (TournamentsPage as (props: never) => Promise<ReactElement>)({ searchParams: Promise.resolve({ ...(view ? { view } : {}), ...extra }) } as never)))
 const cup = (id: string, name: string, start: string, status = 'open', fee = 0) => ({ id, name, description: null, location: 'สนามกีฬากลาง ขอนแก่น', start_date: start, end_date: start, fee, max_teams: 8, status })
 const spotlight = (html: string) => html.slice(html.indexOf('id="tn-next"'), html.indexOf('</section>', html.indexOf('id="tn-next"')))
 
@@ -65,5 +65,32 @@ describe('/tournaments', () => {
     expect(html).toContain('id="tn-month-2026-11"')
     expect(html).toContain('href="#tn-month-2026-12"')
     expect(html).toContain('id="tn-month-2026-12"')
+  })
+
+  it('steps the lead card through the next few tournaments, and the one it shows leaves the list', async () => {
+    db.rows = [cup('t1', 'ศึกเยาวชนขอนแก่น', '2026-10-24'), cup('t2', 'โคราชคัพ', '2026-11-09'), cup('t3', 'อุดรคัพ', '2026-12-05')]
+    const html = await render(undefined, { spot: '1' })
+    expect(spotlight(html)).toContain('โคราชคัพ')
+    expect(html.match(/โคราชคัพ/g)).toHaveLength(1)
+    expect(html).toContain('ศึกเยาวชนขอนแก่น')
+    expect(spotlight(html)).toContain('href="/tournaments?spot=2"')
+    expect(spotlight(html)).toContain('href="/tournaments?spot=0"')
+  })
+
+  it('says a search found nothing and offers to clear it, keeping the tab', async () => {
+    db.rows = []
+    const html = await render('open', { q: 'ไม่มีจริง' })
+    expect(html).toContain('ไม่พบรายการที่ตรงกับ “ไม่มีจริง”')
+    expect(html).toContain('href="/tournaments?view=open"')
+    expect(html).toContain('value="ไม่มีจริง"')
+  })
+
+  it('keeps the search and the list view in the tab links and the page links', async () => {
+    db.rows = [cup('t1', 'ศึกเยาวชนขอนแก่น', '2026-10-24')]
+    const html = await render(undefined, { q: 'ขอนแก่น', layout: 'rows' })
+    const openTab = html.match(/href="([^"]*view=open[^"]*)"/)?.[1] ?? ''
+    expect(new URLSearchParams(openTab.split('?')[1].replaceAll('&amp;', '&')).get('q')).toBe('ขอนแก่น')
+    expect(openTab).toContain('layout=rows')
+    expect(html).toContain('tn-grid is-rows')
   })
 })
