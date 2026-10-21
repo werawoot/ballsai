@@ -38,18 +38,21 @@ describe('home page', () => {
     expect(html).toContain('href="/tournaments/t1"')
   })
 
-  it('explains the platform in three steps when no tournament is open, instead of an empty space', async () => {
+  it('tells the three steps on sample cards when no tournament is open, each labelled a sample', async () => {
     data.tournaments = []
     const html = await render()
     expect(html).not.toContain('id="hm-next-name"')
-    expect(html).toContain('เริ่มต้นใน 3 ขั้น')
-    expect(html).toMatch(/สร้างทีม[\s\S]*ลงแข่ง[\s\S]*ผลขึ้นการ์ดนักกีฬา/)
+    expect(html.match(/class="hm-fut-sample">การ์ดตัวอย่าง</g)).toHaveLength(3)
+    expect(html).toContain('นักกีฬาตัวอย่าง')
     expect(html).toContain('href="/login"')
+    // The starter card has no numbers it has not earned.
+    const starter = html.slice(html.indexOf('hm-fut is-starter'), html.indexOf('hm-fut is-rated'))
+    expect(starter).not.toMatch(/<b>[1-9][\d,]*<\/b>/)
   })
 
-  it('shows the three steps only when there is no next tournament to show', async () => {
+  it('shows the sample cards only when there is no next tournament to show', async () => {
     data.tournaments = [cup('t1', 'ศึกเยาวชนขอนแก่น', '2026-10-24')]
-    expect(await render()).not.toContain('เริ่มต้นใน 3 ขั้น')
+    expect(await render()).not.toContain('hm-fut-sample')
   })
 
   it('hides the platform numbers while they are small, and shows real ones once they are not', async () => {

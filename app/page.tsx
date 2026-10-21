@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getLocale } from 'next-intl/server'
 import { ArrowRight, Bell, BarChart3, CalendarDays, ClipboardList, Crown, IdCard, MapPin, Plus, Search, Sparkles, Trophy, Users, UserSearch } from 'lucide-react'
 import BrandMark from '@/components/BrandMark'
+import HomeCardRing, { type RingCard } from './HomeCardRing'
 import { isSampleId, samplePlayerRanks, sampleTournaments, showDemoData } from '@/lib/sample-data'
 import { getPublicOpenTournaments, getPublicPlatformCounts, getPublicRankings } from '@/lib/public-data'
 import { bangkokToday } from '@/lib/public-tournaments'
@@ -50,10 +51,12 @@ const MORE_SPORTS = [
   'เทควันโด', 'ยูโด', 'คาราเต้', 'มวยสากล', 'ยิงธนู', 'ฟันดาบ', 'ยกน้ำหนัก', 'หมากรุก', 'อีสปอร์ต',
 ]
 
-const HOW_STEPS = [
-  { icon: Users, title: 'สร้างทีม', body: 'โค้ชสร้างทีมและส่งลิงก์ชวนนักกีฬา' },
-  { icon: Trophy, title: 'ลงแข่ง', body: 'พาทีมสมัครรายการที่เปิดรับ' },
-  { icon: IdCard, title: 'ผลขึ้นการ์ดนักกีฬา', body: 'ผลที่ผู้จัดยืนยันเปลี่ยนเป็นคะแนนฝีมือ แต้ม และเหรียญ' },
+// The sample cards on the home ring: one card per step. A sample athlete, never a real
+// one; skills a coach has not assessed are a dash; every card is labelled a sample.
+const RING_CARDS: RingCard[] = [
+  { tier: 'starter', step: 'ขั้นที่ 1', title: 'สร้างการ์ดนักกีฬาฟรี', body: 'สมัคร เลือกตำแหน่ง แล้วได้การ์ดเริ่มต้นทันที ยังไม่มีคะแนนจนกว่าจะลงแข่ง', rating: '—', ratingLabel: 'คะแนนฝีมือ', position: 'FW', name: 'นักกีฬาตัวอย่าง', facts: [{ label: 'แต้ม', value: '0' }, { label: 'เหรียญ', value: '0' }], stats: ['PAC', 'SHO', 'PAS', 'DRI', 'DEF'].map(label => ({ label, value: '—' })) },
+  { tier: 'rated', step: 'ขั้นที่ 2', title: 'ลงแข่ง ผลขึ้นการ์ด', body: 'ผลแข่งที่ผู้จัดยืนยันเปลี่ยนเป็นคะแนนฝีมือ แต้ม และเหรียญแรก', rating: '1,024', ratingLabel: 'คะแนนฝีมือ', position: 'FW', name: 'นักกีฬาตัวอย่าง', facts: [{ label: 'แต้ม', value: '120' }, { label: 'เหรียญ', value: '1' }], stats: ['PAC', 'SHO', 'PAS', 'DRI', 'DEF'].map(label => ({ label, value: '—' })) },
+  { tier: 'hall', step: 'ขั้นที่ 3', title: 'สะสมผลงาน ไปถึงหอเกียรติยศ', body: 'โค้ชประเมินฝีมือ เก็บเหรียญทุกนัด แล้วติดอันดับและหอเกียรติยศ', rating: '1,860', ratingLabel: 'คะแนนฝีมือ', position: 'FW', name: 'นักกีฬาตัวอย่าง', facts: [{ label: 'แต้ม', value: '2,450' }, { label: 'เหรียญ', value: '12' }], stats: [{ label: 'PAC', value: '82' }, { label: 'SHO', value: '79' }, { label: 'PAS', value: '74' }, { label: 'DRI', value: '80' }, { label: 'DEF', value: '61' }] },
 ]
 
 const sportIcon = (key: string) => <svg className="hm-sport-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{SPORT_ICONS[key]}</svg>
@@ -180,18 +183,9 @@ export default async function Home() {
             <Link href={tournamentHref(next.id)} className="gl-btn gl-btn-primary hm-next-cta">ดูรายละเอียดและสมัคร<ArrowRight size={18} aria-hidden="true" /></Link>
           </aside>}
 
-          {/* No open tournament yet: the space explains the platform in three steps instead
-              of standing empty. The steps light up one after another. */}
-          {!next && <aside className="hm-how gl-panel" aria-labelledby="hm-how-title">
-            <h2 id="hm-how-title">เริ่มต้นใน 3 ขั้น</h2>
-            <ol className="hm-how-steps">
-              {HOW_STEPS.map((step, index) => <li key={step.title} style={{ '--i': index } as React.CSSProperties}>
-                <span className="hm-how-icon"><step.icon size={22} aria-hidden="true" /></span>
-                <span><b><i className="gl-num">{index + 1}</i>{step.title}</b><small>{step.body}</small></span>
-              </li>)}
-            </ol>
-            <Link href={user ? '/team-members' : '/login'} className="gl-btn gl-btn-primary hm-how-cta">เริ่มเลย<ArrowRight size={18} aria-hidden="true" /></Link>
-          </aside>}
+          {/* No open tournament yet: three sample cards on a turning ring tell the three
+              steps instead of an empty space (owner, 21 Oct 2026). */}
+          {!next && <HomeCardRing cards={RING_CARDS} ctaHref={user ? '/team-members' : '/login'} labels={{ sample: 'การ์ดตัวอย่าง', region: 'การ์ดนักกีฬาตัวอย่าง 3 ขั้น', previous: 'การ์ดก่อนหน้า', next: 'การ์ดถัดไป', pause: 'หยุดหมุนการ์ด', play: 'หมุนการ์ดต่อ', cta: 'เริ่มสร้างการ์ดของคุณ', slide: 'การ์ด' }} />}
         </section>
 
         {statItems.length > 0 && <section className="hm-stats" aria-label="ตัวเลขของระบบ">
