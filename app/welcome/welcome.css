@@ -1,27 +1,66 @@
-/* First-visit onboarding (/welcome). Stadium surface, three short steps, one big choice
-   per row and one primary button pinned at the bottom (docs/design-system.md). */
+/* First-visit onboarding (/welcome) on the light glass design (ADR-014), straight after
+   /login and over the same stadium photo: the header in white on the photo, the two steps
+   on a frosted white panel with navy text, a bottom sheet on a phone. Only the look moved;
+   every step and its wording are unchanged. */
 
-.wb { background: var(--ui-ink); color: #fff; font-family: var(--font-sarabun), sans-serif; min-height: 100svh; position: relative; }
-body:has(.wb) { background: var(--ui-ink); }
-.wb::before { background: radial-gradient(circle, rgba(204,0,1,.34), rgba(204,0,1,0) 66%); border-radius: 50%; content: ''; height: 420px; pointer-events: none; position: fixed; right: -200px; top: -160px; width: 420px; }
-.wb-shell { display: flex; flex-direction: column; margin: 0 auto; max-width: 560px; min-height: 100svh; position: relative; }
-.wb-header { align-items: center; display: flex; gap: 10px; justify-content: space-between; min-height: 60px; padding: 8px 16px 0 18px; }
+.wb { background-color: var(--gl-pitch); background-image: linear-gradient(110deg, rgba(11,18,32,.82) 0%, rgba(11,18,32,.55) 55%, rgba(11,18,32,.35) 100%), var(--gl-stadium-photo); background-attachment: fixed; background-position: center; background-size: cover; color: #fff; font-family: var(--gl-font); min-height: 100svh; }
+body:has(.wb) { background: var(--gl-pitch); }
+.wb-shell { display: flex; flex-direction: column; margin: 0 auto; max-width: 560px; min-height: 100svh; }
+.wb-header { align-items: center; display: flex; gap: 10px; justify-content: space-between; min-height: 60px; padding: 8px 16px 12px 18px; }
+.wb-header .ui-brand { color: #fff; font-family: var(--gl-font); font-weight: 700; letter-spacing: .3px; }
 .wb-header-end { align-items: center; display: flex; gap: 8px; }
-.wb-back { align-items: center; background: rgba(255,255,255,.07); border: 0; border-radius: 12px; color: #fff; cursor: pointer; display: flex; height: 44px; justify-content: center; width: 44px; }
-.wb-skip { background: none; border: 0; color: var(--ui-mute-d); cursor: pointer; font: 600 14px var(--font-sarabun), sans-serif; min-height: 44px; padding: 0 6px; }
-.wb-skip:hover { color: #fff; }
-.wb-progress { padding: 8px 20px 0; }
-.wb-body { display: flex; flex: 1; flex-direction: column; gap: 10px; padding: 22px 20px 0; }
-.wb-intro { color: var(--ui-mute-d); font-size: 14.5px; line-height: 1.55; margin: -2px 0 6px; }
+.wb-back { align-items: center; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); border-radius: 50%; color: #fff; cursor: pointer; display: flex; height: 44px; justify-content: center; width: 44px; }
+.wb-back:hover { background: rgba(255,255,255,.26); }
+.wb-skip { background: none; border: 0; color: rgba(255,255,255,.9); cursor: pointer; font: 600 14px var(--gl-font); min-height: 44px; padding: 0 6px; text-decoration: underline; text-underline-offset: 3px; }
+.wb-skip:hover { color: var(--gl-green); }
+.wb .bds-lang-switch { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.55); color: #fff; }
+.wb .wb-header button:focus-visible, .wb .wb-header a:focus-visible { outline-color: var(--gl-green); }
+
+/* The panel: frosted white glass, a bottom sheet on a phone. */
+.wb-panel.gl-panel { border-radius: 28px 28px 0 0; color: var(--gl-text); display: flex; flex: 1; flex-direction: column; padding-top: 18px; }
+.wb .wb-panel.gl-panel { background: rgba(255,255,255,.96); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .wb .wb-panel.gl-panel { background: rgba(255,255,255,.88); } }
+.wb-progress { padding: 0 20px; }
+.wb .ui-progress i { background: rgba(11,18,32,.1); }
+.wb .ui-progress i.is-on { background: var(--gl-green); }
+.wb-body { display: flex; flex: 1; flex-direction: column; gap: 10px; padding: 20px 20px 0; }
+.wb .ui-eyebrow { color: var(--gl-green-ink); font: 700 13px var(--gl-font); letter-spacing: .5px; text-transform: none; }
+.wb .ui-h1 { color: var(--gl-navy); font-family: var(--gl-font); font-weight: 700; }
+.wb-intro { color: var(--gl-text-2); font-size: 14.5px; line-height: 1.55; margin: -2px 0 6px; }
 .wb-options { display: flex; flex-direction: column; gap: 10px; }
-.wb-sub { font: 700 11px var(--font-barlow), sans-serif; letter-spacing: 1px; }
-.wb-dest { color: rgba(255,255,255,.5); font: 700 11.5px var(--font-sarabun), sans-serif; margin-top: 3px; }
-.ui-option.is-selected .wb-dest { color: #ffb3b3; }
-.wb-error { background: rgba(224,23,29,.14); border: 1px solid rgba(224,23,29,.45); border-radius: var(--ui-r-md); color: #ffd6d6; font-size: 14px; margin: 6px 0 0; padding: 11px 14px; }
-.wb-footer { background: linear-gradient(180deg, rgba(11,15,22,0), var(--ui-ink) 30%); bottom: 0; padding: 18px 20px calc(20px + env(safe-area-inset-bottom)); position: sticky; }
-@media (max-width: 360px) { .wb-brand-text { display: none; } }
-@media (min-width: 900px) { .wb-shell { justify-content: center; } .wb-body { flex: none; } }
+
+/* A choice: a white glass row; the picked one turns pale green with a green tick. */
+.wb .ui-option { background: rgba(255,255,255,.72); border: 1.5px solid var(--gl-line); border-radius: 18px; box-shadow: 0 4px 14px rgba(11,18,32,.05); color: var(--gl-navy); transition: border-color .15s, background-color .15s, transform .15s; }
+.wb .ui-option:hover { background: #fff; border-color: rgba(22,224,110,.6); }
+.wb .ui-option:active { transform: translateY(1px); }
+.wb .ui-option-icon { background: var(--gl-green-surface); color: var(--gl-green-ink); }
+.wb .ui-option-text small { color: var(--gl-text-2); }
+.wb .ui-option-tick { border-color: #94A3B8; color: var(--gl-navy); }
+.wb .ui-option.is-selected { background: rgba(232,249,238,.92); border-color: var(--gl-green); }
+.wb .ui-option.is-selected .ui-option-icon { background: var(--gl-green); color: var(--gl-navy); }
+.wb .ui-option.is-selected .ui-option-tick { background: var(--gl-green); border-color: var(--gl-green); }
+.wb .ui-option:focus-visible { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
+
+.wb-sub { font: 700 11px var(--gl-font); letter-spacing: 1px; }
+.wb-dest { color: var(--gl-text-2); font: 700 11.5px var(--gl-font); margin-top: 3px; }
+.wb .ui-option.is-selected .wb-dest { color: var(--gl-green-ink); }
+.wb-error { background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 14px; color: #991B1B; font-size: 14px; margin: 6px 0 0; padding: 11px 14px; }
+
+/* The one way forward, pinned at the bottom of the panel. */
+.wb-footer { background: linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,.96) 30%); border-radius: 0 0 26px 26px; bottom: 0; padding: 18px 20px calc(20px + env(safe-area-inset-bottom)); position: sticky; }
+.wb .ui-btn { border-radius: 999px; font-family: var(--gl-font); font-weight: 700; }
+.wb .ui-btn-primary { background: var(--gl-green); box-shadow: 0 8px 22px rgba(22,224,110,.35); color: var(--gl-navy); }
+.wb .ui-btn-primary:hover:not(:disabled) { background: var(--gl-green-hover); }
+.wb .ui-btn:focus-visible { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
 
 /* Two screens: tapping a role goes on, so the hint says so; the last button names where it leads. */
-.wb-hint { color: var(--ui-mute-d); font-size: 13px; line-height: 1.5; margin: 6px 0 0; text-align: center; }
-.wb-next-note { color: var(--ui-mute-d); font-size: 13px; line-height: 1.5; margin: 10px 0 0; text-align: center; }
+.wb-hint { color: var(--gl-text-2); font-size: 13px; line-height: 1.5; margin: 6px 0 20px; text-align: center; }
+.wb-next-note { color: var(--gl-text-2); font-size: 13px; line-height: 1.5; margin: 10px 0 0; text-align: center; }
+
+@media (max-width: 360px) { .wb-brand-text { display: none; } }
+@media (min-width: 900px) {
+  .wb-shell { justify-content: center; padding: 24px 0; }
+  .wb-panel.gl-panel { border-radius: 26px; flex: none; }
+  .wb-body { flex: none; }
+}
+@media (prefers-reduced-motion: reduce) { .wb .ui-option { transition: none; } .wb .ui-option:active { transform: none; } }
