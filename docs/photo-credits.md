@@ -11,6 +11,7 @@ listed there exists in `public/photos/` and has a row here.
 | --- | --- | --- | --- | --- | --- |
 | `stadium-aerial-night.webp` | STADIUM (page head) | https://images.unsplash.com/photo-1556056504-5c7696c4c28d (aerial of an empty floodlit pitch, Budapest, 2018; cropped 1600×640) | not in the file; Unsplash photo page not reachable from the build machine (bot check) | Unsplash Licence (served from images.unsplash.com, not Unsplash+) | 21 Oct 2026 |
 | `cover-grass-line.webp` | COVER_DETAILS | https://images.unsplash.com/photo-1459865264687-595d652de67e (grass and a white line, close-up) | Sandro Schuh (EXIF Artist and IPTC Byline) | Unsplash Licence | 21 Oct 2026 |
+| `backdrop-grass-blur.webp` | BACKDROP (behind the whole page) | https://images.unsplash.com/photo-1459865264687-595d652de67e, blurred (imgix blur=40), 1600 px | Sandro Schuh | Unsplash Licence | 21 Oct 2026 |
 | `cover-centre-circle.webp` | COVER_DETAILS | crop of photo-1556056504-5c7696c4c28d, centre circle | as stadium-aerial-night.webp | Unsplash Licence | 21 Oct 2026 |
 | `cover-penalty-arc.webp` | COVER_DETAILS | crop of photo-1556056504-5c7696c4c28d, penalty area and arc | as stadium-aerial-night.webp | Unsplash Licence | 21 Oct 2026 |
 

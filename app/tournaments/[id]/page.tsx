@@ -7,7 +7,7 @@ import { sampleTournaments, showDemoData } from '@/lib/sample-data'
 import { bangkokToday } from '@/lib/public-tournaments'
 import { tournamentCover } from '@/lib/tournament-cover'
 import { tournamentCountdown, tournamentDateRange, tournamentDayBox, tournamentFee, type TournamentCountdown } from '@/lib/tournament-dates'
-import { STADIUM } from '@/lib/stock-photos'
+import { BACKDROP, STADIUM } from '@/lib/stock-photos'
 import PageHeader from '@/components/PageHeader'
 import TeamStep from './TeamStep'
 import PaymentStep from './PaymentStep'
@@ -102,7 +102,7 @@ export default async function TournamentPage(props: { params: Promise<{ id: stri
   // A map search for the venue the organizer typed: a link out, no embedded map.
   const mapHref = heading.venue ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(heading.venue)}` : null
   return (
-    <main className="bds-page tn-page tn-detail tn-glass gl">
+    <main className="bds-page tn-page tn-detail tn-glass gl gl-scene" style={BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } as React.CSSProperties : undefined}>
       <PageHeader back={back} />
       <div className="tn-stadium gl-on-photo" style={STADIUM ? { '--gl-stadium-photo': `url(${STADIUM.src})` } as React.CSSProperties : undefined}>
         {heading.kind === 'photo' && <span className="tn-hero-photo"><Image alt={cover('photoAlt', { venue: heading.venue ?? '' })} fill sizes="100vw" src={heading.src} unoptimized /></span>}
@@ -140,7 +140,7 @@ export default async function TournamentPage(props: { params: Promise<{ id: stri
       </div>
 
       <div className="tn-wrap">
-        <div className="tn-board">
+        <div className="tn-board gl-card">
           <nav className="tn-d-tabs" aria-label={t('sectionsLabel')}>
             <a className="is-on" href="#tn-overview">{t('overviewTab')}</a>
             {!finished && <a href="#tn-how">{t('howTab')}</a>}
@@ -174,17 +174,17 @@ export default async function TournamentPage(props: { params: Promise<{ id: stri
             </div>
 
             <div className="tn-d-side">
-              <section className="tn-d-card" id="tn-venue">
+              <section className="tn-d-card gl-card" id="tn-venue">
                 <h2>{t('venueTitle')}</h2>
                 <p className="tn-d-venue"><MapPin size={18} aria-hidden="true" /><span>{heading.venue ?? t('noVenue')}</span></p>
                 {mapHref && <a className="gl-btn gl-btn-secondary tn-d-map" href={mapHref} target="_blank" rel="noopener noreferrer">{t('openMap')}<ArrowRight size={16} aria-hidden="true" /></a>}
               </section>
-              <Link className="tn-d-card tn-d-linkcard" href={fixturesHref}>
+              <Link className="tn-d-card gl-card tn-d-linkcard" href={fixturesHref}>
                 <span className="tn-link-icon"><ListOrdered size={20} aria-hidden="true" /></span>
                 <span className="tn-link-text"><b>{t('fixturesTitle')}</b><small>{tournament.fixtures_published_at ? t('fixturesPublished') : t('fixturesNotYet')}</small></span>
                 <ChevronRight size={18} aria-hidden="true" />
               </Link>
-              {!finished && <p className="tn-d-card tn-d-athlete">{t('athleteHint')} <Link href="/team-members">{t('athleteLink')}</Link></p>}
+              {!finished && <p className="tn-d-card gl-card tn-d-athlete">{t('athleteHint')} <Link href="/team-members">{t('athleteLink')}</Link></p>}
             </div>
           </div>
         </div>

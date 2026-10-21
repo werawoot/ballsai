@@ -1,13 +1,13 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { COVER_DETAILS, coverDetailFor, STADIUM, type StockPhoto } from '@/lib/stock-photos'
+import { BACKDROP, COVER_DETAILS, coverDetailFor, STADIUM, type StockPhoto } from '@/lib/stock-photos'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const credits = readFileSync(`${root}docs/photo-credits.md`, 'utf8')
 
 describe('licensed stock photos', () => {
-  const all: StockPhoto[] = [...(STADIUM ? [STADIUM] : []), ...COVER_DETAILS]
+  const all: StockPhoto[] = [...(STADIUM ? [STADIUM] : []), ...(BACKDROP ? [BACKDROP] : []), ...COVER_DETAILS]
 
   it('every photo listed is a file in public/photos with a row in docs/photo-credits.md', () => {
     for (const photo of all) {

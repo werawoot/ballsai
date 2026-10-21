@@ -8,7 +8,7 @@ import { isSampleId, samplePlayerRanks, sampleTournaments, showDemoData } from '
 import { getPublicOpenTournaments, getPublicPlatformCounts, getPublicRankings } from '@/lib/public-data'
 import { bangkokToday } from '@/lib/public-tournaments'
 import { homeStatsVisible } from '@/lib/home-stats'
-import { coverDetailFor, STADIUM } from '@/lib/stock-photos'
+import { BACKDROP, coverDetailFor, STADIUM } from '@/lib/stock-photos'
 import { tournamentCountdown, tournamentDateRange, tournamentDayBox, tournamentFee } from '@/lib/tournament-dates'
 import { provinceName } from '@/lib/thai-provinces'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
@@ -83,7 +83,7 @@ export default async function Home() {
   ] : []
 
   return (
-    <main className="hm gl">
+    <main className="hm gl gl-scene" style={BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } as React.CSSProperties : undefined}>
       <div className="hm-stage" style={STADIUM ? { '--gl-stadium-photo': `url(${STADIUM.src})` } as React.CSSProperties : undefined}>
         <header className="hm-bar">
           <Link href="/" className="hm-logo" aria-label="BallDoenSai.com หน้าหลัก">
@@ -156,13 +156,13 @@ export default async function Home() {
       </div>
 
       <div className="hm-body">
-        <section className="hm-panel hm-tournaments" aria-labelledby="hm-open-title">
+        <section className="hm-panel gl-card hm-tournaments" aria-labelledby="hm-open-title">
           <div className="hm-panel-head"><h2 id="hm-open-title">รายการแข่งที่เปิดรับสมัคร</h2><Link href="/tournaments">ดูทั้งหมด<ArrowRight size={16} aria-hidden="true" /></Link></div>
           {shownTournaments.length > 0 ? <div className="hm-cards">
             {shownTournaments.slice(0, 3).map(item => {
               const box = tournamentDayBox(locale, item.start_date)
               const fee = tournamentFee(item.fee)
-              return <Link key={item.id} href={tournamentHref(item.id)} className="hm-card">
+              return <Link key={item.id} href={tournamentHref(item.id)} className="hm-card gl-card">
                 <span className={`hm-card-cover${coverStyle(item.id) ? ' is-photo' : ''}`} style={coverStyle(item.id)} aria-hidden="true">
                   <span className="hm-card-date gl-num"><b>{box.day}</b><small>{box.month}</small></span>
                 </span>
@@ -183,7 +183,7 @@ export default async function Home() {
           </div>}
         </section>
 
-        <section className="hm-panel hm-ranks" aria-labelledby="hm-rank-title">
+        <section className="hm-panel gl-card hm-ranks" aria-labelledby="hm-rank-title">
           <div className="hm-panel-head"><h2 id="hm-rank-title">อันดับคะแนนฝีมือ</h2><Link href="/ranking">ดูทั้งหมด<ArrowRight size={16} aria-hidden="true" /></Link></div>
           <p className="hm-panel-note">คะแนนฝีมือจากผลแข่งที่ผู้จัดยืนยันเท่านั้น · ฤดูกาล {ACTIVE_SEASON}</p>
           {ranks.length > 0 ? <ol className="hm-rank-list">
@@ -201,7 +201,7 @@ export default async function Home() {
           </div>}
         </section>
 
-        <section className="hm-features gl-panel" aria-label="สิ่งที่ทำได้">
+        <section className="hm-features gl-card" aria-label="สิ่งที่ทำได้">
           {FEATURES.map(feature => <div className="hm-feature" key={feature.title}>
             <span className="hm-feature-icon"><feature.icon size={24} aria-hidden="true" /></span>
             <span><b>{feature.title}</b><small>{feature.ready ? feature.body : 'เร็ว ๆ นี้'}</small></span>

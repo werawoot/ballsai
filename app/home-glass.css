@@ -1,7 +1,7 @@
 /* Home page on the light glass design (ADR-014). Scoped to .hm; the old .home-* rules in
    globals.css no longer match anything on this page. */
 
-.hm { background: var(--gl-canvas); min-height: 100vh; }
+.hm { min-height: 100vh; }
 .hm-sr { clip: rect(0 0 0 0); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
 
 /* Stage: the stadium photo behind the bar, the hero and the numbers. */
@@ -65,14 +65,14 @@
 
 /* Body: open tournaments, the ranking, what the platform does. */
 .hm-body { display: grid; gap: 18px; margin: -44px auto 0; max-width: 1280px; padding: 0 12px calc(110px + env(safe-area-inset-bottom)); position: relative; }
-.hm-panel { background: #fff; border: 1px solid var(--gl-line); border-radius: 20px; box-shadow: 0 12px 32px rgba(11,18,32,.08); min-width: 0; padding: 16px; }
+.hm-panel { border-radius: 20px; box-shadow: 0 12px 32px rgba(11,18,32,.08); min-width: 0; padding: 16px; }
 .hm-panel-head { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin-bottom: 12px; }
 .hm-panel-head h2 { color: var(--gl-navy); font: 700 20px var(--gl-font); margin: 0; }
 .hm-panel-head a { align-items: center; color: var(--gl-text); display: inline-flex; font: 600 14px var(--gl-font); gap: 4px; min-height: 44px; text-decoration: none; }
 .hm-panel-note { color: var(--gl-text-2); font-size: 13px; margin: -6px 0 10px; }
 
 .hm-cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); }
-.hm-card { border: 1px solid var(--gl-line); border-radius: var(--gl-radius); color: inherit; display: flex; flex-direction: column; overflow: hidden; text-decoration: none; transition: box-shadow .15s, transform .15s; }
+.hm-card { border-radius: var(--gl-radius); color: inherit; display: flex; flex-direction: column; overflow: hidden; text-decoration: none; transition: box-shadow .15s, transform .15s; }
 .hm-card:hover { box-shadow: 0 12px 28px rgba(11,18,32,.12); transform: translateY(-2px); }
 .hm-card-cover { background: var(--gl-pitch); background-position: center; background-size: cover; display: block; height: 96px; position: relative; }
 .hm-card-date { align-items: center; background: #fff; border-radius: 12px; box-shadow: 0 6px 16px rgba(11,18,32,.2); color: var(--gl-navy); display: flex; flex-direction: column; height: 56px; justify-content: center; left: 12px; position: absolute; top: 12px; width: 50px; }
@@ -83,17 +83,17 @@
 .hm-card-body > b { color: var(--gl-navy); font: 700 16px/1.35 var(--gl-font); overflow-wrap: anywhere; }
 .hm-card-meta { align-items: flex-start; color: var(--gl-text-2); display: flex; font-size: 13px; gap: 6px; line-height: 1.45; }
 .hm-card-meta svg { color: var(--gl-green-ink); flex: none; margin-top: 2px; }
-.hm-card-foot { align-items: baseline; border-top: 1px solid var(--gl-line); display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: space-between; margin-top: auto; padding-top: 8px; }
+.hm-card-foot { align-items: baseline; border-top: 1px solid rgba(11,18,32,.08); display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: space-between; margin-top: auto; padding-top: 8px; }
 .hm-card-foot > span:first-child { color: var(--gl-navy); font: 700 18px var(--gl-font); }
 .hm-card-foot small { color: var(--gl-text-2); font: 500 12px var(--gl-font); margin-left: 2px; }
 .hm-card-foot > span:last-child { align-items: center; color: var(--gl-text); display: inline-flex; font-size: 13px; gap: 4px; }
-.hm-card-more { align-items: center; background: var(--gl-green-surface); border: 1px solid rgba(22,224,110,.5); border-radius: 999px; color: var(--gl-navy); display: flex; font: 600 14px var(--gl-font); gap: 6px; justify-content: center; min-height: 44px; }
+.hm-card-more { align-items: center; background: rgba(232,249,238,.75); border: 1px solid rgba(22,224,110,.5); border-radius: 999px; color: var(--gl-navy); display: flex; font: 600 14px var(--gl-font); gap: 6px; justify-content: center; min-height: 44px; }
 .hm-card:hover .hm-card-more { background: var(--gl-green); }
 
 .hm-rank-list { display: flex; flex-direction: column; list-style: none; margin: 0; padding: 0; }
-.hm-rank-list li + li { border-top: 1px solid var(--gl-line); }
+.hm-rank-list li + li { border-top: 1px solid rgba(11,18,32,.08); }
 .hm-rank-list a { align-items: center; border-radius: 12px; color: inherit; display: grid; gap: 10px; grid-template-columns: 28px 40px minmax(0, 1fr) auto; min-height: 56px; padding: 6px 6px; text-decoration: none; }
-.hm-rank-list a:hover { background: var(--gl-canvas); }
+.hm-rank-list a:hover { background: rgba(255,255,255,.55); }
 .hm-rank-list li:first-child a { background: rgba(22,224,110,.12); box-shadow: inset 3px 0 0 var(--gl-green); }
 .hm-rank-pos { align-items: center; border-radius: 8px; color: var(--gl-navy); display: flex; font: 700 14px var(--gl-font); height: 26px; justify-content: center; width: 26px; }
 .hm-rank-pos.is-1 { background: #FDE047; }
@@ -109,9 +109,9 @@
 .hm-empty svg { color: var(--gl-green-ink); }
 .hm-empty p { margin: 0; }
 
-.hm-features { align-items: center; display: flex; flex-wrap: wrap; gap: 14px 20px; padding: 16px 18px; }
+.hm-features { align-items: center; border-radius: 20px; display: flex; flex-wrap: wrap; gap: 14px 20px; padding: 16px 18px; }
 .hm-feature { align-items: center; display: flex; flex: 1 1 170px; gap: 12px; min-width: 0; }
-.hm-feature-icon { align-items: center; background: #fff; border-radius: 50%; box-shadow: 0 4px 12px rgba(11,18,32,.08); color: var(--gl-green-ink); display: flex; flex: none; height: 48px; justify-content: center; width: 48px; }
+.hm-feature-icon { align-items: center; background: rgba(255,255,255,.85); border-radius: 50%; box-shadow: 0 4px 12px rgba(11,18,32,.08); color: var(--gl-green-ink); display: flex; flex: none; height: 48px; justify-content: center; width: 48px; }
 .hm-feature b { color: var(--gl-navy); display: block; font-size: 15px; }
 .hm-feature small { color: var(--gl-text-2); font-size: 12.5px; }
 .hm-start { flex: 1 1 100%; min-height: 54px; font-size: 17px; }

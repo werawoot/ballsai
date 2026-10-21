@@ -30,6 +30,15 @@
   --gl-stadium-photo: none;
   --gl-pitch: #14532D;
 
+  /* Frosted cards over the page backdrop (owner, 21 Oct 2026: "โปร่งแสงเยอะ ๆ"). The
+     blur and the white wash keep text readable; without blur support the card is near
+     solid. */
+  --gl-backdrop-photo: none;
+  --gl-card-bg: rgba(255, 255, 255, .62);
+  --gl-card-bg-solid: rgba(255, 255, 255, .94);
+  --gl-card-border: rgba(255, 255, 255, .72);
+  --gl-card-blur: 20px;
+
   --gl-font: var(--font-plex), 'Noto Sans Thai', var(--font-sarabun), sans-serif;
 
   background: var(--gl-canvas);
@@ -39,6 +48,18 @@
 
 /* The page behind a short opted-in page matches its canvas instead of the old paper. */
 body:has(.gl) { background: #F3F6F9; }
+
+/* A scene page: the blurred grass sits behind everything, fixed, under a light wash, so
+   every glass card shows it. Secondary text darkens a step for the busier background. */
+.gl.gl-scene { background: transparent; isolation: isolate; position: relative; --gl-text-2: #475569; }
+.gl.gl-scene::before { background: linear-gradient(180deg, rgba(243,246,249,.42) 0%, rgba(232,249,238,.30) 100%), var(--gl-backdrop-photo) center / cover no-repeat, #CFE8D2; content: ''; inset: 0; pointer-events: none; position: fixed; z-index: -1; }
+body:has(.gl-scene) { background: #CFE8D2; }
+
+/* The frosted card every list, panel and tile uses on a scene page. */
+.gl .gl-card { background: var(--gl-card-bg-solid); border: 1px solid var(--gl-card-border); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .gl .gl-card { -webkit-backdrop-filter: blur(var(--gl-card-blur)) saturate(1.4); backdrop-filter: blur(var(--gl-card-blur)) saturate(1.4); background: var(--gl-card-bg); }
+}
 
 .gl .gl-num { font-variant-numeric: tabular-nums; }
 

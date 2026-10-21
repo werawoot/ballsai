@@ -7,7 +7,7 @@ import { bangkokToday, groupTournamentsByMonth, parseTournamentQuery, parseTourn
 import { tournamentCoverSport, tournamentCoverStatus } from '@/lib/tournament-cover'
 import { tournamentCountdown, tournamentDateRange, tournamentDayBox, tournamentFee, tournamentMonthLabel, type TournamentCountdown } from '@/lib/tournament-dates'
 import { parsePage } from '@/lib/pagination'
-import { coverDetailFor, STADIUM } from '@/lib/stock-photos'
+import { BACKDROP, coverDetailFor, STADIUM } from '@/lib/stock-photos'
 import { ACTIVE_SEASON } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
 import Pagination from '@/components/Pagination'
@@ -93,7 +93,7 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
   const spotStep = (step: number) => link({ spot: String((spot + step + spotlight.length) % spotlight.length) })
 
   return (
-    <main className="bds-page tn-page tn-list gl">
+    <main className="bds-page tn-page tn-list gl gl-scene" style={BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } as React.CSSProperties : undefined}>
       <PageHeader />
       <div className="tn-stadium gl-on-photo" style={STADIUM ? { '--gl-stadium-photo': `url(${STADIUM.src})` } as React.CSSProperties : undefined}>
         <div className="tn-stadium-inner">
@@ -116,7 +116,7 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
       </div>
 
       <div className="tn-wrap">
-        <div className="tn-board">
+        <div className="tn-board gl-card">
           <div className="tn-toolbar">
             {tabs}
             <nav className="tn-layout" aria-label={t('layoutLabel')}>
@@ -126,7 +126,7 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
           </div>
           {query && <p className="tn-search-for">{t('searchFor', { query })}</p>}
 
-          {next && nextBox && nextCountdown && <section className="tn-next" id="tn-next" aria-labelledby="tn-next-name">
+          {next && nextBox && nextCountdown && <section className="tn-next gl-card" id="tn-next" aria-labelledby="tn-next-name">
             {spotlight.length > 1 && <>
               <Link className="tn-spot tn-spot-prev" href={spotStep(-1)} aria-label={t('spotPrev')} scroll={false}><ChevronLeft size={20} aria-hidden="true" /></Link>
               <Link className="tn-spot tn-spot-next" href={spotStep(1)} aria-label={t('spotNext')} scroll={false}><ChevronRight size={20} aria-hidden="true" /></Link>
@@ -178,7 +178,7 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
                     // Started already but not over (a league, a two-day cup): say so, so a
                     // date box in the past does not read as a mistake.
                     const live = view !== 'past' && item.start_date < today
-                    return <Link className={`tn-card${view === 'past' ? ' is-past' : ''}`} href={sample ? '/login' : `/tournaments/${item.id}`} key={item.id}>
+                    return <Link className={`tn-card gl-card${view === 'past' ? ' is-past' : ''}`} href={sample ? '/login' : `/tournaments/${item.id}`} key={item.id}>
                       <span className={`tn-cover${coverStyle(item.id) ? ' is-photo' : ''}`} style={coverStyle(item.id)} aria-hidden="true">
                         <Trophy className="tn-cover-mark" size={52} strokeWidth={1.2} />
                         <span className="tn-cover-date gl-num"><b>{box.day}</b><small>{box.month}</small></span>
@@ -222,7 +222,7 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
           <Pagination basePath="/tournaments" page={page} hasNext={hasNext} params={state} />
         </div>
 
-        {(next || groups.length > 0) && view !== 'past' && <div className="tn-organizer">
+        {(next || groups.length > 0) && view !== 'past' && <div className="tn-organizer gl-card">
           <span className="tn-organizer-icon"><ClipboardPlus size={22} aria-hidden="true" /></span>
           <span className="tn-organizer-text"><b>{t('organizerTitle')}</b><small>{t('organizerBody')}</small></span>
           <Link className="gl-btn gl-btn-primary tn-organizer-cta" href="/dashboard">{t('createCta')}<ArrowRight size={18} aria-hidden="true" /></Link>
