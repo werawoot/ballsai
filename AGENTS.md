@@ -33,8 +33,13 @@ Fame. Users are minors, their guardians, coaches and tournament organizers.
    signed URL after checking the viewer. Never switch a slip to a public URL. Athlete
    photos (`athlete-avatars`) follow the same rule: store the object path and show it
    through `lib/athlete-avatar.ts`; never `getPublicUrl` (T51, SQL62).
-7. Preserve the home page visual language: dark sport editorial, red accent `#CC0001`,
-   dynamic motion, athlete pride. Do not restyle the home page as a side effect.
+7. The visual language is the light glass design of
+   [ADR-014](docs/decisions/ADR-014-light-glass-design-and-doensai-brand.md) (owner, 21 Oct
+   2026): white and pale-green glass, green `#16E06E`, navy `#0B1220`, `app/glass.css`,
+   moved page by page (`/tournaments` first). Pages not yet moved keep the old dark/red look;
+   do not restyle one as a side effect. Photos are real and licensed only, recorded in
+   `docs/photo-credits.md`, never a stock photo as a venue cover or of a child, and never a
+   drawn stand-in.
 8. For any athlete-facing data, answer "where does this come from and how verified is
    it": `self` / `coach_verified` / `performance_verified`. Never present a default value
    as performance. A card without a `player_ranks` row is a STARTER card and says so.
