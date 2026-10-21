@@ -13,10 +13,12 @@ import Pagination from '@/components/Pagination'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
 import { podiumNameLines } from '@/lib/podium-name'
+import { BACKDROP, STADIUM } from '@/lib/stock-photos'
+import '../glass.css'
 import './ranking.css'
 
-// /ranking on the Paper surface (docs/design-system.md): a plain header, one row of views,
-// one row of filters, the signed-in athlete's own place, a podium that shows only what is
+// /ranking on the light glass design (ADR-014): a stadium head with the title and one row
+// of views, then frosted cards over the blurred grass: one row of filters, the signed-in athlete's own place, a podium that shows only what is
 // known (name, place, Power -- no card full of unassessed dashes) and rows that read at a
 // glance. The data and paging are unchanged (T46): 50 per page over every ranked athlete.
 
@@ -87,22 +89,25 @@ export default async function RankingPage(
   const sub = (p: Row) => [p.position, p.team, p.province ? provinceName(p.province, locale) : null].filter(Boolean).join(' · ')
 
   return (
-    <main className="bds-page rk">
+    <main className="bds-page rk gl gl-scene" style={{ ...(BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } : {}), ...(STADIUM ? { '--gl-stadium-photo': `url(${STADIUM.src})` } : {}) } as React.CSSProperties}>
       <PageHeader />
-      <DiscoverTabs current="/ranking" />
+      <section className="rk-stadium">
+        <div className="rk-stadium-inner">
+          <DiscoverTabs current="/ranking" />
+          <div className="rk-top">
+            <div>
+              <p className="rk-eyebrow">{t('eyebrow', { season: ACTIVE_SEASON, sport: sportName })}</p>
+              <h1 className="rk-title">{t('title')}</h1>
+              <p className="rk-intro">{t('intro')}</p>
+            </div>
+            <nav className="rk-views" aria-label={t('viewsLabel')}>
+              {VIEWS.map(item => <Link aria-current={item === view ? 'page' : undefined} className={item === view ? 'is-on' : ''} href={viewHref(item)} key={item}>{t(`views.${item}`)}</Link>)}
+            </nav>
+          </div>
+        </div>
+      </section>
 
       <div className="rk-wrap">
-        <div className="rk-top">
-          <div>
-            <p className="ui-eyebrow">{t('eyebrow', { season: ACTIVE_SEASON, sport: sportName })}</p>
-            <h1 className="ui-h1 rk-title">{t('title')}</h1>
-            <p className="rk-intro">{t('intro')}</p>
-          </div>
-          <nav className="rk-views" aria-label={t('viewsLabel')}>
-            {VIEWS.map(item => <Link aria-current={item === view ? 'page' : undefined} className={item === view ? 'is-on' : ''} href={viewHref(item)} key={item}>{t(`views.${item}`)}</Link>)}
-          </nav>
-        </div>
-
         <div className="rk-layout">
           <aside className="rk-side">
             <RankingFilter provinces={uniqueProvinces} currentProvince={province} currentPosition={position} currentSearch={search} />
@@ -160,11 +165,11 @@ export default async function RankingPage(
             </>}
 
             {rows.length === 0 && (
-              <div className="ui-card rk-empty" role="status">
+              <div className="gl-card rk-empty" role="status">
                 <Trophy size={40} strokeWidth={1.4} aria-hidden="true" />
-                <p className="ui-h2">{filtered ? t('empty') : t('emptyNoData')}</p>
+                <p className="rk-empty-title">{filtered ? t('empty') : t('emptyNoData')}</p>
                 <p>{t('emptyHint')}</p>
-                {filtered && <Link className="ui-btn ui-btn-ghost ui-btn-sm" href={view === 'overall' ? '/ranking' : `/ranking?view=${view}`}>{t('clearFilters')} <ChevronRight size={16} aria-hidden="true" /></Link>}
+                {filtered && <Link className="gl-btn gl-btn-secondary" href={view === 'overall' ? '/ranking' : `/ranking?view=${view}`}>{t('clearFilters')} <ChevronRight size={16} aria-hidden="true" /></Link>}
               </div>
             )}
 
