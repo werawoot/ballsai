@@ -7,6 +7,7 @@ import { bangkokToday, groupTournamentsByMonth, parseTournamentQuery, parseTourn
 import { tournamentCoverSport, tournamentCoverStatus } from '@/lib/tournament-cover'
 import { tournamentCountdown, tournamentDateRange, tournamentDayBox, tournamentFee, tournamentMonthLabel, type TournamentCountdown } from '@/lib/tournament-dates'
 import { parsePage } from '@/lib/pagination'
+import { coverDetailFor, STADIUM } from '@/lib/stock-photos'
 import { ACTIVE_SEASON } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
 import Pagination from '@/components/Pagination'
@@ -83,12 +84,18 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
   const tabs = <nav className="tn-tabs" aria-label={t('tabsLabel')}>
     {TOURNAMENT_VIEWS.map(item => <Link aria-current={item === view ? 'page' : undefined} className={item === view ? 'is-on' : ''} href={link({ view: item === 'upcoming' ? undefined : item, sort: undefined })} key={item}>{t(`tabs.${item}`)}</Link>)}
   </nav>
+  // A licensed close-up (ball, net, trophy) behind a card's date, never a place
+  // (lib/stock-photos.ts); none yet, the brand graphic shows instead.
+  const coverStyle = (id: string) => {
+    const photo = coverDetailFor(id)
+    return photo ? { backgroundImage: `url(${photo.src})` } : undefined
+  }
   const spotStep = (step: number) => link({ spot: String((spot + step + spotlight.length) % spotlight.length) })
 
   return (
     <main className="bds-page tn-page tn-list gl">
       <PageHeader />
-      <div className="tn-stadium gl-on-photo">
+      <div className="tn-stadium gl-on-photo" style={STADIUM ? { '--gl-stadium-photo': `url(${STADIUM.src})` } as React.CSSProperties : undefined}>
         <div className="tn-stadium-inner">
           <p className="tn-eyebrow">{t('eyebrow', { season: ACTIVE_SEASON })}</p>
           <h1 className="tn-title">{t('title')}</h1>
@@ -124,7 +131,7 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
               <Link className="tn-spot tn-spot-prev" href={spotStep(-1)} aria-label={t('spotPrev')} scroll={false}><ChevronLeft size={20} aria-hidden="true" /></Link>
               <Link className="tn-spot tn-spot-next" href={spotStep(1)} aria-label={t('spotNext')} scroll={false}><ChevronRight size={20} aria-hidden="true" /></Link>
             </>}
-            <div className="tn-next-cover" aria-hidden="true">
+            <div className={`tn-next-cover${coverStyle(next.id) ? ' is-photo' : ''}`} style={coverStyle(next.id)} aria-hidden="true">
               <Trophy className="tn-cover-mark" size={64} strokeWidth={1.2} />
               <span className="tn-next-tag">{t('spotlightLabel')}</span>
               <span className="tn-next-date gl-num"><b>{nextBox.day}</b><small>{nextBox.month}</small></span>
@@ -172,7 +179,7 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
                     // date box in the past does not read as a mistake.
                     const live = view !== 'past' && item.start_date < today
                     return <Link className={`tn-card${view === 'past' ? ' is-past' : ''}`} href={sample ? '/login' : `/tournaments/${item.id}`} key={item.id}>
-                      <span className="tn-cover" aria-hidden="true">
+                      <span className={`tn-cover${coverStyle(item.id) ? ' is-photo' : ''}`} style={coverStyle(item.id)} aria-hidden="true">
                         <Trophy className="tn-cover-mark" size={52} strokeWidth={1.2} />
                         <span className="tn-cover-date gl-num"><b>{box.day}</b><small>{box.month}</small></span>
                       </span>
