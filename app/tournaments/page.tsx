@@ -13,6 +13,7 @@ import PageHeader from '@/components/PageHeader'
 import Pagination from '@/components/Pagination'
 import MonthPills from './MonthPills'
 import SortSelect from './SortSelect'
+import TabPills from './TabPills'
 import '../glass.css'
 import './tournaments.css'
 
@@ -81,9 +82,7 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
   const nextLive = nextCountdown?.kind === 'live'
 
   // A tab keeps the search and the view, not the order: each tab has its own default.
-  const tabs = <nav className="tn-tabs" aria-label={t('tabsLabel')}>
-    {TOURNAMENT_VIEWS.map(item => <Link aria-current={item === view ? 'page' : undefined} className={item === view ? 'is-on' : ''} href={link({ view: item === 'upcoming' ? undefined : item, sort: undefined })} key={item}>{t(`tabs.${item}`)}</Link>)}
-  </nav>
+  const tabs = <TabPills label={t('tabsLabel')} items={TOURNAMENT_VIEWS.map(item => ({ href: link({ view: item === 'upcoming' ? undefined : item, sort: undefined }), text: t(`tabs.${item}`), active: item === view }))} />
   // A licensed close-up (ball, net, trophy) behind a card's date, never a place
   // (lib/stock-photos.ts); none yet, the brand graphic shows instead.
   const coverStyle = (id: string) => {
@@ -131,7 +130,8 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
               <Link className="tn-spot tn-spot-prev" href={spotStep(-1)} aria-label={t('spotPrev')} scroll={false}><ChevronLeft size={20} aria-hidden="true" /></Link>
               <Link className="tn-spot tn-spot-next" href={spotStep(1)} aria-label={t('spotNext')} scroll={false}><ChevronRight size={20} aria-hidden="true" /></Link>
             </>}
-            <div className={`tn-next-cover${coverStyle(next.id) ? ' is-photo' : ''}`} style={coverStyle(next.id)} aria-hidden="true">
+            <div className={`tn-next-cover${coverStyle(next.id) ? ' is-photo' : ''}`} aria-hidden="true">
+              {coverStyle(next.id) && <span className="gl-cover-img" style={coverStyle(next.id)} />}
               <Trophy className="tn-cover-mark" size={64} strokeWidth={1.2} />
               <span className="tn-next-tag">{t('spotlightLabel')}</span>
               <span className="tn-next-date gl-num"><b>{nextBox.day}</b><small>{nextBox.month}</small></span>
@@ -178,8 +178,9 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
                     // Started already but not over (a league, a two-day cup): say so, so a
                     // date box in the past does not read as a mistake.
                     const live = view !== 'past' && item.start_date < today
-                    return <Link className={`tn-card gl-card${view === 'past' ? ' is-past' : ''}`} href={sample ? '/login' : `/tournaments/${item.id}`} key={item.id}>
-                      <span className={`tn-cover${coverStyle(item.id) ? ' is-photo' : ''}`} style={coverStyle(item.id)} aria-hidden="true">
+                    return <Link className={`tn-card gl-card gl-reveal${view === 'past' ? ' is-past' : ''}`} href={sample ? '/login' : `/tournaments/${item.id}`} key={item.id}>
+                      <span className={`tn-cover${coverStyle(item.id) ? ' is-photo' : ''}`} aria-hidden="true">
+                        {coverStyle(item.id) && <span className="gl-cover-img" style={coverStyle(item.id)} />}
                         <Trophy className="tn-cover-mark" size={52} strokeWidth={1.2} />
                         <span className="tn-cover-date gl-num"><b>{box.day}</b><small>{box.month}</small></span>
                       </span>
@@ -222,7 +223,7 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
           <Pagination basePath="/tournaments" page={page} hasNext={hasNext} params={state} />
         </div>
 
-        {(next || groups.length > 0) && view !== 'past' && <div className="tn-organizer gl-card">
+        {(next || groups.length > 0) && view !== 'past' && <div className="tn-organizer gl-card gl-reveal">
           <span className="tn-organizer-icon"><ClipboardPlus size={22} aria-hidden="true" /></span>
           <span className="tn-organizer-text"><b>{t('organizerTitle')}</b><small>{t('organizerBody')}</small></span>
           <Link className="gl-btn gl-btn-primary tn-organizer-cta" href="/dashboard">{t('createCta')}<ArrowRight size={18} aria-hidden="true" /></Link>

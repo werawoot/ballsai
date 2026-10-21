@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { getLocale } from 'next-intl/server'
-import { ArrowRight, Bell, BarChart3, CalendarDays, ClipboardList, IdCard, MapPin, Search, Sparkles, Trophy, Users, UserSearch } from 'lucide-react'
+import { ArrowRight, Bell, BarChart3, CalendarDays, ClipboardList, Crown, IdCard, MapPin, Search, Sparkles, Trophy, Users, UserSearch } from 'lucide-react'
 import BrandMark from '@/components/BrandMark'
 import { isSampleId, samplePlayerRanks, sampleTournaments, showDemoData } from '@/lib/sample-data'
 import { getPublicOpenTournaments, getPublicPlatformCounts, getPublicRankings } from '@/lib/public-data'
@@ -160,7 +160,7 @@ export default async function Home() {
         </section>
 
         {statItems.length > 0 && <section className="hm-stats" aria-label="ตัวเลขของระบบ">
-          {statItems.map(item => <div className="hm-stat gl-panel" key={item.label}>
+          {statItems.map(item => <div className="hm-stat gl-panel gl-reveal" key={item.label}>
             <span className="hm-stat-icon"><item.icon size={24} aria-hidden="true" /></span>
             <div><small>{item.label}</small><b className="gl-num">{item.value.toLocaleString('en-US')}</b></div>
           </div>)}
@@ -168,14 +168,15 @@ export default async function Home() {
       </div>
 
       <div className="hm-body">
-        <section className="hm-panel gl-card hm-tournaments" aria-labelledby="hm-open-title">
+        <section className="hm-panel gl-card gl-reveal hm-tournaments" aria-labelledby="hm-open-title">
           <div className="hm-panel-head"><h2 id="hm-open-title">รายการแข่งที่เปิดรับสมัคร</h2><Link href="/tournaments">ดูทั้งหมด<ArrowRight size={16} aria-hidden="true" /></Link></div>
           {shownTournaments.length > 0 ? <div className="hm-cards">
             {shownTournaments.slice(0, 3).map(item => {
               const box = tournamentDayBox(locale, item.start_date)
               const fee = tournamentFee(item.fee)
-              return <Link key={item.id} href={tournamentHref(item.id)} className="hm-card gl-card">
-                <span className={`hm-card-cover${coverStyle(item.id) ? ' is-photo' : ''}`} style={coverStyle(item.id)} aria-hidden="true">
+              return <Link key={item.id} href={tournamentHref(item.id)} className="hm-card gl-card gl-reveal">
+                <span className={`hm-card-cover${coverStyle(item.id) ? ' is-photo' : ''}`} aria-hidden="true">
+                  {coverStyle(item.id) && <span className="gl-cover-img" style={coverStyle(item.id)} />}
                   <span className="hm-card-date gl-num"><b>{box.day}</b><small>{box.month}</small></span>
                 </span>
                 <span className="hm-card-body">
@@ -195,14 +196,14 @@ export default async function Home() {
           </div>}
         </section>
 
-        <section className="hm-panel gl-card hm-ranks" aria-labelledby="hm-rank-title">
+        <section className="hm-panel gl-card gl-reveal hm-ranks" aria-labelledby="hm-rank-title">
           <div className="hm-panel-head"><h2 id="hm-rank-title">อันดับคะแนนฝีมือ</h2><Link href="/ranking">ดูทั้งหมด<ArrowRight size={16} aria-hidden="true" /></Link></div>
           <p className="hm-panel-note">คะแนนฝีมือจากผลแข่งที่ผู้จัดยืนยันเท่านั้น · ฤดูกาล {ACTIVE_SEASON}</p>
           {ranks.length > 0 ? <ol className="hm-rank-list">
-            {ranks.map((player, index) => <li key={player.id}>
+            {ranks.map((player, index) => <li key={player.id} className={index < 3 ? `is-medal is-${index + 1}` : undefined}>
               <Link href={isSampleId(player.id) ? '/ranking' : `/players/${player.id}`}>
                 <span className={`hm-rank-pos gl-num is-${index + 1}`}>{index + 1}</span>
-                <span className="hm-rank-av" aria-hidden="true">{player.player_name.trim().charAt(0)}</span>
+                <span className="hm-rank-av" aria-hidden="true">{player.player_name.trim().charAt(0)}{index === 0 && <Crown className="hm-rank-crown" size={16} />}</span>
                 <span className="hm-rank-name"><b>{player.player_name}</b><small>{[player.team, player.province ? provinceName(player.province, locale === 'en' ? 'en' : 'th') : null].filter(Boolean).join(' · ')}</small></span>
                 <span className="hm-rank-pts gl-num">{player.pts.toLocaleString('en-US')}</span>
               </Link>
@@ -213,7 +214,7 @@ export default async function Home() {
           </div>}
         </section>
 
-        <section className="hm-features gl-card" aria-label="สิ่งที่ทำได้">
+        <section className="hm-features gl-card gl-reveal" aria-label="สิ่งที่ทำได้">
           {FEATURES.map(feature => <div className="hm-feature" key={feature.title}>
             <span className="hm-feature-icon"><feature.icon size={24} aria-hidden="true" /></span>
             <span><b>{feature.title}</b><small>{feature.ready ? feature.body : 'เร็ว ๆ นี้'}</small></span>

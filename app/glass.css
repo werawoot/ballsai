@@ -139,3 +139,19 @@ body:has(.gl) .bds-nav-item.is-pending { color: #0B1220; }
 body:has(.gl) .bds-nav-item.is-pending .bds-nav-icon { background: rgba(22, 224, 110, .25); color: #0B1220; }
 body:has(.gl) .bds-nav-item:focus-visible { outline-color: #0B1220; }
 body:has(.gl) .bds-nav-badge { background: #DC2626; box-shadow: 0 0 0 2px #fff; }
+
+/* A card cover photo as its own layer, so it can ease in on hover while the date box on
+   top of it stays still. */
+.gl .gl-cover-img { background-position: center; background-size: cover; inset: 0; position: absolute; transition: transform .9s cubic-bezier(.2,.7,.2,1); }
+.gl a:hover .gl-cover-img, .gl a:focus-visible .gl-cover-img { transform: scale(1.08); }
+
+/* Cards and panels fade and rise in as they scroll into view, where the browser can tie
+   an animation to scrolling. Elsewhere, and when less motion is asked for, they simply
+   show. Nothing starts hidden, so no content depends on the animation running. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .gl .gl-reveal { animation: gl-reveal linear both; animation-range: entry 0% entry 45%; animation-timeline: view(); }
+  }
+}
+@keyframes gl-reveal { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .gl .gl-cover-img { transition: none; } .gl a:hover .gl-cover-img { transform: none; } }

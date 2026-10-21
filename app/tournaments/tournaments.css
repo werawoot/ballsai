@@ -35,14 +35,23 @@
 .tn-board { border-radius: 20px; box-shadow: 0 16px 40px rgba(11,18,32,.10); margin-top: -40px; padding: 14px; position: relative; }
 
 .tn-toolbar { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
-.tn-tabs { display: flex; flex: 1 1 auto; gap: 6px; overflow-x: auto; }
+.tn-tabs { display: flex; flex: 1 1 auto; gap: 6px; overflow-x: auto; position: relative; }
+/* One green pill slides under the chosen tab (TabPills). */
+.tn-tabs-pill { background: var(--gl-green); border-radius: 999px; box-shadow: 0 6px 16px rgba(22,224,110,.35); height: 44px; left: 0; position: absolute; top: 0; transition: transform .35s cubic-bezier(.3,.7,.3,1), width .35s cubic-bezier(.3,.7,.3,1); z-index: 0; }
+.tn-tabs a { position: relative; z-index: 1; }
 .tn-layout { background: rgba(255,255,255,.6); border-radius: 999px; display: flex; gap: 2px; padding: 3px; }
 .tn-layout a { align-items: center; border-radius: 999px; color: var(--gl-text); display: flex; font: 600 13px var(--gl-font); gap: 6px; min-height: 40px; padding: 0 14px; text-decoration: none; }
 .tn-layout a.is-on { background: var(--gl-green); color: var(--gl-navy); }
 .tn-search-for { color: var(--gl-text-2); font-size: 14px; margin: 12px 2px 0; }
 .tn-tabs a { align-items: center; background: rgba(255,255,255,.6); border-radius: 999px; color: var(--gl-text); display: flex; flex: 1 0 auto; font: 600 14px var(--gl-font); justify-content: center; min-height: 44px; padding: 0 18px; text-decoration: none; transition: background-color .15s; white-space: nowrap; }
 .tn-tabs a:hover { background: rgba(255,255,255,.9); }
-.tn-tabs a.is-on { background: var(--gl-green); color: var(--gl-navy); font-weight: 700; }
+.tn-tabs a.is-on { color: var(--gl-navy); font-weight: 700; }
+/* Until the pill is placed (first paint, no JavaScript) the chosen tab colours itself. */
+.tn-tabs a.is-on { background: var(--gl-green); }
+.tn-tabs-pill { opacity: 0; }
+.tn-tabs[data-pill] .tn-tabs-pill { opacity: 1; }
+.tn-tabs[data-pill] a.is-on, .tn-tabs[data-pill] a.is-on:hover { background: transparent; }
+@media (prefers-reduced-motion: reduce) { .tn-tabs-pill { transition: none; } }
 
 /* The next tournament: cover, facts, and a side with the countdown and the one way in. */
 .tn-next { border-radius: var(--gl-radius); box-shadow: 0 6px 20px rgba(11,18,32,.06); display: grid; margin-top: 14px; overflow: hidden; position: relative; }
@@ -52,7 +61,7 @@
 .tn-spot { top: 10px; }
 .tn-spot-prev { right: 60px; }
 .tn-spot-next { right: 10px; }
-.tn-next-cover { align-items: center; background: var(--gl-pitch); background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 40px, rgba(255,255,255,0) 40px 80px); display: flex; justify-content: center; min-height: 150px; position: relative; }
+.tn-next-cover { align-items: center; background: var(--gl-pitch); overflow: hidden; background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 40px, rgba(255,255,255,0) 40px 80px); display: flex; justify-content: center; min-height: 150px; position: relative; }
 .tn-next-tag { background: var(--gl-green); border-radius: 999px; color: var(--gl-navy); font: 700 13px var(--gl-font); left: 12px; padding: 5px 12px; position: absolute; top: 12px; }
 .tn-next-date { align-items: center; background: var(--gl-white); border-radius: 14px; bottom: 12px; box-shadow: 0 6px 16px rgba(11,18,32,.25); color: var(--gl-navy); display: flex; flex-direction: column; height: 76px; justify-content: center; left: 12px; position: absolute; width: 68px; }
 .tn-next-date b { font: 700 34px/1 var(--gl-font); }
@@ -95,7 +104,7 @@
 .tn-card { border-radius: var(--gl-radius); box-shadow: 0 4px 14px rgba(11,18,32,.05); color: inherit; display: flex; flex-direction: column; overflow: hidden; text-decoration: none; transition: box-shadow .15s, transform .15s; }
 .tn-card:hover { box-shadow: 0 12px 28px rgba(11,18,32,.12); transform: translateY(-2px); }
 .tn-card.is-past { opacity: .8; }
-.tn-cover { align-items: center; background: var(--gl-pitch); background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 36px, rgba(255,255,255,0) 36px 72px); display: flex; height: 104px; justify-content: center; position: relative; }
+.tn-cover { align-items: center; background: var(--gl-pitch); overflow: hidden; background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 36px, rgba(255,255,255,0) 36px 72px); display: flex; height: 104px; justify-content: center; position: relative; }
 .tn-cover-mark { color: rgba(255,255,255,.28); }
 /* With a licensed close-up behind it: the photo fills the cover, a light shade keeps the
    tag and the arrows readable, and the graphic's trophy steps aside. */

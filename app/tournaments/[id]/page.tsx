@@ -174,12 +174,12 @@ export default async function TournamentPage(props: { params: Promise<{ id: stri
             </div>
 
             <div className="tn-d-side">
-              <section className="tn-d-card gl-card" id="tn-venue">
+              <section className="tn-d-card gl-card gl-reveal" id="tn-venue">
                 <h2>{t('venueTitle')}</h2>
                 <p className="tn-d-venue"><MapPin size={18} aria-hidden="true" /><span>{heading.venue ?? t('noVenue')}</span></p>
                 {mapHref && <a className="gl-btn gl-btn-secondary tn-d-map" href={mapHref} target="_blank" rel="noopener noreferrer">{t('openMap')}<ArrowRight size={16} aria-hidden="true" /></a>}
               </section>
-              <Link className="tn-d-card gl-card tn-d-linkcard" href={fixturesHref}>
+              <Link className="tn-d-card gl-card gl-reveal tn-d-linkcard" href={fixturesHref}>
                 <span className="tn-link-icon"><ListOrdered size={20} aria-hidden="true" /></span>
                 <span className="tn-link-text"><b>{t('fixturesTitle')}</b><small>{tournament.fixtures_published_at ? t('fixturesPublished') : t('fixturesNotYet')}</small></span>
                 <ChevronRight size={18} aria-hidden="true" />
