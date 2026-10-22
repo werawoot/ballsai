@@ -22,6 +22,7 @@ listed there exists in `public/photos/` and has a row here.
 | `head-pitch-lines.webp` | PAGE_PHOTOS.athletes (/athletes head) | https://unsplash.com/photos/green-grass-field-with-white-paint-HTbSPSZ0Hsk (photo-1507602368706-321eeafaf53b, two white lines on grass; softened slightly) | Dan Gold (@danielcgold) | Unsplash Licence | 22 Oct 2026 |
 | `head-seats-mono.webp` | PAGE_PHOTOS.hallOfFame (/hall-of-fame head) | https://unsplash.com/photos/empty-stadium-seats-arranged-in-a-row-atHbrQaEzx4 (photo-1741899940722-8f70b3911c81, black and white, no signage) | Ramiro Pianarosa (@rpianarosa) | Unsplash Licence | 22 Oct 2026 |
 | `head-roof-sky.webp` | PAGE_PHOTOS.player (/players/[id] head) | https://unsplash.com/photos/2APhya1dM_U (photo-1494390438231-97c51a2de9c7, a stadium roof against the sky) | Bangkit Ristant (@bangkitristant) | Unsplash Licence | 22 Oct 2026 |
+| `card-pitch-overhead.webp` | PAGE_PHOTOS.profile (/profile identity card) | https://unsplash.com/photos/empty-football-field-in-aerial-photgraphy-raesgfwU7iM (photo-1546717003-caee5f93a9db, a pitch from straight above, Netherlands; cropped to the pitch, leaving out the benches with a few people far away) | Victor (@victor_g) | Unsplash Licence | 22 Oct 2026 |
 
 Checked and left out on 21 Oct 2026: photos with people, the FIFA World Cup trophy (a trade
 mark), balls and boots with a readable Nike or Adidas mark, and photo-1510051640316 (a goal

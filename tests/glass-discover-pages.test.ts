@@ -35,6 +35,25 @@ describe('/hall-of-fame on the light glass design', () => {
   })
 })
 
+// "ของฉัน" follows /welcome onto the glass design (owner, 22 Oct 2026). /profile/edit shares
+// the stylesheet but has not moved, so every glass rule is scoped to the opted-in root.
+describe('/profile on the light glass design', () => {
+  const page = read('app/profile/page.tsx')
+  const css = read('app/profile/profile.css')
+  it('opts in with the glass scene and its own photo', () => {
+    expect(page).toContain('<main className="pf gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profile) as React.CSSProperties}>')
+    expect(page).toContain("import '../glass.css'")
+  })
+  it('leaves /profile/edit on its old look', () => {
+    expect(read('app/profile/edit/page.tsx')).toContain('<main className="pf">')
+    const glass = css.slice(css.indexOf('/* Light glass design (ADR-014)'))
+    expect(glass.length).toBeGreaterThan(100)
+    for (const rule of glass.split('}').map(part => part.trim()).filter(part => part && !part.startsWith('@') && !part.startsWith('/*'))) {
+      expect(rule.split('{')[0].split(',').every(selector => selector.includes('.pf.gl')), rule).toBe(true)
+    }
+  })
+})
+
 describe('/players/[id] keeps where every number comes from', () => {
   const page = read('app/players/[id]/page.tsx')
   it('still shows STARTER for a card with no rank row and the source chip on the card', () => {

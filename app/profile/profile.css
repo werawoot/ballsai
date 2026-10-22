@@ -296,3 +296,66 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf-team-ask { border: 1.5px dashed #d6cfc4 !important; box-shadow: none !important; display: flex; flex-direction: column; gap: 10px; }
 .pf-team-ask .pf-card-desc { margin: 0; }
 .pf-team-ask .pf-btn { align-self: flex-start; }
+
+/* Light glass design (ADR-014) for /profile only: the page opts in with `.gl` on its root,
+   /profile/edit does not, so every rule below starts with `.pf.gl`. The identity card sits
+   on the page's own photo under a navy wash; the cards below are frosted white over the
+   blurred grass; green replaces red for the one thing to do now. Wording, consent and the
+   PDPA section are unchanged. */
+.pf.gl { --pf-ink: var(--gl-navy); --pf-red: var(--gl-green-ink); --pf-red-soft: var(--gl-green-surface); --pf-green: var(--gl-green-ink); --pf-muted: var(--gl-text-2); --pf-line: rgba(11,18,32,.09); background: transparent; color: var(--gl-text); font-family: var(--gl-font); }
+.pf.gl > .bds-page-header { -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3); background: rgba(11,18,32,.88); }
+.pf.gl :focus-visible { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
+.pf.gl .pf-hero :focus-visible { outline-color: var(--gl-green); }
+
+.pf.gl .pf-hero { background-color: var(--gl-navy); background-image: linear-gradient(160deg, rgba(11,18,32,.84) 0%, rgba(11,18,32,.55) 55%, rgba(15,122,63,.35) 100%), var(--gl-stadium-photo); background-position: center; background-size: cover; border-radius: 26px; box-shadow: 0 20px 44px rgba(11,18,32,.28); }
+.pf.gl .pf-avatar { border-color: rgba(22,224,110,.7); border-radius: 22px; }
+.pf.gl .pf-name { font-family: var(--gl-font); font-weight: 700; }
+.pf.gl .pf-sub { color: rgba(255,255,255,.82); }
+.pf.gl .pf-chip { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.3); }
+.pf.gl .pf-chip.is-gold { background: rgba(22,224,110,.2); border-color: rgba(22,224,110,.55); color: #fff; }
+.pf.gl .pf-chip.is-green { background: var(--gl-green); color: var(--gl-navy); }
+.pf.gl .pf-level { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.18); }
+.pf.gl .pf-level-num b { font-family: var(--gl-font); font-weight: 700; }
+.pf.gl .pf-bar { background: rgba(255,255,255,.18); }
+.pf.gl .pf-bar i { background: linear-gradient(90deg, #12C961, var(--gl-green)); }
+
+.pf.gl .pf-btn { border-radius: 999px; font-family: var(--gl-font); font-weight: 700; }
+.pf.gl .pf-btn-primary, .pf.gl .pf-hero .pf-btn-primary { background: var(--gl-green); box-shadow: 0 8px 22px rgba(22,224,110,.35); color: var(--gl-navy) !important; }
+.pf.gl .pf-btn-primary:hover { background: var(--gl-green-hover); box-shadow: 0 8px 22px rgba(22,224,110,.4); }
+.pf.gl .pf-btn-ghost { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.5); }
+.pf.gl .pf-btn-ghost:hover { background: rgba(255,255,255,.22); }
+.pf.gl .pf-btn-line { background: rgba(255,255,255,.85); border-color: var(--gl-navy); color: var(--gl-navy) !important; }
+.pf.gl .pf-btn-line:hover { background: #fff; color: var(--gl-navy) !important; }
+
+/* Frosted cards over the grass. */
+.pf.gl .pf-card, .pf.gl .pf-link, .pf.gl .rh-tool { background: var(--gl-card-bg-solid); border: 1px solid var(--gl-card-border); border-radius: 22px; box-shadow: 0 10px 26px rgba(11,18,32,.08); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .pf.gl .pf-card, .pf.gl .pf-link, .pf.gl .rh-tool { -webkit-backdrop-filter: blur(var(--gl-card-blur)) saturate(1.4); backdrop-filter: blur(var(--gl-card-blur)) saturate(1.4); background: var(--gl-card-bg); }
+}
+.pf.gl .pf-card-title, .pf.gl .rh-title { color: var(--gl-navy); font-family: var(--gl-font); font-weight: 700; }
+.pf.gl .pf-card-meta { background: var(--gl-green-surface); color: var(--gl-green-ink); }
+.pf.gl .pf-segments i { background: rgba(11,18,32,.1); }
+.pf.gl .pf-segments i.is-done { background: var(--gl-green-ink); }
+.pf.gl .pf-segments i.is-now { background: var(--gl-green); }
+.pf.gl .pf-step, .pf.gl .pf-all-steps, .pf.gl .pf-list li, .pf.gl .rh-list li + li { border-color: rgba(11,18,32,.08); }
+.pf.gl .pf-step.is-next a { background: rgba(232,249,238,.85); box-shadow: inset 4px 0 0 var(--gl-green); }
+.pf.gl .pf-step.is-next .pf-step-icon { border-color: var(--gl-green); }
+.pf.gl .pf-step a:hover .pf-step-title { color: var(--gl-green-ink); }
+.pf.gl .pf-power { color: var(--gl-green-ink); font-family: var(--gl-font); }
+.pf.gl .pf-link:hover, .pf.gl .rh-tool:hover { border-color: var(--gl-green); }
+.pf.gl .pf-link-icon { background: var(--gl-green-surface); color: var(--gl-green-ink); }
+.pf.gl .rh-stats { background: rgba(255,255,255,.6); }
+.pf.gl .rh.is-now { background: linear-gradient(140deg, #0F7A3F, #0B1220 80%); box-shadow: 0 18px 40px rgba(11,18,32,.28); }
+.pf.gl .rh.is-now .pf-btn-primary { background: var(--gl-green); color: var(--gl-navy) !important; }
+.pf.gl .rh-tool:focus-visible, .pf.gl .rh-next:focus-visible { outline-color: var(--gl-navy); }
+.pf.gl .rh-next { background: rgba(255,255,255,.5); border-color: rgba(11,18,32,.18); }
+.pf.gl .rh-next b { color: var(--gl-green-ink); }
+.pf.gl .rh-next:hover { border-color: var(--gl-green); }
+.pf.gl .pf-team-ask { border-color: rgba(11,18,32,.18) !important; }
+
+/* The training card stays a navy card; its button turns green. */
+.pf.gl .tr-today { background: linear-gradient(150deg, #0B1220, #12325A); }
+.pf.gl .tr-today .ui-btn-primary { background: var(--gl-green); box-shadow: 0 8px 22px rgba(22,224,110,.35); color: var(--gl-navy); }
+.pf.gl .tr-today::after { background: radial-gradient(circle, rgba(22,224,110,.35), transparent 65%); }
+.pf.gl .ui-chip.is-red { background: var(--gl-green-surface); color: var(--gl-green-ink); }
+.pf.gl .rh-tool-icon { background: var(--gl-green-surface); color: var(--gl-green-ink); }
