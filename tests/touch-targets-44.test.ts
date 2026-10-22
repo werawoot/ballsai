@@ -28,10 +28,11 @@ describe('ordinary pages grow the control itself', () => {
   })
 
   it('makes every /athletes filter select at least 44px tall', () => {
+    // The glass page (ADR-014) styles them with one class in app/athletes/athletes.css.
     const filters = read('app/athletes/AthleteFilters.tsx')
-    expect(px(filters, /const selectStyle = \{[^}]*minHeight: (\d+)/)).toBeGreaterThanOrEqual(44)
+    expect(px(read('app/athletes/athletes.css'), /\.at-select \{[^}]*min-height: (\d+)px/)).toBeGreaterThanOrEqual(44)
     expect(filters.match(/<select\b/g)?.length).toBe(3)
-    expect(filters.match(/style=\{selectStyle\}/g)?.length).toBe(3)
+    expect(filters.match(/className="at-select"/g)?.length).toBe(3)
   })
 })
 

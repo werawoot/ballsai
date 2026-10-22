@@ -32,32 +32,17 @@ export default function AthleteFilters({
     router.replace(`/athletes?${params.toString()}`)
   }
 
-  const selectStyle = {
-    minWidth: 0,
-    minHeight: 44,
-    border: '1px solid #ddd',
-    borderRadius: 6,
-    background: 'white',
-    padding: '0 10px',
-    color: '#333',
-    fontFamily: 'var(--font-sarabun)',
-    fontSize: 12,
-    fontWeight: 700,
-  } as const
-
   return (
-    <div style={{ padding: '14px 16px', borderBottom: '1px solid #e4e4e1', background: '#f7f7f5' }}>
-      <div style={{ maxWidth: 920, margin: '0 auto' }}>
-        <div style={{ position: 'relative', marginBottom: 9 }}>
-          <Search size={17} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#888' }} />
-          <input defaultValue={currentSearch} onChange={event => update('search', event.target.value)} placeholder={t('searchAthleteName')} style={{ width: '100%', minHeight: 44, border: '1px solid #d8d8d5', borderRadius: 6, padding: '0 12px 0 38px', background: 'white', fontFamily: 'var(--font-sarabun)', fontSize: 14, outline: 'none' }} />
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '28px repeat(3,minmax(0,1fr))', gap: 7, alignItems: 'center' }}>
-          <SlidersHorizontal size={18} color="#777" />
-          <select aria-label={t('province')} value={currentProvince} onChange={event => update('province', event.target.value)} style={selectStyle}><option value="">{t('allProvinces')}</option>{provinces.map(province => <option key={province} value={province}>{provinceName(province, locale)}</option>)}</select>
-          <select aria-label={t('position')} value={currentPosition} onChange={event => update('position', event.target.value)} style={selectStyle}><option value="">{t('allPositions')}</option>{['FW', 'MF', 'DF', 'GK'].map(position => <option key={position} value={position}>{position}</option>)}</select>
-          <select aria-label={t('age')} value={currentAge} onChange={event => update('age', event.target.value)} style={selectStyle}><option value="">{t('allAges')}</option><option value="u12">U12</option><option value="u15">U15</option><option value="u18">U18</option><option value="adult">20+</option></select>
-        </div>
+    <div className="at-filters">
+      <label className="at-search">
+        <Search size={17} aria-hidden="true" />
+        <input aria-label={t('searchAthleteName')} defaultValue={currentSearch} onChange={event => update('search', event.target.value)} placeholder={t('searchAthleteName')} type="search" />
+      </label>
+      <div className="at-selects">
+        <SlidersHorizontal size={18} aria-hidden="true" />
+        <select aria-label={t('province')} className="at-select" value={currentProvince} onChange={event => update('province', event.target.value)}><option value="">{t('allProvinces')}</option>{provinces.map(province => <option key={province} value={province}>{provinceName(province, locale)}</option>)}</select>
+        <select aria-label={t('position')} className="at-select" value={currentPosition} onChange={event => update('position', event.target.value)}><option value="">{t('allPositions')}</option>{['FW', 'MF', 'DF', 'GK'].map(position => <option key={position} value={position}>{position}</option>)}</select>
+        <select aria-label={t('age')} className="at-select" value={currentAge} onChange={event => update('age', event.target.value)}><option value="">{t('allAges')}</option><option value="u12">U12</option><option value="u15">U15</option><option value="u18">U18</option><option value="adult">20+</option></select>
       </div>
     </div>
   )

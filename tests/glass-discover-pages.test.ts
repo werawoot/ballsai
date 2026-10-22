@@ -9,6 +9,7 @@ const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.ur
 describe.each([
   ['/ranking', 'app/ranking/page.tsx', 'rk'],
   ['/players/[id]', 'app/players/[id]/page.tsx', 'pp'],
+  ['/athletes', 'app/athletes/page.tsx', 'at'],
 ])('%s on the light glass design', (_route, file, prefix) => {
   const page = read(file)
 
@@ -21,6 +22,18 @@ describe.each([
   it('heads the page with the licensed stadium photo, not the old red glow', () => {
     expect(page).toContain("'--gl-stadium-photo'")
     expect(page).not.toContain('ui-matchday')
+  })
+})
+
+// The third view of the discover switch keeps its own header and honour cards; it opts in
+// on its root and takes the stadium photo behind its head.
+describe('/hall-of-fame on the light glass design', () => {
+  const page = read('app/hall-of-fame/page.tsx')
+  it('opts in with the glass scene and the stadium photo, and loads the glass styles', () => {
+    expect(page).toContain('<main className="hall-page gl gl-scene"')
+    expect(page).toContain("'--gl-backdrop-photo'")
+    expect(page).toContain("'--gl-stadium-photo'")
+    expect(page).toContain("import '../glass.css'")
   })
 })
 
