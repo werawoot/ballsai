@@ -7,20 +7,19 @@ import { describe, expect, it } from 'vitest'
 const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')
 
 describe.each([
-  ['/ranking', 'app/ranking/page.tsx', 'rk'],
-  ['/players/[id]', 'app/players/[id]/page.tsx', 'pp'],
-  ['/athletes', 'app/athletes/page.tsx', 'at'],
-])('%s on the light glass design', (_route, file, prefix) => {
+  ['/ranking', 'app/ranking/page.tsx', 'rk', 'ranking'],
+  ['/players/[id]', 'app/players/[id]/page.tsx', 'pp', 'player'],
+  ['/athletes', 'app/athletes/page.tsx', 'at', 'athletes'],
+])('%s on the light glass design', (_route, file, prefix, photo) => {
   const page = read(file)
 
   it('opts in with the glass scene over the blurred grass and loads the glass styles', () => {
     expect(page).toMatch(new RegExp(`<main className="bds-page ${prefix} gl gl-scene"`))
-    expect(page).toContain("'--gl-backdrop-photo'")
     expect(page).toMatch(/import '(\.\.\/)+glass\.css'/)
   })
 
-  it('heads the page with the licensed stadium photo, not the old red glow', () => {
-    expect(page).toContain("'--gl-stadium-photo'")
+  it('heads the page with its own licensed photo, not the old red glow', () => {
+    expect(page).toContain(`glassSceneStyle(PAGE_PHOTOS.${photo})`)
     expect(page).not.toContain('ui-matchday')
   })
 })
@@ -31,8 +30,7 @@ describe('/hall-of-fame on the light glass design', () => {
   const page = read('app/hall-of-fame/page.tsx')
   it('opts in with the glass scene and the stadium photo, and loads the glass styles', () => {
     expect(page).toContain('<main className="hall-page gl gl-scene"')
-    expect(page).toContain("'--gl-backdrop-photo'")
-    expect(page).toContain("'--gl-stadium-photo'")
+    expect(page).toContain('glassSceneStyle(PAGE_PHOTOS.hallOfFame)')
     expect(page).toContain("import '../glass.css'")
   })
 })

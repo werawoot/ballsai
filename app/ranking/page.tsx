@@ -13,7 +13,7 @@ import Pagination from '@/components/Pagination'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
 import { podiumNameLines } from '@/lib/podium-name'
-import { BACKDROP, STADIUM } from '@/lib/stock-photos'
+import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
 import '../glass.css'
 import './ranking.css'
 
@@ -89,7 +89,7 @@ export default async function RankingPage(
   const sub = (p: Row) => [p.position, p.team, p.province ? provinceName(p.province, locale) : null].filter(Boolean).join(' · ')
 
   return (
-    <main className="bds-page rk gl gl-scene" style={{ ...(BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } : {}), ...(STADIUM ? { '--gl-stadium-photo': `url(${STADIUM.src})` } : {}) } as React.CSSProperties}>
+    <main className="bds-page rk gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.ranking) as React.CSSProperties}>
       <PageHeader />
       <section className="rk-stadium">
         <div className="rk-stadium-inner">

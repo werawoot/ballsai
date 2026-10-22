@@ -7,7 +7,7 @@ import { sampleTournaments, showDemoData } from '@/lib/sample-data'
 import { bangkokToday } from '@/lib/public-tournaments'
 import { tournamentCover } from '@/lib/tournament-cover'
 import { tournamentCountdown, tournamentDateRange, tournamentDayBox, tournamentFee, type TournamentCountdown } from '@/lib/tournament-dates'
-import { BACKDROP, STADIUM } from '@/lib/stock-photos'
+import { BACKDROP, PAGE_PHOTOS } from '@/lib/stock-photos'
 import PageHeader from '@/components/PageHeader'
 import TeamStep from './TeamStep'
 import PaymentStep from './PaymentStep'
@@ -104,7 +104,7 @@ export default async function TournamentPage(props: { params: Promise<{ id: stri
   return (
     <main className="bds-page tn-page tn-detail tn-glass gl gl-scene" style={BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } as React.CSSProperties : undefined}>
       <PageHeader back={back} />
-      <div className="tn-stadium gl-on-photo" style={STADIUM ? { '--gl-stadium-photo': `url(${STADIUM.src})` } as React.CSSProperties : undefined}>
+      <div className="tn-stadium gl-on-photo" style={{ '--gl-stadium-photo': `url(${PAGE_PHOTOS.tournament.src})` } as React.CSSProperties}>
         {heading.kind === 'photo' && <span className="tn-hero-photo"><Image alt={cover('photoAlt', { venue: heading.venue ?? '' })} fill sizes="100vw" src={heading.src} unoptimized /></span>}
         <div className="tn-d-head">
           <div className="tn-d-intro">

@@ -11,7 +11,7 @@ import { OtpHelp } from "./OtpHelp";
 import { LoginConsent } from "./LoginConsent";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import BrandMark from "@/components/BrandMark";
-import { STADIUM } from "@/lib/stock-photos";
+import { PAGE_PHOTOS } from "@/lib/stock-photos";
 import "../glass.css";
 import "./login.css";
 
@@ -179,7 +179,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
   const otpSlots = otpSlotCount(otp.length);
 
   return (
-    <main className="lg gl" style={STADIUM ? { "--gl-stadium-photo": `url(${STADIUM.src})` } as React.CSSProperties : undefined}>
+    <main className="lg gl" style={{ "--gl-stadium-photo": `url(${PAGE_PHOTOS.login.src})` } as React.CSSProperties}>
       <div className="lg-shell">
         <section className="lg-hero">
           <Link className="ui-brand" href="/" aria-label="BallDoenSai.com"><BrandMark size={26} />BallDoenSai.com</Link>

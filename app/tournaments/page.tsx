@@ -7,7 +7,7 @@ import { bangkokToday, groupTournamentsByMonth, parseTournamentQuery, parseTourn
 import { tournamentCoverSport, tournamentCoverStatus } from '@/lib/tournament-cover'
 import { tournamentCountdown, tournamentDateRange, tournamentDayBox, tournamentFee, tournamentMonthLabel, type TournamentCountdown } from '@/lib/tournament-dates'
 import { parsePage } from '@/lib/pagination'
-import { BACKDROP, coverDetailFor, STADIUM } from '@/lib/stock-photos'
+import { BACKDROP, coverDetailFor, PAGE_PHOTOS } from '@/lib/stock-photos'
 import { ACTIVE_SEASON } from '@/lib/season'
 import PageHeader from '@/components/PageHeader'
 import Pagination from '@/components/Pagination'
@@ -94,7 +94,7 @@ export default async function TournamentsPage(props: { searchParams: Promise<Sea
   return (
     <main className="bds-page tn-page tn-list gl gl-scene" style={BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } as React.CSSProperties : undefined}>
       <PageHeader />
-      <div className="tn-stadium gl-on-photo" style={STADIUM ? { '--gl-stadium-photo': `url(${STADIUM.src})` } as React.CSSProperties : undefined}>
+      <div className="tn-stadium gl-on-photo" style={{ '--gl-stadium-photo': `url(${PAGE_PHOTOS.tournaments.src})` } as React.CSSProperties}>
         <div className="tn-stadium-inner">
           <p className="tn-eyebrow">{t('eyebrow', { season: ACTIVE_SEASON })}</p>
           <h1 className="tn-title">{t('title')}</h1>

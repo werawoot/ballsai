@@ -1,13 +1,13 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { BACKDROP, COVER_DETAILS, coverDetailFor, STADIUM, type StockPhoto } from '@/lib/stock-photos'
+import { BACKDROP, COVER_DETAILS, coverDetailFor, PAGE_PHOTOS, STADIUM, type StockPhoto } from '@/lib/stock-photos'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const credits = readFileSync(`${root}docs/photo-credits.md`, 'utf8')
 
 describe('licensed stock photos', () => {
-  const all: StockPhoto[] = [...(STADIUM ? [STADIUM] : []), ...(BACKDROP ? [BACKDROP] : []), ...COVER_DETAILS]
+  const all: StockPhoto[] = [...(STADIUM ? [STADIUM] : []), ...(BACKDROP ? [BACKDROP] : []), ...COVER_DETAILS, ...Object.values(PAGE_PHOTOS)]
 
   it('every photo listed is a file in public/photos with a row in docs/photo-credits.md', () => {
     for (const photo of all) {
@@ -17,6 +17,14 @@ describe('licensed stock photos', () => {
       expect(credits, `${file} needs a credits row`).toMatch(new RegExp(`\\|\\s*\`?${file.replace('.', '\\.')}\`?\\s*\\|`))
       expect(photo.credit.length).toBeGreaterThan(0)
     }
+  })
+
+  // Owner, 22 Oct 2026: no photo used twice. Each page head is its own photo, different
+  // from the home page's and from every card cover.
+  it('gives every page its own head photo, used nowhere else', () => {
+    const heads = [STADIUM?.src, ...Object.values(PAGE_PHOTOS).map(photo => photo.src)]
+    expect(new Set(heads).size).toBe(heads.length)
+    for (const cover of COVER_DETAILS) expect(heads).not.toContain(cover.src)
   })
 
   it('gives a tournament the same cover detail every time, and none while the set is empty', () => {

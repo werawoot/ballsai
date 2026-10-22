@@ -14,7 +14,7 @@ import { fetchPublicAthletesPage, type PublicAthlete as AthleteProfile, type Pub
 import { PROVINCE_NAMES_EN, provinceName } from '@/lib/thai-provinces'
 import type { Locale } from '@/i18n/config'
 import { withAvatarUrls } from '@/lib/athlete-avatar'
-import { BACKDROP, STADIUM } from '@/lib/stock-photos'
+import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
 import '../glass.css'
 import './athletes.css'
 // /athletes on the light glass design (ADR-014), like /ranking: a stadium head with the
@@ -87,7 +87,7 @@ export default async function AthletesPage(
   const provinces = Object.keys(PROVINCE_NAMES_EN).sort((a, b) => a.localeCompare(b, 'th'))
 
   return (
-    <main className="bds-page at gl gl-scene" style={{ ...(BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } : {}), ...(STADIUM ? { '--gl-stadium-photo': `url(${STADIUM.src})` } : {}) } as React.CSSProperties}>
+    <main className="bds-page at gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.athletes) as React.CSSProperties}>
       <PageHeader eyebrow={t('eyebrow')} />
 
       <section className="at-stadium">

@@ -15,7 +15,7 @@ import { seasonSummary } from '@/lib/player-profile'
 import { FORM_EVENT_LIMIT, formHistory, playerTab, type RatingEventRow } from '@/lib/player-form'
 import { fetchRankPosition } from '@/lib/public-ranking-page'
 import PageHeader from '@/components/PageHeader'
-import { BACKDROP, STADIUM } from '@/lib/stock-photos'
+import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
 import ReportHighlightButton from './ReportHighlightButton'
 import DisputeDataButton from './DisputeDataButton'
 import ShareProfileButton from './ShareProfileButton'
@@ -193,7 +193,7 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
   const meta = [team, province].filter(Boolean).join(' · ')
 
   return (
-    <main className="bds-page pp gl gl-scene" style={{ ...(BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } : {}), ...(STADIUM ? { '--gl-stadium-photo': `url(${STADIUM.src})` } : {}) } as React.CSSProperties}>
+    <main className="bds-page pp gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.player) as React.CSSProperties}>
       <PageHeader back={{ href: '/athletes', label: t('back') }} />
 
       <section className="pp-hero ui-dark">
