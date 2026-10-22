@@ -22,7 +22,7 @@ export const STADIUM: StockPhoto | null = { src: '/photos/stadium-aerial-night.w
 
 const unsplash = (photographer: string, id: string) => `${photographer}, Unsplash, photo-${id}`
 
-export type PhotoPage = 'tournaments' | 'tournament' | 'login' | 'welcome' | 'ranking' | 'athletes' | 'hallOfFame' | 'player' | 'profile'
+export type PhotoPage = 'tournaments' | 'tournament' | 'login' | 'welcome' | 'ranking' | 'athletes' | 'hallOfFame' | 'player' | 'profile' | 'profileEdit'
 
 export const PAGE_PHOTOS: Readonly<Record<PhotoPage, StockPhoto>> = {
   tournaments: { src: '/photos/head-seats-colour.webp', credit: unsplash('Nico Smit', '1646801479598-6a00891d2039') },
@@ -34,6 +34,7 @@ export const PAGE_PHOTOS: Readonly<Record<PhotoPage, StockPhoto>> = {
   hallOfFame: { src: '/photos/head-seats-mono.webp', credit: unsplash('Ramiro Pianarosa', '1741899940722-8f70b3911c81') },
   player: { src: '/photos/head-roof-sky.webp', credit: unsplash('Bangkit Ristant', '1494390438231-97c51a2de9c7') },
   profile: { src: '/photos/card-pitch-overhead.webp', credit: unsplash('Victor (victor_g)', '1546717003-caee5f93a9db') },
+  profileEdit: { src: '/photos/head-corner-flag.webp', credit: unsplash('Ben Wiens', '1531861184681-f2de7dd72da5') },
 }
 
 // Behind the whole page, so glass cards have grass to show through: the same grass close-up

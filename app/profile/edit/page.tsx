@@ -6,10 +6,14 @@ import EditProfileForm from '../EditProfileForm'
 import { signAvatarUrls } from '@/lib/athlete-avatar'
 import PageHeader from '@/components/PageHeader'
 import { PUBLIC_PROFILE_COLUMNS, fetchMyAthletePrivate } from '@/lib/athlete-private'
+import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
+import '../../glass.css'
 import '../profile.css'
 
 // Editing the athlete profile, in sections: details, visibility, highlights,
-// achievements. /profile shows the result.
+// achievements. /profile shows the result. On the light glass design (ADR-014) like
+// /profile: the title on its own photo, the form on frosted cards; the form, its wording and
+// the guardian consent rule are unchanged.
 export default async function EditProfilePage() {
   const cookieStore = await cookies()
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
@@ -41,10 +45,10 @@ export default async function EditProfilePage() {
   ])
 
   return (
-    <main className="pf">
+    <main className="pf pf-editing gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profileEdit) as React.CSSProperties}>
       <PageHeader back={{ href: '/profile', label: t('back') }} />
+      <section className="pf-edit-head"><h1 className="pf-edit-title">{t('title')}</h1></section>
       <div className="pf-edit">
-        <h1 className="pf-edit-title">{t('title')}</h1>
         <EditProfileForm
           profile={profile}
           athleteProfile={athleteProfile ? { ...(athleteProfile as object), ...athletePrivate } as never : null}

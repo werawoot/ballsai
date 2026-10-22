@@ -1,7 +1,7 @@
 # BallDoenSai design system (v1, 30 ก.ย. 2026)
 
 > **21 ต.ค. 2026: กำลังเปลี่ยนเป็นดีไซน์ใหม่แบบกระจกสีขาว-เขียว** ([ADR-014](decisions/ADR-014-light-glass-design-and-doensai-brand.md), `app/glass.css`)
-> ทีละหน้า หน้าที่ย้ายแล้ว: `/` (หน้าแรก), `/tournaments`, `/tournaments/[id]` (หน้าข้อมูลรายการ; ขั้นตอนสร้างทีมและชำระเงินยังเป็นแบบเดิม), `/login`, `/welcome`, `/ranking`, `/players/[id]`, `/athletes`, `/hall-of-fame`, `/profile` (ไม่รวม `/profile/edit`) หน้าที่ยังไม่ย้ายใช้ระบบเดิมในเอกสารนี้ต่อไปจนกว่าจะย้าย
+> ทีละหน้า หน้าที่ย้ายแล้ว: `/` (หน้าแรก), `/tournaments`, `/tournaments/[id]` (หน้าข้อมูลรายการ; ขั้นตอนสร้างทีมและชำระเงินยังเป็นแบบเดิม), `/login`, `/welcome`, `/ranking`, `/players/[id]`, `/athletes`, `/hall-of-fame`, `/profile`, `/profile/edit` หน้าที่ยังไม่ย้ายใช้ระบบเดิมในเอกสารนี้ต่อไปจนกว่าจะย้าย
 
 ใช้กับทุกหน้าที่ปรับใหม่ ยกเว้นหน้าแรก (AGENTS.md กฎข้อ 7) ซึ่งเป็นต้นแบบของภาษาภาพนี้อยู่แล้ว
 โค้ด: `app/ui.css` (tokens + ชิ้นส่วน `ui-*`), `components/BrandMark.tsx`

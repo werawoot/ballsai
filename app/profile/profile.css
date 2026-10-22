@@ -359,3 +359,32 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .tr-today::after { background: radial-gradient(circle, rgba(22,224,110,.35), transparent 65%); }
 .pf.gl .ui-chip.is-red { background: var(--gl-green-surface); color: var(--gl-green-ink); }
 .pf.gl .rh-tool-icon { background: var(--gl-green-surface); color: var(--gl-green-ink); }
+
+/* /profile/edit on glass: the title on the page's own photo, the top bar over it; the
+   section tabs, fields, switches and save bar in white glass with green for the chosen one. */
+.pf.gl.pf-editing { position: relative; }
+.pf.gl.pf-editing > .bds-page-header { -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3); background: rgba(11,18,32,.3); border-bottom: 1px solid rgba(255,255,255,.16); left: 0; position: absolute; right: 0; top: 0; z-index: 25; }
+.pf.gl .pf-edit-head { background-color: var(--gl-pitch); background-image: linear-gradient(100deg, rgba(11,18,32,.78) 0%, rgba(11,18,32,.45) 60%, rgba(11,18,32,.2) 100%), var(--gl-stadium-photo); background-position: 70% 22%; background-size: cover; color: #fff; padding: calc(56px + env(safe-area-inset-top) + 34px) 16px 34px; }
+.pf.gl .pf-edit-head .pf-edit-title { font: 700 clamp(30px, 7vw, 44px)/1.15 var(--gl-font); margin: 0 auto; max-width: 760px; text-shadow: 0 4px 24px rgba(0,0,0,.35); }
+.pf.gl .pf-edit { padding-top: 16px; }
+.pf.gl .pf-tabs { -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3); background: rgba(255,255,255,.7); border-radius: 0 0 18px 18px; }
+.pf.gl .pf-tabs a { background: rgba(255,255,255,.85); border: 1px solid var(--gl-line); border-radius: 999px; color: var(--gl-navy); font-family: var(--gl-font); min-height: 40px; display: inline-flex; align-items: center; }
+.pf.gl .pf-tabs a:hover { border-color: var(--gl-green); }
+.pf.gl .pf-label { color: var(--gl-navy); }
+.pf.gl .pf-input { background: rgba(255,255,255,.88); border: 1.5px solid var(--gl-line); border-radius: 14px; color: var(--gl-navy); font-family: var(--gl-font); }
+.pf.gl .pf-input:focus { border-color: var(--gl-green-ink); box-shadow: 0 0 0 3px rgba(22,224,110,.3); }
+.pf.gl .pf-photo-frame { background-color: rgba(255,255,255,.6); border-radius: 18px; }
+.pf.gl .pf-photo-frame.has-photo { border-color: var(--gl-green); box-shadow: 0 8px 20px rgba(11,18,32,.15); }
+.pf.gl .pf-position { background: rgba(255,255,255,.85); border: 1.5px solid var(--gl-line); border-radius: 14px; }
+.pf.gl .pf-position b { font-family: var(--gl-font); }
+.pf.gl .pf-position[aria-pressed="true"] { background: var(--gl-green); border-color: var(--gl-green); box-shadow: 0 6px 16px rgba(22,224,110,.35); color: var(--gl-navy); }
+.pf.gl .pf-position[aria-pressed="true"] span { color: var(--gl-navy); }
+.pf.gl .pf-switch[aria-checked="true"] { background: var(--gl-green-ink); }
+.pf.gl .pf-callout { border-radius: 14px; }
+.pf.gl .pf-drop { background: rgba(255,255,255,.55); border-color: rgba(11,18,32,.18); border-radius: 16px; }
+.pf.gl .pf-type { background: rgba(255,255,255,.85); border: 1.5px solid var(--gl-line); border-radius: 999px; }
+.pf.gl .pf-type[aria-pressed="true"] { background: var(--gl-green-surface); border-color: var(--gl-green-ink); color: var(--gl-green-ink); }
+.pf.gl .pf-btn-icon:hover { color: var(--gl-green-ink); }
+.pf.gl .pf-savebar { -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3); background: rgba(255,255,255,.9); border: 1px solid var(--gl-card-border); border-radius: 999px; box-shadow: 0 12px 30px rgba(11,18,32,.18); padding-left: 20px; }
+.pf.gl .pf-savebar.is-dirty span::before { background: var(--gl-green); }
+@media (min-width: 900px) { .pf.gl .pf-edit-head { padding-left: 24px; padding-right: 24px; } }

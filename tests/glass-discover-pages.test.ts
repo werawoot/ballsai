@@ -35,8 +35,8 @@ describe('/hall-of-fame on the light glass design', () => {
   })
 })
 
-// "ของฉัน" follows /welcome onto the glass design (owner, 22 Oct 2026). /profile/edit shares
-// the stylesheet but has not moved, so every glass rule is scoped to the opted-in root.
+// "ของฉัน" and its edit page follow /welcome onto the glass design (owner, 22 Oct 2026). The
+// stylesheet's old rules stay for any page without `.gl`, so every glass rule is scoped.
 describe('/profile on the light glass design', () => {
   const page = read('app/profile/page.tsx')
   const css = read('app/profile/profile.css')
@@ -44,12 +44,12 @@ describe('/profile on the light glass design', () => {
     expect(page).toContain('<main className="pf gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profile) as React.CSSProperties}>')
     expect(page).toContain("import '../glass.css'")
   })
-  it('leaves /profile/edit on its old look', () => {
-    expect(read('app/profile/edit/page.tsx')).toContain('<main className="pf">')
+  it('takes /profile/edit along, on its own photo, with every glass rule scoped to the opted-in root', () => {
+    expect(read('app/profile/edit/page.tsx')).toContain('<main className="pf pf-editing gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profileEdit) as React.CSSProperties}>')
     const glass = css.slice(css.indexOf('/* Light glass design (ADR-014)'))
     expect(glass.length).toBeGreaterThan(100)
     for (const rule of glass.split('}').map(part => part.trim()).filter(part => part && !part.startsWith('@') && !part.startsWith('/*'))) {
-      expect(rule.split('{')[0].split(',').every(selector => selector.includes('.pf.gl')), rule).toBe(true)
+      expect(rule.replace(/\/\*[\s\S]*?\*\//g, '').split('{')[0].split(',').every(selector => selector.includes('.pf.gl')), rule).toBe(true)
     }
   })
 })
