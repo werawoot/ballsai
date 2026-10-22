@@ -193,7 +193,7 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
   const meta = [team, province].filter(Boolean).join(' · ')
 
   return (
-    <main className="bds-page pp gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.player) as React.CSSProperties}>
+    <main className="bds-page pp gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.player)}>
       <PageHeader back={{ href: '/athletes', label: t('back') }} />
 
       <section className="pp-hero ui-dark">

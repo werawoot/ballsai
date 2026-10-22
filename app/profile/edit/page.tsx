@@ -45,7 +45,7 @@ export default async function EditProfilePage() {
   ])
 
   return (
-    <main className="pf pf-editing gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profileEdit) as React.CSSProperties}>
+    <main className="pf pf-editing gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profileEdit)}>
       <PageHeader back={{ href: '/profile', label: t('back') }} />
       <section className="pf-edit-head"><h1 className="pf-edit-title">{t('title')}</h1></section>
       <div className="pf-edit">

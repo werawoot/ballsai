@@ -297,8 +297,9 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf-team-ask .pf-card-desc { margin: 0; }
 .pf-team-ask .pf-btn { align-self: flex-start; }
 
-/* Light glass design (ADR-014) for /profile only: the page opts in with `.gl` on its root,
-   /profile/edit does not, so every rule below starts with `.pf.gl`. The identity card sits
+/* Light glass design (ADR-014) for /profile and /profile/edit: each page opts in with `.gl`
+   on its root, and every rule below starts with `.pf.gl`, so a page using this stylesheet
+   without `.gl` keeps the old look. The identity card sits
    on the page's own photo under a navy wash; the cards below are frosted white over the
    blurred grass; green replaces red for the one thing to do now. Wording, consent and the
    PDPA section are unchanged. */
@@ -368,7 +369,7 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .pf-edit-head .pf-edit-title { font: 700 clamp(30px, 7vw, 44px)/1.15 var(--gl-font); margin: 0 auto; max-width: 760px; text-shadow: 0 4px 24px rgba(0,0,0,.35); }
 .pf.gl .pf-edit { padding-top: 16px; }
 .pf.gl .pf-tabs { -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3); background: rgba(255,255,255,.7); border-radius: 0 0 18px 18px; }
-.pf.gl .pf-tabs a { background: rgba(255,255,255,.85); border: 1px solid var(--gl-line); border-radius: 999px; color: var(--gl-navy); font-family: var(--gl-font); min-height: 40px; display: inline-flex; align-items: center; }
+.pf.gl .pf-tabs a { background: rgba(255,255,255,.85); border: 1px solid var(--gl-line); border-radius: 999px; color: var(--gl-navy); font-family: var(--gl-font); min-height: 44px; display: inline-flex; align-items: center; }
 .pf.gl .pf-tabs a:hover { border-color: var(--gl-green); }
 .pf.gl .pf-label { color: var(--gl-navy); }
 .pf.gl .pf-input { background: rgba(255,255,255,.88); border: 1.5px solid var(--gl-line); border-radius: 14px; color: var(--gl-navy); font-family: var(--gl-font); }

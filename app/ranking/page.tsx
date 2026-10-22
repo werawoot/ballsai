@@ -89,7 +89,7 @@ export default async function RankingPage(
   const sub = (p: Row) => [p.position, p.team, p.province ? provinceName(p.province, locale) : null].filter(Boolean).join(' · ')
 
   return (
-    <main className="bds-page rk gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.ranking) as React.CSSProperties}>
+    <main className="bds-page rk gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.ranking)}>
       <PageHeader />
       <section className="rk-stadium">
         <div className="rk-stadium-inner">

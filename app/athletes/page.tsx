@@ -87,7 +87,7 @@ export default async function AthletesPage(
   const provinces = Object.keys(PROVINCE_NAMES_EN).sort((a, b) => a.localeCompare(b, 'th'))
 
   return (
-    <main className="bds-page at gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.athletes) as React.CSSProperties}>
+    <main className="bds-page at gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.athletes)}>
       <PageHeader eyebrow={t('eyebrow')} />
 
       <section className="at-stadium">
@@ -114,7 +114,7 @@ export default async function AthletesPage(
               <div className="at-photo" style={profile.profile_image_url ? { backgroundImage: `url(${profile.profile_image_url})` } : undefined}>
                 {!profile.profile_image_url && <PositionMark position={profile.position || ''} />}
                 <span className="at-pos">{profile.position || '—'}</span>
-                {verified && <span className="at-verified" title={t('verified')}><CheckCircle2 size={15} aria-label={t('verified')} /></span>}
+                {verified && <span className="at-verified" role="img" aria-label={t('verified')} title={t('verified')}><CheckCircle2 size={15} aria-hidden="true" /></span>}
               </div>
               <div className="at-body">
                 <b className="at-name">{profile.display_name}</b>

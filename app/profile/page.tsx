@@ -169,7 +169,7 @@ export default async function ProfilePage() {
   const stepTag = (item: ReadinessItem) => item.done ? t('readiness.statusDone') : item.key === readiness?.next?.key ? t('readiness.next') : item.blocked ? '' : <span className="pf-sr">{t('readiness.statusTodo')}</span>
 
   return (
-    <main className="pf gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profile) as React.CSSProperties}>
+    <main className="pf gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profile)}>
       <PageHeader eyebrow={t('eyebrow')} />
       <div className="pf-shell">
         <aside className="pf-aside">

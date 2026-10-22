@@ -25,10 +25,10 @@ describe.each([
 })
 
 // The third view of the discover switch keeps its own header and honour cards; it opts in
-// on its root and takes the stadium photo behind its head.
+// on its root and takes its own photo behind its head.
 describe('/hall-of-fame on the light glass design', () => {
   const page = read('app/hall-of-fame/page.tsx')
-  it('opts in with the glass scene and the stadium photo, and loads the glass styles', () => {
+  it('opts in with the glass scene and its own photo, and loads the glass styles', () => {
     expect(page).toContain('<main className="hall-page gl gl-scene"')
     expect(page).toContain('glassSceneStyle(PAGE_PHOTOS.hallOfFame)')
     expect(page).toContain("import '../glass.css'")
@@ -41,11 +41,11 @@ describe('/profile on the light glass design', () => {
   const page = read('app/profile/page.tsx')
   const css = read('app/profile/profile.css')
   it('opts in with the glass scene and its own photo', () => {
-    expect(page).toContain('<main className="pf gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profile) as React.CSSProperties}>')
+    expect(page).toContain('<main className="pf gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profile)}>')
     expect(page).toContain("import '../glass.css'")
   })
   it('takes /profile/edit along, on its own photo, with every glass rule scoped to the opted-in root', () => {
-    expect(read('app/profile/edit/page.tsx')).toContain('<main className="pf pf-editing gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profileEdit) as React.CSSProperties}>')
+    expect(read('app/profile/edit/page.tsx')).toContain('<main className="pf pf-editing gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profileEdit)}>')
     const glass = css.slice(css.indexOf('/* Light glass design (ADR-014)'))
     expect(glass.length).toBeGreaterThan(100)
     for (const rule of glass.split('}').map(part => part.trim()).filter(part => part && !part.startsWith('@') && !part.startsWith('/*'))) {

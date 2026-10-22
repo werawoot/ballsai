@@ -16,6 +16,8 @@
 //   (lib/tournament-cover.ts).
 // None ever shows an identifiable person, a child, or a club or brand logo.
 
+import type { CSSProperties } from 'react'
+
 export type StockPhoto = { src: string; credit: string }
 
 export const STADIUM: StockPhoto | null = { src: '/photos/stadium-aerial-night.webp', credit: 'Unsplash, photo-1556056504-5c7696c4c28d' }
@@ -50,11 +52,11 @@ export const COVER_DETAILS: readonly StockPhoto[] = [
 ]
 
 // The style that puts a page's head photo and the blurred grass behind a glass page.
-export function glassSceneStyle(head: StockPhoto | null, backdrop: StockPhoto | null = BACKDROP): Record<string, string> {
+export function glassSceneStyle(head: StockPhoto | null): CSSProperties {
   return {
-    ...(backdrop ? { '--gl-backdrop-photo': `url(${backdrop.src})` } : {}),
+    ...(BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } : {}),
     ...(head ? { '--gl-stadium-photo': `url(${head.src})` } : {}),
-  }
+  } as CSSProperties
 }
 
 /**
