@@ -12,6 +12,8 @@ import GuardianSteps from "@/components/GuardianSteps";
 import { guardianStepsApply } from "@/lib/guardian-steps";
 import { CHOICES, destinationFor, goalFor, personaOf, savedAnswers, type Choice } from "@/lib/onboarding";
 import { ACTIVE_SPORT } from "@/lib/season";
+import { STADIUM } from "@/lib/stock-photos";
+import "../glass.css";
 import "./welcome.css";
 
 // Two screens (UX report 8, mockups 1-2): who you are, which sport. Tapping a role goes straight
@@ -86,7 +88,7 @@ export default function OnboardingFlow({ nextPath, userId }: { email: string; ne
   const sportTitle = choice === "athlete" ? "athlete" : choice === "guardian" ? "guardian" : "other";
 
   return (
-    <main className="wb ui-dark">
+    <main className="wb gl" style={STADIUM ? { "--gl-stadium-photo": `url(${STADIUM.src})` } as React.CSSProperties : undefined}>
       <div className="wb-shell">
         <header className="wb-header">
           {step === 0
@@ -99,49 +101,51 @@ export default function OnboardingFlow({ nextPath, userId }: { email: string; ne
           </div>
         </header>
 
-        <div className="ui-progress wb-progress" role="progressbar" aria-valuemin={1} aria-valuemax={TOTAL} aria-valuenow={step + 1} aria-label={t("progress", { step: step + 1, total: TOTAL })}>
-          {[0, 1].map((item) => <i className={item <= step ? "is-on" : ""} key={item} />)}
-        </div>
+        <section className="wb-panel gl-panel">
+          <div className="ui-progress wb-progress" role="progressbar" aria-valuemin={1} aria-valuemax={TOTAL} aria-valuenow={step + 1} aria-label={t("progress", { step: step + 1, total: TOTAL })}>
+            {[0, 1].map((item) => <i className={item <= step ? "is-on" : ""} key={item} />)}
+          </div>
 
-        <div className="wb-body">
-          <p className="ui-eyebrow">{t("progress", { step: step + 1, total: TOTAL })}</p>
-          {step === 0 && <>
-            {/* Thai runs the two halves together; English needs the space. */}
-            <h1 className="ui-h1">{[t("persona.titleTop"), t("persona.titleBottom")].join(locale === "th" ? "" : " ")}</h1>
-            <p className="wb-intro">{t("persona.intro")}</p>
-            <div className="wb-options">
-              {CHOICES.map((id) => {
-                const Icon = icons[id];
-                return <button aria-pressed={choice === id} className={`ui-option${choice === id ? " is-selected" : ""}`} key={id} onClick={() => pick(id)} type="button">
-                  <span className="ui-option-icon"><Icon size={22} /></span>
-                  <span className="ui-option-text"><b>{t(`personas.${id}.title`)}</b><small>{t(`personas.${id}.description`)}</small></span>
-                  <span className="ui-option-tick">{choice === id && <Check size={14} strokeWidth={3.5} />}</span>
-                </button>;
-              })}
-            </div>
-            <p className="wb-hint">{t("persona.hint")}</p>
-          </>}
+          <div className="wb-body">
+            <p className="ui-eyebrow">{t("progress", { step: step + 1, total: TOTAL })}</p>
+            {step === 0 && <>
+              {/* Thai runs the two halves together; English needs the space. */}
+              <h1 className="ui-h1">{[t("persona.titleTop"), t("persona.titleBottom")].join(locale === "th" ? "" : " ")}</h1>
+              <p className="wb-intro">{t("persona.intro")}</p>
+              <div className="wb-options">
+                {CHOICES.map((id) => {
+                  const Icon = icons[id];
+                  return <button aria-pressed={choice === id} className={`ui-option${choice === id ? " is-selected" : ""}`} key={id} onClick={() => pick(id)} type="button">
+                    <span className="ui-option-icon"><Icon size={22} /></span>
+                    <span className="ui-option-text"><b>{t(`personas.${id}.title`)}</b><small>{t(`personas.${id}.description`)}</small></span>
+                    <span className="ui-option-tick">{choice === id && <Check size={14} strokeWidth={3.5} />}</span>
+                  </button>;
+                })}
+              </div>
+              <p className="wb-hint">{t("persona.hint")}</p>
+            </>}
 
-          {step === 1 && choice && <>
-            <h1 className="ui-h1">{t(`sport.titleFor.${sportTitle}`)}</h1>
-            <p className="wb-intro">{t("sport.intro")}</p>
-            <div className="wb-options">
-              {sports.map((item) => <button aria-pressed={sport === item} className={`ui-option${sport === item ? " is-selected" : ""}`} key={item} onClick={() => setSport(item)} type="button">
-                <span className="ui-option-text"><b>{t(`sports.${item}`)}</b>{item === "other" && <small>{t("sports.soon")}</small>}</span>
-                <span className="ui-option-tick">{sport === item && <Check size={14} strokeWidth={3.5} />}</span>
-              </button>)}
-            </div>
-            {/* The goal that sends a parent to /guardian: say what they will need first. */}
-            {guardianStepsApply(personaOf(choice), goalFor(choice)) && <div style={{ marginTop: 16 }}><GuardianSteps tone="dark" /></div>}
-          </>}
+            {step === 1 && choice && <>
+              <h1 className="ui-h1">{t(`sport.titleFor.${sportTitle}`)}</h1>
+              <p className="wb-intro">{t("sport.intro")}</p>
+              <div className="wb-options">
+                {sports.map((item) => <button aria-pressed={sport === item} className={`ui-option${sport === item ? " is-selected" : ""}`} key={item} onClick={() => setSport(item)} type="button">
+                  <span className="ui-option-text"><b>{t(`sports.${item}`)}</b>{item === "other" && <small>{t("sports.soon")}</small>}</span>
+                  <span className="ui-option-tick">{sport === item && <Check size={14} strokeWidth={3.5} />}</span>
+                </button>)}
+              </div>
+              {/* The goal that sends a parent to /guardian: say what they will need first. */}
+              {guardianStepsApply(personaOf(choice), goalFor(choice)) && <div style={{ marginTop: 16 }}><GuardianSteps /></div>}
+            </>}
 
-          {error && <p className="wb-error" role="alert">{error}</p>}
-        </div>
+            {error && <p className="wb-error" role="alert">{error}</p>}
+          </div>
 
-        {step === 1 && choice && <footer className="wb-footer">
-          <button className="ui-btn ui-btn-primary" disabled={saving} onClick={() => finish(false)} type="button">{saving ? t("starting") : t(`finish.${choice}`)} <ArrowRight size={18} /></button>
-          <p className="wb-next-note">{t(`nextNote.${choice}`)}</p>
-        </footer>}
+          {step === 1 && choice && <footer className="wb-footer">
+            <button className="ui-btn ui-btn-primary" disabled={saving} onClick={() => finish(false)} type="button">{saving ? t("starting") : t(`finish.${choice}`)} <ArrowRight size={18} /></button>
+            <p className="wb-next-note">{t(`nextNote.${choice}`)}</p>
+          </footer>}
+        </section>
       </div>
     </main>
   );

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { Sarabun, Oswald, Barlow_Condensed } from 'next/font/google'
+import { Sarabun, Oswald, Barlow_Condensed, IBM_Plex_Sans_Thai } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import SiteNav from '@/components/SiteNav'
@@ -26,6 +26,15 @@ const barlowCondensed = Barlow_Condensed({
   variable: '--font-barlow',
 })
 
+// The light glass design (ADR-014, app/glass.css). Not preloaded: only pages that opt in
+// with the `gl` class use it, so the rest of the site does not download it.
+const plexThai = IBM_Plex_Sans_Thai({
+  subsets: ['thai', 'latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-plex',
+  preload: false,
+})
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('meta')
   return { title: t('title'), description: t('description') }
@@ -45,7 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const locale = await getLocale()
   return (
     <html lang={locale}>
-      <body className={`${sarabun.variable} ${oswald.variable} ${barlowCondensed.variable}`}>
+      <body className={`${sarabun.variable} ${oswald.variable} ${barlowCondensed.variable} ${plexThai.variable}`}>
         <NextIntlClientProvider>
           {children}
           <SiteNav />

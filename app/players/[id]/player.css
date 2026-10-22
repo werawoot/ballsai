@@ -1,5 +1,5 @@
-/* Public athlete profile (/players/[id]). Stadium header with the athlete's card, Paper
-   sections below (docs/design-system.md). */
+/* Public athlete profile (/players/[id]). Stadium header with the athlete's card, then
+   sections below; the light glass look (ADR-014) is the block at the end of this file. */
 
 .bds-page.pp { color: var(--ui-text); font-family: var(--font-sarabun), sans-serif; overflow-x: hidden; }
 
@@ -178,3 +178,59 @@
 }
 
 @media (prefers-reduced-motion: reduce) { .pp-trust-chevron { transition: none; } }
+
+/* Light glass design (ADR-014). The stadium photo behind the card and the name, white text
+   on it; below, frosted white cards over the blurred grass with navy text. Green replaces
+   the old red for the current tab, bars, chart and level. The sources every number states
+   are untouched (AGENTS.md rule 8). */
+.bds-page.pp.gl { background: transparent !important; color: var(--gl-text); font-family: var(--gl-font); position: relative; --ui-text: var(--gl-text); --ui-mute: var(--gl-text-2); --ui-sunk: rgba(11,18,32,.05); --ui-line: rgba(11,18,32,.09); --ui-ok: var(--gl-green-ink); --ui-red-soft: #FEE2E2; }
+.pp.gl > .bds-page-header { left: 0; position: absolute; right: 0; top: 0; z-index: 2; }
+.pp.gl .pp-hero { background-color: var(--gl-pitch); background-image: linear-gradient(100deg, rgba(11,18,32,.8) 0%, rgba(11,18,32,.55) 55%, rgba(11,18,32,.3) 100%), var(--gl-stadium-photo); background-position: center; background-size: cover; padding-top: calc(56px + env(safe-area-inset-top)); }
+.pp.gl .pp-hero::before { background: radial-gradient(circle, rgba(22,224,110,.22), rgba(22,224,110,0) 62%); }
+.pp.gl .pp-hero h1 { font-family: var(--gl-font); font-weight: 700; text-shadow: 0 4px 24px rgba(0,0,0,.35); }
+.pp.gl .pp-sub { color: rgba(255,255,255,.88); }
+.pp.gl .pp-card { box-shadow: 0 24px 44px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.2); }
+.pp.gl .pp-card-scrim { background: linear-gradient(180deg, rgba(0,0,0,.4), transparent 30%, transparent 50%, rgba(8,40,26,.96) 68%); }
+.pp.gl .pp-card-brand { color: var(--gl-green-ink); }
+.pp.gl .pp-quick { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.22); }
+.pp.gl .pp-quick dt { color: rgba(255,255,255,.75); }
+.pp.gl .ui-btn { border-radius: 999px; font-family: var(--gl-font); font-weight: 700; }
+.pp.gl .ui-btn-primary { background: var(--gl-green); box-shadow: 0 8px 22px rgba(22,224,110,.35); color: var(--gl-navy); }
+.pp.gl .ui-btn-primary:hover:not(:disabled) { background: var(--gl-green-hover); }
+.pp.gl .ui-btn-ghost-d { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.55); color: #fff; }
+.pp.gl .ui-btn-ghost { background: #fff; border-color: var(--gl-navy); color: var(--gl-navy); }
+.pp.gl .pp-share-note { color: var(--gl-green); }
+
+.pp.gl .pp-section-head h2 { color: var(--gl-navy); font-family: var(--gl-font); font-weight: 700; }
+.pp.gl .ui-card { background: var(--gl-card-bg-solid); border: 1px solid var(--gl-card-border); border-radius: 20px; box-shadow: 0 10px 26px rgba(11,18,32,.08); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .pp.gl .ui-card { -webkit-backdrop-filter: blur(var(--gl-card-blur)) saturate(1.4); backdrop-filter: blur(var(--gl-card-blur)) saturate(1.4); background: var(--gl-card-bg); } }
+.pp.gl .pp-power b, .pp.gl .pp-tiles b, .pp.gl .pp-bar b, .pp.gl .pp-level-n, .pp.gl .pp-chart figcaption b, .pp.gl .pp-match-rating b { font-family: var(--gl-font); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pp.gl .pp-power b { color: var(--gl-navy); }
+.pp.gl .pp-power small { font-family: var(--gl-font); letter-spacing: .3px; }
+.pp.gl .pp-rank b { color: var(--gl-green-ink); }
+.pp.gl .pp-tiles div { background: rgba(255,255,255,.6); }
+.pp.gl .pp-wdl .is-l, .pp.gl .is-loss.pp-res, .pp.gl .pp-last5 .is-loss { color: #B91C1C; }
+.pp.gl .pp-wdl .is-w, .pp.gl .is-win.pp-res, .pp.gl .pp-last5 .is-win { background: var(--gl-green-surface); color: var(--gl-green-ink); }
+.pp.gl .pp-starter svg { color: var(--gl-green-ink); }
+.pp.gl .pp-track i { background: linear-gradient(90deg, #0F7A3F, var(--gl-green)); }
+.pp.gl .pp-level-n { background: linear-gradient(160deg, var(--gl-green), #0F7A3F); color: var(--gl-navy); }
+.pp.gl .pp-level small { color: var(--gl-green-ink); }
+.pp.gl .pp-xp i { background: var(--gl-green); }
+.pp.gl .pp-badges li { background: rgba(255,255,255,.6); }
+.pp.gl .pp-badges li.is-on { background: #FEF3C7; border-color: #F6D365; color: #8A5A00; }
+.pp.gl .pp-hl a { background: linear-gradient(140deg, #0B1220, #0F5A33); }
+.pp.gl .pp-hl a:focus-visible { outline-color: var(--gl-navy); }
+.pp.gl .pp-hl-report small { background: #fff; color: var(--gl-text); }
+.pp.gl .pp-achievements svg { color: #B7791F; }
+.pp.gl .pp-achievements svg.is-verified { color: var(--gl-green-ink); }
+.pp.gl .pp-trust summary > svg:first-child { color: var(--gl-green-ink); }
+.pp.gl .pp-tabs { -webkit-backdrop-filter: blur(var(--gl-card-blur)); backdrop-filter: blur(var(--gl-card-blur)); background: rgba(255,255,255,.62); border-color: var(--gl-card-border); border-radius: 999px; }
+.pp.gl .pp-tabs a { border-radius: 999px; color: var(--gl-text-2); }
+.pp.gl .pp-tabs a.is-on { background: var(--gl-green); box-shadow: 0 6px 16px rgba(22,224,110,.35); color: var(--gl-navy); }
+.pp.gl .pp-chart-area { fill: rgba(22,224,110,.16); }
+.pp.gl .pp-chart-line { stroke: #0F7A3F; }
+.pp.gl .pp-chart circle { fill: var(--gl-green); stroke: #fff; }
+.pp.gl .pp-mvp { background: #FEF3C7; color: #8A5A00; }
+.pp.gl .pp-match-rating small.is-down { color: #B91C1C; }
+.pp.gl .pp-tabs a:focus-visible, .pp.gl .pp-trust summary:focus-visible { outline-color: var(--gl-navy); }
+.pp.gl .pp-hero a:focus-visible, .pp.gl .pp-hero button:focus-visible { outline-color: var(--gl-green); }

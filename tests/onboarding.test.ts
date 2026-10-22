@@ -88,6 +88,14 @@ describe('the first /welcome screen', () => {
     expect(text(render('th'))).toContain('ต้องให้ผู้ดูแลระบบเปิดสิทธิ์')
   })
 
+  // ADR-014: /welcome follows /login onto the light glass design, over the same stadium photo.
+  // Only the look moves; every step and its wording stay as they were.
+  it('sits on the light glass design over the stadium photo, like the sign-in page', () => {
+    const html = render('th')
+    expect(html).toMatch(/<main class="wb gl"[^>]*--gl-stadium-photo:url\(\/photos\/stadium-aerial-night\.webp\)/)
+    expect(html).toContain('class="wb-panel gl-panel"')
+    expect(html).not.toContain('ui-dark')
+  })
   it('has no Thai in English, apart from the language switch that names the other language', () => {
     const html = render('en').replace(/<button[^>]*class="bds-lang-switch"[\s\S]*?<\/button>/g, '')
     expect(text(html)).not.toMatch(/[ก-ฺเ-๛]/)
@@ -104,4 +112,5 @@ describe('choosing a role again', () => {
     expect(welcomeIsDone(null, undefined)).toBe(false)
     expect(CHANGE_ROLE_PATH).toBe('/welcome?again=1')
   })
+
 })

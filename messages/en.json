@@ -71,7 +71,34 @@
     "organizerBody": "Create it, open registration and record results that reach every player card, all in one place.",
     "statFee": "Entry",
     "statTeams": "Teams",
-    "statVenue": "Venue"
+    "statVenue": "Venue",
+    "byMonth": "Tournaments by month",
+    "monthsLabel": "Jump to month",
+    "startsIn": "Kick-off",
+    "createCta": "Create a tournament",
+    "introLine1": "Find youth football tournaments across Thailand",
+    "introLine2": "Enter your team, play, and keep every result on the athlete profile",
+    "searchLabel": "Search tournaments",
+    "searchPlaceholder": "Tournament or venue name…",
+    "searchButton": "Search",
+    "searchClear": "Clear search",
+    "searchFor": "Search “{query}”",
+    "searchEmpty": "No tournament matches “{query}”",
+    "searchEmptyHint": "Try a shorter word, or the venue name",
+    "sortLabel": "Sort by",
+    "sort": {
+      "soonest": "Date, soonest first",
+      "latest": "Date, latest first",
+      "fee": "Fee, lowest first"
+    },
+    "layoutLabel": "View",
+    "layout": {
+      "cards": "Cards",
+      "rows": "List"
+    },
+    "spotPrev": "Previous tournament",
+    "spotNext": "Next tournament",
+    "monthsMore": "Scroll to later months"
   },
   "tournamentCover": {
     "status": {
@@ -1448,7 +1475,24 @@
     "freeDoneText": "This tournament is free. The organizer will check the roster and confirm your team",
     "freeDraftTitle": "This team is not submitted yet",
     "freeDraftText": "Submit it from the team members page once at least 1 player has accepted",
-    "freeDraftCta": "Go to team members"
+    "freeDraftCta": "Go to team members",
+    "sectionsLabel": "On this page",
+    "overviewTab": "Overview",
+    "howTab": "How to enter",
+    "fixturesTab": "Fixtures",
+    "venueTab": "Venue",
+    "factDates": "Dates",
+    "factVenue": "Venue",
+    "factStatus": "Status",
+    "factFixtures": "Fixtures",
+    "overviewEmpty": "The organizer has not added details yet",
+    "venueTitle": "Venue",
+    "openMap": "Open in Google Maps",
+    "noVenue": "The organizer has not named a venue",
+    "startsIn": "Kick-off",
+    "share": "Share",
+    "shareCopied": "Link copied",
+    "viewFixtures": "Fixtures and results"
   },
   "player": {
     "back": "Athletes",

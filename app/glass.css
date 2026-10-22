@@ -1,0 +1,165 @@
+/* Light glass design (ADR-014). A page opts in with the `gl` class on its root; nothing
+   here applies to a page without it. Colours and glass values live only here. */
+
+.gl {
+  --gl-navy: #0B1220;
+  --gl-green: #16E06E;
+  --gl-green-hover: #12C961;
+  --gl-green-ink: #0F7A3F; /* green text on white: 5.4:1 */
+  --gl-white: #FFFFFF;
+  --gl-canvas: #F3F6F9;
+  --gl-green-surface: #E8F9EE;
+  --gl-text: #172033;
+  --gl-text-2: #5B6475; /* secondary text: 6.0:1 on white, 5.5:1 on the canvas */
+  --gl-line: #E2E8F0;
+  --gl-success: #16A34A;
+  --gl-warning: #F59E0B;
+  --gl-error: #DC2626;
+  --gl-info: #2563EB;
+
+  --gl-glass-bg: rgba(255, 255, 255, .76);
+  --gl-glass-bg-strong: rgba(255, 255, 255, .90);
+  --gl-glass-bg-subtle: rgba(255, 255, 255, .58);
+  --gl-glass-border: rgba(255, 255, 255, .65);
+  --gl-glass-blur: 18px;
+  --gl-glass-shadow: 0 8px 32px rgba(11, 18, 32, .10);
+  --gl-radius: 16px;
+
+  /* The stadium behind a page head. A real, licensed photo goes in --gl-stadium-photo
+     (docs/photo-credits.md); until one is added the head is a plain pitch green. */
+  --gl-stadium-photo: none;
+  --gl-pitch: #14532D;
+
+  /* Frosted cards over the page backdrop (owner, 21 Oct 2026: "โปร่งแสงเยอะ ๆ"). The
+     blur and the white wash keep text readable; without blur support the card is near
+     solid. */
+  --gl-backdrop-photo: none;
+  --gl-card-bg: rgba(255, 255, 255, .62);
+  --gl-card-bg-solid: rgba(255, 255, 255, .94);
+  --gl-card-border: rgba(255, 255, 255, .72);
+  --gl-card-blur: 20px;
+
+  --gl-font: var(--font-plex), 'Noto Sans Thai', var(--font-sarabun), sans-serif;
+
+  background: var(--gl-canvas);
+  color: var(--gl-text);
+  font-family: var(--gl-font);
+}
+
+/* The page behind a short opted-in page matches its canvas instead of the old paper. */
+body:has(.gl) { background: #F3F6F9; }
+
+/* A scene page: the blurred grass sits behind everything, fixed, under a light wash, so
+   every glass card shows it. Secondary text darkens a step for the busier background. */
+.gl.gl-scene { background: transparent; isolation: isolate; position: relative; --gl-text-2: #475569; }
+.gl.gl-scene::before { background: linear-gradient(180deg, rgba(243,246,249,.42) 0%, rgba(232,249,238,.30) 100%), var(--gl-backdrop-photo) center / cover no-repeat, #CFE8D2; content: ''; inset: 0; pointer-events: none; position: fixed; z-index: -1; }
+body:has(.gl-scene) { background: #CFE8D2; }
+
+/* The frosted card every list, panel and tile uses on a scene page. */
+.gl .gl-card { background: var(--gl-card-bg-solid); border: 1px solid var(--gl-card-border); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .gl .gl-card { -webkit-backdrop-filter: blur(var(--gl-card-blur)) saturate(1.4); backdrop-filter: blur(var(--gl-card-blur)) saturate(1.4); background: var(--gl-card-bg); }
+}
+
+.gl .gl-num { font-variant-numeric: tabular-nums; }
+
+/* Glass panel: a solid near-white surface where blur is not supported, so text stays
+   readable on any background. */
+.gl .gl-panel {
+  background: var(--gl-glass-bg-strong);
+  border: 1px solid var(--gl-glass-border);
+  border-radius: var(--gl-radius);
+  box-shadow: var(--gl-glass-shadow);
+  color: var(--gl-text);
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .gl .gl-panel {
+    -webkit-backdrop-filter: blur(var(--gl-glass-blur)) saturate(1.3);
+    backdrop-filter: blur(var(--gl-glass-blur)) saturate(1.3);
+    background: var(--gl-glass-bg);
+  }
+}
+
+.gl .gl-btn {
+  align-items: center; border: 0; border-radius: 999px; cursor: pointer; display: inline-flex;
+  font: 700 16px/1.2 var(--gl-font); gap: 8px; justify-content: center; min-height: 48px;
+  padding: 0 22px; text-decoration: none; transition: background-color .15s, transform .15s;
+}
+.gl .gl-btn-primary { background: var(--gl-green); box-shadow: 0 8px 22px rgba(22, 224, 110, .35); color: var(--gl-navy); }
+.gl .gl-btn-primary:hover { background: var(--gl-green-hover); }
+.gl .gl-btn-secondary { background: var(--gl-white); border: 1px solid var(--gl-navy); color: var(--gl-navy); }
+.gl .gl-btn:active { transform: translateY(1px); }
+
+/* Status: a word and a colour, never colour alone. */
+.gl .gl-status {
+  align-items: center; border-radius: 999px; display: inline-flex; font: 700 12px/1 var(--gl-font);
+  gap: 6px; min-height: 24px; padding: 0 10px; white-space: nowrap;
+}
+.gl .gl-status.is-open { background: var(--gl-green); color: var(--gl-navy); }
+.gl .gl-status.is-live { background: var(--gl-error); color: var(--gl-white); }
+.gl .gl-status.is-muted { background: #EEF2F6; color: #334155; }
+.gl .gl-status.is-warn { background: #FEF3C7; color: #92400E; }
+
+.gl a:focus-visible, .gl button:focus-visible { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
+.gl .gl-on-photo a:focus-visible, .gl .gl-on-photo button:focus-visible { outline-color: var(--gl-green); }
+
+@media (prefers-reduced-motion: reduce) { .gl .gl-btn { transition: none; } }
+
+/* Shared bars on an opted-in page. The top bar is glass over the page head; the bottom
+   bar (SiteNav, outside the page root) turns light glass with navy text and a green pill
+   for the current page. Pages not yet moved keep the dark bars. */
+.gl .bds-page-header {
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  background: rgba(11, 18, 32, .28);
+  border-bottom: 1px solid rgba(255, 255, 255, .16);
+  --ph-gold: var(--gl-green);
+}
+.gl .bds-page-header-brand, .gl .bds-page-header-back { color: #fff; }
+.gl .bds-page-header-brand:hover, .gl .bds-page-header-back:hover { color: var(--gl-green); }
+.gl .bds-lang-switch { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .55); color: #fff; }
+.gl .bds-lang-switch:hover { border-color: var(--gl-green); }
+
+body:has(.gl) .bds-nav {
+  --nav-gold: #0F7A3F;
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  background: rgba(255, 255, 255, .82);
+  border-top: 1px solid rgba(11, 18, 32, .08);
+  box-shadow: 0 -8px 24px rgba(11, 18, 32, .08);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body:has(.gl) .bds-nav { background: rgba(255, 255, 255, .97); }
+}
+body:has(.gl) .bds-nav-item { color: #5B6475; }
+body:has(.gl) .bds-nav-item:hover { color: #0B1220; }
+body:has(.gl) .bds-nav-item.is-active { color: #0B1220; }
+body:has(.gl) .bds-nav-item.is-active .bds-nav-icon { background: #16E06E; color: #0B1220; }
+body:has(.gl) .bds-nav-item.is-pending { color: #0B1220; }
+body:has(.gl) .bds-nav-item.is-pending .bds-nav-icon { background: rgba(22, 224, 110, .25); color: #0B1220; }
+body:has(.gl) .bds-nav-item:focus-visible { outline-color: #0B1220; }
+body:has(.gl) .bds-nav-badge { background: #DC2626; box-shadow: 0 0 0 2px #fff; }
+
+/* A card cover photo as its own layer, so it can ease in on hover while the date box on
+   top of it stays still. */
+.gl .gl-cover-img { background-position: center; background-size: cover; inset: 0; position: absolute; transition: transform .9s cubic-bezier(.2,.7,.2,1); }
+.gl a:hover .gl-cover-img, .gl a:focus-visible .gl-cover-img { transform: scale(1.08); }
+
+/* Cards and panels fade and rise in as they scroll into view, where the browser can tie
+   an animation to scrolling. Elsewhere, and when less motion is asked for, they simply
+   show. Nothing starts hidden, so no content depends on the animation running. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .gl .gl-reveal { animation: gl-reveal linear both; animation-range: entry 0% entry 45%; animation-timeline: view(); }
+  }
+}
+@keyframes gl-reveal { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .gl .gl-cover-img { transition: none; } .gl a:hover .gl-cover-img { transform: none; } }
+
+/* The นักกีฬา / อันดับ / หอเกียรติยศ switch on an opted-in page: white glass over the
+   stadium head, the current view in green. */
+.gl .bds-discover-tabs { -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3); background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.4); box-shadow: 0 8px 22px rgba(11,18,32,.18); }
+.gl .bds-discover-tab { color: rgba(255,255,255,.92); font-family: var(--gl-font); }
+.gl .bds-discover-tab:hover { color: #fff; }
+.gl .bds-discover-tab.is-active { background: var(--gl-green); box-shadow: 0 4px 12px rgba(22,224,110,.35); color: var(--gl-navy); }
+.gl .bds-discover-tab:focus-visible { outline-color: var(--gl-green); }

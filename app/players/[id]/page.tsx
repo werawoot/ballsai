@@ -15,13 +15,16 @@ import { seasonSummary } from '@/lib/player-profile'
 import { FORM_EVENT_LIMIT, formHistory, playerTab, type RatingEventRow } from '@/lib/player-form'
 import { fetchRankPosition } from '@/lib/public-ranking-page'
 import PageHeader from '@/components/PageHeader'
+import { BACKDROP, STADIUM } from '@/lib/stock-photos'
 import ReportHighlightButton from './ReportHighlightButton'
 import DisputeDataButton from './DisputeDataButton'
 import ShareProfileButton from './ShareProfileButton'
+import '../../glass.css'
 import './player.css'
 
-// A public athlete profile (docs/design-system.md). Stadium header with the same card the
-// athlete builds at /card, then Paper sections in the order a coach or scout reads them:
+// A public athlete profile on the light glass design (ADR-014). A stadium head (the licensed
+// photo) with the same card the athlete builds at /card, then frosted sections over the
+// blurred grass in the order a coach or scout reads them:
 // this season's verified numbers, skills, identity, about, highlights, achievements, and
 // where it all comes from. Skills, form and match-by-match sit behind three tabs (?tab=),
 // the way a football card site reads; form is rating_events, which only verified results
@@ -190,7 +193,7 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
   const meta = [team, province].filter(Boolean).join(' · ')
 
   return (
-    <main className="bds-page pp ui-matchday">
+    <main className="bds-page pp gl gl-scene" style={{ ...(BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } : {}), ...(STADIUM ? { '--gl-stadium-photo': `url(${STADIUM.src})` } : {}) } as React.CSSProperties}>
       <PageHeader back={{ href: '/athletes', label: t('back') }} />
 
       <section className="pp-hero ui-dark">
