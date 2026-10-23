@@ -180,7 +180,8 @@
       "organizer": "Next: see what your account can do",
       "venue_owner": "Next: add a venue and open free times",
       "sponsor_brand": "Next: create a sponsorship"
-    }
+    },
+    "later": "Choose later"
   },
   "card": {
     "chooseImage": "Please choose a JPG, PNG or WEBP image",
@@ -1413,7 +1414,6 @@
     }
   },
   "loginOtp": {
-    "emailSubtitle": "We will email you a code. No password to remember.",
     "title": "Enter the code from your email",
     "sentTo": "Sent to",
     "onlyLatest": "Only the code in the newest email works. Asking for a new code cancels the old one.",
@@ -2031,7 +2031,18 @@
     "next": "Next: tell us whether you are an athlete, a parent, a coach or an organizer, and start right away.",
     "lead": "Results the organizer confirms become your player card, your Power Rating and your rank across Thailand",
     "adminEyebrow": "Admins only",
-    "consentNeeded": "Tick the box above first, then press the button again."
+    "consentNeeded": "Tick the box above first, then press the button again.",
+    "tabSignIn": "Sign in",
+    "tabSignUp": "Sign up",
+    "signUpSub": "An email or Google account new to us gets an account straight away. No password to set",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Your email",
+    "sending": "Sending...",
+    "orWith": "or continue with",
+    "slogan1": "Every match",
+    "slogan2": "opens a door",
+    "slogan3": "for Thai youth",
+    "orSignUpWith": "or sign up with"
   },
   "guardianPage": {
     "title": "Link to your child’s account",

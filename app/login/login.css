@@ -49,8 +49,8 @@ body:has(.lg) { background: var(--gl-pitch); }
 .lg-consent.is-checked i { background: var(--gl-green); border-color: var(--gl-green); }
 .lg-consent a { color: var(--gl-navy); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 .lg-consent:focus-within { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
-.lg-google { background: conic-gradient(#ea4335 0 25%, #fbbc05 0 50%, #34a853 0 75%, #4285f4 0); border-radius: 50%; height: 20px; position: relative; width: 20px; }
-.lg-google::after { background: #fff; border-radius: 50%; content: ''; inset: 5px; position: absolute; }
+/* The real Google "G" (components/GoogleLogo), on the white button as Google's guidelines ask. */
+.lg-google { display: block; flex: none; }
 .lg-or { align-items: center; color: var(--gl-text-2); display: flex; font-size: 12.5px; gap: 10px; margin: 0; }
 .lg-or::before, .lg-or::after { background: rgba(11,18,32,.12); content: ''; flex: 1; height: 1px; }
 .lg-consent.is-missing { border-color: #DC2626; box-shadow: 0 0 0 3px rgba(220,38,38,.15); }
@@ -95,3 +95,39 @@ body:has(.lg) { background: var(--gl-pitch); }
 .lg-password-toggle { align-items: center; background: transparent; border: 0; border-radius: 10px; color: var(--gl-text-2); cursor: pointer; display: inline-flex; height: 44px; justify-content: center; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; }
 .lg-password-toggle:hover, .lg-password-toggle[aria-pressed="true"] { color: inherit; }
 .lg-password-toggle:focus-visible { outline: 2px solid var(--gl-navy); outline-offset: 2px; }
+
+/* The owner's design (23 Oct 2026): on a phone the photo half shows the brand and the line in
+   the middle, the language switch in the corner; the white card below holds the sign-in /
+   sign-up tabs, the email field with its send button, then Google and Facebook. */
+.lg-hero-bar { display: flex; justify-content: flex-end; min-height: 44px; }
+.lg-hero .bds-lang-switch { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.55); color: #fff; }
+.lg-hero .lg-brand { align-items: center; display: flex; flex-direction: column; font-size: 22px; gap: 8px; justify-content: center; margin-top: 4px; text-shadow: 0 2px 14px rgba(0,0,0,.4); }
+.lg-hero .lg-brand > :first-child { filter: drop-shadow(0 6px 18px rgba(22,224,110,.35)); height: 56px; width: 56px; }
+.lg-hero-copy { display: block; text-align: center; }
+.lg-hero .ui-hero { font-size: clamp(28px, 8vw, 34px); line-height: 1.3; margin: 12px 0 6px; }
+.lg-hero .lg-lead { display: none; }
+.lg-hero a:focus-visible, .lg-hero button:focus-visible { outline: 3px solid var(--gl-green); outline-offset: 2px; }
+
+.lg-tabs { border-bottom: 1px solid rgba(11,18,32,.1); display: flex; margin: -6px 0 4px; }
+.lg-tabs button { background: none; border: 0; border-bottom: 3px solid transparent; color: var(--gl-text-2); cursor: pointer; flex: 1; font: 700 16px var(--gl-font); margin-bottom: -1px; min-height: 48px; }
+.lg-tabs button.is-on { border-bottom-color: var(--gl-green); color: var(--gl-navy); }
+.lg-tabs button:focus-visible { outline: 3px solid var(--gl-navy); outline-offset: -3px; }
+
+.lg-input { align-items: center; background: rgba(255,255,255,.9); border: 1.5px solid var(--gl-line); border-radius: 14px; color: var(--gl-text-2); cursor: text; display: flex; gap: 10px; padding: 0 14px; }
+.lg-input input { background: none; border: 0; color: var(--gl-navy); flex: 1; font: 16px var(--gl-font); min-height: 50px; min-width: 0; outline: none; }
+.lg-input input::placeholder { color: #8A93A3; }
+.lg-input:focus-within { border-color: var(--gl-navy); outline: 3px solid rgba(11,18,32,.15); outline-offset: 1px; }
+.lg .lg-facebook svg { color: #1877F2; }
+.lg-otp-icon { align-items: center; align-self: center; background: var(--gl-green-surface); border-radius: 26px; color: var(--gl-green-ink); display: flex; height: 84px; justify-content: center; margin: 4px 0 2px; width: 84px; }
+.lg-center { text-align: center; }
+
+@media (min-width: 900px) {
+  .lg-shell { position: relative; }
+  .lg-hero { position: static; }
+  .lg-hero-bar { position: absolute; right: 40px; top: 28px; }
+  .lg-hero .lg-brand { flex-direction: row; font-size: inherit; justify-content: flex-start; margin-top: 0; }
+  .lg-hero .lg-brand > :first-child { height: 30px; width: 30px; }
+  .lg-hero-copy { margin-top: 90px; text-align: left; }
+  .lg-hero .ui-hero { font-size: 58px; line-height: 1.15; }
+  .lg-hero .lg-lead { display: block; }
+}

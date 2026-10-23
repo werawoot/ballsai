@@ -72,7 +72,7 @@ describe('the first /welcome screen', () => {
     for (const name of ['นักกีฬา', 'ผู้ปกครอง', 'โค้ช', 'ผู้จัดแข่ง', 'เจ้าของสนาม', 'ผู้สนับสนุน']) expect(page).toContain(name)
     expect(page).not.toContain('โค้ช / ผู้จัด')
     expect(page).not.toContain('Sponsor / Brand')
-    expect(html.match(/class="ui-option( is-selected)?"/g)?.length).toBe(6)
+    expect(html.match(/class="wb-role( is-selected)?"/g)?.length).toBe(6)
     expect(html).not.toContain('ต่อไป')
   })
 
