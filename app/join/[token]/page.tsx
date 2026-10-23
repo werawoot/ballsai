@@ -7,6 +7,9 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { isJoinToken, joinPath } from '@/lib/team-join'
 import JoinRequestButton from './JoinRequestButton'
 import '../../team-members/team-page.css'
+import '../../glass.css'
+import '../../team-members/team-glass.css'
+import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
 
 // A team's join link (ADR-011). Anyone with the link sees the team's name, the coach's
 // display name and the province, never the roster. Asking to join needs sign-in and an
@@ -23,17 +26,18 @@ export default async function JoinTeamPage(props: { params: Promise<{ token: str
   const team = ((rows ?? []) as { team_name: string; coach_name: string | null; province: string | null; open: boolean }[])[0] ?? null
   const back = `${joinPath(token)}?ask=1`
 
-  return <main className="bds-page ui-matchday tp">
+  return <main className="bds-page tp tp-join gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.join)}>
     <PageHeader back={{ href: '/', label: t('home') }} />
+    <section className="tj-head">
+      <div className="tj-head-inner">
+        <p className="ui-eyebrow">{t('eyebrow')}</p>
+        <h1 className="tp-title">{team ? team.team_name : t('goneTitle')}</h1>
+      </div>
+    </section>
     <div className="tp-wrap">
-      <p className="ui-eyebrow">{t('eyebrow')}</p>
       {!team
-        ? <>
-            <h1 className="tp-title">{t('goneTitle')}</h1>
-            <p className="tp-note">{t('goneBody')}</p>
-          </>
+        ? <p className="tp-note">{t('goneBody')}</p>
         : <>
-            <h1 className="tp-title">{team.team_name}</h1>
             <ul className="ui-card tj-card tj-facts">
               <li><UserRound size={16} aria-hidden="true" />{t('coach')}: <b>{team.coach_name ?? t('coachUnnamed')}</b></li>
               {team.province && <li><MapPin size={16} aria-hidden="true" />{t('province')}: <b>{team.province}</b></li>}

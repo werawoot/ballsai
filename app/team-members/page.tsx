@@ -34,6 +34,9 @@ import { MY_TEAM_MEMBERSHIPS_LIMIT, fetchMyTeamMemberships, teamNamesById, type 
 import LeaveTeamButton from './LeaveTeamButton'
 import type { ChildTeamRow } from '@/lib/team-join'
 import './team-hub.css'
+import '../glass.css'
+import './team-glass.css'
+import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
 import PageHeader from '@/components/PageHeader'
 
 type Member = { id: string; team_id: string; athlete_id: string; status: string; invited_at: string; teams?: { name: string | null } | null }
@@ -201,9 +204,9 @@ export default async function TeamMembersPage(props: { searchParams?: Promise<{ 
     <h2 id={`tm-${id}-title`}>{icon}{h(`sections.${id}`)}</h2>{extra}
   </div>
 
-  return <main className="bds-page ui-matchday tm-page">
+  return <main className="bds-page tm-page gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.teams)}>
     <PageHeader back={{ href: '/profile', label: h('back') }} />
-    <div className="tm-wrap">
+    <section className="tm-head">
       <div className="tm-hero">
         <h1 className="ui-h1">{t('title')}</h1>
         <p className="tm-lead">{hub.isCoach ? h('leadCoach') : h('leadFamily')}</p>
@@ -212,6 +215,8 @@ export default async function TeamMembersPage(props: { searchParams?: Promise<{ 
           {hub.sections.map(id => <a key={id} href={`#tm-${id}`}>{h(`sections.${id}`)}</a>)}
         </nav>}
       </div>
+    </section>
+    <div className="tm-wrap">
 
       {loadFailed && <p role="alert" className="tp-alert">{t('loadFailed')}</p>}
       {attestationError && <p role="alert" className="tp-alert">{h('attestationsFailed')}</p>}

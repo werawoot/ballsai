@@ -8,10 +8,12 @@ import { parsePage } from '@/lib/pagination'
 import NotificationList, { type NotificationItem } from './NotificationList'
 import PageHeader from '@/components/PageHeader'
 import Pagination from '@/components/Pagination'
+import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
+import '../glass.css'
 import './notifications.css'
 
-// A Stadium head (docs/design-system.md) with what is still unread and two tabs, then
-// Paper: the person's own notifications by Bangkok day, one page at a time. Nothing is
+// On the light glass design (ADR-014): a photo head with what is still unread and two
+// tabs, then frosted cards: the person's own notifications by Bangkok day, one page at a time. Nothing is
 // capped: the unread number is a count on the server (partial index
 // notifications_user_unread_idx), and older rows are on the next page
 // (notifications_user_created_idx). RLS shows each person their own rows only.
@@ -43,7 +45,7 @@ export default async function NotificationsPage(props: { searchParams: Promise<{
   const tab = (target: 'all' | 'unread') => target === 'all' ? '/notifications' : '/notifications?view=unread'
 
   return (
-    <main className="bds-page nt-page">
+    <main className="bds-page nt-page gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.notifications)}>
       <PageHeader />
       <div className="nt-stadium">
         <div className="nt-stadium-inner">

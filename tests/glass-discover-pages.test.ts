@@ -54,6 +54,43 @@ describe('/profile on the light glass design', () => {
   })
 })
 
+// The team hub and a team's join link (owner, 23 Oct 2026). Both leave the dark matchday
+// theme for glass, each on its own photo; the team sheet page (/team-members/[teamId]) shares
+// team-page.css and has not moved, so the glass rules live in their own file, all scoped.
+describe('/team-members and /join on the light glass design', () => {
+  it('opt in with the glass scene and their own photos', () => {
+    expect(read('app/team-members/page.tsx')).toContain('<main className="bds-page tm-page gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.teams)}>')
+    expect(read('app/join/[token]/page.tsx')).toContain('<main className="bds-page tp tp-join gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.join)}>')
+    expect(read('app/team-members/page.tsx')).not.toContain('ui-matchday')
+    expect(read('app/join/[token]/page.tsx')).not.toContain('ui-matchday')
+  })
+  it('keeps every glass rule scoped to an opted-in root, so the team sheet page is unchanged', () => {
+    const css = read('app/team-members/team-glass.css')
+    for (const rule of css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map(part => part.trim()).filter(part => part && !part.startsWith('@'))) {
+      expect(rule.split('{')[0].split(',').every(selector => selector.includes('.gl')), rule).toBe(true)
+    }
+    expect(read('app/team-members/[teamId]/page.tsx')).not.toContain('team-glass.css')
+  })
+})
+
+// Notifications (owner, 23 Oct 2026): the stadium head takes its own photo, the list frosted
+// cards; the unread mark stays a colour and a shape, never colour alone.
+describe('/notifications on the light glass design', () => {
+  it('opts in with the glass scene and its own photo', () => {
+    const page = read('app/notifications/page.tsx')
+    expect(page).toContain('<main className="bds-page nt-page gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.notifications)}>')
+    expect(page).toContain("import '../glass.css'")
+  })
+  it('scopes every glass rule to the opted-in root', () => {
+    const css = read('app/notifications/notifications.css')
+    const glass = css.slice(css.indexOf('/* Light glass design (ADR-014)'))
+    expect(glass.length).toBeGreaterThan(100)
+    for (const rule of glass.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map(part => part.trim()).filter(part => part && !part.startsWith('@'))) {
+      expect(rule.split('{')[0].split(',').every(selector => selector.includes('.nt-page.gl')), rule).toBe(true)
+    }
+  })
+})
+
 describe('/players/[id] keeps where every number comes from', () => {
   const page = read('app/players/[id]/page.tsx')
   it('still shows STARTER for a card with no rank row and the source chip on the card', () => {
