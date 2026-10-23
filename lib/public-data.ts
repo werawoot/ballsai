@@ -6,6 +6,7 @@ import { fetchIdentityRanking, type IdentityRanking } from './public-identity-ra
 import { fetchRankingProvinces } from './ranking-provinces'
 import { fetchRankingPage } from './public-ranking-page'
 import type { HomeStats } from './home-stats'
+import { fetchPublicPlayer, type PublicPlayerPage } from './public-player'
 
 const publicSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -187,4 +188,16 @@ export const getPublicPlatformCounts = unstable_cache(
   },
   ['public-platform-counts'],
   { revalidate: 600, tags: ['public-tournaments', 'public-ranking'] },
+)
+
+// The shared copy of a public athlete page (/players/[id]) for viewers with no session,
+// read with the anon key so it holds only what RLS shows everyone. Cached for a minute:
+// a profile made private drops out of it within that minute, and deleting an athlete's
+// data (PDPA) clears it at once: /api/account/delete-athlete-data revalidates the
+// public-athletes tag. A
+// failed read throws and is not cached.
+export const getPublicPlayer = unstable_cache(
+  async (id: string): Promise<PublicPlayerPage | null> => fetchPublicPlayer(publicSupabase, id),
+  ['public-player'],
+  { revalidate: 60, tags: ['public-player', 'public-athletes'] },
 )
