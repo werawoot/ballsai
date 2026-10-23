@@ -3,6 +3,9 @@
 Every photo the site shows that is not uploaded by a user. Rules: [ADR-014](decisions/ADR-014-light-glass-design-and-doensai-brand.md).
 Only licences that allow commercial use without payment (Unsplash Licence, Pexels Licence)
 or photos the owner took. No identifiable person, no child, no club crest or brand logo.
+One exception, the owner's decision of 23 Oct 2026 (AGENTS.md rule 7): the athletes image
+the owner made with an AI tool, beside the line on /login only (`LOGIN_ART`). It shows no
+real person and no brand mark, and is used nowhere else.
 
 `lib/stock-photos.ts` lists the files; `tests/stock-photos.test.ts` checks that every file
 listed there exists in `public/photos/` and has a row here.
@@ -28,6 +31,7 @@ listed there exists in `public/photos/` and has a row here.
 | `head-fence-sunrise.webp` | PAGE_PHOTOS.join (/join/[token] head) | https://www.pexels.com/photo/sunrise-over-empty-soccer-field-with-trees-29741193/ (sunrise through a fence over an empty pitch; cropped) | Alexander Mass | Pexels Licence | 23 Oct 2026 |
 | `head-floodlight-pair.webp` | PAGE_PHOTOS.notifications (/notifications head) | https://www.pexels.com/photo/two-football-stadium-lights-776805/ (two floodlight frames against a pale sky, empty seats below) | Toni Cuenca | Pexels Licence | 23 Oct 2026 |
 | `head-pitch-floodlit.webp` | PAGE_PHOTOS.matchPlan (/match-plan head) | https://www.pexels.com/photo/green-football-field-399187/ (an empty artificial pitch under two floodlights at night, Norrtälje; cropped 1600×640, no people, no signage) | Jonathan Petersson (@grizzlybear) | Pexels Licence | 23 Oct 2026 |
+| `login-athletes-owner.webp` | LOGIN_ART (/login, beside the line; the only exception to rule 7) | Made by the owner with an AI image tool and handed over in the session of 23 Oct 2026 (athletes of several sports in a stadium; a second version with no brand mark on any shirt) | The owner | The owner's own image; no real person | 23 Oct 2026 |
 
 Checked and left out on 21 Oct 2026: photos with people, the FIFA World Cup trophy (a trade
 mark), balls and boots with a readable Nike or Adidas mark, and photo-1510051640316 (a goal

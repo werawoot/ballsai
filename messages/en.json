@@ -2029,7 +2029,7 @@
     "facebook": "Continue with Facebook",
     "facebookLoading": "Taking you to Facebook...",
     "next": "Next: tell us whether you are an athlete, a parent, a coach or an organizer, and start right away.",
-    "lead": "Results the organizer confirms become your player card, your Power Rating and your rank across Thailand",
+    "lead": "A youth sports data platform to develop athletes, build a record and open the way ahead",
     "adminEyebrow": "Admins only",
     "consentNeeded": "Tick the box above first, then press the button again.",
     "tabSignIn": "Sign in",
@@ -2062,7 +2062,16 @@
       "athletics": "Athletics",
       "swimming": "Swimming",
       "badminton": "Badminton",
-      "cycling": "Cycling"
+      "tennis": "Tennis",
+      "boxing": "Boxing",
+      "open": "open",
+      "more": "More sports to come"
+    },
+    "stats": {
+      "athletes": "Rated athletes",
+      "tournaments": "Tournaments",
+      "results": "Verified results",
+      "provinces": "Provinces covered"
     }
   },
   "guardianPage": {

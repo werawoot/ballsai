@@ -39,7 +39,9 @@ Fame. Users are minors, their guardians, coaches and tournament organizers.
    moved page by page (`/tournaments` first). Pages not yet moved keep the old dark/red look;
    do not restyle one as a side effect. Photos are real and licensed only, recorded in
    `docs/photo-credits.md`, never a stock photo as a venue cover or of a child, and never a
-   drawn stand-in.
+   drawn stand-in. One exception (owner, 23 Oct 2026): the athletes image the owner made with
+   an AI tool, with no brand mark, beside the line on `/login` only (`LOGIN_ART`). Do not use
+   it, or any other generated picture of people, anywhere else.
 8. For any athlete-facing data, answer "where does this come from and how verified is
    it": `self` / `coach_verified` / `performance_verified`. Never present a default value
    as performance. A card without a `player_ranks` row is a STARTER card and says so.

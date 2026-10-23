@@ -44,6 +44,12 @@ export const PAGE_PHOTOS: Readonly<Record<PhotoPage, StockPhoto>> = {
   matchPlan: { src: '/photos/head-pitch-floodlit.webp', credit: pexels('Jonathan Petersson', '399187') },
 }
 
+// The one picture of people the site shows that no user uploaded (owner's decision, 23 Oct
+// 2026; AGENTS.md rule 7): athletes the owner made with an AI image tool, no real person and
+// no brand mark, beside the line on /login only. Nowhere else, and never a stand-in for an
+// athlete, a team or a venue.
+export const LOGIN_ART: StockPhoto = { src: '/photos/login-athletes-owner.webp', credit: 'Made by the owner with an AI image tool, 23 Oct 2026' }
+
 // Behind the whole page, so glass cards have grass to show through: the same grass close-up
 // as a cover, blurred until no line or place can be made out.
 export const BACKDROP: StockPhoto | null = { src: '/photos/backdrop-grass-blur.webp', credit: 'Sandro Schuh, Unsplash, photo-1459865264687-595d652de67e (blurred)' }

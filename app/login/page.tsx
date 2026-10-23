@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import LoginPanel from "./LoginPanel";
 import { safeNextPath } from "@/lib/safe-next";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { getPublicPlatformCounts } from "@/lib/public-data";
+import { loginStats } from "@/lib/home-stats";
+import { bangkokToday } from "@/lib/public-tournaments";
 
 // The athlete-facing page offers Google and email OTP only. The admin password form
 // stays reachable at /login?admin=1 but is never advertised on a page used by children,
@@ -21,5 +24,16 @@ export default async function LoginPage(
     const { data: { user } } = await supabase.auth.getUser()
     if (user) redirect(nextPath)
   }
-  return <LoginPanel adminEntry={adminEntry} nextPath={nextPath} />;
+  // The stats bar shows real counts only (lib/home-stats loginStats), from the home page's
+  // ten-minute cache; a failed read shows the provinces alone and never blocks signing in.
+  const stats = adminEntry ? [] : await readLoginStats();
+  return <LoginPanel adminEntry={adminEntry} nextPath={nextPath} stats={stats} />;
+}
+
+async function readLoginStats() {
+  try {
+    return loginStats(await getPublicPlatformCounts(bangkokToday()));
+  } catch {
+    return loginStats(null);
+  }
 }

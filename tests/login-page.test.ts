@@ -4,6 +4,8 @@ const auth = vi.hoisted(() => ({ user: null as null | { id: string } }))
 vi.mock('@/lib/supabase-server', () => ({ createServerSupabaseClient: async () => ({ auth: { getUser: async () => ({ data: { user: auth.user } }) } }) }))
 vi.mock('next/navigation', () => ({ redirect: (to: string) => { throw new Error(`redirect ${to}`) } }))
 vi.mock('@/app/login/LoginPanel', () => ({ default: () => null }))
+// The stats bar's counts come from the public cache; here it fails, and /login still opens.
+vi.mock('@/lib/public-data', () => ({ getPublicPlatformCounts: async () => { throw new Error('offline') } }))
 
 import LoginPage from '@/app/login/page'
 

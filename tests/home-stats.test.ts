@@ -28,3 +28,19 @@ describe('the open count on the football chip', () => {
     expect(sportOpenCount(null)).toBeNull()
   })
 })
+
+// /login's stats bar (owner, 23 Oct 2026): real counts only, each shown on its own once it
+// passes the same floor the home page uses; the 77 provinces are a fact and always show.
+import { loginStats, PROVINCE_COUNT } from '@/lib/home-stats'
+describe('the /login stats bar', () => {
+  it('shows only the 77 provinces while the counts are small', () => {
+    expect(loginStats({ tournaments: 2, openTournaments: 1, athletes: 7, results: 3 })).toEqual([{ key: 'provinces', value: PROVINCE_COUNT }])
+    expect(PROVINCE_COUNT).toBe(77)
+  })
+  it('adds each count once it passes its own floor, never a failed one', () => {
+    expect(loginStats({ tournaments: 12, openTournaments: 0, athletes: 60, results: Number.NaN })).toEqual([
+      { key: 'athletes', value: 60 }, { key: 'tournaments', value: 12 }, { key: 'provinces', value: 77 },
+    ])
+    expect(loginStats(null)).toEqual([{ key: 'provinces', value: 77 }])
+  })
+})
