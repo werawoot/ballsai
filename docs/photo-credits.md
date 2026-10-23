@@ -26,6 +26,7 @@ listed there exists in `public/photos/` and has a row here.
 | `head-corner-flag.webp` | PAGE_PHOTOS.profileEdit (/profile/edit head) | https://unsplash.com/photos/minimalist-photo-of-soccer-field-91yHQ1JMK9Y (photo-1531861184681-f2de7dd72da5, a corner flag and arc; cropped to leave out the far advertising boards) | Ben Wiens (@benwiens) | Unsplash Licence | 22 Oct 2026 |
 | `head-training-cones.webp` | PAGE_PHOTOS.teams (/team-members head) | https://www.pexels.com/photo/agility-ladder-and-marker-cones-on-a-football-field-13204961/ (an agility ladder and marker cones on a pitch, no people) | Chris K | Pexels Licence | 23 Oct 2026 |
 | `head-fence-sunrise.webp` | PAGE_PHOTOS.join (/join/[token] head) | https://www.pexels.com/photo/sunrise-over-empty-soccer-field-with-trees-29741193/ (sunrise through a fence over an empty pitch; cropped) | Alexander Mass | Pexels Licence | 23 Oct 2026 |
+| `head-floodlight-pair.webp` | PAGE_PHOTOS.notifications (/notifications head) | https://www.pexels.com/photo/two-football-stadium-lights-776805/ (two floodlight frames against a pale sky, empty seats below) | Toni Cuenca | Pexels Licence | 23 Oct 2026 |
 
 Checked and left out on 21 Oct 2026: photos with people, the FIFA World Cup trophy (a trade
 mark), balls and boots with a readable Nike or Adidas mark, and photo-1510051640316 (a goal

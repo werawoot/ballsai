@@ -64,3 +64,41 @@
 .nt-empty .ui-btn { margin-top: 6px; }
 
 @media (prefers-reduced-motion: reduce) { .nt-item, .nt-chevron, .nt-tabs a { transition: none; } }
+
+/* Light glass design (ADR-014). The head shows the page's own photo under a navy wash, the
+   top bar over it; the list is frosted cards over the blurred grass. Unread keeps its bar,
+   its dot and its bolder title, now green, so it never rests on colour alone. */
+.nt-page.gl { --ui-line: rgba(11,18,32,.09); background: transparent !important; color: var(--gl-text); font-family: var(--gl-font); position: relative; }
+.nt-page.gl > .bds-page-header { left: 0; position: absolute; right: 0; top: 0; z-index: 3; }
+.nt-page.gl .nt-stadium { background-color: var(--gl-pitch); background-image: linear-gradient(100deg, rgba(11,18,32,.84) 0%, rgba(11,18,32,.6) 60%, rgba(11,18,32,.38) 100%), var(--gl-stadium-photo); background-position: center; background-size: cover; padding-top: calc(56px + env(safe-area-inset-top)); }
+.nt-page.gl .nt-stadium::before { background: radial-gradient(closest-side, rgba(22,224,110,.28), rgba(22,224,110,0)); }
+.nt-page.gl .nt-stadium::after { display: none; }
+.nt-page.gl .nt-eyebrow { align-self: flex-start; background: rgba(22,224,110,.16); border: 1px solid rgba(22,224,110,.55); border-radius: 999px; color: #fff; font: 600 13px var(--gl-font); padding: 4px 12px; }
+.nt-page.gl .nt-title { font-family: var(--gl-font); font-weight: 700; text-shadow: 0 4px 24px rgba(0,0,0,.35); }
+.nt-page.gl .nt-intro { color: rgba(255,255,255,.9); }
+.nt-page.gl .nt-count { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.4); color: #fff; }
+.nt-page.gl .nt-count.is-on { background: var(--gl-green); border-color: var(--gl-green); color: var(--gl-navy); }
+.nt-page.gl .nt-count b { font-family: var(--gl-font); font-weight: 700; }
+.nt-page.gl .nt-tabs { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.35); border-radius: 999px; }
+.nt-page.gl .nt-tabs a { border-radius: 999px; color: rgba(255,255,255,.9); font-family: var(--gl-font); }
+.nt-page.gl .nt-tabs a.is-on { background: var(--gl-green); box-shadow: 0 6px 16px rgba(22,224,110,.35); color: var(--gl-navy); }
+.nt-page.gl .nt-tab-badge { background: var(--gl-navy); }
+.nt-page.gl .nt-tabs a:focus-visible { outline-color: var(--gl-green); }
+.nt-page.gl .nt-link:focus-visible, .nt-page.gl .nt-mark:focus-visible { outline-color: var(--gl-navy); }
+
+.nt-page.gl .nt-day-label { color: var(--gl-navy); font-family: var(--gl-font); font-weight: 700; }
+.nt-page.gl .nt-item, .nt-page.gl .ui-card { background: var(--gl-card-bg-solid); border: 1px solid var(--gl-card-border); border-radius: 18px; box-shadow: 0 10px 24px rgba(11,18,32,.07); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nt-page.gl .nt-item, .nt-page.gl .ui-card { -webkit-backdrop-filter: blur(var(--gl-card-blur)) saturate(1.4); backdrop-filter: blur(var(--gl-card-blur)) saturate(1.4); background: var(--gl-card-bg); }
+}
+.nt-page.gl .nt-item:hover { border-color: var(--gl-green); }
+.nt-page.gl .nt-item.is-unread { background: rgba(232,249,238,.9); border-color: rgba(22,224,110,.55); }
+.nt-page.gl .nt-item.is-unread::before, .nt-page.gl .nt-dot { background: var(--gl-green-ink); }
+.nt-page.gl .nt-item-title, .nt-page.gl .nt-kind { color: var(--gl-navy); font-family: var(--gl-font); }
+.nt-page.gl .nt-link:hover .nt-chevron { color: var(--gl-green-ink); }
+.nt-page.gl .nt-icon.is-news, .nt-page.gl .nt-icon.is-event, .nt-page.gl .nt-icon.is-training, .nt-page.gl .nt-empty-icon { background: var(--gl-green-surface); color: var(--gl-green-ink); }
+.nt-page.gl .nt-mark:hover { background: var(--gl-green-surface); }
+.nt-page.gl .nt-empty h2 { color: var(--gl-navy); font-family: var(--gl-font); font-weight: 700; }
+.nt-page.gl .ui-btn { border-radius: 999px; font-family: var(--gl-font); font-weight: 700; }
+.nt-page.gl .ui-btn-primary { background: var(--gl-green); box-shadow: 0 8px 22px rgba(22,224,110,.35); color: var(--gl-navy); }
+.nt-page.gl .ui-btn-ghost { background: rgba(255,255,255,.85); border-color: var(--gl-navy); color: var(--gl-navy); }

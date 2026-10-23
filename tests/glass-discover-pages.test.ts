@@ -73,6 +73,24 @@ describe('/team-members and /join on the light glass design', () => {
   })
 })
 
+// Notifications (owner, 23 Oct 2026): the stadium head takes its own photo, the list frosted
+// cards; the unread mark stays a colour and a shape, never colour alone.
+describe('/notifications on the light glass design', () => {
+  it('opts in with the glass scene and its own photo', () => {
+    const page = read('app/notifications/page.tsx')
+    expect(page).toContain('<main className="bds-page nt-page gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.notifications)}>')
+    expect(page).toContain("import '../glass.css'")
+  })
+  it('scopes every glass rule to the opted-in root', () => {
+    const css = read('app/notifications/notifications.css')
+    const glass = css.slice(css.indexOf('/* Light glass design (ADR-014)'))
+    expect(glass.length).toBeGreaterThan(100)
+    for (const rule of glass.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map(part => part.trim()).filter(part => part && !part.startsWith('@'))) {
+      expect(rule.split('{')[0].split(',').every(selector => selector.includes('.nt-page.gl')), rule).toBe(true)
+    }
+  })
+})
+
 describe('/players/[id] keeps where every number comes from', () => {
   const page = read('app/players/[id]/page.tsx')
   it('still shows STARTER for a card with no rank row and the source chip on the card', () => {
