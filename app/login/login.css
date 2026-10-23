@@ -131,3 +131,40 @@ body:has(.lg) { background: var(--gl-pitch); }
   .lg-hero .ui-hero { font-size: 58px; line-height: 1.15; }
   .lg-hero .lg-lead { display: block; }
 }
+
+/* The story on the photo half (LoginJourney): five steps from playing to the Hall of Fame,
+   lit one after another, then the sports, football and futsal open, the rest drifting softly
+   with "soon". Without motion every step is simply lit and nothing moves. */
+.lg-story { margin: 14px auto 0; max-width: 460px; }
+.lg-journey { display: grid; gap: 4px; grid-template-columns: repeat(5, minmax(0, 1fr)); list-style: none; margin: 0; padding: 0; }
+.lg-journey li { align-items: center; display: flex; flex-direction: column; gap: 6px; position: relative; text-align: center; }
+.lg-journey li + li::before { background: rgba(255,255,255,.28); content: ''; height: 2px; left: calc(-50% + 22px); position: absolute; right: calc(50% + 22px); top: 19px; }
+.lg-journey-icon { align-items: center; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.4); border-radius: 50%; color: #fff; display: flex; height: 40px; justify-content: center; width: 40px; }
+.lg-journey-text { color: rgba(255,255,255,.9); font-size: 11.5px; font-weight: 600; line-height: 1.3; text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+.lg-sports { display: none; flex-wrap: wrap; gap: 8px; list-style: none; margin: 18px 0 0; padding: 0; }
+.lg-sports li { align-items: center; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.25); border-radius: 999px; color: rgba(255,255,255,.7); display: inline-flex; font-size: 13px; font-weight: 600; gap: 6px; padding: 6px 12px; }
+.lg-sports li.is-open { background: rgba(22,224,110,.18); border-color: rgba(22,224,110,.7); color: #fff; }
+.lg-sports li.is-open svg { color: var(--gl-green); }
+.lg-sports-note { color: rgba(255,255,255,.82); font-size: 12.5px; margin: 10px 0 0; text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .lg-journey-icon { animation: lg-step 8s ease-in-out infinite; animation-delay: calc(var(--i) * 1.6s); }
+  .lg-sports li:not(.is-open) { animation: lg-drift 7s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -0.9s); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lg-journey-icon { background: rgba(22,224,110,.22); border-color: var(--gl-green); }
+}
+@keyframes lg-step {
+  0%, 22%, 100% { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.4); box-shadow: none; color: #fff; transform: none; }
+  6%, 16% { background: var(--gl-green); border-color: var(--gl-green); box-shadow: 0 0 0 6px rgba(22,224,110,.22), 0 8px 22px rgba(22,224,110,.45); color: var(--gl-navy); transform: scale(1.1); }
+}
+@keyframes lg-drift { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+
+@media (min-width: 900px) {
+  .lg-story { margin: 40px 0 0; max-width: 520px; }
+  .lg-journey-icon { height: 48px; width: 48px; }
+  .lg-journey li + li::before { left: calc(-50% + 26px); right: calc(50% + 26px); top: 23px; }
+  .lg-journey-text { font-size: 13px; }
+  .lg-sports { display: flex; }
+  .lg-sports-note { text-align: left; }
+}

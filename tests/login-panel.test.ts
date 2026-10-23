@@ -171,3 +171,24 @@ describe('/login consent row on each screen that signs in', () => {
     expect(html).toContain('aria-invalid="true"')
   })
 })
+
+// Owner, 23 Oct 2026: the photo half shows where a match goes, and the sports. Only football
+// and futsal are open today, so the rest say "soon" and a line says the site starts there.
+describe('/login photo half: the journey and the sports', () => {
+  const page = text(render())
+  it('names the five steps from playing to the Hall of Fame', () => {
+    expect(page).toMatch(/ลงแข่ง[\s\S]*ผู้จัดยืนยันผล[\s\S]*การ์ดนักกีฬา[\s\S]*อันดับทั่วประเทศ[\s\S]*หอเกียรติยศ/)
+  })
+  it('marks only football and futsal as open and says the rest are coming', () => {
+    const html = render()
+    expect(html.match(/class="is-open"/g)?.length).toBe(2)
+    expect(page).toContain('บาสเกตบอล (เร็ว ๆ นี้)')
+    expect(page).not.toContain('ฟุตบอล (เร็ว ๆ นี้)')
+    expect(page).toContain('เริ่มที่ฟุตบอลและฟุตซอล · กีฬาอื่นตามมา')
+  })
+  it('reads in English with the same honesty', () => {
+    const en = text(render('en'))
+    expect(en).toContain('Hall of Fame')
+    expect(en).toContain('Starting with football and futsal')
+  })
+})

@@ -2042,7 +2042,28 @@
     "slogan1": "Every match",
     "slogan2": "opens a door",
     "slogan3": "for Thai youth",
-    "orSignUpWith": "or sign up with"
+    "orSignUpWith": "or sign up with",
+    "journey": {
+      "label": "Where every match can take you",
+      "play": "Play",
+      "verified": "Result verified",
+      "card": "Athlete card",
+      "rank": "National ranking",
+      "hall": "Hall of Fame"
+    },
+    "sports": {
+      "label": "Sports",
+      "soon": "soon",
+      "note": "Starting with football and futsal · more sports to follow",
+      "football": "Football",
+      "futsal": "Futsal",
+      "basketball": "Basketball",
+      "volleyball": "Volleyball",
+      "athletics": "Athletics",
+      "swimming": "Swimming",
+      "badminton": "Badminton",
+      "cycling": "Cycling"
+    }
   },
   "guardianPage": {
     "title": "Link to your child’s account",

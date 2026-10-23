@@ -9,6 +9,7 @@ import { OTP_MAX_LENGTH, canSubmitOtp, otpSlotCount, normalizeEmail, normalizeOt
 import { captchaSiteKey, withCaptcha } from "@/lib/captcha";
 import { OtpHelp } from "./OtpHelp";
 import { LoginConsent } from "./LoginConsent";
+import { LoginJourney } from "./LoginJourney";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import BrandMark from "@/components/BrandMark";
 import LanguageSwitch from "@/components/LanguageSwitch";
@@ -194,6 +195,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
           <div className="lg-hero-copy">
             <p className="ui-hero">{tp("slogan1")}<br /><em>{tp("slogan2")}</em><br />{tp("slogan3")}</p>
             <p className="lg-lead">{tp("lead")}</p>
+            <LoginJourney />
           </div>
         </section>
 
