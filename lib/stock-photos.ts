@@ -3,8 +3,12 @@
 // photographer, licence); tests/stock-photos.test.ts fails a build that adds one without
 // the other.
 //
-// Three kinds, kept apart on purpose:
-// - STADIUM: atmosphere behind a page head. An empty stadium or pitch, no people.
+// Four kinds, kept apart on purpose:
+// - STADIUM: atmosphere behind the home page head. An empty stadium or pitch, no people.
+// - PAGE_PHOTOS: one different photo behind each other page's head, so no two pages look
+//   the same (owner, 22 Oct 2026: "รูปอย่าพยายามใช้ซ้ำ"). Minimal details of the game:
+//   seats, a net, floodlights, lines, a roof. The tournament page's own head is a net, not
+//   a place, so it never passes for that tournament's venue.
 // - BACKDROP: a heavily blurred texture behind the whole page, for the glass to show.
 // - COVER_DETAILS: a close crop (grass and a line, a centre circle, a penalty arc) for a
 //   tournament card that has no photo of its own. Never a whole pitch, a stand or a
@@ -12,9 +16,28 @@
 //   (lib/tournament-cover.ts).
 // None ever shows an identifiable person, a child, or a club or brand logo.
 
+import type { CSSProperties } from 'react'
+
 export type StockPhoto = { src: string; credit: string }
 
 export const STADIUM: StockPhoto | null = { src: '/photos/stadium-aerial-night.webp', credit: 'Unsplash, photo-1556056504-5c7696c4c28d' }
+
+const unsplash = (photographer: string, id: string) => `${photographer}, Unsplash, photo-${id}`
+
+export type PhotoPage = 'tournaments' | 'tournament' | 'login' | 'welcome' | 'ranking' | 'athletes' | 'hallOfFame' | 'player' | 'profile' | 'profileEdit'
+
+export const PAGE_PHOTOS: Readonly<Record<PhotoPage, StockPhoto>> = {
+  tournaments: { src: '/photos/head-seats-colour.webp', credit: unsplash('Nico Smit', '1646801479598-6a00891d2039') },
+  tournament: { src: '/photos/head-net-dark.webp', credit: unsplash('Sebastian Schuster', '1758934217889-1aec468a2d4d') },
+  login: { src: '/photos/page-floodlights.webp', credit: unsplash('Linus Belanger', '1760800954391-c0975e57d0bf') },
+  welcome: { src: '/photos/page-net-sunset.webp', credit: unsplash('Alex (alexdphotography)', '1558297462-bf13bfc9fad2') },
+  ranking: { src: '/photos/head-pitch-above.webp', credit: unsplash('Bernd Dittrich', '1723231462004-069caa209740') },
+  athletes: { src: '/photos/head-pitch-lines.webp', credit: unsplash('Dan Gold', '1507602368706-321eeafaf53b') },
+  hallOfFame: { src: '/photos/head-seats-mono.webp', credit: unsplash('Ramiro Pianarosa', '1741899940722-8f70b3911c81') },
+  player: { src: '/photos/head-roof-sky.webp', credit: unsplash('Bangkit Ristant', '1494390438231-97c51a2de9c7') },
+  profile: { src: '/photos/card-pitch-overhead.webp', credit: unsplash('Victor (victor_g)', '1546717003-caee5f93a9db') },
+  profileEdit: { src: '/photos/head-corner-flag.webp', credit: unsplash('Ben Wiens', '1531861184681-f2de7dd72da5') },
+}
 
 // Behind the whole page, so glass cards have grass to show through: the same grass close-up
 // as a cover, blurred until no line or place can be made out.
@@ -27,6 +50,14 @@ export const COVER_DETAILS: readonly StockPhoto[] = [
   { src: '/photos/cover-centre-circle.webp', credit: 'Unsplash, photo-1556056504-5c7696c4c28d (crop)' },
   { src: '/photos/cover-penalty-arc.webp', credit: 'Unsplash, photo-1556056504-5c7696c4c28d (crop)' },
 ]
+
+// The style that puts a page's head photo and the blurred grass behind a glass page.
+export function glassSceneStyle(head: StockPhoto | null): CSSProperties {
+  return {
+    ...(BACKDROP ? { '--gl-backdrop-photo': `url(${BACKDROP.src})` } : {}),
+    ...(head ? { '--gl-stadium-photo': `url(${head.src})` } : {}),
+  } as CSSProperties
+}
 
 /**
  * The cover detail for one tournament: the same photo for the same tournament on every

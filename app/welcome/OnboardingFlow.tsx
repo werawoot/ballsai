@@ -12,7 +12,7 @@ import GuardianSteps from "@/components/GuardianSteps";
 import { guardianStepsApply } from "@/lib/guardian-steps";
 import { CHOICES, destinationFor, goalFor, personaOf, savedAnswers, type Choice } from "@/lib/onboarding";
 import { ACTIVE_SPORT } from "@/lib/season";
-import { STADIUM } from "@/lib/stock-photos";
+import { PAGE_PHOTOS } from "@/lib/stock-photos";
 import "../glass.css";
 import "./welcome.css";
 
@@ -88,7 +88,7 @@ export default function OnboardingFlow({ nextPath, userId }: { email: string; ne
   const sportTitle = choice === "athlete" ? "athlete" : choice === "guardian" ? "guardian" : "other";
 
   return (
-    <main className="wb gl" style={STADIUM ? { "--gl-stadium-photo": `url(${STADIUM.src})` } as React.CSSProperties : undefined}>
+    <main className="wb gl" style={{ "--gl-stadium-photo": `url(${PAGE_PHOTOS.welcome.src})` } as React.CSSProperties}>
       <div className="wb-shell">
         <header className="wb-header">
           {step === 0

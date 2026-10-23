@@ -1,0 +1,63 @@
+/* /athletes on the light glass design (ADR-014, app/glass.css), laid out like /ranking: a
+   stadium head with the discover switch and the title, the filters, then frosted athlete
+   cards over the blurred grass. */
+
+.bds-page.at { background: transparent !important; color: var(--gl-text); font-family: var(--gl-font); min-height: 100vh; overflow-x: hidden; position: relative; }
+/* The glass top bar lies over the stadium head, so the head runs up behind it. */
+.at > .bds-page-header { left: 0; position: absolute; right: 0; top: 0; z-index: 2; }
+
+.at-stadium { background-color: var(--gl-pitch); background-image: linear-gradient(100deg, rgba(11,18,32,.78) 0%, rgba(11,18,32,.5) 55%, rgba(11,18,32,.25) 100%), var(--gl-stadium-photo); background-position: center; background-size: cover; color: #fff; padding-top: calc(56px + env(safe-area-inset-top)); }
+.at-stadium-inner { margin: 0 auto; max-width: 1080px; padding: 4px 16px 26px; }
+.at-stadium .bds-discover-tabs { margin: 10px 0 0; }
+.at-eyebrow { background: rgba(22,224,110,.16); border: 1px solid rgba(22,224,110,.55); border-radius: 999px; color: #fff; display: inline-block; font: 600 13px var(--gl-font); margin: 18px 0 0; padding: 4px 12px; }
+.at-title { font: 700 clamp(30px, 8vw, 46px)/1.15 var(--gl-font); margin: 10px 0 0; text-shadow: 0 4px 24px rgba(0,0,0,.35); }
+.at-intro { color: rgba(255,255,255,.92); font-size: 15px; line-height: 1.55; margin: 6px 0 0; max-width: 560px; text-shadow: 0 2px 10px rgba(0,0,0,.35); }
+
+/* Filters: a glass search bar and three glass selects. */
+.at-filters { display: flex; flex-direction: column; gap: 8px; margin: 0 auto; max-width: 1080px; padding: 16px 16px 0; }
+.at-search { align-items: center; background: rgba(255,255,255,.9); border: 1px solid rgba(255,255,255,.75); border-radius: 999px; box-shadow: 0 6px 18px rgba(11,18,32,.08); color: var(--gl-text-2); display: flex; gap: 8px; min-height: 46px; padding: 0 16px; }
+.at-search:focus-within { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
+.at-search input { background: transparent; border: 0; color: var(--gl-navy); flex: 1; font: 500 15px var(--gl-font); min-width: 0; outline: none; }
+.at-search input::placeholder { color: var(--gl-text-2); }
+.at-selects { align-items: center; display: grid; gap: 7px; grid-template-columns: 24px repeat(3, minmax(0, 1fr)); }
+.at-selects > svg { color: var(--gl-navy); }
+.at-select { -webkit-appearance: none; appearance: none; background: rgba(255,255,255,.9) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230B1220' stroke-width='3'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center; border: 1px solid rgba(255,255,255,.75); border-radius: 999px; box-shadow: 0 6px 18px rgba(11,18,32,.08); color: var(--gl-navy); font: 600 13.5px var(--gl-font); min-height: 46px; min-width: 0; padding: 0 28px 0 14px; }
+.at-select:focus-visible { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
+
+.at-wrap { margin: 0 auto; max-width: 1080px; padding: 18px 16px 8px; }
+.at-head { align-items: baseline; display: flex; justify-content: space-between; margin: 0 4px 12px; }
+.at-head h2 { color: var(--gl-navy); font: 700 18px var(--gl-font); margin: 0; }
+.at-head span { color: var(--gl-text-2); font-size: 13px; }
+
+.at-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+.at-card { border-radius: 20px; box-shadow: 0 10px 26px rgba(11,18,32,.08); color: inherit; display: flex; flex-direction: column; min-width: 0; overflow: hidden; text-decoration: none; transition: transform .2s, box-shadow .2s; }
+.at-card:hover { box-shadow: 0 16px 32px rgba(11,18,32,.14); transform: translateY(-3px); }
+.at-card:focus-visible { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
+.at-photo { align-items: center; background: linear-gradient(160deg, #E8F9EE, #CFE8D2) center top / cover no-repeat; color: var(--gl-green-ink); display: flex; height: 148px; justify-content: center; position: relative; }
+.at-pos { background: var(--gl-navy); border-radius: 999px; color: #fff; font: 700 11px var(--gl-font); left: 10px; padding: 3px 9px; position: absolute; top: 10px; }
+.at-verified { align-items: center; background: var(--gl-green-ink); border-radius: 50%; color: #fff; display: flex; height: 26px; justify-content: center; position: absolute; right: 10px; top: 10px; width: 26px; }
+.at-body { display: flex; flex-direction: column; gap: 4px; padding: 12px 12px 12px; }
+.at-name { color: var(--gl-navy); font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.at-line { align-items: center; color: var(--gl-text-2); display: flex; font-size: 12px; gap: 5px; min-width: 0; }
+.at-line svg { flex: none; }
+.at-line span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.at-power { align-items: baseline; border-top: 1px solid rgba(11,18,32,.08); display: flex; justify-content: space-between; margin-top: 6px; padding-top: 8px; }
+.at-power small { color: var(--gl-text-2); font-size: 11.5px; }
+.at-power b { color: var(--gl-green-ink); font: 700 18px var(--gl-font); font-variant-numeric: tabular-nums; }
+.at-power b.is-none { color: var(--gl-text-2); font-size: 12px; font-weight: 600; }
+
+.at-empty { align-items: center; border-radius: 20px; color: var(--gl-text-2); display: flex; flex-direction: column; gap: 8px; padding: 44px 20px; text-align: center; }
+.at-empty svg { color: var(--gl-green-ink); }
+.at-empty p { font-size: 14px; margin: 0; }
+
+/* On a phone the three selects take the whole row; the filter icon is only decoration. */
+@media (max-width: 899px) { .at-selects { grid-template-columns: repeat(3, minmax(0, 1fr)); } .at-selects > svg { display: none; } .at-select { font-size: 13px; padding: 0 24px 0 12px; background-position: right 10px center; } }
+@media (min-width: 900px) {
+  .at-stadium-inner { padding: 8px 24px 34px; }
+  .at-filters { align-items: center; flex-direction: row; padding: 22px 24px 0; }
+  .at-search { flex: 1 1 0; }
+  .at-selects { flex: 0 0 520px; }
+  .at-wrap { padding: 22px 24px 8px; }
+  .at-grid { gap: 16px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { .at-card { transition: none; } .at-card:hover { transform: none; } }

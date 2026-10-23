@@ -8,6 +8,9 @@ import DiscoverTabs from '@/components/DiscoverTabs'
 import Pagination from '@/components/Pagination'
 import { parsePage } from '@/lib/pagination'
 import { fetchHallPage } from '@/lib/public-hall'
+import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
+import '../glass.css'
+import './hall.css'
 
 type HallEntry = {
   id: string
@@ -23,6 +26,9 @@ type HallEntry = {
   image_url: string | null
   citation: string
 }
+
+// /hall-of-fame on the light glass design (ADR-014): its own header and honour cards stay,
+// over the stadium photo and the blurred grass (app/hall-of-fame/hall.css).
 
 // Labels come from messages (hallPage.category.*); this holds only the icon and colour.
 const categoryCopy: Record<HallEntry['category'], { icon: typeof Trophy; color: string }> = {
@@ -62,7 +68,7 @@ export default async function HallOfFamePage(
     return `/hall-of-fame${params.size ? `?${params.toString()}` : ''}`
   }
 
-  return <main className="hall-page">
+  return <main className="hall-page gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.hallOfFame)}>
     <header className="hall-header"><Link href="/" className="hall-logo"><Trophy size={19} /> BallDoenSai.com</Link><Link href="/ranking" className="hall-ranking-link">{t('rankingLink')}</Link></header>
     <section className="hall-hero"><div className="hall-hero-orbit" /><div><span>{t('eyebrow')}</span><h1>{t('title')}<br /><em>{t('titleEm')}</em></h1><p>{t('intro')}</p></div><div className="hall-season"><small>{t('season')}</small><b>{season}</b></div></section>
     <DiscoverTabs current="/hall-of-fame" />
@@ -78,7 +84,7 @@ export default async function HallOfFamePage(
         const copy = categoryCopy[entry.category]
         const Icon = copy.icon
         const profileHref = entry.player_rank_id ? `/players/${entry.player_rank_id}` : entry.athlete_id ? `/players/${entry.athlete_id}` : null
-        const content = <article className="hall-entry"><div className="hall-entry-glow" style={{ background: copy.color }} /><div className="hall-entry-top"><span style={{ color: copy.color }}><Icon size={15} /> {t(`category.${entry.category}`)}</span><small>{ageLabel(entry.age_group)} · {entry.season}</small></div><div className="hall-entry-avatar" style={entry.image_url ? { backgroundImage: `url(${entry.image_url})` } : undefined}><Icon size={50} /></div><h2>{entry.athlete_name}</h2><p>{[entry.position, entry.team_name, entry.province].filter(Boolean).join(' · ')}</p><blockquote>“{entry.citation}”</blockquote><footer>{t('honour')}</footer></article>
+        const content = <article className="hall-entry"><div className="hall-entry-glow" style={{ background: copy.color }} /><div className="hall-entry-top"><span><Icon size={15} style={{ color: copy.color }} aria-hidden="true" /> {t(`category.${entry.category}`)}</span><small>{ageLabel(entry.age_group)} · {entry.season}</small></div><div className="hall-entry-avatar" style={entry.image_url ? { backgroundImage: `url(${entry.image_url})` } : undefined}><Icon size={50} /></div><h2>{entry.athlete_name}</h2><p>{[entry.position, entry.team_name, entry.province].filter(Boolean).join(' · ')}</p><blockquote>“{entry.citation}”</blockquote><footer>{t('honour')}</footer></article>
         return profileHref ? <Link className="hall-entry-link" href={profileHref} key={entry.id}>{content}</Link> : <div className="hall-entry-link" key={entry.id}>{content}</div>
       })}</div> : <div className="hall-empty"><Award size={38} /><h2>{t('emptyTitle')}</h2><p>{t('emptyBody')}</p><Link href="/ranking">{t('emptyAction')}</Link></div>}
       <Pagination basePath="/hall-of-fame" page={page} hasNext={hasNext} params={{ ...(searchParams.season ? { season } : {}), category, age, province }} />

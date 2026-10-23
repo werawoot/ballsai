@@ -26,6 +26,8 @@ import { trainingHasPrimary, trainingHome } from '@/lib/training/home'
 import { homeKind, type HomeKind } from '@/lib/role-home'
 import { loadRoleHome } from '@/lib/role-home-data'
 import type messagesTh from '@/messages/th.json'
+import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
+import '../glass.css'
 import './profile.css'
 import { fetchMyTeamMemberships } from '@/lib/my-team-memberships'
 
@@ -167,7 +169,7 @@ export default async function ProfilePage() {
   const stepTag = (item: ReadinessItem) => item.done ? t('readiness.statusDone') : item.key === readiness?.next?.key ? t('readiness.next') : item.blocked ? '' : <span className="pf-sr">{t('readiness.statusTodo')}</span>
 
   return (
-    <main className="pf">
+    <main className="pf gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profile)}>
       <PageHeader eyebrow={t('eyebrow')} />
       <div className="pf-shell">
         <aside className="pf-aside">
