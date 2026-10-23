@@ -4,7 +4,9 @@ import { NextIntlClientProvider, createTranslator } from 'next-intl'
 import { describe, expect, it, vi } from 'vitest'
 import th from '@/messages/th.json'
 
-const db = vi.hoisted(() => ({ persona: 'guardian' as string | null, events: null as Record<string, unknown>[] | null, news: null as Record<string, unknown>[] | null, plans: null as Record<string, unknown>[] | null, notes: null as Record<string, unknown>[] | null, minutes: null as Record<string, unknown>[] | null, staff: null as Record<string, unknown>[] | null }))
+const db = vi.hoisted(() => ({ persona: 'guardian' as string | null, events: null as Record<string, unknown>[] | null, news: null as Record<string, unknown>[] | null, plans: null as Record<string, unknown>[] | null, notes: null as Record<string, unknown>[] | null, minutes: null as Record<string, unknown>[] | null, staff: null as Record<string, unknown>[] | null,
+  // my_team_hub (sql/92): null while missing, so the page calls the functions it wraps.
+  hub: null as Record<string, unknown> | null }))
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
@@ -16,6 +18,7 @@ function fakeClient() {
   // my_upcoming_team_events (sql/70) and my_team_announcements (sql/71): missing until
   // the file is applied, unless a test seeds rows.
   const rpc = async (name: string) => {
+    if (name === 'my_team_hub') return db.hub ? { data: db.hub, error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } }
     const rows = ({ my_upcoming_team_events: db.events, my_team_announcements: db.news, my_team_training_plans: db.plans, my_coach_notes: db.notes, my_match_minutes: db.minutes, my_team_staff: db.staff } as Record<string, Record<string, unknown>[] | null>)[name] ?? null
     return rows ? { data: rows, error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } }
   }
@@ -82,6 +85,19 @@ describe('/guardian team events (sql/70)', () => {
     expect(html).toContain('นัดกระชับมิตร')
     expect(html).toContain('สำหรับ ปาล์ม')
     expect(html).toContain(th.teamEvents.yes)
+  })
+
+  it('reads the same event and news through my_team_hub once sql/92 is applied', async () => {
+    db.persona = 'guardian'
+    db.hub = {
+      events: [{ event_id: 'e1', team_id: 't1', team_name: 'ขอนแก่น U13', kind: 'match', title: 'นัดกระชับมิตร', starts_at: '2026-10-18T02:00:00Z', location: null, note: null, athlete_id: 'child', athlete_name: 'ปาล์ม', answer: null }],
+      news: [{ id: 'n1', team_name: 'ขอนแก่น U13', body: 'งดซ้อมวันเสาร์ ฝนตก', created_at: '2026-10-12T09:00:00Z', read_at: null }],
+    }
+    const html = await render(GuardianPage as () => Promise<ReactElement>)
+    db.hub = null
+    expect(html).toContain('นัดกระชับมิตร')
+    expect(html).toContain('สำหรับ ปาล์ม')
+    expect(html).toContain('งดซ้อมวันเสาร์ ฝนตก')
   })
 
   it('shows no event section before SQL70 is applied', async () => {
