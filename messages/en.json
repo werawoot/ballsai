@@ -2029,7 +2029,7 @@
     "facebook": "Continue with Facebook",
     "facebookLoading": "Taking you to Facebook...",
     "next": "Next: tell us whether you are an athlete, a parent, a coach or an organizer, and start right away.",
-    "lead": "Results the organizer confirms become your player card, your Power Rating and your rank across Thailand",
+    "lead": "A youth sports data platform to develop athletes, build a record and open the way ahead",
     "adminEyebrow": "Admins only",
     "consentNeeded": "Tick the box above first, then press the button again.",
     "tabSignIn": "Sign in",
@@ -2042,7 +2042,41 @@
     "slogan1": "Every match",
     "slogan2": "opens a door",
     "slogan3": "for Thai youth",
-    "orSignUpWith": "or sign up with"
+    "orSignUpWith": "or sign up with",
+    "journey": {
+      "label": "Where every match can take you",
+      "play": "Play",
+      "verified": "Result verified",
+      "card": "Athlete card",
+      "rank": "National ranking",
+      "hall": "Hall of Fame"
+    },
+    "sports": {
+      "label": "Sports",
+      "soon": "soon",
+      "note": "Starting with football and futsal · more sports to follow",
+      "football": "Football",
+      "futsal": "Futsal",
+      "basketball": "Basketball",
+      "volleyball": "Volleyball",
+      "athletics": "Athletics",
+      "swimming": "Swimming",
+      "badminton": "Badminton",
+      "tennis": "Tennis",
+      "boxing": "Boxing",
+      "open": "open",
+      "more": "More sports to come"
+    },
+    "stats": {
+      "athletes": "Rated athletes",
+      "tournaments": "Tournaments",
+      "results": "Verified results",
+      "provinces": "Open to every province",
+      "sports": "Sports open now",
+      "roles": "Roles to sign up as",
+      "fee": "Sign-up fee",
+      "free": "Free"
+    }
   },
   "guardianPage": {
     "title": "Link to your child’s account",

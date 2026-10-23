@@ -8,6 +8,7 @@ import en from '@/messages/en.json'
 vi.mock('@/lib/supabase', () => ({ createClient: () => ({}) }))
 // The language switch on the photo half (owner's design, 23 Oct 2026) uses the app router.
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: () => {}, refresh: () => {} }), usePathname: () => '/login' }))
+vi.mock('next/font/google', () => ({ Kaushan_Script: () => ({ className: 'font-script' }) }))
 import LoginPanel from '@/app/login/LoginPanel'
 import { LoginConsent } from '@/app/login/LoginConsent'
 import { readFileSync } from 'node:fs'
@@ -169,5 +170,52 @@ describe('/login consent row on each screen that signs in', () => {
     expect(html).toContain('id="login-consent"')
     expect(html).toContain('role="alert"')
     expect(html).toContain('aria-invalid="true"')
+  })
+})
+
+// Owner, 23 Oct 2026: the photo half shows where a match goes, and the sports. Only football
+// and futsal are open today, so the rest say "soon" and a line says the site starts there.
+describe('/login photo half: the journey and the sports', () => {
+  const page = text(render())
+  it('names the five steps from playing to the Hall of Fame', () => {
+    expect(page).toMatch(/ลงแข่ง[\s\S]*ผู้จัดยืนยันผล[\s\S]*การ์ดนักกีฬา[\s\S]*อันดับทั่วประเทศ[\s\S]*หอเกียรติยศ/)
+  })
+  it('marks only football and futsal as open and says the rest are coming', () => {
+    const html = render()
+    expect(html.match(/class="is-open[^"]*"/g)?.length).toBe(2)
+    expect(page).toContain('บาสเกตบอล เร็ว ๆ นี้')
+    expect(page).toContain('ฟุตบอล เปิดแล้ว')
+    expect(page).not.toContain('ฟุตบอล เร็ว ๆ นี้')
+    expect(page).toContain('เริ่มที่ฟุตบอลและฟุตซอล · กีฬาอื่นตามมา')
+  })
+  it('reads in English with the same honesty', () => {
+    const en = text(render('en'))
+    expect(en).toContain('Hall of Fame')
+    expect(en).toContain('Starting with football and futsal')
+  })
+})
+
+// Owner's desktop design, 23 Oct 2026: the stats bar carries only what the page was given
+// (real counts from lib/home-stats loginStats), and the picture is the owner's own.
+describe('/login stats bar and picture', () => {
+  const withStats = (stats: unknown[]) => text(renderToStaticMarkup(createElement(NextIntlClientProvider as ComponentType<never>, { locale: 'th', messages: th, timeZone: 'Asia/Bangkok' } as never,
+    createElement(LoginPanel as ComponentType<never>, { adminEntry: false, nextPath: '/profile', stats }))))
+  it('shows the provinces alone when that is all it was given, and no invented totals', () => {
+    const page = withStats([{ key: 'provinces', value: 77 }])
+    expect(page).toContain('เปิดให้ทุกจังหวัด 77')
+    expect(page).not.toMatch(/20K|500\+|1M/)
+    expect(page).not.toContain('นักกีฬาที่มีคะแนนฝีมือ')
+  })
+  it('shows the facts with the free sign-up as a word, not a zero', () => {
+    const page = withStats([{ key: 'sports', value: 2 }, { key: 'roles', value: 6 }, { key: 'fee', value: 0 }, { key: 'provinces', value: 77 }])
+    expect(page).toContain('กีฬาที่เปิดแล้ว 2')
+    expect(page).toContain('บทบาทที่สมัครได้ 6')
+    expect(page).toContain('ค่าสมัครใช้งาน ฟรี')
+  })
+  it('shows a real count it was given', () => {
+    expect(withStats([{ key: 'athletes', value: 1240 }, { key: 'provinces', value: 77 }])).toContain('นักกีฬาที่มีคะแนนฝีมือ 1,240')
+  })
+  it('uses the owner\'s picture, the only one allowed by the rule 7 exception', () => {
+    expect(render()).toContain('src="/photos/login-athletes-owner.webp"')
   })
 })

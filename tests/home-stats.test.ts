@@ -28,3 +28,28 @@ describe('the open count on the football chip', () => {
     expect(sportOpenCount(null)).toBeNull()
   })
 })
+
+// /login's stats bar (owner, 23 Oct 2026): always four boxes. Real counts come first, each
+// once past the home page's floor; the rest are facts that need no users: the sports open
+// today, the roles one can sign up as, the sign-up fee. The 77 provinces always close the bar.
+import { loginStats, OPEN_SPORTS, PROVINCE_COUNT } from '@/lib/home-stats'
+import { CHOICES } from '@/lib/onboarding'
+describe('the /login stats bar', () => {
+  it('fills four boxes with facts while the counts are small, the provinces last', () => {
+    expect(loginStats({ tournaments: 2, openTournaments: 1, athletes: 7, results: 3 })).toEqual([
+      { key: 'sports', value: 2 }, { key: 'roles', value: 6 }, { key: 'fee', value: 0 }, { key: 'provinces', value: 77 },
+    ])
+    expect(loginStats(null).map(stat => stat.key)).toEqual(['sports', 'roles', 'fee', 'provinces'])
+  })
+  it('takes its facts from the lists the site runs on, not from typed-in numbers', () => {
+    expect(PROVINCE_COUNT).toBe(77)
+    expect(OPEN_SPORTS).toEqual(['football', 'futsal'])
+    expect(loginStats(null).find(stat => stat.key === 'roles')?.value).toBe(CHOICES.length)
+  })
+  it('lets a real count take a fact\'s place once it passes its floor, never a failed one', () => {
+    expect(loginStats({ tournaments: 12, openTournaments: 0, athletes: 60, results: Number.NaN })).toEqual([
+      { key: 'athletes', value: 60 }, { key: 'tournaments', value: 12 }, { key: 'sports', value: 2 }, { key: 'provinces', value: 77 },
+    ])
+    expect(loginStats({ tournaments: 12, openTournaments: 0, athletes: 60, results: 25 }).map(stat => stat.key)).toEqual(['athletes', 'tournaments', 'results', 'provinces'])
+  })
+})

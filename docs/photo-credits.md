@@ -3,6 +3,9 @@
 Every photo the site shows that is not uploaded by a user. Rules: [ADR-014](decisions/ADR-014-light-glass-design-and-doensai-brand.md).
 Only licences that allow commercial use without payment (Unsplash Licence, Pexels Licence)
 or photos the owner took. No identifiable person, no child, no club crest or brand logo.
+One exception, the owner's decision of 23 Oct 2026 (AGENTS.md rule 7): the athletes image
+the owner made with an AI tool, beside the line on /login only (`LOGIN_ART`). It shows no
+real person and no brand mark, and is used nowhere else.
 
 `lib/stock-photos.ts` lists the files; `tests/stock-photos.test.ts` checks that every file
 listed there exists in `public/photos/` and has a row here.
@@ -16,7 +19,7 @@ listed there exists in `public/photos/` and has a row here.
 | `cover-penalty-arc.webp` | COVER_DETAILS | crop of photo-1556056504-5c7696c4c28d, penalty area and arc | as stadium-aerial-night.webp | Unsplash Licence | 21 Oct 2026 |
 | `head-seats-colour.webp` | PAGE_PHOTOS.tournaments (/tournaments head) | https://unsplash.com/photos/a-row-of-empty-seats-in-a-stadium-GSe24RLE1Fs (photo-1646801479598-6a00891d2039, empty coloured seats; 1600×640) | Nico Smit (@nicosmit99) | Unsplash Licence | 22 Oct 2026 |
 | `head-net-dark.webp` | PAGE_PHOTOS.tournament (/tournaments/[id] head; a net, not a place) | https://unsplash.com/photos/close-up-of-a-soccer-goal-net-against-black-background-2EbwO2RaKA8 (photo-1758934217889-1aec468a2d4d) | Sebastian Schuster (@sschusterphotoart) | Unsplash Licence | 22 Oct 2026 |
-| `page-floodlights.webp` | PAGE_PHOTOS.login (/login) | https://unsplash.com/photos/two-stadium-lights-against-a-clear-blue-sky-Dn4hT9Y1Gn0 (photo-1760800954391-c0975e57d0bf; 1600×1000) | Linus Belanger (@linusbelanger) | Unsplash Licence | 22 Oct 2026 |
+| `page-floodlights.webp` | was PAGE_PHOTOS.login (/login) until 23 Oct 2026; no longer shown, file removed | https://unsplash.com/photos/two-stadium-lights-against-a-clear-blue-sky-Dn4hT9Y1Gn0 (photo-1760800954391-c0975e57d0bf; 1600×1000) | Linus Belanger (@linusbelanger) | Unsplash Licence | 22 Oct 2026 |
 | `page-net-sunset.webp` | PAGE_PHOTOS.welcome (/welcome) | https://unsplash.com/photos/Caw5BPLZahc (photo-1558297462-bf13bfc9fad2, a torn net at sunset, Märsta; 1600×1000) | Alex (@alexdphotography) | Unsplash Licence | 22 Oct 2026 |
 | `head-pitch-above.webp` | PAGE_PHOTOS.ranking (/ranking head) | https://unsplash.com/photos/an-aerial-view-of-a-soccer-field-from-above-JLt9G7435Qk (photo-1723231462004-069caa209740; cropped to leave out a lettered wall) | Bernd Dittrich (@hdbernd) | Unsplash Licence | 22 Oct 2026 |
 | `head-pitch-lines.webp` | PAGE_PHOTOS.athletes (/athletes head) | https://unsplash.com/photos/green-grass-field-with-white-paint-HTbSPSZ0Hsk (photo-1507602368706-321eeafaf53b, two white lines on grass; softened slightly) | Dan Gold (@danielcgold) | Unsplash Licence | 22 Oct 2026 |
@@ -28,6 +31,13 @@ listed there exists in `public/photos/` and has a row here.
 | `head-fence-sunrise.webp` | PAGE_PHOTOS.join (/join/[token] head) | https://www.pexels.com/photo/sunrise-over-empty-soccer-field-with-trees-29741193/ (sunrise through a fence over an empty pitch; cropped) | Alexander Mass | Pexels Licence | 23 Oct 2026 |
 | `head-floodlight-pair.webp` | PAGE_PHOTOS.notifications (/notifications head) | https://www.pexels.com/photo/two-football-stadium-lights-776805/ (two floodlight frames against a pale sky, empty seats below) | Toni Cuenca | Pexels Licence | 23 Oct 2026 |
 | `head-pitch-floodlit.webp` | PAGE_PHOTOS.matchPlan (/match-plan head) | https://www.pexels.com/photo/green-football-field-399187/ (an empty artificial pitch under two floodlights at night, Norrtälje; cropped 1600×640, no people, no signage) | Jonathan Petersson (@grizzlybear) | Pexels Licence | 23 Oct 2026 |
+| `login-athletes-owner.webp` | LOGIN_ART (/login, beside the line; the only exception to rule 7) | Made by the owner with an AI image tool and handed over in the session of 23 Oct 2026 (athletes of several sports in a stadium; a second version with no brand mark on any shirt) | The owner | The owner's own image; no real person | 23 Oct 2026 |
+| `page-login-scene.webp` | PAGE_PHOTOS.login (/login background, from 23 Oct 2026) | Made for this page: the two top corners of `login-athletes-owner.webp` (stadium lights and stands only, no person), enlarged and blurred, over grass up close from https://www.pexels.com/photo/green-grass-across-beige-red-open-sports-stadium-during-daytime-61143/ (the grass part only) | The owner (corners); Juan Salamanca (@jsalamanca), grass | The owner's own image; Pexels Licence | 23 Oct 2026 |
+| `tile-football.webp` | SPORT_TILES.football (/login sport tile) | https://www.pexels.com/photo/soccer-ball-on-green-field-at-sunset-38275739/ (a plain worn ball by a white line, no mark) | Jomon Kollannoor (@jomon-kollannoor-337112572) | Pexels Licence | 23 Oct 2026 |
+| `tile-basketball.webp` | SPORT_TILES.basketball | https://www.pexels.com/photo/close-up-photo-of-a-basketball-7201551/ (cropped to the seams, leaving out the maker's print at the edge) | cottonbro studio (@cottonbro) | Pexels Licence | 23 Oct 2026 |
+| `tile-volleyball.webp` | SPORT_TILES.volleyball | https://www.pexels.com/photo/indoor-volleyball-on-a-court-line-32602955/ | Critical Smith (@criticalimagery) | Pexels Licence | 23 Oct 2026 |
+| `tile-tennis.webp` | SPORT_TILES.tennis | https://www.pexels.com/photo/tennis-ball-on-clay-court-close-up-38380408/ | Daniel Neves Cotta (@afterdark) | Pexels Licence | 23 Oct 2026 |
+| `tile-badminton.webp` | SPORT_TILES.badminton | https://www.pexels.com/photo/shuttlecocks-on-the-floor-7438726/ (three plain shuttlecocks) | Saif71.com (@saif71) | Pexels Licence | 23 Oct 2026 |
 
 Checked and left out on 21 Oct 2026: photos with people, the FIFA World Cup trophy (a trade
 mark), balls and boots with a readable Nike or Adidas mark, and photo-1510051640316 (a goal

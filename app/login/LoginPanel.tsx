@@ -9,11 +9,13 @@ import { OTP_MAX_LENGTH, canSubmitOtp, otpSlotCount, normalizeEmail, normalizeOt
 import { captchaSiteKey, withCaptcha } from "@/lib/captcha";
 import { OtpHelp } from "./OtpHelp";
 import { LoginConsent } from "./LoginConsent";
+import { LoginJourney } from "./LoginJourney";
+import type { LoginStat } from "@/lib/home-stats";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import BrandMark from "@/components/BrandMark";
 import LanguageSwitch from "@/components/LanguageSwitch";
 import GoogleLogo from "@/components/GoogleLogo";
-import { PAGE_PHOTOS } from "@/lib/stock-photos";
+import { LOGIN_ART, PAGE_PHOTOS } from "@/lib/stock-photos";
 import "../glass.css";
 import "./login.css";
 
@@ -24,7 +26,7 @@ type LoginStep = "start" | "otp" | "admin";
 
 const consentText = <>ฉันยอมรับ <Link href="/terms">ข้อกำหนดการใช้งาน</Link> และ <Link href="/privacy">นโยบายความเป็นส่วนตัว (PDPA)</Link></>;
 
-export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boolean; nextPath: string }) {
+export default function LoginPanel({ adminEntry, nextPath, stats = [] }: { adminEntry: boolean; nextPath: string; stats?: LoginStat[] }) {
   const [step, setStep] = useState<LoginStep>(adminEntry ? "admin" : "start");
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -185,7 +187,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
   const otpSlots = otpSlotCount(otp.length);
 
   return (
-    <main className="lg gl" style={{ "--gl-stadium-photo": `url(${PAGE_PHOTOS.login.src})` } as React.CSSProperties}>
+    <main className="lg gl" style={{ "--gl-stadium-photo": `url(${PAGE_PHOTOS.login.src})`, "--lg-art": `url(${LOGIN_ART.src})` } as React.CSSProperties}>
       <div className="lg-shell">
         <section className="lg-hero">
           <div className="lg-hero-bar"><LanguageSwitch /></div>
@@ -194,6 +196,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
           <div className="lg-hero-copy">
             <p className="ui-hero">{tp("slogan1")}<br /><em>{tp("slogan2")}</em><br />{tp("slogan3")}</p>
             <p className="lg-lead">{tp("lead")}</p>
+            <LoginJourney stats={stats} />
           </div>
         </section>
 
@@ -215,6 +218,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
               {captcha}
               <button className="ui-btn ui-btn-primary" disabled={loading || !email || captchaMissing} onClick={() => sendOtp()} type="button">{loading ? tp("sending") : tp("email")}<ChevronRight size={18} /></button>
               <p className="lg-or"><span>{mode === "signup" ? tp("orSignUpWith") : tp("orWith")}</span></p>
+              <div className="lg-socials">
               <button className="ui-btn ui-btn-white" disabled={loading} onClick={signInWithGoogle} type="button">
                 <GoogleLogo className="lg-google" />
                 {loading ? tp("googleLoading") : tp("google")}
@@ -222,6 +226,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
               <button className="ui-btn ui-btn-white lg-facebook" disabled={loading} onClick={signInWithFacebook} type="button">
                 <Facebook size={18} fill="currentColor" aria-hidden="true" /> {loading ? tp("facebookLoading") : tp("facebook")}
               </button>
+              </div>
               <p className="lg-next">{tp("next")}</p>
               <p className="lg-trust"><Shield size={15} /> ข้อมูลเด็กเปิดเผยได้เมื่อผู้ปกครองยินยอมเท่านั้น · ไม่ต้องตั้งรหัสผ่าน</p>
             </>

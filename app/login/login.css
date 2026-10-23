@@ -79,7 +79,7 @@ body:has(.lg) { background: var(--gl-pitch); }
 .lg-message { background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 14px; color: #991B1B; font-size: 14px; line-height: 1.5; margin: 4px 0 0; padding: 11px 14px; }
 
 @media (min-width: 900px) {
-  .lg-shell { display: grid; gap: 56px; grid-template-columns: minmax(0, 1.1fr) minmax(400px, .9fr); padding: 32px 40px; }
+  .lg-shell { display: grid; gap: 48px; grid-template-columns: minmax(0, 1.25fr) minmax(400px, .75fr); max-width: 1320px; padding: 32px 40px; }
   .lg-hero { padding: 8px 0 0; }
   .lg-hero-copy { display: block; margin-top: 90px; padding-right: 0; }
   .lg-hero .ui-hero { font-size: 58px; }
@@ -131,3 +131,84 @@ body:has(.lg) { background: var(--gl-pitch); }
   .lg-hero .ui-hero { font-size: 58px; line-height: 1.15; }
   .lg-hero .lg-lead { display: block; }
 }
+
+/* The photo half (LoginJourney), owner's design of 23 Oct 2026.
+   Phone: the owner's athletes picture behind the brand and the line, the handwritten "More
+   Than a Game", five steps from playing to the Hall of Fame lit one after another, and the
+   note that the site starts with football and futsal.
+   Wide screen: the picture large beside the line, the stats bar (real counts only) and the
+   sport tiles: the first row each ball on its own surface, the second line icons, a green
+   glow walking from tile to tile; football and futsal keep a green edge as the open ones.
+   Without motion every step is simply lit and nothing moves. */
+.lg-story { margin: 14px auto 0; max-width: 460px; }
+.lg-art, .lg-stats, .lg-sports { display: none; }
+.lg-tagline { color: #fff; font-size: 26px; margin: 4px 0 0; text-align: center; text-shadow: 0 4px 18px rgba(0,0,0,.5); transform: rotate(-4deg); }
+.lg-tagline::after { background: linear-gradient(90deg, var(--gl-green), rgba(22,224,110,0)); border-radius: 2px; content: ''; display: block; height: 3px; margin: 2px auto 0; width: 150px; }
+.lg-journey { display: grid; gap: 4px; grid-template-columns: repeat(5, minmax(0, 1fr)); list-style: none; margin: 14px 0 0; padding: 0; }
+.lg-journey li { align-items: center; display: flex; flex-direction: column; gap: 6px; position: relative; text-align: center; }
+.lg-journey li + li::before { background: rgba(255,255,255,.28); content: ''; height: 2px; left: calc(-50% + 22px); position: absolute; right: calc(50% + 22px); top: 19px; }
+.lg-journey-icon { align-items: center; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.4); border-radius: 50%; color: #fff; display: flex; height: 40px; justify-content: center; width: 40px; }
+.lg-journey-text { color: rgba(255,255,255,.9); font-size: 11.5px; font-weight: 600; line-height: 1.3; text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+.lg-sports-note { color: rgba(255,255,255,.82); font-size: 12.5px; margin: 10px 0 0; text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+/* Google and Facebook side by side when there is room, each on its own line when not. */
+.lg-socials { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); }
+.lg-socials .ui-btn { font-size: 15px; gap: 8px; padding: 0 10px; white-space: nowrap; width: 100%; }
+/* "Continue with Facebook" is too long to share a row with Google: one button per row. */
+.lg-socials:lang(en) { grid-template-columns: 1fr; }
+
+@media (max-width: 899px) {
+  .lg-hero { background: linear-gradient(180deg, rgba(11,18,32,.55) 0%, rgba(11,18,32,.35) 40%, rgba(11,18,32,.9) 100%), var(--lg-art) center 25% / cover no-repeat; }
+}
+
+@media (min-width: 900px) {
+  .lg-hero-copy { isolation: isolate; margin-top: 56px; position: relative; }
+  .lg-hero .ui-hero { max-width: 420px; }
+  .lg-hero .lg-lead { max-width: 380px; }
+  .lg-story { margin: 18px 0 0; max-width: none; }
+  .lg-art { display: block; height: auto; -webkit-mask-composite: source-in; -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 80%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 14%, #000 70%, transparent 100%); mask-composite: intersect; mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 80%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 14%, #000 70%, transparent 100%); pointer-events: none; position: absolute; right: -70px; top: -110px; width: min(720px, 62vw); z-index: -1; }
+  .lg-tagline { font-size: 32px; text-align: left; }
+  .lg-tagline::after { margin: 2px 0 0; }
+  .lg-journey { display: none; }
+  .lg-sports-note { text-align: left; }
+
+  .lg-stats { -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); background: rgba(11,18,32,.55); border: 1px solid rgba(255,255,255,.14); border-radius: 18px; display: grid; grid-auto-columns: minmax(0, auto); grid-auto-flow: column; margin: 22px 0 0; max-width: 100%; padding: 14px 6px; width: fit-content; }
+  .lg-stats > div { align-items: center; border-left: 1px solid rgba(255,255,255,.12); column-gap: 10px; display: grid; grid-template-columns: auto 1fr; padding: 0 14px; }
+  .lg-stats > div:first-child { border-left: 0; }
+  .lg-stats svg { color: var(--gl-green); grid-row: span 2; }
+  .lg-stats dt { color: rgba(255,255,255,.75); font-size: 12px; }
+  .lg-stats dd { color: #fff; font: 700 26px/1.1 var(--gl-font); margin: 0; }
+
+  .lg-sports { display: grid; gap: 10px; grid-template-columns: repeat(5, minmax(0, 1fr)); list-style: none; margin: 14px 0 0; padding: 0; }
+  .lg-sports li { align-items: center; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); background: rgba(11,18,32,.5); border: 1px solid rgba(255,255,255,.12); border-radius: 16px; color: #fff; display: flex; flex-direction: column; font-size: 13px; gap: 4px; justify-content: center; min-height: 104px; overflow: hidden; padding: 10px 6px; position: relative; text-align: center; }
+  .lg-sports li > span { font-size: 14px; font-weight: 700; }
+  .lg-sports li svg { color: rgba(255,255,255,.8); }
+  .lg-sports li small { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); background: rgba(11,18,32,.55); border-radius: 999px; color: rgba(255,255,255,.7); font-size: 11px; font-weight: 600; padding: 2px 8px; position: absolute; right: 6px; top: 6px; }
+  .lg-sports li.has-photo { background: linear-gradient(180deg, rgba(11,18,32,0) 30%, rgba(11,18,32,.88) 100%), var(--tile) center / cover no-repeat; justify-content: flex-end; padding-bottom: 10px; }
+  .lg-sports li.has-photo > span { text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+  .lg-sports li.is-open { border: 2px solid var(--gl-green); box-shadow: 0 0 22px rgba(22,224,110,.3); }
+  .lg-sports li.is-open:not(.has-photo) { background: rgba(22,224,110,.16); }
+  .lg-sports li.is-open svg, .lg-sports li.is-more svg { color: var(--gl-green); }
+  .lg-sports li.is-open small { background: var(--gl-green); color: var(--gl-navy); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lg-journey-icon { animation: lg-step 8s ease-in-out infinite; animation-delay: calc(var(--i) * 1.6s); }
+}
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .lg-sports li { animation: lg-tile-glow 10s ease-in-out infinite; animation-delay: calc(var(--i) * 1s); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lg-journey-icon { background: rgba(22,224,110,.22); border-color: var(--gl-green); }
+}
+@keyframes lg-step {
+  0%, 22%, 100% { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.4); box-shadow: none; color: #fff; transform: none; }
+  6%, 16% { background: var(--gl-green); border-color: var(--gl-green); box-shadow: 0 0 0 6px rgba(22,224,110,.22), 0 8px 22px rgba(22,224,110,.45); color: var(--gl-navy); transform: scale(1.1); }
+}
+@keyframes lg-tile-glow {
+  0%, 9%, 100% { transform: none; }
+  3%, 6% { box-shadow: 0 0 0 2px var(--gl-green), 0 12px 28px rgba(22,224,110,.45); transform: translateY(-5px) scale(1.04); }
+}
+
+/* The page's own scene (owner, 23 Oct 2026): a lighter wash, so the stadium light and the
+   grass of the background show, as in the design; the text keeps its shadow. */
+.lg { background-image: linear-gradient(110deg, rgba(11,18,32,.72) 0%, rgba(11,18,32,.35) 55%, rgba(11,18,32,.25) 100%), var(--gl-stadium-photo); }
