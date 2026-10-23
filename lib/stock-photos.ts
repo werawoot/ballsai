@@ -30,7 +30,8 @@ export type PhotoPage = 'tournaments' | 'tournament' | 'login' | 'welcome' | 'ra
 export const PAGE_PHOTOS: Readonly<Record<PhotoPage, StockPhoto>> = {
   tournaments: { src: '/photos/head-seats-colour.webp', credit: unsplash('Nico Smit', '1646801479598-6a00891d2039') },
   tournament: { src: '/photos/head-net-dark.webp', credit: unsplash('Sebastian Schuster', '1758934217889-1aec468a2d4d') },
-  login: { src: '/photos/page-floodlights.webp', credit: unsplash('Linus Belanger', '1760800954391-c0975e57d0bf') },
+  // Grass up close with the stands blurred behind (owner, 23 Oct 2026: "พื้นหญ้า"); replaced the floodlights.
+  login: { src: '/photos/page-grass-stands.webp', credit: pexels('Juan Salamanca', '61143') },
   welcome: { src: '/photos/page-net-sunset.webp', credit: unsplash('Alex (alexdphotography)', '1558297462-bf13bfc9fad2') },
   ranking: { src: '/photos/head-pitch-above.webp', credit: unsplash('Bernd Dittrich', '1723231462004-069caa209740') },
   athletes: { src: '/photos/head-pitch-lines.webp', credit: unsplash('Dan Gold', '1507602368706-321eeafaf53b') },
@@ -49,6 +50,17 @@ export const PAGE_PHOTOS: Readonly<Record<PhotoPage, StockPhoto>> = {
 // no brand mark, beside the line on /login only. Nowhere else, and never a stand-in for an
 // athlete, a team or a venue.
 export const LOGIN_ART: StockPhoto = { src: '/photos/login-athletes-owner.webp', credit: 'Made by the owner with an AI image tool, 23 Oct 2026' }
+
+// The sport tiles on /login (owner, 23 Oct 2026): the ball or shuttle of each sport on its
+// own surface. No person, and none with a readable brand, crest or maker's mark (cropped
+// where one sat at an edge).
+export const SPORT_TILES = {
+  football: { src: '/photos/tile-football.webp', credit: pexels('Jomon Kollannoor', '38275739') },
+  basketball: { src: '/photos/tile-basketball.webp', credit: pexels('cottonbro studio', '7201551') },
+  volleyball: { src: '/photos/tile-volleyball.webp', credit: pexels('Critical Smith', '32602955') },
+  tennis: { src: '/photos/tile-tennis.webp', credit: pexels('Daniel Neves Cotta', '38380408') },
+  badminton: { src: '/photos/tile-badminton.webp', credit: pexels('Saif71.com', '7438726') },
+} as const satisfies Record<string, StockPhoto>
 
 // Behind the whole page, so glass cards have grass to show through: the same grass close-up
 // as a cover, blurred until no line or place can be made out.

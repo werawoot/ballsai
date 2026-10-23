@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Kaushan_Script } from "next/font/google";
 import { BadgeCheck, CirclePlus, ChartColumn, CircleDot, Feather, Flag, Footprints, Goal, HandFist, IdCard, MapPin, Target, TrendingUp, Trophy, Users, Volleyball, Waves, type LucideIcon } from "lucide-react";
-import { LOGIN_ART } from "@/lib/stock-photos";
+import { LOGIN_ART, SPORT_TILES } from "@/lib/stock-photos";
 import type { LoginStat } from "@/lib/home-stats";
 
 // The photo half of /login says what the site does with a match (owner, 23 Oct 2026). On a
@@ -12,11 +12,15 @@ import type { LoginStat } from "@/lib/home-stats";
 // "soon", with a line that says so (AGENTS.md rules 7 and 8).
 type Step = "play" | "verified" | "card" | "rank" | "hall";
 type Sport = "football" | "futsal" | "basketball" | "volleyball" | "tennis" | "badminton" | "athletics" | "swimming" | "boxing";
+type PhotoSport = keyof typeof SPORT_TILES;
 const STEPS: [Step, LucideIcon][] = [["play", Flag], ["verified", BadgeCheck], ["card", IdCard], ["rank", TrendingUp], ["hall", Trophy]];
+// As in the owner's design: the first row shows each ball on its own surface (SPORT_TILES,
+// licensed, no brand), the second row line icons. Futsal leads the second row: it is open.
 const SPORTS: [Sport, LucideIcon, boolean][] = [
-  ["football", Goal, true], ["futsal", Goal, true], ["basketball", CircleDot, false], ["volleyball", Volleyball, false], ["tennis", Target, false],
-  ["badminton", Feather, false], ["athletics", Footprints, false], ["swimming", Waves, false], ["boxing", HandFist, false],
+  ["football", Goal, true], ["basketball", CircleDot, false], ["volleyball", Volleyball, false], ["tennis", Target, false], ["badminton", Feather, false],
+  ["futsal", Goal, true], ["athletics", Footprints, false], ["swimming", Waves, false], ["boxing", HandFist, false],
 ];
+const tilePhoto = (sport: Sport) => (sport in SPORT_TILES ? SPORT_TILES[sport as PhotoSport].src : null);
 // The handwritten "More Than a Game" of the design; loaded on /login only.
 const script = Kaushan_Script({ weight: "400", subsets: ["latin"], display: "swap" });
 const STAT_ICONS: Record<LoginStat["key"], LucideIcon> = { athletes: Users, tournaments: Trophy, results: ChartColumn, provinces: MapPin };
@@ -45,12 +49,14 @@ export function LoginJourney({ stats }: { stats: LoginStat[] }) {
         })}
       </dl>
       <ul className="lg-sports" aria-label={ts("label")}>
-        {SPORTS.map(([key, Icon, open]) => (
-          <li key={key} className={open ? "is-open" : undefined}>
-            <Icon size={26} aria-hidden="true" /><span>{ts(key)}</span>{open ? <small>{ts("open")}</small> : <small>{ts("soon")}</small>}
-          </li>
-        ))}
-        <li className="is-more"><CirclePlus size={26} aria-hidden="true" /><span>{ts("more")}</span></li>
+        {SPORTS.map(([key, Icon, open], index) => {
+          const photo = tilePhoto(key);
+          return <li key={key} className={[open ? "is-open" : "", photo ? "has-photo" : ""].filter(Boolean).join(" ") || undefined}
+            style={{ "--i": index, ...(photo ? { "--tile": `url(${photo})` } : {}) } as React.CSSProperties}>
+            {!photo && <Icon size={30} aria-hidden="true" />}<span>{ts(key)}</span><small>{open ? ts("open") : ts("soon")}</small>
+          </li>;
+        })}
+        <li className="is-more" style={{ "--i": SPORTS.length } as React.CSSProperties}><CirclePlus size={30} aria-hidden="true" /><span>{ts("more")}</span></li>
       </ul>
       <p className="lg-sports-note">{ts("note")}</p>
     </div>

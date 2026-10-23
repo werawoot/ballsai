@@ -182,7 +182,7 @@ describe('/login photo half: the journey and the sports', () => {
   })
   it('marks only football and futsal as open and says the rest are coming', () => {
     const html = render()
-    expect(html.match(/class="is-open"/g)?.length).toBe(2)
+    expect(html.match(/class="is-open[^"]*"/g)?.length).toBe(2)
     expect(page).toContain('บาสเกตบอล เร็ว ๆ นี้')
     expect(page).toContain('ฟุตบอล เปิดแล้ว')
     expect(page).not.toContain('ฟุตบอล เร็ว ๆ นี้')

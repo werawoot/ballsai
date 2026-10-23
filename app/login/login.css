@@ -149,7 +149,6 @@ body:has(.lg) { background: var(--gl-pitch); }
 
 @media (prefers-reduced-motion: no-preference) {
   .lg-journey-icon { animation: lg-step 8s ease-in-out infinite; animation-delay: calc(var(--i) * 1.6s); }
-  .lg-sports li:not(.is-open) { animation: lg-drift 7s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -0.9s); }
 }
 @media (prefers-reduced-motion: reduce) {
   .lg-journey-icon { background: rgba(22,224,110,.22); border-color: var(--gl-green); }
@@ -158,7 +157,6 @@ body:has(.lg) { background: var(--gl-pitch); }
   0%, 22%, 100% { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.4); box-shadow: none; color: #fff; transform: none; }
   6%, 16% { background: var(--gl-green); border-color: var(--gl-green); box-shadow: 0 0 0 6px rgba(22,224,110,.22), 0 8px 22px rgba(22,224,110,.45); color: var(--gl-navy); transform: scale(1.1); }
 }
-@keyframes lg-drift { from { transform: translateY(0); } to { transform: translateY(-6px); } }
 
 @media (min-width: 900px) {
   .lg-story { margin: 40px 0 0; max-width: 520px; }
@@ -206,8 +204,23 @@ body:has(.lg) { background: var(--gl-pitch); }
   .lg-socials { grid-template-columns: 1fr 1fr; }
   .lg-socials .ui-btn { font-size: 15px; padding: 0 12px; }
 }
+
+/* Sport tiles (owner, 23 Oct 2026): the first row is each ball on its own surface, the label
+   on a dark fade at the foot; the second row line icons. A green glow walks from tile to tile,
+   one after another; football and futsal keep a green edge as the open ones. Without motion
+   nothing moves. */
+@media (min-width: 900px) {
+  .lg-sports li { justify-content: center; min-height: 104px; overflow: hidden; position: relative; transition: transform .2s; }
+  .lg-sports li > span { font-size: 14px; font-weight: 700; }
+  .lg-sports li small { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); background: rgba(11,18,32,.55); border-radius: 999px; padding: 2px 8px; position: absolute; right: 6px; top: 6px; }
+  .lg-sports li.has-photo { background: linear-gradient(180deg, rgba(11,18,32,0) 30%, rgba(11,18,32,.88) 100%), var(--tile) center / cover no-repeat; justify-content: flex-end; padding-bottom: 10px; }
+  .lg-sports li.has-photo > span { text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+  .lg-sports li.is-open small { background: var(--gl-green); color: var(--gl-navy); }
+}
 @media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
-  .lg-sports li:not(.is-open):not(.is-more) { animation: lg-drift 7s ease-in-out infinite alternate; }
-  .lg-sports li:nth-child(2n) { animation-delay: -2.5s; }
-  .lg-sports li:nth-child(3n) { animation-delay: -4.5s; }
+  .lg-sports li { animation: lg-tile-glow 10s ease-in-out infinite; animation-delay: calc(var(--i) * 1s); }
+}
+@keyframes lg-tile-glow {
+  0%, 9%, 100% { transform: none; }
+  3%, 6% { box-shadow: 0 0 0 2px var(--gl-green), 0 12px 28px rgba(22,224,110,.45); transform: translateY(-5px) scale(1.04); }
 }
