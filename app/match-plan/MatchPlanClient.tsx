@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { createPortal } from 'react-dom'
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { CheckCircle2, Circle, GripVertical, LoaderCircle, Plus, RotateCcw, Save, Search, ShieldAlert, ShieldHalf, Sparkles, Trash2, X } from 'lucide-react'
 import { BOARD_FORMATIONS, DEFAULT_FORMATION, DRAFT_NAME_MAX, DRAFT_PLAYERS_MAX, autoFill, benchPlayer, boardLayout, clearPitch, draftKey, dropOnPitch, readDraft, resetPoints, writeDraft, boardFromRoster, boardToPlayers, changeFormation, formationSlots, placePlayer, removePlayer, type BoardPosition, type BoardState } from '@/lib/match-plan-board'
@@ -382,8 +383,11 @@ export default function MatchPlanClient({ teams, head, toolbar, pagination, empt
       {pagination}
     </div>
 
-    {drag?.moved && <span className="mp-ghost" style={{ left: drag.x, top: drag.y }} aria-hidden="true">{initial(name(drag.id))}</span>}
-    {choosingTeam && <div className="mp-sheet-wrap" onClick={() => setChoosingTeam(false)}>
+    {/* The ghost and the sheets go straight into <body>: the glass page root isolates its
+        stacking order, so inside it no z-index could lift them over the bottom bar. `gl`
+        brings the glass tokens along. */}
+    {drag?.moved && createPortal(<span className="mp-ghost gl" style={{ left: drag.x, top: drag.y }} aria-hidden="true">{initial(name(drag.id))}</span>, document.body)}
+    {choosingTeam && createPortal(<div className="mp-sheet-wrap gl" onClick={() => setChoosingTeam(false)}>
       <div className="mp-sheet" role="dialog" aria-modal="true" aria-labelledby="mp-team-title" onClick={event => event.stopPropagation()}>
         <div className="mp-sheet-head">
           <h2 id="mp-team-title">{t('teamPick')}</h2>
@@ -393,8 +397,8 @@ export default function MatchPlanClient({ teams, head, toolbar, pagination, empt
           <b>{item.name}</b>{item.id === teamId ? <CheckCircle2 size={18} aria-hidden="true" /> : <small>{tournamentName(item)}</small>}
         </button></li>)}</ul></div>
       </div>
-    </div>}
-    {picking !== null && <div className="mp-sheet-wrap" onClick={() => setPicking(null)}>
+    </div>, document.body)}
+    {picking !== null && createPortal(<div className="mp-sheet-wrap gl" onClick={() => setPicking(null)}>
       <div className="mp-sheet" role="dialog" aria-modal="true" aria-labelledby="mp-sheet-title" onClick={event => event.stopPropagation()}>
         <div className="mp-sheet-head">
           <h2 id="mp-sheet-title">{t('sheetTitle', { position: slotPosition ? t(`positionNames.${slotPosition}`) : '' })}</h2>
@@ -413,6 +417,6 @@ export default function MatchPlanClient({ teams, head, toolbar, pagination, empt
         {!live && addForm('sheet')}
         {sheetGroups.length === 0 && live && <p className="mp-hint">{t('allPlaced')}</p>}
       </div>
-    </div>}
+    </div>, document.body)}
   </div>
 }
