@@ -129,6 +129,36 @@ export function removePlayer(state: BoardState, athleteId: string): BoardState {
   return { ...state, slots: state.slots.map(id => (id === athleteId ? null : id)), bench: state.bench.filter(id => id !== athleteId) }
 }
 
+// "จัดรายชื่ออัตโนมัติ": fills only the empty slots, from players who are on neither the pitch
+// nor the bench. First each empty slot takes a free player whose own profile position
+// matches it, then any slot still empty takes whoever is left, in roster order. A player
+// the coach already placed or benched never moves; with nothing to fill it is a no-op.
+export function autoFill(state: BoardState, roster: { athlete_id: string; profile_position: string | null }[]): BoardState {
+  const taken = new Set([...state.slots.filter(Boolean) as string[], ...state.bench])
+  const free = roster.filter(member => !taken.has(member.athlete_id))
+  const empty = boardLayout(state).filter(slot => !state.slots[slot.index])
+  if (!free.length || !empty.length) return state
+  const slots = [...state.slots]
+  const used = new Set<string>()
+  for (const slot of empty) {
+    const match = free.find(member => !used.has(member.athlete_id) && member.profile_position === slot.position)
+    if (match) { slots[slot.index] = match.athlete_id; used.add(match.athlete_id) }
+  }
+  const rest = free.filter(member => !used.has(member.athlete_id))
+  for (const slot of empty) {
+    if (slots[slot.index]) continue
+    const next = rest.shift()
+    if (!next) break
+    slots[slot.index] = next.athlete_id
+  }
+  return { ...state, slots }
+}
+
+// "ล้างตำแหน่ง": everyone on the pitch goes back to the free list; the bench and the shape stay.
+export function clearPitch(state: BoardState): BoardState {
+  return withPoints({ ...state, slots: state.slots.map(() => null) }, [])
+}
+
 export function changeFormation(state: BoardState, formation: string): BoardState {
   const size = formationSlots(formation).length
   const onPitch = state.slots.filter((id): id is string => Boolean(id))

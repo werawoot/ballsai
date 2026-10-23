@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BOARD_FORMATIONS, boardFromRoster, boardLayout, boardToPlayers, changeFormation, dropOnPitch, formationSlots, movePlayer, placePlayer, removePlayer, resetPoints, type BoardState, draftKey, readDraft, writeDraft } from '@/lib/match-plan-board'
+import { BOARD_FORMATIONS, autoFill, clearPitch, boardFromRoster, boardLayout, boardToPlayers, changeFormation, dropOnPitch, formationSlots, movePlayer, placePlayer, removePlayer, resetPoints, type BoardState, draftKey, readDraft, writeDraft } from '@/lib/match-plan-board'
 
 const member = (id: string, role: 'starter' | 'substitute' | null = null, slot: number | null = null, position: 'GK' | 'DF' | 'MF' | 'FW' | null = null) => ({
   athlete_id: id, display_name: id, profile_position: null, lineup_role: role, position, slot_order: slot,
@@ -220,5 +220,42 @@ describe('dragging players anywhere on the pitch (SQL68 stores the point)', () =
   it('keeps the points in a draft too', () => {
     const draft = { board: movePlayer({ formation: '1-2-1', slots: ['draft-1', null, null, null, null], bench: [] }, 0, 40, 95), players: [{ id: 'draft-1', name: 'ก้อง' }], focus: '', talk: '' }
     expect(readDraft(writeDraft(draft))!.board.points![0]).toEqual({ x: 40, y: 95 })
+  })
+})
+
+describe('auto-arrange (จัดรายชื่ออัตโนมัติ)', () => {
+  const people = (list: [string, string | null][]) => list.map(([athlete_id, profile_position]) => ({ athlete_id, profile_position }))
+  const empty = (formation = '2-3-1'): BoardState => ({ formation, slots: Array(formationSlots(formation).length).fill(null), bench: [] })
+
+  it('puts each free player in an empty slot of their own position first', () => {
+    const board = autoFill(empty(), people([['f1', 'FW'], ['d1', 'DF'], ['g1', 'GK'], ['m1', 'MF'], ['d2', 'DF']]))
+    expect(board.slots).toEqual(['g1', 'd1', 'd2', 'm1', null, null, 'f1'])
+  })
+
+  it('fills slots left over with anyone still free, in list order', () => {
+    const board = autoFill(empty(), people([['a', 'FW'], ['b', 'FW'], ['c', null], ['d', 'GK']]))
+    expect(board.slots).toEqual(['d', 'b', 'c', null, null, null, 'a'])
+  })
+
+  it('never moves a player the coach placed, benched or who is not free', () => {
+    const start: BoardState = { formation: '2-3-1', slots: [null, null, null, null, null, null, 'x'], bench: ['g-bench'] }
+    const board = autoFill(start, people([['x', 'GK'], ['g-bench', 'GK'], ['g2', 'GK'], ['f2', 'FW']]))
+    expect(board.slots[6]).toBe('x')
+    expect(board.slots[0]).toBe('g2')
+    expect(board.bench).toEqual(['g-bench'])
+    expect(board.slots.filter(Boolean)).toEqual(['g2', 'f2', 'x'])
+  })
+
+  it('keeps a dragged point and changes nothing when nobody is free', () => {
+    const start = movePlayer({ formation: '1-2-1', slots: ['a', 'b', 'c', 'd', 'e'], bench: [] }, 1, 30, 70)
+    expect(autoFill(start, people([['a', 'GK'], ['z', 'FW']]))).toBe(start)
+  })
+})
+
+describe('clear the pitch (ล้างตำแหน่ง)', () => {
+  it('takes every starter off the pitch, keeps the bench and the shape', () => {
+    const start = movePlayer({ formation: '1-2-1', slots: ['a', null, 'c', null, 'e'], bench: ['s'] }, 2, 40, 40)
+    const board = clearPitch(start)
+    expect(board).toEqual({ formation: '1-2-1', slots: [null, null, null, null, null], bench: ['s'] })
   })
 })

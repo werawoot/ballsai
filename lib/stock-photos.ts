@@ -25,7 +25,7 @@ export const STADIUM: StockPhoto | null = { src: '/photos/stadium-aerial-night.w
 const unsplash = (photographer: string, id: string) => `${photographer}, Unsplash, photo-${id}`
 const pexels = (photographer: string, id: string) => `${photographer}, Pexels, photo ${id}`
 
-export type PhotoPage = 'tournaments' | 'tournament' | 'login' | 'welcome' | 'ranking' | 'athletes' | 'hallOfFame' | 'player' | 'profile' | 'profileEdit' | 'teams' | 'join' | 'notifications'
+export type PhotoPage = 'tournaments' | 'tournament' | 'login' | 'welcome' | 'ranking' | 'athletes' | 'hallOfFame' | 'player' | 'profile' | 'profileEdit' | 'teams' | 'join' | 'notifications' | 'matchPlan'
 
 export const PAGE_PHOTOS: Readonly<Record<PhotoPage, StockPhoto>> = {
   tournaments: { src: '/photos/head-seats-colour.webp', credit: unsplash('Nico Smit', '1646801479598-6a00891d2039') },
@@ -41,6 +41,7 @@ export const PAGE_PHOTOS: Readonly<Record<PhotoPage, StockPhoto>> = {
   teams: { src: '/photos/head-training-cones.webp', credit: pexels('Chris K', '13204961') },
   join: { src: '/photos/head-fence-sunrise.webp', credit: pexels('Alexander Mass', '29741193') },
   notifications: { src: '/photos/head-floodlight-pair.webp', credit: pexels('Toni Cuenca', '776805') },
+  matchPlan: { src: '/photos/head-pitch-floodlit.webp', credit: pexels('Jonathan Petersson', '399187') },
 }
 
 // Behind the whole page, so glass cards have grass to show through: the same grass close-up

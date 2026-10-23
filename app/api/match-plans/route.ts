@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { signAvatarUrls } from '@/lib/athlete-avatar'
 
 type LineupPlayer = {
   athlete_id?: string
@@ -33,7 +34,28 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase.rpc('get_match_plan_safely', { p_team_id: teamId })
   if (error) return NextResponse.json({ error: 'โหลดแผนก่อนแข่งไม่สำเร็จ' }, { status: error.message.includes('NOT_ALLOWED') ? 403 : 500 })
-  return NextResponse.json({ data })
+  return NextResponse.json({ data: await withRosterPhotos(supabase, data) })
+}
+
+// The board's roster list shows each member's photo when the viewer may see it: the
+// athlete_profiles row passes the viewer's own RLS (public, own or guardian) and storage
+// signs only what its RLS allows (lib/athlete-avatar, T51). A roster is one team's accepted
+// members (an entry is capped at 60, a club team is not), read by primary key in batches of
+// 100 so a long id list never outgrows a URL. A failed read means no photos, never a failed plan.
+const PHOTO_BATCH = 100
+type RosterPayload = { roster?: { athlete_id: string }[] } | null
+async function withRosterPhotos(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, data: RosterPayload) {
+  const roster = data?.roster ?? []
+  if (!roster.length) return data
+  const ids = roster.map(member => member.athlete_id)
+  const batches = await Promise.all(Array.from({ length: Math.ceil(ids.length / PHOTO_BATCH) }, (_, index) =>
+    supabase.from('athlete_profiles').select('user_id, profile_image_url').in('user_id', ids.slice(index * PHOTO_BATCH, (index + 1) * PHOTO_BATCH))))
+  const stored = new Map(batches.flatMap(({ data: rows, error }) => (error ? [] : (rows ?? []).map(row => [row.user_id as string, row.profile_image_url as string | null] as const))))
+  const urls = await signAvatarUrls(supabase, [...stored.values()])
+  return { ...data, roster: roster.map(member => {
+    const value = stored.get(member.athlete_id)
+    return { ...member, avatar_url: (value && urls.get(value)) || null }
+  }) }
 }
 
 export async function POST(request: Request) {
