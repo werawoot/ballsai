@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeft, ChevronRight, Eye, EyeOff, Facebook, Mail, Shield } from "lucide-react";
+import { ArrowLeft, ChevronRight, Eye, EyeOff, Facebook, Mail, MailCheck, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { OTP_MAX_LENGTH, canSubmitOtp, otpSlotCount, normalizeEmail, normalizeOtp, otpErrorKey, resendWaitSeconds } from "@/lib/otp";
 import { captchaSiteKey, withCaptcha } from "@/lib/captcha";
@@ -11,16 +11,21 @@ import { OtpHelp } from "./OtpHelp";
 import { LoginConsent } from "./LoginConsent";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import BrandMark from "@/components/BrandMark";
+import LanguageSwitch from "@/components/LanguageSwitch";
 import { PAGE_PHOTOS } from "@/lib/stock-photos";
 import "../glass.css";
 import "./login.css";
 
-type LoginStep = "start" | "email" | "otp" | "admin";
+// The first screen holds both ways in, as in the owner's design (23 Oct 2026): the email
+// field with its send button, then Google and Facebook. Sign in and sign up are one flow (a
+// new address or Google account gets an account), so the two tabs only change the wording.
+type LoginStep = "start" | "otp" | "admin";
 
 const consentText = <>ฉันยอมรับ <Link href="/terms">ข้อกำหนดการใช้งาน</Link> และ <Link href="/privacy">นโยบายความเป็นส่วนตัว (PDPA)</Link></>;
 
 export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boolean; nextPath: string }) {
   const [step, setStep] = useState<LoginStep>(adminEntry ? "admin" : "start");
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
@@ -182,11 +187,11 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
     <main className="lg gl" style={{ "--gl-stadium-photo": `url(${PAGE_PHOTOS.login.src})` } as React.CSSProperties}>
       <div className="lg-shell">
         <section className="lg-hero">
-          <Link className="ui-brand" href="/" aria-label="BallDoenSai.com"><BrandMark size={26} />BallDoenSai.com</Link>
-          {/* The slogan is for the wide layout; on a phone the page opens on what it is and what to press.
-              No example card: it carried numbers that belong to no one (AGENTS.md rule 8). */}
+          <div className="lg-hero-bar"><LanguageSwitch /></div>
+          <Link className="ui-brand lg-brand" href="/" aria-label="BallDoenSai.com"><BrandMark size={30} /><span>BallDoenSai.com</span></Link>
+          {/* No example card: it carried numbers that belong to no one (AGENTS.md rule 8). */}
           <div className="lg-hero-copy">
-            <p className="ui-hero">ทุกนัดที่เล่น<br />กลายเป็น<em>ตัวตน</em><br />ของคุณ</p>
+            <p className="ui-hero">{tp("slogan1")}<br /><em>{tp("slogan2")}</em><br />{tp("slogan3")}</p>
             <p className="lg-lead">{tp("lead")}</p>
           </div>
         </section>
@@ -194,47 +199,39 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
         <section className="lg-panel gl-panel">
           {step === "start" && (
             <>
-              <h1 className="ui-h1 lg-title">{tp("title")}</h1>
-              <p className="lg-sub">{tp("sub")}</p>
+              <div className="lg-tabs" role="group" aria-label={tp("title")}>
+                <button aria-pressed={mode === "signin"} className={mode === "signin" ? "is-on" : undefined} onClick={() => setMode("signin")} type="button">{tp("tabSignIn")}</button>
+                <button aria-pressed={mode === "signup"} className={mode === "signup" ? "is-on" : undefined} onClick={() => setMode("signup")} type="button">{tp("tabSignUp")}</button>
+              </div>
+              <h1 className="lg-sr">{tp("title")}</h1>
+              <p className="lg-sub">{mode === "signup" ? tp("signUpSub") : tp("sub")}</p>
+              <label className="lg-input" htmlFor="email">
+                <Mail aria-hidden="true" size={19} />
+                <span className="lg-sr">{tp("emailLabel")}</span>
+                <input autoComplete="email" id="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && email) sendOtp(); }} placeholder={tp("emailPlaceholder")} type="email" value={email} />
+              </label>
               <LoginConsent accepted={acceptedTerms} missing={consentMissing} missingText={tp("consentNeeded")} onChange={(accepted) => { setAcceptedTerms(accepted); if (accepted) setConsentMissing(false); }}>{consentText}</LoginConsent>
+              {captcha}
+              <button className="ui-btn ui-btn-primary" disabled={loading || !email || captchaMissing} onClick={() => sendOtp()} type="button">{loading ? tp("sending") : tp("email")}<ChevronRight size={18} /></button>
+              <p className="lg-or"><span>{tp("orWith")}</span></p>
               <button className="ui-btn ui-btn-white" disabled={loading} onClick={signInWithGoogle} type="button">
                 <span className="lg-google" aria-hidden="true" />
                 {loading ? tp("googleLoading") : tp("google")}
               </button>
-              <p className="lg-or"><span>หรือ</span></p>
-              <button className="ui-btn ui-btn-ghost-d" onClick={() => go("email")} type="button">
-                <Mail size={18} /> {tp("email")}
-              </button>
-              <button className="lg-link" disabled={loading} onClick={signInWithFacebook} type="button">
-                <Facebook size={16} fill="currentColor" /> {loading ? tp("facebookLoading") : tp("facebook")}
+              <button className="ui-btn ui-btn-white lg-facebook" disabled={loading} onClick={signInWithFacebook} type="button">
+                <Facebook size={18} fill="currentColor" aria-hidden="true" /> {loading ? tp("facebookLoading") : tp("facebook")}
               </button>
               <p className="lg-next">{tp("next")}</p>
               <p className="lg-trust"><Shield size={15} /> ข้อมูลเด็กเปิดเผยได้เมื่อผู้ปกครองยินยอมเท่านั้น · ไม่ต้องตั้งรหัสผ่าน</p>
             </>
           )}
 
-          {step === "email" && (
-            <>
-              <button className="lg-back" onClick={() => go("start")} type="button"><ArrowLeft size={18} /> กลับ</button>
-              <p className="ui-eyebrow">ขั้นตอน 1 จาก 2</p>
-              <h2 className="ui-h1 lg-title">รับรหัสทางอีเมล</h2>
-              <p className="lg-sub">{t("emailSubtitle")}</p>
-              <label className="ui-field" htmlFor="email">
-                <span>อีเมล</span>
-                <input autoComplete="email" id="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} placeholder="you@email.com" type="email" value={email} />
-              </label>
-              <LoginConsent accepted={acceptedTerms} missing={consentMissing} missingText={tp("consentNeeded")} onChange={(accepted) => { setAcceptedTerms(accepted); if (accepted) setConsentMissing(false); }}>{consentText}</LoginConsent>
-              {captcha}
-              <button className="ui-btn ui-btn-primary" disabled={loading || !email || captchaMissing} onClick={() => sendOtp()} type="button">{loading ? "กำลังส่ง..." : "ส่งรหัสให้ฉัน"}<ChevronRight size={18} /></button>
-            </>
-          )}
-
           {step === "otp" && (
             <>
-              <button className="lg-back" onClick={() => go("email")} type="button"><ArrowLeft size={18} /> เปลี่ยนอีเมล</button>
-              <p className="ui-eyebrow">ขั้นตอน 2 จาก 2</p>
-              <h2 className="ui-h1 lg-title">{t("title")}</h2>
-              <p className="lg-sub">{t("sentTo")} <b>{normalizeEmail(email)}</b></p>
+              <button className="lg-back" onClick={() => go("start")} type="button"><ArrowLeft size={18} /> เปลี่ยนอีเมล</button>
+              <span className="lg-otp-icon" aria-hidden="true"><MailCheck size={40} /></span>
+              <h2 className="ui-h1 lg-title lg-center">{t("title")}</h2>
+              <p className="lg-sub lg-center">{t("sentTo")} <b>{normalizeEmail(email)}</b></p>
               <label className="lg-otp" htmlFor="otp">
                 <span className="lg-sr">OTP</span>
                 <input autoComplete="one-time-code" autoFocus id="otp" inputMode="numeric" maxLength={OTP_MAX_LENGTH} onChange={(event) => setOtp(normalizeOtp(event.target.value))} value={otp} />

@@ -64,3 +64,24 @@ body:has(.wb) { background: var(--gl-pitch); }
   .wb-body { flex: none; }
 }
 @media (prefers-reduced-motion: reduce) { .wb .ui-option { transition: none; } .wb .ui-option:active { transform: none; } }
+
+/* Role cards (owner's design, 23 Oct 2026): two columns on a phone, three on a wide screen.
+   The top of each card is an icon on pale green; the picked card turns green with a tick. */
+.wb-roles { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wb-role { background: rgba(255,255,255,.8); border: 1.5px solid var(--gl-line); border-radius: 18px; box-shadow: 0 4px 14px rgba(11,18,32,.06); color: var(--gl-navy); cursor: pointer; display: flex; flex-direction: column; font-family: var(--gl-font); overflow: hidden; padding: 0; text-align: left; transition: border-color .15s, transform .15s; }
+.wb-role:hover { border-color: rgba(22,224,110,.7); }
+.wb-role:active { transform: translateY(1px); }
+.wb-role:focus-visible { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
+.wb-role-art { align-items: center; background: linear-gradient(150deg, #E8F9EE 0%, #CFF5DE 55%, #B7EFCD 100%); display: flex; height: 76px; justify-content: center; position: relative; }
+.wb-role-icon { align-items: center; background: #fff; border-radius: 50%; box-shadow: 0 6px 16px rgba(15,122,63,.18); color: var(--gl-green-ink); display: flex; height: 50px; justify-content: center; width: 50px; }
+.wb-role-tick { align-items: center; background: var(--gl-green); border-radius: 50%; color: var(--gl-navy); display: flex; height: 24px; justify-content: center; position: absolute; right: 10px; top: 10px; width: 24px; }
+.wb-role-text { display: grid; gap: 4px; padding: 10px 12px 14px; }
+.wb-role-text b { color: var(--gl-green-ink); font-size: 16px; line-height: 1.3; }
+.wb-role-text small { color: var(--gl-text-2); font-size: 12.5px; line-height: 1.45; }
+.wb-role.is-selected { background: rgba(232,249,238,.95); border-color: var(--gl-green); }
+.wb-role.is-selected .wb-role-icon { background: var(--gl-green); color: var(--gl-navy); }
+.wb-later { align-items: center; align-self: stretch; background: rgba(11,18,32,.05); border: 1px solid rgba(11,18,32,.1); border-radius: 999px; color: var(--gl-navy); cursor: pointer; display: flex; font: 700 15px var(--gl-font); gap: 8px; justify-content: center; margin: -8px 0 20px; min-height: 50px; }
+.wb-later:hover { background: rgba(11,18,32,.08); }
+.wb-later:focus-visible { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
+@media (min-width: 900px) { .wb-shell { max-width: 720px; } .wb-roles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .wb-role { transition: none; } .wb-role:active { transform: none; } }

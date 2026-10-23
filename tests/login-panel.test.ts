@@ -6,6 +6,8 @@ import th from '@/messages/th.json'
 import en from '@/messages/en.json'
 
 vi.mock('@/lib/supabase', () => ({ createClient: () => ({}) }))
+// The language switch on the photo half (owner's design, 23 Oct 2026) uses the app router.
+vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: () => {}, refresh: () => {} }), usePathname: () => '/login' }))
 import LoginPanel from '@/app/login/LoginPanel'
 import { LoginConsent } from '@/app/login/LoginConsent'
 import { readFileSync } from 'node:fs'
@@ -105,12 +107,20 @@ describe('/login code step: when the email does not come', () => {
   })
 })
 
-describe('/login first screen: two clear ways in (owner, 14 Oct 2026)', () => {
+describe('/login first screen (owner\'s design, 23 Oct 2026; replaces the 14 Oct order)', () => {
   const html = render()
-  it('keeps Google and email as the two buttons and Facebook as a quiet link below them', () => {
-    expect(html.indexOf('lg-google')).toBeLessThan(html.indexOf('ส่งรหัสเข้าอีเมลของฉัน'))
-    expect(html.indexOf('ส่งรหัสเข้าอีเมลของฉัน')).toBeLessThan(html.indexOf('lg-link'))
-    expect(html).toMatch(/class="lg-link"[^>]*>[\s\S]*?เข้าด้วย Facebook/)
+  it('opens on the sign-in / sign-up tabs, then email, then Google and Facebook as equal buttons', () => {
+    const page = text(html)
+    expect(page).toContain('เข้าสู่ระบบ สมัครสมาชิก')
+    expect(html).toContain('id="email"')
+    expect(html.indexOf('ส่งรหัสเข้าอีเมลของฉัน')).toBeLessThan(html.indexOf('หรือเข้าสู่ระบบด้วย'))
+    expect(html.indexOf('หรือเข้าสู่ระบบด้วย')).toBeLessThan(html.indexOf('lg-google'))
+    expect(html.indexOf('lg-google')).toBeLessThan(html.indexOf('lg-facebook'))
+    expect(html).toMatch(/class="ui-btn ui-btn-white lg-facebook"[^>]*>[\s\S]*?เข้าด้วย Facebook/)
+  })
+  it('asks for no password and offers no sign-in that is not wired up', () => {
+    expect(html).not.toContain('type="password"')
+    expect(text(html)).not.toMatch(/Apple|ลืมรหัสผ่าน|จดจำฉัน/)
   })
   it('has a place for the consent reminder right under the consent row', () => {
     expect(html).toContain('id="login-consent-help"')
@@ -136,9 +146,12 @@ describe('/login?admin=1 password field', () => {
 describe('/login consent row on each screen that signs in', () => {
   const source = readFileSync('app/login/LoginPanel.tsx', 'utf8')
   const branch = (step: string) => source.slice(source.indexOf(`{step === "${step}" && (`), source.indexOf('</>', source.indexOf(`{step === "${step}" && (`)))
-  it('is on the first screen and on the email screen', () => {
+  // The email field moved onto the first screen (owner's design, 23 Oct 2026), so the one
+  // consent row there sits above both the email send button and Google / Facebook.
+  it('is on the first screen, which now also holds the email field', () => {
     expect(branch('start')).toContain('<LoginConsent')
-    expect(branch('email')).toContain('<LoginConsent')
+    expect(branch('start')).toContain('id="email"')
+    expect(source).not.toContain('{step === "email" && (')
   })
   it('keeps its exact words and its links on the first screen', () => {
     const html = render()

@@ -112,17 +112,20 @@ export default function OnboardingFlow({ nextPath, userId }: { email: string; ne
               {/* Thai runs the two halves together; English needs the space. */}
               <h1 className="ui-h1">{[t("persona.titleTop"), t("persona.titleBottom")].join(locale === "th" ? "" : " ")}</h1>
               <p className="wb-intro">{t("persona.intro")}</p>
-              <div className="wb-options">
+              {/* A grid of role cards, as in the owner's design (23 Oct 2026). Each card is an icon
+                  on pale green, never a photo of a person: no stock picture of a child or a coach
+                  stands for a role (AGENTS.md rule 7). */}
+              <div className="wb-roles">
                 {CHOICES.map((id) => {
                   const Icon = icons[id];
-                  return <button aria-pressed={choice === id} className={`ui-option${choice === id ? " is-selected" : ""}`} key={id} onClick={() => pick(id)} type="button">
-                    <span className="ui-option-icon"><Icon size={22} /></span>
-                    <span className="ui-option-text"><b>{t(`personas.${id}.title`)}</b><small>{t(`personas.${id}.description`)}</small></span>
-                    <span className="ui-option-tick">{choice === id && <Check size={14} strokeWidth={3.5} />}</span>
+                  return <button aria-pressed={choice === id} className={`wb-role${choice === id ? " is-selected" : ""}`} key={id} onClick={() => pick(id)} type="button">
+                    <span className="wb-role-art" aria-hidden="true"><span className="wb-role-icon"><Icon size={26} /></span>{choice === id && <span className="wb-role-tick"><Check size={14} strokeWidth={3.5} /></span>}</span>
+                    <span className="wb-role-text"><b>{t(`personas.${id}.title`)}</b><small>{t(`personas.${id}.description`)}</small></span>
                   </button>;
                 })}
               </div>
               <p className="wb-hint">{t("persona.hint")}</p>
+              <button className="wb-later" disabled={saving} onClick={() => finish(true)} type="button">{t("later")} <ArrowRight size={18} aria-hidden="true" /></button>
             </>}
 
             {step === 1 && choice && <>
