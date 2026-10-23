@@ -19,7 +19,22 @@
 และ**ปฏิเสธ**ถ้าไม่ใช่ Staging (`vorpnkedpscsqhnrssrl`) หรือถ้าเป็นโดเมน Production
 (Vercel Preview อาจตั้งให้ใช้ฐาน Production ได้ จึงเชื่อที่อยู่เว็บอย่างเดียวไม่ได้)
 
-## ขั้นตอน
+## รันจากปุ่มใน GitHub (แนะนำ)
+
+GitHub → Actions → **Load test (Staging)** → Run workflow → ใส่ URL ของเว็บ Staging แล้วเลือกจำนวนคนและเวลา
+ผลขึ้นในหน้าสรุปของรอบนั้น และไฟล์รายงานเก็บไว้ 90 วัน (`.github/workflows/load-test.yml`)
+
+- URL ต้องเป็นโดเมนหลักของโปรเจกต์ `ballsai-staging` ลิงก์ Preview ที่เปิด Vercel Deployment Protection
+  จะตอบ 401 และสคริปต์จะปฏิเสธเพราะยืนยันฐาน Staging ไม่ได้
+- **ไม่มีค่าใช้จ่าย:** Vercel Hobby และ Supabase Free ไม่เก็บเงินเมื่อใช้เกิน แต่อาจจำกัดหรือหยุดโปรเจกต์ถึงรอบเดือนใหม่
+  และโควตา Vercel ใช้ร่วมทั้งบัญชี (กระทบ Production ได้) จึงรัน **20 คน 60 วินาที** ก่อน ดูหน้า Usage
+  แล้วค่อยรัน 200 คน 600 วินาทีครั้งเดียว
+- คุกกี้นักกีฬาและผู้จัด (ไม่บังคับ) ใส่เป็น repository secret ชื่อ `LOAD_TEST_SIGNED_IN_COOKIE`,
+  `LOAD_TEST_ORGANIZER_COOKIE`, `LOAD_TEST_TOURNAMENT_ID`, `LOAD_TEST_TEAM_A_ID`, `LOAD_TEST_TEAM_B_ID`,
+  `LOAD_TEST_PLAYER_RANK_ID` ใส่ก่อนรันไม่นาน เพราะ session หมดอายุ ไม่ใส่ก็ได้ ผลจะเป็น PARTIAL
+- PARTIAL ถือเป็นรอบสีเขียว แต่ไม่นับว่าผ่าน T39; FAIL หรือถูกปฏิเสธเป็นสีแดง
+
+## รันจากเครื่องตัวเอง
 
 1. **เว็บที่ใช้ฐาน Staging:** Vercel → Settings → Environment Variables ต้องมีสภาพแวดล้อม (เช่น Preview)
    ที่ `NEXT_PUBLIC_SUPABASE_URL` ชี้ `https://vorpnkedpscsqhnrssrl.supabase.co` แล้วใช้ URL ของ deployment นั้น

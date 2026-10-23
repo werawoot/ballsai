@@ -1,0 +1,91 @@
+name: Load test (Staging)
+
+# T39. Runs scripts/load-test.mjs from a GitHub runner, so the owner can start it with one
+# button (Actions tab, "Run workflow") instead of a laptop on home internet. Started by hand
+# only. The script itself refuses any site whose JavaScript talks to the Production database
+# or is a Production domain, so this workflow cannot load Production. See docs/load-test.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Staging web address (https://…vercel.app), whose database is Staging'
+        required: true
+        type: string
+      users:
+        description: 'Users at the same time (try 20 first)'
+        required: true
+        type: choice
+        options: ['20', '200']
+        default: '20'
+      duration:
+        description: 'Seconds to measure after the 60 s ramp-up'
+        required: true
+        type: choice
+        options: ['60', '600']
+        default: '60'
+
+permissions:
+  contents: read
+
+# One load test at a time: two runs would measure each other.
+concurrency:
+  group: load-test-staging
+  cancel-in-progress: false
+
+jobs:
+  load:
+    name: ${{ inputs.users }} users, ${{ inputs.duration }} s
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # The script needs no dependencies. Optional secrets add the signed-in (25%) and
+      # organizer (5%) users; without them those groups are skipped and the verdict is
+      # PARTIAL. The script never prints cookies or writes them to the report.
+      - name: Run load test
+        env:
+          LOAD_TEST_URL: ${{ inputs.url }}
+          ALLOW_LOAD_TEST: 'true'
+          USERS: ${{ inputs.users }}
+          DURATION_SECONDS: ${{ inputs.duration }}
+          REPORT_PATH: load-test-report.json
+          SIGNED_IN_COOKIE: ${{ secrets.LOAD_TEST_SIGNED_IN_COOKIE }}
+          ORGANIZER_COOKIE: ${{ secrets.LOAD_TEST_ORGANIZER_COOKIE }}
+          RESULT_TOURNAMENT_ID: ${{ secrets.LOAD_TEST_TOURNAMENT_ID }}
+          RESULT_TEAM_A_ID: ${{ secrets.LOAD_TEST_TEAM_A_ID }}
+          RESULT_TEAM_B_ID: ${{ secrets.LOAD_TEST_TEAM_B_ID }}
+          RESULT_PLAYER_RANK_ID: ${{ secrets.LOAD_TEST_PLAYER_RANK_ID }}
+        run: |
+          set +e
+          node scripts/load-test.mjs 2>&1 | tee load-test-output.txt
+          code=${PIPESTATUS[0]}
+          {
+            echo '## Load test'
+            echo
+            echo '```'
+            cat load-test-output.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # 0 PASS, 3 PARTIAL (passed, some groups skipped): the run is green and the summary
+          # says which. 1 FAIL or refused: the run is red.
+          if [ "$code" = 3 ]; then exit 0; fi
+          exit "$code"
+
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-report
+          path: |
+            load-test-report.json
+            load-test-output.txt
+          if-no-files-found: ignore
+          retention-days: 90
