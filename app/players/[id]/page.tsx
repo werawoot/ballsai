@@ -4,16 +4,14 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { Award, Check, CheckCircle2, ChevronRight, ExternalLink, Image as ImageIcon, PlayCircle, ShieldCheck, Trophy } from 'lucide-react'
-import { isSampleId, samplePlayerRanks, showDemoData } from '@/lib/sample-data'
 import { IDENTITY_BADGES, calculateLevel, identityTierKey, levelProgress } from '@/lib/digital-identity'
-import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
-import { PUBLIC_PROFILE_COLUMNS, fetchAthleteAge } from '@/lib/athlete-private'
-import { withAvatarUrls } from '@/lib/athlete-avatar'
 import { SKILL_KEYS, skillText } from '@/lib/skill-ratings'
 import { cardProvenance } from '@/lib/player-card'
+import { ACTIVE_SEASON } from '@/lib/season'
 import { seasonSummary } from '@/lib/player-profile'
-import { FORM_EVENT_LIMIT, formHistory, playerTab, type RatingEventRow } from '@/lib/player-form'
-import { fetchRankPosition } from '@/lib/public-ranking-page'
+import { FORM_EVENT_LIMIT, formHistory, playerTab } from '@/lib/player-form'
+import { fetchPublicPlayer, servesSharedPlayerCopy } from '@/lib/public-player'
+import { getPublicPlayer } from '@/lib/public-data'
 import PageHeader from '@/components/PageHeader'
 import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
 import ReportHighlightButton from './ReportHighlightButton'
@@ -32,44 +30,6 @@ import './player.css'
 // skill nobody assessed is a dash, and a profile with no player_ranks row is a STARTER
 // card that shows no Power, rank or skills at all.
 
-type PlayerRecord = {
-  id: string
-  player_id?: string | null
-  player_name: string
-  team: string | null
-  province: string | null
-  position: string | null
-  sport?: string | null
-  season?: string | null
-  ovr: number | null
-  pts: number | null
-  pac: number | null
-  sho: number | null
-  pas: number | null
-  dri: number | null
-  def: number | null
-}
-
-type AthleteProfile = {
-  user_id: string
-  display_name: string
-  position?: string | null
-  province?: string | null
-  height_cm?: number | null
-  weight_kg?: number | null
-  current_team?: string | null
-  bio?: string | null
-  profile_image_url?: string | null
-  verification_level: 'self' | 'coach_verified' | 'performance_verified'
-}
-
-type AthleteVideo = { id: number; title: string; video_url: string; video_type: string }
-type AthleteHighlight = { id: number; title: string; media_type: 'image' | 'video' }
-type AthleteAchievement = { id: number; title: string; event_name?: string | null; achievement_year?: number | null; verification_status: string }
-type SkillAssessment = { speed?: number | null; stamina?: number | null; strength?: number | null; technique?: number | null; vision?: number | null; source_level: string }
-type IdentityProgress = { xp_total: number; current_level: number }
-type AthleteBadge = { badge_key: string; awarded_at: string }
-
 const POSITIONS = ['FW', 'MF', 'DF', 'GK'] as const
 const ASSESSED_KEYS = ['speed', 'stamina', 'strength', 'technique', 'vision'] as const
 const VERIFICATION = ['self', 'coach_verified', 'performance_verified'] as const
@@ -78,64 +38,35 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
   const [params, searchParams] = await Promise.all([props.params, props.searchParams ?? Promise.resolve({} as { tab?: string })])
   const tab = playerTab(searchParams.tab)
   const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: cookiesToSet => cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)),
-      },
-    }
-  )
   const [t, tCard, tHome, locale] = await Promise.all([getTranslations('player'), getTranslations('card'), getTranslations('profileHome'), getLocale()])
 
-  const { data: player } = showDemoData && isSampleId(params.id)
-    ? { data: samplePlayerRanks.find(item => item.id === params.id) ?? null }
-    : await supabase.from('player_ranks').select('*').eq('id', params.id).maybeSingle()
-
-  const routeIsUserId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(params.id)
-  const linkedPlayerResult = !player && routeIsUserId
-    ? await supabase.from('player_ranks').select('*').eq('player_id', params.id).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).maybeSingle()
-    : { data: null }
-  const rank = (player || linkedPlayerResult.data) as PlayerRecord | null
-  const athleteId = rank?.player_id || (routeIsUserId ? params.id : null)
-  const rankSport = rank?.sport || ACTIVE_SPORT
+  // No session: the shared cached copy (lib/public-data.ts). Signed in: this viewer's own
+  // session, uncached, because RLS may show them more (their own or their child's page).
+  const readPage = () => {
+    if (servesSharedPlayerCopy(cookieStore.getAll().map(cookie => cookie.name))) return getPublicPlayer(params.id)
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => cookieStore.getAll(),
+          setAll: cookiesToSet => cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)),
+        },
+      }
+    )
+    return fetchPublicPlayer(supabase, params.id)
+  }
+  const data = await readPage().catch(error => {
+    console.error(JSON.stringify({ level: 'error', event: 'public_player_fetch_failed', message: (error as Error)?.message ?? String(error) }))
+    return null
+  })
+  if (!data) redirect('/athletes')
+  const { rank, profile: athleteProfile, videos, highlights: uploadedHighlights, achievements, skill: skillAssessment, progress: identityProgress, badges: athleteBadges, age, position } = data
+  const athleteId = rank?.player_id || athleteProfile?.user_id || null
   const rankSeason = rank?.season || ACTIVE_SEASON
-
-  const [profileResult, videoResult, highlightResult, achievementResult, skillResult, progressResult, badgeResult, age, ratingResult, position] = await Promise.all([
-    athleteId ? supabase.from('athlete_profiles').select(PUBLIC_PROFILE_COLUMNS).eq('user_id', athleteId).maybeSingle() : null,
-    athleteId ? supabase.from('athlete_videos').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6) : null,
-    athleteId ? supabase.from('athlete_highlights').select('id, title, media_type').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(6) : null,
-    athleteId ? supabase.from('athlete_achievements').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(8) : null,
-    athleteId ? supabase.from('athlete_skill_assessments').select('*').eq('athlete_id', athleteId).order('created_at', { ascending: false }).limit(1).maybeSingle() : null,
-    athleteId ? supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', athleteId).maybeSingle() : null,
-    athleteId ? supabase.from('athlete_badges').select('badge_key, awarded_at').eq('athlete_id', athleteId).order('awarded_at', { ascending: false }) : null,
-    // An age, never the birth date: public_athlete_age (sql/58) works it out in the database.
-    athleteId ? fetchAthleteAge(supabase, athleteId) : null,
-    // This season's verified results behind the rank row (public read, written only by
-    // verified match results).
-    rank && !isSampleId(rank.id) ? supabase.from('player_ratings').select('id, power_rating, matches_played, wins, draws, losses, goals, assists, clean_sheets, mvps').eq('player_rank_id', rank.id).eq('sport', rankSport).eq('season', rankSeason).maybeSingle() : null,
-    rank && typeof rank.pts === 'number' && !isSampleId(rank.id) ? fetchRankPosition(supabase, { sport: rankSport, season: rankSeason, id: rank.id, pts: rank.pts }).catch(() => null) : null,
-  ])
-  // The photo is a private object (T51): signed only if this viewer may see it.
-  const athleteProfile = profileResult?.data ? (await withAvatarUrls(supabase, [profileResult.data as AthleteProfile]))[0] : null
-  const videos = (videoResult?.data ?? []) as AthleteVideo[]
-  const uploadedHighlights = (highlightResult?.data ?? []) as AthleteHighlight[]
-  const achievements = (achievementResult?.data ?? []) as AthleteAchievement[]
-  const skillAssessment = skillResult?.data as SkillAssessment | null
-  const identityProgress = progressResult?.data as IdentityProgress | null
-  const athleteBadges = (badgeResult?.data ?? []) as AthleteBadge[]
-
-  if (!rank && !athleteProfile) redirect('/athletes')
   const hasRanking = Boolean(rank)
-  const season = seasonSummary(ratingResult?.data ?? null)
-  // Match by match, newest first: one indexed read (player_rating_id, created_at desc).
-  const ratingId = season ? (ratingResult?.data as { id?: string } | null)?.id : null
-  const eventsResult = ratingId
-    ? await supabase.from('rating_events').select('created_at, result, rating_after, rating_change, goals, assists, mvp, clean_sheet').eq('player_rating_id', ratingId).order('created_at', { ascending: false }).limit(FORM_EVENT_LIMIT)
-    : null
-  const form = formHistory((eventsResult?.data ?? []) as RatingEventRow[])
+  const season = seasonSummary(data.rating)
+  const form = formHistory(data.events)
 
   const displayName = athleteProfile?.display_name || rank?.player_name || t('fallbackName')
   const team = athleteProfile?.current_team || rank?.team || null
