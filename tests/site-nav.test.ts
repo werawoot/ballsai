@@ -393,4 +393,15 @@ describe('the route skeleton', () => {
   it('hides its decorative shapes from assistive technology', () => {
     expect(loading.match(/aria-hidden="true"/g)?.length).toBeGreaterThanOrEqual(3)
   })
+  // Owner, 23 Oct 2026: the skeleton still flashed the old dark header, red bar and gold
+  // wordmark between pages that had moved to the light glass design (ADR-014).
+  it('stands on the light glass design, with the brand mark the site uses', () => {
+    expect(loading).toMatch(/className="bds-route-skeleton gl gl-scene"/)
+    expect(loading).toContain("import './glass.css'")
+    expect(loading).toContain('<BrandMark')
+    expect(loading).not.toContain('BALLDOENSAI<em>')
+    const css = read('app/globals.css')
+    expect(css).not.toMatch(/\.bds-skel-hero \.bds-skel-line\.is-eyebrow \{[^}]*--nav-red/)
+    expect(css).not.toContain('.bds-skel-wordmark')
+  })
 })

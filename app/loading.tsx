@@ -1,18 +1,17 @@
 import { useTranslations } from 'next-intl'
+import BrandMark from '@/components/BrandMark'
+import { glassSceneStyle } from '@/lib/stock-photos'
+import './glass.css'
 
-// Shown by Next while a server-rendered route is still streaming. It fills only the page
-// area: the root layout, and with it the bottom bar, stays on screen, so the tap that got
-// us here is still visibly lit while this holds the space.
-//
-// It is a skeleton, not a spinner. The shapes stand where content will land -- a dark
-// header, a hero, a column of cards in the editorial offset-shadow style the pages use --
-// so the page arriving reads as the skeleton filling in rather than a screen swap.
+// The one route skeleton, shown while any page loads. It stands on the light glass design
+// (ADR-014) with the site's brand mark, so moving between glass pages never flashes the old
+// dark bar; the shapes are neutral enough for a page not yet moved.
 export default function Loading() {
   const t = useTranslations('nav')
-  return <div className="bds-route-skeleton" role="status" aria-live="polite">
+  return <div className="bds-route-skeleton gl gl-scene" style={glassSceneStyle(null)} role="status" aria-live="polite">
     <span className="sr-only">{t('loading')}</span>
     <div className="bds-skel-header" aria-hidden="true">
-      <span className="bds-skel-wordmark">BALLDOENSAI<em>.COM</em></span>
+      <BrandMark size={26} /><span className="bds-skel-name">BallDoenSai.com</span>
     </div>
     <div className="bds-skel-hero" aria-hidden="true">
       <i className="bds-skel-line is-eyebrow" />
