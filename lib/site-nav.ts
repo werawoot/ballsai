@@ -84,6 +84,28 @@ export function navItemsFor(kind: NavKind | null | undefined): readonly NavItem[
   return kind && kind in ROLE_NAV ? ROLE_NAV[kind as keyof typeof ROLE_NAV] : NAV_ITEMS
 }
 
+const NAV_KINDS: readonly NavKind[] = ['athlete', 'guardian', 'coach', 'organizer', 'venue', 'sponsor']
+// Where a role is chosen (/welcome) or its home is shown (/profile): the bar reads it again
+// there, so a change of role shows without a new tab.
+const ROLE_READ_PATHS = ['/welcome', '/profile']
+
+/**
+ * T60. The bar's tabs depend on the role, which used to be read on every route change. It is
+ * remembered per tab (sessionStorage, `cached`) together with the account it belongs to, and
+ * read again only for another account, a first visit, or where the role can change. `use` is
+ * what to draw now; `read` says whether to ask the database. A convenience, never a
+ * permission: RLS guards every page the tabs lead to.
+ */
+export function rolePlan(cached: string | null, userId: string | null, pathname: string): { use: NavKind | null; read: boolean } {
+  if (!userId) return { use: null, read: false }
+  let use: NavKind | null = null
+  try {
+    const saved = cached ? JSON.parse(cached) as { userId?: unknown; kind?: unknown } : null
+    if (saved && saved.userId === userId && NAV_KINDS.includes(saved.kind as NavKind)) use = saved.kind as NavKind
+  } catch { /* a bare kind from before T60, or anything else: not trusted */ }
+  return { use, read: use === null || ROLE_READ_PATHS.includes(pathname) }
+}
+
 /** The platform ceiling. A test holds the list to it so a sixth tab cannot creep back in. */
 export const MAX_NAV_ITEMS = 5
 
