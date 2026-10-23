@@ -6,6 +6,7 @@ import { fetchUnreadNotificationCount } from '@/lib/notification-count'
 import NotificationBellLink from '@/components/NotificationBellLink'
 import VenueOwnerClient, { type OwnerBooking, type OwnerVenue, type OwnerVenuePhoto } from './VenueOwnerClient'
 import VenueOperations from './VenueOperations'
+import { fetchOwnerVenues } from '@/lib/owner-venues'
 import PageHeader from '@/components/PageHeader'
 
 export default async function VenueOwnerPage() {
@@ -16,7 +17,8 @@ export default async function VenueOwnerPage() {
   const t = await getTranslations('venueOwner.page')
 
   const [{ data: venueRows }, { data: bookingRows }, { data: photoRows }] = await Promise.all([
-    supabase.from('venue_profiles').select('id, name, province, address, contact_phone, description, amenities, venue_courts(id, name, sport, surface, capacity, venue_slots(id, starts_at, ends_at, price_baht, status))').eq('owner_id', user.id).order('created_at', { ascending: false }),
+    // Each court's slots from a week back onward, capped per court (T61, lib/owner-venues).
+    fetchOwnerVenues(supabase, user.id).then(({ venues, error }) => ({ data: venues, error })),
     // Inner joins keep this to requests against the viewer's own venues. RLS also lets
     // an owner read their own outgoing requests to other venues; those are not inbox items.
     supabase.from('venue_booking_requests').select('id, status, purpose, note, requested_at, venue_slots!inner(starts_at, ends_at, price_baht, venue_courts!inner(name, venue_profiles!inner(name, owner_id)))').eq('venue_slots.venue_courts.venue_profiles.owner_id', user.id).order('requested_at', { ascending: false }).limit(50),
