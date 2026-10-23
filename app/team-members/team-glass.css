@@ -40,6 +40,13 @@
 .tm-page.gl .tp-status.is-pending { background: #FEF3C7; color: #8A5A00; }
 .tm-page.gl .tp-status.is-declined, .tm-page.gl .te-kind.is-match, .tm-page.gl .tm-chip.is-no { background: #FEE2E2; color: #991B1B; }
 .tm-page.gl .te-who em.is-no { color: #B91C1C; }
-.tm-page.gl .tp-chips button, .tm-page.gl .tp-skill button, .tm-page.gl .tt-days button, .tm-page.gl .tt-loads button { background: rgba(255,255,255,.7); }
 .tm-page.gl .tm-wrap .ui-eyebrow { color: var(--gl-green-ink); }
 .tm-page.gl .tm-empty-link { color: var(--gl-green-ink); }
+.tm-page.gl .tm-chip.is-ok, .tm-page.gl .tm-next span, .tm-page.gl .tm-mine span { color: var(--gl-green-ink); }
+.tm-page.gl .tm-chip.is-ok { background: var(--gl-green-surface); }
+.tm-page.gl .tm-chip.is-club { background: #DBEAFE; color: #1D4ED8; }
+.tm-page.gl .tm-chip.is-wait { background: #FEF3C7; color: #8A5A00; }
+.tm-page.gl .tm-head-link { color: var(--gl-green-ink); }
+/* A chosen answer (an event reply, a staff invite) keeps a visible ring on a white card. */
+.tm-page.gl .me-answers .is-chosen { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
+.tm-page.gl .ui-field:focus-within, .tp-join.gl .ui-field:focus-within, .tm-page.gl .ui-option:focus-visible { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
