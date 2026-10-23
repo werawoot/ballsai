@@ -16,12 +16,11 @@ import TrainingCard from './TrainingCard'
 import PageHeader from '@/components/PageHeader'
 import RoleHomeCard, { RoleLoadFailed } from '@/components/RoleHomeCard'
 import { calculateLevel, identityTierKey, levelProgress } from '@/lib/digital-identity'
-import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import { PROFILE_MENU } from '@/lib/site-nav'
-import { PUBLIC_PROFILE_COLUMNS, fetchMyAthletePrivate, shownAge, thaiDate } from '@/lib/athlete-private'
+import { shownAge, thaiDate } from '@/lib/athlete-private'
 import { profileReadiness, type ReadinessItem } from '@/lib/profile-readiness'
 import { signAvatarUrls } from '@/lib/athlete-avatar'
-import { fetchMyTraining } from '@/lib/training/data'
+import { fetchProfileHome } from '@/lib/profile-home'
 import { trainingHasPrimary, trainingHome } from '@/lib/training/home'
 import { homeKind, type HomeKind } from '@/lib/role-home'
 import { loadRoleHome } from '@/lib/role-home-data'
@@ -29,7 +28,6 @@ import type messagesTh from '@/messages/th.json'
 import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
 import '../glass.css'
 import './profile.css'
-import { fetchMyTeamMemberships } from '@/lib/my-team-memberships'
 
 // /profile is "ของฉัน": it opens on the person's own work for their role (lib/role-home.ts)
 // with one primary button. For an athlete that is training first, then what is left before
@@ -70,10 +68,6 @@ function PositionMark({ position, size }: { position: string; size: number }) {
 
 const KIND_ICONS: Record<HomeKind, LucideIcon> = { athlete: IdCard, guardian: UsersRound, coach: Compass, organizer: Trophy, venue: Building2, sponsor: Handshake }
 const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map(part => [...part][0] ?? '').join('').toUpperCase() || '?'
-const count = async (query: PromiseLike<{ count: number | null; error: unknown }>) => {
-  const { count: value, error } = await query
-  return error ? 0 : value ?? 0
-}
 
 export default async function ProfilePage() {
   const cookieStore = await cookies()
@@ -87,47 +81,31 @@ export default async function ProfilePage() {
   if (!user) redirect('/login')
 
   const t = await getTranslations('profileHome')
-  const { data: profileRow } = await supabase.from('profiles').select('full_name, role, onboarding_persona').eq('id', user.id).maybeSingle()
-  const profile = profileRow as Profile | null
+  // One call to my_profile_home (sql/91), or the old separate reads before it is applied.
+  const home = await fetchProfileHome(supabase, user.id)
+  const profile = home.profile as Profile | null
   const today = thaiDate(new Date())
   const kind = homeKind({ persona: profile?.onboarding_persona, role: profile?.role })
   const athleteHome = kind === 'athlete'
-  // A guardian, coach, organizer or venue owner is not shown, or charged for, the athlete's queries.
-  const [athleteResult, rankResult, membershipResult, progressResult, highlightCount, videoCount, pendingGuardian] = athleteHome ? await Promise.all([
-    supabase.from('athlete_profiles').select(PUBLIC_PROFILE_COLUMNS).eq('user_id', user.id).maybeSingle(),
-    supabase.from('player_ranks').select('id, player_name, position, ovr, pts').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).maybeSingle(),
-    // Team names through sql/82: the teams row itself is hidden from a member by RLS.
-    fetchMyTeamMemberships(supabase as never, user.id, 5),
-    supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', user.id).maybeSingle(),
-    count(supabase.from('athlete_highlights').select('id', { count: 'exact', head: true }).eq('athlete_id', user.id)),
-    count(supabase.from('athlete_videos').select('id', { count: 'exact', head: true }).eq('athlete_id', user.id)),
-    count(supabase.from('guardian_links').select('id', { count: 'exact', head: true }).eq('athlete_id', user.id).eq('status', 'pending')),
-  ]) : [null, null, null, null, 0, 0, 0] as const
-  const athleteRow = athleteResult?.data ?? null
-  const rankRow = rankResult?.data ?? null
-  const membershipRows = membershipResult?.memberships ?? null
-  const progressRow = progressResult?.data ?? null
   const roleKind = athleteHome ? null : kind
-  const [loaded, hasAthleteProfile] = roleKind ? await Promise.all([
-    loadRoleHome(supabase, roleKind, user.id),
-    // Someone who coaches or runs a venue may also play: their card stays one tap away.
-    count(supabase.from('athlete_profiles').select('user_id', { count: 'exact', head: true }).eq('user_id', user.id)),
-  ]) : [null, 0] as const
-  const athlete = athleteRow as AthleteProfile | null
-  const rank = rankRow as PlayerRank | null
-  const memberships = (membershipRows ?? []) as unknown as Membership[]
-  const pendingTeamInvites = memberships.filter(membership => membership.status === 'pending').length
-  // The birth date and consent time come only through my_athlete_private (sql/58).
-  const [athletePrivate, avatarUrls, training] = await Promise.all([
-    athlete ? fetchMyAthletePrivate(supabase, user.id).catch(error => {
-      console.error(JSON.stringify({ level: 'error', event: 'athlete_private_read_failed', code: error?.code ?? null }))
-      return { birth_date: null, guardian_consent_at: null }
-    }) : null,
+  // A guardian, coach, organizer or venue owner is not shown the athlete's own parts; someone
+  // who coaches or runs a venue may also play, so their card stays one tap away.
+  const hasAthleteProfile = home.athlete ? 1 : 0
+  const [loaded, avatarUrls] = await Promise.all([
+    roleKind ? loadRoleHome(supabase, roleKind, user.id) : null,
     // The photo is a private object (T51); the owner may always sign their own.
-    signAvatarUrls(supabase, [athlete?.profile_image_url]),
-    // Training (sql/63) is the athlete's own; nothing to show without an athlete profile.
-    athlete ? fetchMyTraining(supabase, user.id) : null,
+    signAvatarUrls(supabase, [athleteHome ? (home.athlete?.profile_image_url as string | null | undefined) : null]),
   ])
+  const athlete = (athleteHome ? home.athlete : null) as AthleteProfile | null
+  const rank = (athleteHome ? home.rank : null) as PlayerRank | null
+  const memberships = (athleteHome ? home.memberships : []) as unknown as Membership[]
+  const pendingTeamInvites = memberships.filter(membership => membership.status === 'pending').length
+  const athletePrivate = athlete ? home.private : null
+  const training = athlete ? home.training : null
+  const progressRow = athleteHome ? home.progress : null
+  const highlightCount = athleteHome ? home.highlights : 0
+  const videoCount = athleteHome ? home.videos : 0
+  const pendingGuardian = athleteHome ? home.pendingGuardian : 0
   const avatarUrl = athlete?.profile_image_url ? avatarUrls.get(athlete.profile_image_url) ?? null : null
 
   const progress = progressRow as { xp_total: number; current_level: number } | null

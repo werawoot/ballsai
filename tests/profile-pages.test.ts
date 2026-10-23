@@ -43,7 +43,11 @@ function fakeClient() {
   }
   return {
     from,
-    rpc: async (fn: string) => fn === 'my_team_memberships'
+    // my_profile_home (sql/91) answers as missing here, so these pages read through the
+    // separate reads it replaces; tests/profile-home.test.ts covers the one-call path.
+    rpc: async (fn: string) => fn === 'my_profile_home'
+      ? { data: null, error: { code: 'PGRST202' } }
+      : fn === 'my_team_memberships'
       ? (db.memberships ? { data: db.memberships, error: null } : { data: null, error: { code: 'PGRST202' } })
       : { data: db.private ? [db.private] : [], error: null },
     auth: { getUser: async () => ({ data: { user: { id: 'me', email: 'athlete@example.com' } } }) },
@@ -347,7 +351,8 @@ describe('/profile is "ของฉัน": it opens on the work of each role (U
 
   it('keeps the card of a coach who also plays one tap away', async () => {
     as('coach_organizer')
-    db.counts = { athlete_profiles: 1 }
+    // The page reads the athlete row itself now (sql/91 or its fallback), not a head count.
+    db.tables = { ...db.tables, athlete_profiles: minor }
     const html = await render(ProfilePage as never)
     expect(html).toContain('href="/card"')
     expect(text(html)).toContain('การ์ดนักกีฬาของฉัน')
