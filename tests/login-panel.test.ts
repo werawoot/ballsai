@@ -118,6 +118,11 @@ describe('/login first screen (owner\'s design, 23 Oct 2026; replaces the 14 Oct
     expect(html.indexOf('lg-google')).toBeLessThan(html.indexOf('lg-facebook'))
     expect(html).toMatch(/class="ui-btn ui-btn-white lg-facebook"[^>]*>[\s\S]*?เข้าด้วย Facebook/)
   })
+  it('shows the real Google "G" in its four colours on the Google button, not a drawn circle', () => {
+    const button = html.slice(html.indexOf('lg-google') - 200, html.indexOf('เข้าด้วย Google'))
+    for (const colour of ['#EA4335', '#4285F4', '#FBBC05', '#34A853']) expect(button).toContain(`fill="${colour}"`)
+    expect(readFileSync('app/login/login.css', 'utf8')).not.toContain('conic-gradient')
+  })
   it('asks for no password and offers no sign-in that is not wired up', () => {
     expect(html).not.toContain('type="password"')
     expect(text(html)).not.toMatch(/Apple|ลืมรหัสผ่าน|จดจำฉัน/)

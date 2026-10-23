@@ -12,6 +12,7 @@ import { LoginConsent } from "./LoginConsent";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import BrandMark from "@/components/BrandMark";
 import LanguageSwitch from "@/components/LanguageSwitch";
+import GoogleLogo from "@/components/GoogleLogo";
 import { PAGE_PHOTOS } from "@/lib/stock-photos";
 import "../glass.css";
 import "./login.css";
@@ -215,7 +216,7 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
               <button className="ui-btn ui-btn-primary" disabled={loading || !email || captchaMissing} onClick={() => sendOtp()} type="button">{loading ? tp("sending") : tp("email")}<ChevronRight size={18} /></button>
               <p className="lg-or"><span>{tp("orWith")}</span></p>
               <button className="ui-btn ui-btn-white" disabled={loading} onClick={signInWithGoogle} type="button">
-                <span className="lg-google" aria-hidden="true" />
+                <GoogleLogo className="lg-google" />
                 {loading ? tp("googleLoading") : tp("google")}
               </button>
               <button className="ui-btn ui-btn-white lg-facebook" disabled={loading} onClick={signInWithFacebook} type="button">

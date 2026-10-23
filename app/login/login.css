@@ -49,8 +49,8 @@ body:has(.lg) { background: var(--gl-pitch); }
 .lg-consent.is-checked i { background: var(--gl-green); border-color: var(--gl-green); }
 .lg-consent a { color: var(--gl-navy); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 .lg-consent:focus-within { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
-.lg-google { background: conic-gradient(#ea4335 0 25%, #fbbc05 0 50%, #34a853 0 75%, #4285f4 0); border-radius: 50%; height: 20px; position: relative; width: 20px; }
-.lg-google::after { background: #fff; border-radius: 50%; content: ''; inset: 5px; position: absolute; }
+/* The real Google "G" (components/GoogleLogo), on the white button as Google's guidelines ask. */
+.lg-google { display: block; flex: none; }
 .lg-or { align-items: center; color: var(--gl-text-2); display: flex; font-size: 12.5px; gap: 10px; margin: 0; }
 .lg-or::before, .lg-or::after { background: rgba(11,18,32,.12); content: ''; flex: 1; height: 1px; }
 .lg-consent.is-missing { border-color: #DC2626; box-shadow: 0 0 0 3px rgba(220,38,38,.15); }
