@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { OwnerVenue, OwnerBooking } from './VenueOwnerClient'
 import { formatVenueBookingDateTime, formatVenueBookingTime } from '@/lib/venue-booking-time'
+import { OWNER_SLOT_DAYS_BACK } from '@/lib/owner-venues'
 import styles from './operations.module.css'
 
 export function OfflinePaymentNotice() {
@@ -22,6 +23,8 @@ export default function VenueOperations({ venues, bookings }: { venues: OwnerVen
   const [busy, setBusy] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [day, setDay] = useState('')
+  // The page reads slots from OWNER_SLOT_DAYS_BACK days back (lib/owner-venues); an older day says so.
+  const oldestDay = local(new Date(Date.now() - OWNER_SLOT_DAYS_BACK * 24 * 3600 * 1000).toISOString()).slice(0, 10)
   const courts = venues.flatMap(v => (v.venue_courts ?? []).map(c => ({ ...c, venueName: v.name })))
   const slots = courts.flatMap(c => (c.venue_slots ?? []).map(s => ({ ...s, label: `${c.venueName} · ${c.name}` })))
     .sort((a,b) => a.starts_at.localeCompare(b.starts_at))
@@ -57,7 +60,8 @@ export default function VenueOperations({ venues, bookings }: { venues: OwnerVen
           </form></details>}
       </article>)}
       {!day && <p>เลือกวันเพื่อดูทุกคอร์ท พร้อมสถานะว่างและการจอง</p>}
-      {day && !slots.some(s => local(s.starts_at).startsWith(day)) && <p>ไม่มีช่วงเวลาในวันนี้</p>}
+      {day && day < oldestDay && <p>{tl('venueOps.window', { days: OWNER_SLOT_DAYS_BACK })}</p>}
+      {day && day >= oldestDay && !slots.some(s => local(s.starts_at).startsWith(day)) && <p>ไม่มีช่วงเวลาในวันนี้</p>}
     </div>
     {venues.map(v => <details key={v.id}><summary>แก้ข้อมูลสนาม · {v.name}</summary>
       <form onSubmit={e => void submit(e,'venue',v.id)}>

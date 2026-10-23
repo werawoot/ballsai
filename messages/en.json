@@ -2213,7 +2213,8 @@
     },
     "venueOps": {
       "paymentNote": "Closed beta: pay the venue and any deposit outside the system. A confirmed booking is not proof of payment; agree the amount and refund terms with the venue before you transfer",
-      "eyebrow": "For venue owners · Thailand time"
+      "eyebrow": "For venue owners · Thailand time",
+      "window": "This schedule goes back {days} days; the day you chose is older than that"
     },
     "bookingRequest": {
       "paymentNote": "Closed beta: pay the venue or any deposit outside the system. A confirmed booking is not proof of payment; agree the terms before you transfer",
