@@ -91,6 +91,14 @@ describe('loading a match plan with the roster photos', () => {
     expect((await response.json()).data.roster.map((member: { avatar_url: unknown }) => member.avatar_url)).toEqual([null, null])
   })
 
+  it('reads a long roster\'s photos in batches of 100, so the id list never outgrows a URL', async () => {
+    const many = Array.from({ length: 150 }, (_, index) => ({ athlete_id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`, display_name: `P${index}` }))
+    rpc.mockResolvedValue({ data: { plan: null, roster: many }, error: null })
+    const body = await (await load()).json()
+    expect(photos.asked.map(ids => ids.length)).toEqual([100, 50])
+    expect(body.data.roster).toHaveLength(150)
+  })
+
   it('asks for no photos when nobody is on the roster', async () => {
     rpc.mockResolvedValue({ data: { plan: null, roster: [] }, error: null })
     await load()

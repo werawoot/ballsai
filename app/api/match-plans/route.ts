@@ -39,14 +39,18 @@ export async function GET(request: Request) {
 
 // The board's roster list shows each member's photo when the viewer may see it: the
 // athlete_profiles row passes the viewer's own RLS (public, own or guardian) and storage
-// signs only what its RLS allows (lib/athlete-avatar, T51). A roster is at most 25 people,
-// read by primary key. A failed read means no photos, never a failed plan.
+// signs only what its RLS allows (lib/athlete-avatar, T51). A roster is one team's accepted
+// members (an entry is capped at 60, a club team is not), read by primary key in batches of
+// 100 so a long id list never outgrows a URL. A failed read means no photos, never a failed plan.
+const PHOTO_BATCH = 100
 type RosterPayload = { roster?: { athlete_id: string }[] } | null
 async function withRosterPhotos(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, data: RosterPayload) {
   const roster = data?.roster ?? []
   if (!roster.length) return data
-  const { data: rows, error } = await supabase.from('athlete_profiles').select('user_id, profile_image_url').in('user_id', roster.map(member => member.athlete_id))
-  const stored = new Map(error ? [] : (rows ?? []).map(row => [row.user_id as string, row.profile_image_url as string | null]))
+  const ids = roster.map(member => member.athlete_id)
+  const batches = await Promise.all(Array.from({ length: Math.ceil(ids.length / PHOTO_BATCH) }, (_, index) =>
+    supabase.from('athlete_profiles').select('user_id, profile_image_url').in('user_id', ids.slice(index * PHOTO_BATCH, (index + 1) * PHOTO_BATCH))))
+  const stored = new Map(batches.flatMap(({ data: rows, error }) => (error ? [] : (rows ?? []).map(row => [row.user_id as string, row.profile_image_url as string | null] as const))))
   const urls = await signAvatarUrls(supabase, [...stored.values()])
   return { ...data, roster: roster.map(member => {
     const value = stored.get(member.athlete_id)

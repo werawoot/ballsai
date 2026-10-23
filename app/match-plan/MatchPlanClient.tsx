@@ -286,7 +286,7 @@ export default function MatchPlanClient({ teams, head, toolbar, pagination, empt
             <ol className="mp-steps gl-card" aria-label={t('stepsLabel')}>
               {steps.map((step, index) => <li key={step.title} className={step.done ? 'is-done' : index === currentStep ? 'is-now' : undefined} aria-current={index === currentStep ? 'step' : undefined}>
                 <span className="mp-step-no" aria-hidden="true">{step.done ? <CheckCircle2 size={20} /> : index + 1}</span>
-                <span className="mp-step-text"><b>{step.title}</b><small>{step.text}</small></span>
+                <span className="mp-step-text"><b>{step.title}<span className="mp-sr"> ({step.done ? t('checkDone') : t('checkTodo')})</span></b><small>{step.text}</small></span>
               </li>)}
             </ol>
 
@@ -329,9 +329,9 @@ export default function MatchPlanClient({ teams, head, toolbar, pagination, empt
             </section>
 
             <section className={`mp-list gl-card${drag?.moved && (board.slots.includes(drag.id) || tab === 'bench') ? ' is-target' : ''}`} aria-label={t('listLabel')} data-drop="bench">
-              <div className="mp-tabs" role="tablist" aria-label={t('listLabel')}>
-                <button type="button" role="tab" aria-selected={tab === 'team'} className={tab === 'team' ? 'is-on' : undefined} onClick={() => setTab('team')}>{t('tabTeam', { count: roster.length })}</button>
-                <button type="button" role="tab" aria-selected={tab === 'bench'} className={tab === 'bench' ? 'is-on' : undefined} onClick={() => setTab('bench')}>{t('tabBench', { count: board.bench.length })}</button>
+              <div className="mp-tabs" role="group" aria-label={t('listLabel')}>
+                <button type="button" aria-pressed={tab === 'team'} className={tab === 'team' ? 'is-on' : undefined} onClick={() => setTab('team')}>{t('tabTeam', { count: roster.length })}</button>
+                <button type="button" aria-pressed={tab === 'bench'} className={tab === 'bench' ? 'is-on' : undefined} onClick={() => setTab('bench')}>{t('tabBench', { count: board.bench.length })}</button>
               </div>
               <div className="mp-find">
                 <label className="mp-search"><Search size={16} aria-hidden="true" /><span className="mp-sr">{t('searchPlayer')}</span><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={t('searchPlayer')} autoComplete="off" /></label>
@@ -374,7 +374,7 @@ export default function MatchPlanClient({ teams, head, toolbar, pagination, empt
           </div>
 
           <div className="mp-savebar">
-            {message ? <p className={`mp-msg is-${message.tone}`} role={message.tone === 'error' ? 'alert' : 'status'}>{message.tone === 'error' ? <ShieldAlert size={17} aria-hidden="true" /> : <CheckCircle2 size={17} aria-hidden="true" />}{message.text}</p>
+            {message ? <p className={`mp-msg is-${message.tone}`} role={message.tone === 'error' ? 'alert' : 'status'}>{message.tone === 'error' ? <ShieldAlert size={17} aria-hidden="true" /> : message.tone === 'info' ? <Sparkles size={17} aria-hidden="true" /> : <CheckCircle2 size={17} aria-hidden="true" />}{message.text}</p>
               : dirty && <p className="mp-msg">{t('unsaved')}</p>}
             <button type="button" className="mp-btn mp-btn-green mp-save" disabled={saving} onClick={save}><Save size={18} aria-hidden="true" />{saving ? t('saving') : live ? t('save') : t('saveDraft')}</button>
           </div>

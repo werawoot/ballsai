@@ -950,11 +950,8 @@
     "searchPlaceholder": "Team name",
     "searchButton": "Search",
     "empty": "No teams here yet",
-    "title": "Match plan",
-    "lead": "Drag or tap circles on the pitch to set the starters, add substitutes, then save once.",
     "teamPick": "Choose a team",
     "players": "{count} players",
-    "counts": "Starters {starters}/{slots} · Subs {bench}",
     "pitchHint": "Drag a circle anywhere, onto another player to swap, or tap it to pick a player. Drag names from the lists below onto the pitch.",
     "slotEmpty": "{position}, empty. Tap to pick a player",
     "slotFilled": "{position}: {name}. Tap to change",
@@ -964,10 +961,8 @@
       "MF": "Midfielder",
       "FW": "Forward"
     },
-    "benchTitle": "Substitutes",
     "benchEmpty": "No substitutes yet. Tap \"+ Sub\" in the list below.",
     "removeFromBench": "Remove {name} from the substitutes",
-    "availableTitle": "Not in the plan yet",
     "allPlaced": "Everyone is in the plan",
     "toBench": "+ Sub",
     "sheetTitle": "Pick a player · {position}",
@@ -1030,7 +1025,7 @@
     "checkDone": "done",
     "checkTodo": "not done",
     "autoFill": "Auto-arrange",
-    "autoFillDone": "Empty spots filled by each player's position. Drag to change",
+    "autoFillDone": "Empty spots filled: players in their own position first, then anyone left. Drag to change",
     "autoFillNone": "No free player or empty spot to fill",
     "clearPitch": "Clear the pitch",
     "tabTeam": "Team ({count})",
@@ -2204,12 +2199,6 @@
       "title": "Shortlist",
       "privacy": "Only your account sees this; athletes do not know they are on your shortlist",
       "powerNote": "Power Rating comes from confirmed match results, not from anything athletes enter themselves"
-    },
-    "matchPlanPage": {
-      "eyebrow": "For coaches · before the match",
-      "titleLine1": "Match",
-      "titleLine2": "plan.",
-      "intro": "Set starters, substitutes, positions and a message before the match. A plan is not a match result and does not change Power Rating, XP or badges"
     },
     "matchPlanBoard": {
       "teamLabel": "Team / tournament",

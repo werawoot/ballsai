@@ -31,18 +31,17 @@ export default async function MatchPlanPage(
   const scope: MatchPlanScope = searchParams.scope === 'mine' || searchParams.scope === 'organized' ? searchParams.scope : organizes ? 'organized' : 'mine'
   const page = parsePage(searchParams.page)
   const search = (searchParams.q ?? '').trim().slice(0, 80)
-  const [t, th, { teams, hasNext }] = await Promise.all([
+  const [t, { teams, hasNext }] = await Promise.all([
     getTranslations('matchPlan'),
-    getTranslations('teamHub'),
     fetchMatchPlanTeamsPage(supabase, { userId: user.id, scope, page, search }),
   ])
-  // Where this plan sits: an organizer came from the dashboard, a coach from their team hub.
+  // Where this plan sits, for the top bar's back link and the crumb alike: an organizer came
+  // from the dashboard, a coach from their team hub.
   const crumb = organizes ? { href: '/dashboard', label: tl('dashboardLabels.back') } : { href: '/team-members', label: t('crumbTeam') }
 
   return (
     <main className="bds-page mp-page gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.matchPlan)}>
-      {/* An organizer came from the dashboard; a coach from their own home (report 10). */}
-      <PageHeader back={organizes ? { href: '/dashboard', label: tl('dashboardLabels.back') } : { href: '/profile', label: th('back') }} />
+      <PageHeader back={crumb} />
 
       {/* Keyed by the list shown, so a new scope, search or page starts on its first team. */}
       <MatchPlanClient key={`${scope}:${search}:${page}`} teams={teams as unknown as MatchPlanTeam[]} empty={Boolean(search) && teams.length === 0}
