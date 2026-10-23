@@ -142,7 +142,7 @@ body {
 .bds-lang-switch[aria-busy="true"] { cursor:progress; opacity:.6; }
 @media print { .bds-page-header { display:none; } }
 /* --nav-height is shared by the bar and its spacer so the two cannot drift apart. */
-.bds-nav, .bds-nav-spacer, .bds-route-progress, .bds-discover-tabs, .bds-route-skeleton { --nav-ink:#111827; --nav-red:#CC0001; --nav-gold:#f4b942; --nav-height:70px; }
+.bds-nav, .bds-nav-spacer, .bds-route-progress, .bds-discover-tabs { --nav-ink:#111827; --nav-red:#CC0001; --nav-gold:#f4b942; --nav-height:70px; }
 /* The one bottom bar (components/SiteNav.tsx). Five equal columns, so it fits any phone
    by construction: there is no content width to overflow, and no hidden destination. */
 .bds-nav { background:rgba(17,24,39,.97); -webkit-backdrop-filter:blur(14px) saturate(140%); backdrop-filter:blur(14px) saturate(140%); border-top:1px solid rgba(255,255,255,.08); bottom:0; box-shadow:0 -12px 30px rgba(17,24,39,.18); box-sizing:border-box; display:grid; grid-auto-columns:minmax(0,1fr); grid-auto-flow:column; height:calc(var(--nav-height) + env(safe-area-inset-bottom)); left:0; padding:6px max(6px,calc((100vw - 560px) / 2)) calc(6px + env(safe-area-inset-bottom)); position:fixed; right:0; z-index:100; }
@@ -183,27 +183,27 @@ body {
 .bds-discover-tab:hover { color:#fff; }
 .bds-discover-tab.is-active { background:var(--nav-red); box-shadow:0 4px 12px rgba(204,0,1,.35); color:#fff; font-weight:800; }
 .bds-discover-tab:focus-visible { outline:2px solid var(--nav-gold); outline-offset:2px; }
-/* Route skeleton (app/loading.tsx). Shapes stand where content lands; a single light
-   sweep crosses them so the wait reads as progress, not a frozen screen. */
-.bds-route-skeleton { background:#f8f5ef; min-height:100vh; }
-.bds-skel-header { align-items:center; background:rgba(17,24,39,.97); display:flex; height:64px; padding:0 clamp(16px,4vw,48px); }
-.bds-skel-wordmark { color:#fff; font:800 24px/1 var(--font-oswald),sans-serif; letter-spacing:1.7px; }
-.bds-skel-wordmark em { color:var(--nav-gold); font-style:normal; }
-.bds-skel-hero { background:linear-gradient(112deg,#101827 9%,#202e49 58%,#0c432e 135%); display:grid; gap:12px; padding:clamp(34px,6vw,60px) max(20px,calc((100vw - 980px) / 2)) 46px; }
+/* Route skeleton (app/loading.tsx), on the light glass design (ADR-014): a glass bar with
+   the brand mark, a pitch-green head and frosted cards (gl-card) over the blurred grass. Shapes stand
+   where content lands; a single light sweep crosses them so the wait reads as progress. */
+.bds-route-skeleton { min-height:100vh; }
+.bds-skel-header { -webkit-backdrop-filter:blur(14px) saturate(1.3); backdrop-filter:blur(14px) saturate(1.3); align-items:center; background:rgba(11,18,32,.28); border-bottom:1px solid rgba(255,255,255,.16); display:flex; gap:10px; height:64px; padding:0 clamp(16px,4vw,48px); position:relative; z-index:1; }
+.bds-skel-name { color:#fff; font:800 19px/1 var(--gl-font); letter-spacing:.2px; }
+.bds-skel-hero { background:linear-gradient(180deg,rgba(11,18,32,.18),rgba(11,18,32,.5)),linear-gradient(118deg,var(--gl-pitch) 0%,#166534 55%,var(--gl-navy) 140%); display:grid; gap:12px; margin-top:-64px; padding:calc(64px + clamp(30px,5vw,52px)) max(20px,calc((100vw - 980px) / 2)) 46px; }
 .bds-skel-body { display:grid; gap:14px; margin:0 auto; max-width:1080px; padding:26px clamp(16px,4vw,42px) 30px; }
-.bds-skel-card { align-items:center; animation:bds-skel-rise .45s cubic-bezier(.2,.8,.2,1) both; background:#fff; border:1px solid #e4dfd5; box-shadow:8px 9px 0 rgba(17,24,39,.08); display:flex; gap:14px; padding:14px; }
+.bds-skel-card { align-items:center; animation:bds-skel-rise .45s cubic-bezier(.2,.8,.2,1) both; border-radius:var(--gl-radius); box-shadow:var(--gl-glass-shadow); display:flex; gap:14px; padding:14px; }
 .bds-skel-card-text { display:grid; flex:1; gap:8px; }
-.bds-skel-line, .bds-skel-avatar, .bds-skel-stat { background:linear-gradient(90deg,rgba(17,24,39,.07) 0%,rgba(17,24,39,.07) 38%,rgba(17,24,39,.14) 50%,rgba(17,24,39,.07) 62%,rgba(17,24,39,.07) 100%); background-size:240% 100%; animation:bds-skel-sweep 1.3s ease-in-out infinite; border-radius:4px; display:block; }
-.bds-skel-hero .bds-skel-line { background-image:linear-gradient(90deg,rgba(255,255,255,.09) 0%,rgba(255,255,255,.09) 38%,rgba(255,255,255,.2) 50%,rgba(255,255,255,.09) 62%,rgba(255,255,255,.09) 100%); }
+.bds-skel-line, .bds-skel-avatar, .bds-skel-stat { background:linear-gradient(90deg,rgba(11,18,32,.07) 0%,rgba(11,18,32,.07) 38%,rgba(11,18,32,.14) 50%,rgba(11,18,32,.07) 62%,rgba(11,18,32,.07) 100%); background-size:240% 100%; animation:bds-skel-sweep 1.3s ease-in-out infinite; border-radius:6px; display:block; }
+.bds-skel-hero .bds-skel-line { background-image:linear-gradient(90deg,rgba(255,255,255,.12) 0%,rgba(255,255,255,.12) 38%,rgba(255,255,255,.26) 50%,rgba(255,255,255,.12) 62%,rgba(255,255,255,.12) 100%); }
 .bds-skel-line.is-eyebrow { background-color:transparent; height:11px; width:min(150px,40%); }
-.bds-skel-hero .bds-skel-line.is-eyebrow { background-image:linear-gradient(90deg,var(--nav-red),rgba(204,0,1,.55)); animation:none; }
+.bds-skel-hero .bds-skel-line.is-eyebrow { background-image:linear-gradient(90deg,var(--gl-green),rgba(22,224,110,.5)); animation:none; border-radius:999px; }
 .bds-skel-line.is-title { height:clamp(34px,6vw,58px); width:min(520px,78%); }
 .bds-skel-line.is-title.is-short { width:min(340px,52%); }
 .bds-skel-line.is-copy { height:13px; margin-top:6px; width:min(380px,64%); }
 .bds-skel-avatar { border-radius:50%; flex:none; height:46px; width:46px; }
 .bds-skel-line.is-card-title { height:14px; width:62%; }
 .bds-skel-line.is-card-meta { height:11px; width:38%; }
-.bds-skel-stat { flex:none; height:28px; width:54px; }
+.bds-skel-stat { border-radius:999px; flex:none; height:28px; width:54px; }
 @keyframes bds-skel-sweep { 0% { background-position:100% 0; } 100% { background-position:0 0; } }
 @keyframes bds-skel-rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
 .sr-only { border:0; clip:rect(0 0 0 0); height:1px; margin:-1px; overflow:hidden; padding:0; position:absolute; white-space:nowrap; width:1px; }
