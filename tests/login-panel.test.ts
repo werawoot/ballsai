@@ -206,6 +206,12 @@ describe('/login stats bar and picture', () => {
     expect(page).not.toMatch(/20K|500\+|1M/)
     expect(page).not.toContain('นักกีฬาที่มีคะแนนฝีมือ')
   })
+  it('shows the facts with the free sign-up as a word, not a zero', () => {
+    const page = withStats([{ key: 'sports', value: 2 }, { key: 'roles', value: 6 }, { key: 'fee', value: 0 }, { key: 'provinces', value: 77 }])
+    expect(page).toContain('กีฬาที่เปิดแล้ว 2')
+    expect(page).toContain('บทบาทที่สมัครได้ 6')
+    expect(page).toContain('ค่าสมัครใช้งาน ฟรี')
+  })
   it('shows a real count it was given', () => {
     expect(withStats([{ key: 'athletes', value: 1240 }, { key: 'provinces', value: 77 }])).toContain('นักกีฬาที่มีคะแนนฝีมือ 1,240')
   })

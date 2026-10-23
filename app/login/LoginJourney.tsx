@@ -1,8 +1,8 @@
 import { useTranslations } from "next-intl";
 import { Kaushan_Script } from "next/font/google";
-import { BadgeCheck, CirclePlus, ChartColumn, CircleDot, Feather, Flag, Footprints, Goal, HandFist, IdCard, MapPin, Target, TrendingUp, Trophy, Users, Volleyball, Waves, type LucideIcon } from "lucide-react";
+import { BadgeCheck, CirclePlus, ChartColumn, CircleDot, Feather, Flag, Footprints, Gift, Goal, HandFist, IdCard, MapPin, Medal, Target, TrendingUp, Trophy, UserRound, Users, Volleyball, Waves, type LucideIcon } from "lucide-react";
 import { LOGIN_ART, SPORT_TILES } from "@/lib/stock-photos";
-import type { LoginStat } from "@/lib/home-stats";
+import { OPEN_SPORTS, type LoginStat } from "@/lib/home-stats";
 
 // The photo half of /login says what the site does with a match (owner, 23 Oct 2026). On a
 // wide screen, as in the owner's design: the owner's athletes picture beside the line, the
@@ -16,14 +16,15 @@ type PhotoSport = keyof typeof SPORT_TILES;
 const STEPS: [Step, LucideIcon][] = [["play", Flag], ["verified", BadgeCheck], ["card", IdCard], ["rank", TrendingUp], ["hall", Trophy]];
 // As in the owner's design: the first row shows each ball on its own surface (SPORT_TILES,
 // licensed, no brand), the second row line icons. Futsal leads the second row: it is open.
-const SPORTS: [Sport, LucideIcon, boolean][] = [
-  ["football", Goal, true], ["basketball", CircleDot, false], ["volleyball", Volleyball, false], ["tennis", Target, false], ["badminton", Feather, false],
-  ["futsal", Goal, true], ["athletics", Footprints, false], ["swimming", Waves, false], ["boxing", HandFist, false],
+const SPORTS: [Sport, LucideIcon][] = [
+  ["football", Goal], ["basketball", CircleDot], ["volleyball", Volleyball], ["tennis", Target], ["badminton", Feather],
+  ["futsal", Goal], ["athletics", Footprints], ["swimming", Waves], ["boxing", HandFist],
 ];
+const isOpen = (sport: Sport) => (OPEN_SPORTS as readonly string[]).includes(sport);
 const tilePhoto = (sport: Sport) => (sport in SPORT_TILES ? SPORT_TILES[sport as PhotoSport].src : null);
 // The handwritten "More Than a Game" of the design; loaded on /login only.
 const script = Kaushan_Script({ weight: "400", subsets: ["latin"], display: "swap" });
-const STAT_ICONS: Record<LoginStat["key"], LucideIcon> = { athletes: Users, tournaments: Trophy, results: ChartColumn, provinces: MapPin };
+const STAT_ICONS: Record<LoginStat["key"], LucideIcon> = { athletes: Users, tournaments: Trophy, results: ChartColumn, sports: Medal, roles: UserRound, fee: Gift, provinces: MapPin };
 
 export function LoginJourney({ stats }: { stats: LoginStat[] }) {
   const t = useTranslations("loginPage.journey");
@@ -45,12 +46,13 @@ export function LoginJourney({ stats }: { stats: LoginStat[] }) {
       {stats.length > 0 && <dl className="lg-stats">
         {stats.map(({ key, value }) => {
           const Icon = STAT_ICONS[key];
-          return <div key={key}><Icon size={26} aria-hidden="true" /><dt>{tn(key)}</dt><dd className="gl-num">{value.toLocaleString("en-US")}</dd></div>;
+          return <div key={key}><Icon size={26} aria-hidden="true" /><dt>{tn(key)}</dt><dd className="gl-num">{key === "fee" && value === 0 ? tn("free") : value.toLocaleString("en-US")}</dd></div>;
         })}
       </dl>}
       <ul className="lg-sports" aria-label={ts("label")}>
-        {SPORTS.map(([key, Icon, open], index) => {
+        {SPORTS.map(([key, Icon], index) => {
           const photo = tilePhoto(key);
+          const open = isOpen(key);
           return <li key={key} className={[open ? "is-open" : "", photo ? "has-photo" : ""].filter(Boolean).join(" ") || undefined}
             style={{ "--i": index, ...(photo ? { "--tile": `url(${photo})` } : {}) } as React.CSSProperties}>
             {!photo && <Icon size={30} aria-hidden="true" />}<span>{ts(key)}</span><small>{open ? ts("open") : ts("soon")}</small>

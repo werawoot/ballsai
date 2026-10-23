@@ -1,4 +1,5 @@
 import { THAI_PROVINCES } from './thai-provinces'
+import { CHOICES } from './onboarding'
 
 // The four platform numbers on the home page, and when they are worth showing. A home page
 // that opens with "0 tournaments" tells a first visitor nobody uses it, so the block stays
@@ -25,14 +26,26 @@ export function sportOpenCount(stats: HomeStats | null, min = SPORT_COUNT_MIN): 
 /** Thailand's provinces: the province picker's own list (lib/thai-provinces), so the bar can never claim one more. */
 export const PROVINCE_COUNT = THAI_PROVINCES.length
 
-export type LoginStat = { key: 'athletes' | 'tournaments' | 'results' | 'provinces'; value: number }
+/** The sports the site runs today; /login marks the rest "soon". */
+export const OPEN_SPORTS = ['football', 'futsal'] as const
 
-// The stats bar on /login (owner, 23 Oct 2026): each real count shows on its own once it
-// passes the home page's floor; a failed count (NaN) never shows. The provinces always do.
+type CountKey = 'athletes' | 'tournaments' | 'results'
+type FactKey = 'sports' | 'roles' | 'fee'
+export type LoginStat = { key: CountKey | FactKey | 'provinces'; value: number }
+
+/** The stats bar on /login always has this many boxes. */
+export const LOGIN_STAT_BOXES = 4
+
+// The stats bar on /login (owner, 23 Oct 2026): four boxes. Each real count shows once it
+// passes the home page's floor (a failed count, NaN, never does); the boxes left are filled
+// with facts that need no users, each read from the list the site runs on: the sports open
+// today, the roles one can sign up as (lib/onboarding), and the sign-up fee, which is none.
+// The provinces always close the bar.
 export function loginStats(stats: HomeStats | null, min: HomeStats = HOME_STATS_MIN): LoginStat[] {
-  const shown = (key: 'athletes' | 'tournaments' | 'results'): LoginStat[] => {
+  const counts = (['athletes', 'tournaments', 'results'] as const).flatMap((key): LoginStat[] => {
     const value = stats?.[key]
     return typeof value === 'number' && Number.isFinite(value) && value >= min[key] ? [{ key, value }] : []
-  }
-  return [...shown('athletes'), ...shown('tournaments'), ...shown('results'), { key: 'provinces', value: PROVINCE_COUNT }]
+  })
+  const facts: LoginStat[] = [{ key: 'sports', value: OPEN_SPORTS.length }, { key: 'roles', value: CHOICES.length }, { key: 'fee', value: 0 }]
+  return [...counts, ...facts].slice(0, LOGIN_STAT_BOXES - 1).concat({ key: 'provinces', value: PROVINCE_COUNT })
 }

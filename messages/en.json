@@ -2071,7 +2071,11 @@
       "athletes": "Rated athletes",
       "tournaments": "Tournaments",
       "results": "Verified results",
-      "provinces": "Open to every province"
+      "provinces": "Open to every province",
+      "sports": "Sports open now",
+      "roles": "Roles to sign up as",
+      "fee": "Sign-up fee",
+      "free": "Free"
     }
   },
   "guardianPage": {

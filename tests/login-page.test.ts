@@ -30,15 +30,15 @@ describe('/login', () => {
 
 // Review, 23 Oct 2026: the stats bar must never hold up signing in.
 describe('/login stats bar', () => {
-  it('opens with the provinces alone when the counts fail or hang', async () => {
+  it('opens with the facts and the provinces when the counts fail or hang', async () => {
     auth.user = null
     counts.mode = 'fail'
     const element = await open({}) as { props: { stats: unknown[] } }
-    expect(element.props.stats).toEqual([{ key: 'provinces', value: 77 }])
+    expect(element.props.stats.map((stat: { key: string }) => stat.key)).toEqual(['sports', 'roles', 'fee', 'provinces'])
     counts.mode = 'hang'
     const started = Date.now()
     const slow = await open({}) as { props: { stats: unknown[] } }
     expect(Date.now() - started).toBeLessThan(2000)
-    expect(slow.props.stats).toEqual([{ key: 'provinces', value: 77 }])
+    expect(slow.props.stats.map((stat: { key: string }) => stat.key)).toEqual(['sports', 'roles', 'fee', 'provinces'])
   })
 })
