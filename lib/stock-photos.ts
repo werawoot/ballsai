@@ -30,8 +30,9 @@ export type PhotoPage = 'tournaments' | 'tournament' | 'login' | 'welcome' | 'ra
 export const PAGE_PHOTOS: Readonly<Record<PhotoPage, StockPhoto>> = {
   tournaments: { src: '/photos/head-seats-colour.webp', credit: unsplash('Nico Smit', '1646801479598-6a00891d2039') },
   tournament: { src: '/photos/head-net-dark.webp', credit: unsplash('Sebastian Schuster', '1758934217889-1aec468a2d4d') },
-  // Grass up close with the stands blurred behind (owner, 23 Oct 2026: "พื้นหญ้า"); replaced the floodlights.
-  login: { src: '/photos/page-grass-stands.webp', credit: pexels('Juan Salamanca', '61143') },
+  // In the theme of the owner's athletes picture (owner, 23 Oct 2026): its stadium-light
+  // corners, no person in them, blown up and blurred, over grass up close. Made for this page.
+  login: { src: '/photos/page-login-scene.webp', credit: `Composite: the light corners of the owner's AI image (LOGIN_ART), blurred, over grass by ${pexels('Juan Salamanca', '61143')}` },
   welcome: { src: '/photos/page-net-sunset.webp', credit: unsplash('Alex (alexdphotography)', '1558297462-bf13bfc9fad2') },
   ranking: { src: '/photos/head-pitch-above.webp', credit: unsplash('Bernd Dittrich', '1723231462004-069caa209740') },
   athletes: { src: '/photos/head-pitch-lines.webp', credit: unsplash('Dan Gold', '1507602368706-321eeafaf53b') },

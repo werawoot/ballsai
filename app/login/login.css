@@ -79,7 +79,7 @@ body:has(.lg) { background: var(--gl-pitch); }
 .lg-message { background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 14px; color: #991B1B; font-size: 14px; line-height: 1.5; margin: 4px 0 0; padding: 11px 14px; }
 
 @media (min-width: 900px) {
-  .lg-shell { display: grid; gap: 56px; grid-template-columns: minmax(0, 1.1fr) minmax(400px, .9fr); padding: 32px 40px; }
+  .lg-shell { display: grid; gap: 48px; grid-template-columns: minmax(0, 1.25fr) minmax(400px, .75fr); max-width: 1320px; padding: 32px 40px; }
   .lg-hero { padding: 8px 0 0; }
   .lg-hero-copy { display: block; margin-top: 90px; padding-right: 0; }
   .lg-hero .ui-hero { font-size: 58px; }
@@ -184,7 +184,7 @@ body:has(.lg) { background: var(--gl-pitch); }
   .lg-hero .ui-hero { max-width: 420px; }
   .lg-hero .lg-lead { max-width: 380px; }
   .lg-story { margin: 18px 0 0; max-width: none; }
-  .lg-art { display: block; height: auto; -webkit-mask-composite: source-in; -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 80%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 14%, #000 70%, transparent 100%); mask-composite: intersect; mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 80%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 14%, #000 70%, transparent 100%); opacity: .95; pointer-events: none; position: absolute; right: -40px; top: -70px; width: 470px; z-index: -1; }
+  .lg-art { display: block; height: auto; -webkit-mask-composite: source-in; -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 80%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 14%, #000 70%, transparent 100%); mask-composite: intersect; mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 80%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 14%, #000 70%, transparent 100%); opacity: 1; pointer-events: none; position: absolute; right: -70px; top: -110px; width: min(720px, 62vw); z-index: -1; }
   .lg-tagline { font-size: 32px; text-align: left; }
   .lg-tagline::after { margin: 2px 0 0; }
   .lg-journey { display: none; }
@@ -224,3 +224,7 @@ body:has(.lg) { background: var(--gl-pitch); }
   0%, 9%, 100% { transform: none; }
   3%, 6% { box-shadow: 0 0 0 2px var(--gl-green), 0 12px 28px rgba(22,224,110,.45); transform: translateY(-5px) scale(1.04); }
 }
+
+/* The page's own scene (owner, 23 Oct 2026): lighter wash, so the stadium light and the
+   grass of the background show, as in the design; the text keeps its shadow. */
+.lg { background-image: linear-gradient(110deg, rgba(11,18,32,.72) 0%, rgba(11,18,32,.35) 55%, rgba(11,18,32,.25) 100%), var(--gl-stadium-photo); }
