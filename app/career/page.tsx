@@ -34,7 +34,9 @@ export default async function CareerPage() {
 
   const [{ data: athlete }, { data: rating }, { data: achievements }, { memberships }, { data: progress }, { data: videos }, { data: highlights }, { data: earnedBadges }] = await Promise.all([
     supabase.from('athlete_profiles').select('display_name, created_at, verification_level').eq('user_id', user.id).maybeSingle(),
-    supabase.from('player_ratings').select('id, power_rating, matches_played, wins, goals, assists, clean_sheets, mvps, confidence').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).maybeSingle(),
+    // This season's row only: player_ratings has one row per season, and maybeSingle() over
+    // two seasons is an error that read as "no rating" (T59). Indexed by sql/93.
+    supabase.from('player_ratings').select('id, power_rating, matches_played, wins, goals, assists, clean_sheets, mvps, confidence').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).maybeSingle(),
     supabase.from('athlete_achievements').select('id, title, event_name, verification_status, created_at').eq('athlete_id', user.id).order('created_at', { ascending: false }).limit(12),
     // Team names through sql/82: the teams row itself is hidden from a member by RLS.
     fetchMyTeamMemberships(supabase as never, user.id, 12),
