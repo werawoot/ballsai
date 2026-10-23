@@ -14,7 +14,7 @@ export type MyTeamMembership = {
   teams: { id: string; name: string; status: string; kind: string | null; tournaments: { name: string | null; location: string | null } | null } | null
 }
 
-type MembershipRow = {
+export type MembershipRow = {
   member_id: string; team_id: string; status: MyTeamMembership['status']; invited_at: string | null; created_at: string
   team_name: string; team_status: string; team_kind: string | null; tournament_name: string | null; tournament_location: string | null
 }
@@ -29,6 +29,18 @@ type MembershipReader = {
 }
 
 const MISSING = ['PGRST202', '42883']
+
+// One row of my_team_memberships (sql/82), also embedded in my_profile_home (sql/91).
+export function membershipFromRow(row: MembershipRow): MyTeamMembership {
+  return {
+    id: row.member_id,
+    team_id: row.team_id,
+    status: row.status,
+    invited_at: row.invited_at,
+    created_at: row.created_at,
+    teams: { id: row.team_id, name: row.team_name, status: row.team_status, kind: row.team_kind, tournaments: row.tournament_name || row.tournament_location ? { name: row.tournament_name, location: row.tournament_location } : null },
+  }
+}
 export const MY_TEAM_MEMBERSHIPS_LIMIT = 100
 
 // failed: neither read answered, so the page can say it could not load rather than "no teams".
@@ -36,15 +48,7 @@ export async function fetchMyTeamMemberships(client: MembershipReader, userId: s
   const capped = Math.min(Math.max(1, Math.floor(limit)), MY_TEAM_MEMBERSHIPS_LIMIT)
   const { data, error } = await client.rpc('my_team_memberships', { p_limit: capped })
   if (!error) {
-    const memberships = ((data ?? []) as MembershipRow[]).map(row => ({
-      id: row.member_id,
-      team_id: row.team_id,
-      status: row.status,
-      invited_at: row.invited_at,
-      created_at: row.created_at,
-      teams: { id: row.team_id, name: row.team_name, status: row.team_status, kind: row.team_kind, tournaments: row.tournament_name || row.tournament_location ? { name: row.tournament_name, location: row.tournament_location } : null },
-    }))
-    return { memberships, failed: false }
+    return { memberships: ((data ?? []) as MembershipRow[]).map(membershipFromRow), failed: false }
   }
   if (!MISSING.includes(error.code ?? '')) {
     console.error(JSON.stringify({ level: 'error', event: 'my_team_memberships_failed', code: error.code ?? null }))
