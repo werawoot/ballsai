@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { signAvatarUrls } from '@/lib/athlete-avatar'
 
 type LineupPlayer = {
   athlete_id?: string
@@ -33,7 +34,24 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase.rpc('get_match_plan_safely', { p_team_id: teamId })
   if (error) return NextResponse.json({ error: 'โหลดแผนก่อนแข่งไม่สำเร็จ' }, { status: error.message.includes('NOT_ALLOWED') ? 403 : 500 })
-  return NextResponse.json({ data })
+  return NextResponse.json({ data: await withRosterPhotos(supabase, data) })
+}
+
+// The board's roster list shows each member's photo when the viewer may see it: the
+// athlete_profiles row passes the viewer's own RLS (public, own or guardian) and storage
+// signs only what its RLS allows (lib/athlete-avatar, T51). A roster is at most 25 people,
+// read by primary key. A failed read means no photos, never a failed plan.
+type RosterPayload = { roster?: { athlete_id: string }[] } | null
+async function withRosterPhotos(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, data: RosterPayload) {
+  const roster = data?.roster ?? []
+  if (!roster.length) return data
+  const { data: rows, error } = await supabase.from('athlete_profiles').select('user_id, profile_image_url').in('user_id', roster.map(member => member.athlete_id))
+  const stored = new Map(error ? [] : (rows ?? []).map(row => [row.user_id as string, row.profile_image_url as string | null]))
+  const urls = await signAvatarUrls(supabase, [...stored.values()])
+  return { ...data, roster: roster.map(member => {
+    const value = stored.get(member.athlete_id)
+    return { ...member, avatar_url: (value && urls.get(value)) || null }
+  }) }
 }
 
 export async function POST(request: Request) {

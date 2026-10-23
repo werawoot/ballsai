@@ -10,6 +10,7 @@ describe.each([
   ['/ranking', 'app/ranking/page.tsx', 'rk', 'ranking'],
   ['/players/[id]', 'app/players/[id]/page.tsx', 'pp', 'player'],
   ['/athletes', 'app/athletes/page.tsx', 'at', 'athletes'],
+  ['/match-plan', 'app/match-plan/page.tsx', 'mp-page', 'matchPlan'],
 ])('%s on the light glass design', (_route, file, prefix, photo) => {
   const page = read(file)
 
