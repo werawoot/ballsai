@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import th from '@/messages/th.json'
 import en from '@/messages/en.json'
-import { MAX_NAV_ITEMS, NAV_ITEMS, activeNavItem, navItemsFor } from '@/lib/site-nav'
+import { MAX_NAV_ITEMS, NAV_ITEMS, activeNavItem, navItemsFor, rolePlan } from '@/lib/site-nav'
 
 // Owner, 9 Oct 2026 (approved mockup "BallDoenSai ตัวอย่าง UX ตามบทบาท"): the bottom bar
 // belongs to the person's role, and its first tab is their main job.
@@ -50,5 +50,31 @@ describe('a bottom bar per role', () => {
         expect((en.nav.items as Record<string, string>)[item.id], item.id).toBeTruthy()
       }
     }
+  })
+})
+
+// T60: the bar read the person's profile row on every route change to pick its tabs. The
+// role is now remembered per tab and per account, and read again only where it can change.
+describe('when the bottom bar reads the role again', () => {
+  const me = '11111111-1111-4111-8111-111111111111'
+  it('reads it once per account in a tab', () => {
+    expect(rolePlan(null, me, '/ranking')).toEqual({ use: null, read: true })
+    expect(rolePlan(JSON.stringify({ userId: me, kind: 'coach' }), me, '/ranking')).toEqual({ use: 'coach', read: false })
+  })
+
+  it('never shows one account the role remembered for another', () => {
+    expect(rolePlan(JSON.stringify({ userId: 'someone-else', kind: 'organizer' }), me, '/ranking')).toEqual({ use: null, read: true })
+    // The old cache held a bare kind with no account: it is not trusted.
+    expect(rolePlan('organizer', me, '/ranking')).toEqual({ use: null, read: true })
+  })
+
+  it('reads it again where a role is chosen or shown, so a change shows at once', () => {
+    const cached = JSON.stringify({ userId: me, kind: 'athlete' })
+    expect(rolePlan(cached, me, '/welcome')).toEqual({ use: 'athlete', read: true })
+    expect(rolePlan(cached, me, '/profile')).toEqual({ use: 'athlete', read: true })
+  })
+
+  it('keeps nothing for a signed-out visitor', () => {
+    expect(rolePlan(JSON.stringify({ userId: me, kind: 'coach' }), null, '/ranking')).toEqual({ use: null, read: false })
   })
 })

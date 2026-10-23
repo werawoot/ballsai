@@ -16,6 +16,7 @@ import {
   linkNavigationTarget,
   navItemsFor,
   navigationPhase,
+  rolePlan,
   showsSiteNav,
   startNavigation,
   type NavItemId,
@@ -41,11 +42,11 @@ const ICONS: Record<NavItemId, LucideIcon> = {
   results: ClipboardCheck,
 }
 
-// The last role seen in this tab, so a page change does not flash the general bar before
-// the role is read again. Per tab and per session only: a convenience, never a permission.
+// The role seen last in this tab, with the account it belongs to (lib/site-nav rolePlan).
+// Per tab and per session only: a convenience, never a permission.
 const KIND_KEY = 'bds-nav-kind'
-const readKind = (): NavKind | null => {
-  try { return (window.sessionStorage.getItem(KIND_KEY) as NavKind | null) || null } catch { return null }
+const readCachedRole = (): string | null => {
+  try { return window.sessionStorage.getItem(KIND_KEY) } catch { return null }
 }
 
 /** How long the progress bar takes to fill and fade once the new route has arrived. */
@@ -109,25 +110,33 @@ export default function SiteNav() {
     if (!visible) return
     let cancelled = false
     const load = async () => {
-      // The role seen last in this tab first, then the fresh one below.
-      const cached = readKind()
-      if (cached) setKind(current => current ?? cached)
+      const cached = readCachedRole()
       const supabase = createClient()
       const { data } = await supabase.auth.getSession()
-      const userId = data.session?.user.id
+      const userId = data.session?.user.id ?? null
+      // The role is read once per account in this tab, and again only where it can change
+      // (T60); the unread count on every route change, so coming back from /notifications
+      // shows the new number.
+      const plan = rolePlan(cached, userId, pathname)
+      if (plan.use) setKind(plan.use)
       const [count, role] = userId
         ? await Promise.all([
           fetchUnreadNotificationCount(supabase, userId),
           // Which bar to draw (lib/role-home.ts decides the kind). RLS lets a person read
           // their own profile row only.
-          supabase.from('profiles').select('onboarding_persona, role').eq('id', userId).maybeSingle()
-            .then(({ data: row }) => row ? homeKind({ persona: row.onboarding_persona, role: row.role }) : null, () => null),
+          plan.read
+            ? supabase.from('profiles').select('onboarding_persona, role').eq('id', userId).maybeSingle()
+              .then(({ data: row }) => row ? homeKind({ persona: row.onboarding_persona, role: row.role }) : null, () => plan.use)
+            : plan.use,
         ])
         : [null, null]
       if (cancelled) return
       setUnread(count)
       setKind(role)
-      try { if (role) window.sessionStorage.setItem(KIND_KEY, role); else window.sessionStorage.removeItem(KIND_KEY) } catch { /* the bar still works without it */ }
+      try {
+        if (userId && role) window.sessionStorage.setItem(KIND_KEY, JSON.stringify({ userId, kind: role }))
+        else window.sessionStorage.removeItem(KIND_KEY)
+      } catch { /* the bar still works without it */ }
     }
     // A badge must never be the reason navigation breaks.
     load().catch(() => { if (!cancelled) setUnread(null) })
