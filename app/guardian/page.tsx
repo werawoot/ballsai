@@ -3,13 +3,13 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { createServerClient } from '@supabase/ssr'
 import GuardianLinksClient, { type GuardianLink } from './GuardianLinksClient'
-import MyEventsPanel, { type MyEventRow } from '../team-members/MyEventsPanel'
-import MyNewsPanel, { type MyAnnouncementRow } from '../team-members/MyNewsPanel'
-import MyTrainingPanel, { type MyPlanRow } from '../team-members/MyTrainingPanel'
-import MyCoachNotesPanel, { type MyNoteRow } from '../team-members/MyCoachNotesPanel'
-import MyMinutesPanel, { type MyMinutesRow } from '../team-members/MyMinutesPanel'
+import MyEventsPanel from '../team-members/MyEventsPanel'
+import MyNewsPanel from '../team-members/MyNewsPanel'
+import MyTrainingPanel from '../team-members/MyTrainingPanel'
+import MyCoachNotesPanel from '../team-members/MyCoachNotesPanel'
+import MyMinutesPanel from '../team-members/MyMinutesPanel'
 import MyTeamStaffPanel from '../team-members/MyTeamStaffPanel'
-import type { MyTeamStaffRow } from '@/lib/team-staff'
+import { fetchMyTeamHub } from '@/lib/my-team-hub'
 import { planToday } from '@/lib/team-training'
 import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
@@ -53,31 +53,18 @@ export default async function GuardianPage() {
   const t = await getTranslations('header')
   const tp = await getTranslations('guardianPage')
 
-  const [{ data: profile }, { data: guardianRows }, { data: incomingRows }] = await Promise.all([
+  // One wave (T59): the profile, both sides of the guardian links, and the children's team
+  // data from my_team_hub (sql/92), or the functions it wraps side by side before it is
+  // applied: events (sql/70), news (sql/71), plans (sql/72), coach notes (sql/73), minutes
+  // (sql/74) and staff (sql/75). A section whose SQL is not applied is empty.
+  const [{ data: profile }, { data: guardianRows }, { data: incomingRows }, mine] = await Promise.all([
     supabase.from('profiles').select('onboarding_persona').eq('id', user.id).maybeSingle(),
     supabase.from('guardian_links').select('id, status, requested_at, athlete_profiles!guardian_links_athlete_id_fkey(display_name, is_public, athlete_progress(xp_total, current_level), athlete_badges(badge_key))').eq('guardian_id', user.id).order('requested_at', { ascending: false }),
     supabase.from('guardian_links').select('id, status, requested_at').eq('athlete_id', user.id).eq('status', 'pending').order('requested_at', { ascending: false }),
+    fetchMyTeamHub(supabase, user.id),
   ])
-  // Upcoming team events of the children this guardian may answer for (sql/70). Before
-  // SQL70 the function is missing and nothing is shown.
-  const { data: eventRows, error: eventsError } = await supabase.rpc('my_upcoming_team_events', { p_limit: 30 })
-  const events = eventsError ? [] : ((eventRows ?? []) as MyEventRow[])
-  // Announcements from their children's teams (sql/71); nothing before SQL71.
-  const { data: newsRows, error: newsError } = await supabase.rpc('my_team_announcements', { p_limit: 10 })
-  const news = newsError ? [] : ((newsRows ?? []) as MyAnnouncementRow[])
-  // This week's and next week's plans of their children's teams (sql/72).
-  const { data: planRows, error: plansError } = await supabase.rpc('my_team_training_plans')
-  const plans = plansError ? [] : ((planRows ?? []) as MyPlanRow[])
+  const { events, news, plans, notes: coachNotes, minutes: myMinutes, teamStaff } = mine
   const planDay = planToday()
-  // Coach notes about the athlete or the children this guardian may act for (sql/73).
-  const { data: noteRows, error: notesError } = await supabase.rpc('my_coach_notes', { p_limit: 50 })
-  const coachNotes = notesError ? [] : ((noteRows ?? []) as MyNoteRow[])
-  // Season minutes recorded by the coach (sql/74); nothing before SQL74.
-  const { data: minuteRows, error: minutesError } = await supabase.rpc('my_match_minutes')
-  const myMinutes = minutesError ? [] : ((minuteRows ?? []) as MyMinutesRow[])
-  // Every adult on the staff of the children's teams (sql/75); nothing before SQL75.
-  const { data: staffRows, error: staffError } = await supabase.rpc('my_team_staff')
-  const teamStaff = staffError ? [] : ((staffRows ?? []) as MyTeamStaffRow[])
   const isGuardian = (profile as Profile | null)?.onboarding_persona === 'guardian'
   const links = ((guardianRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
   const incoming = ((incomingRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
