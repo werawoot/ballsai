@@ -5,7 +5,8 @@ vi.mock('@/lib/supabase-server', () => ({ createServerSupabaseClient: async () =
 vi.mock('next/navigation', () => ({ redirect: (to: string) => { throw new Error(`redirect ${to}`) } }))
 vi.mock('@/app/login/LoginPanel', () => ({ default: () => null }))
 // The stats bar's counts come from the public cache; here it fails, and /login still opens.
-vi.mock('@/lib/public-data', () => ({ getPublicPlatformCounts: async () => { throw new Error('offline') } }))
+const counts = vi.hoisted(() => ({ mode: 'fail' as 'fail' | 'hang' }))
+vi.mock('@/lib/public-data', () => ({ getPublicPlatformCounts: () => counts.mode === 'hang' ? new Promise(() => {}) : Promise.reject(new Error('offline')) }))
 
 import LoginPage from '@/app/login/page'
 
@@ -24,5 +25,20 @@ describe('/login', () => {
     await expect(open({})).resolves.toBeTruthy()
     auth.user = { id: 'u1' }
     await expect(open({ admin: '1' })).resolves.toBeTruthy()
+  })
+})
+
+// Review, 23 Oct 2026: the stats bar must never hold up signing in.
+describe('/login stats bar', () => {
+  it('opens with the provinces alone when the counts fail or hang', async () => {
+    auth.user = null
+    counts.mode = 'fail'
+    const element = await open({}) as { props: { stats: unknown[] } }
+    expect(element.props.stats).toEqual([{ key: 'provinces', value: 77 }])
+    counts.mode = 'hang'
+    const started = Date.now()
+    const slow = await open({}) as { props: { stats: unknown[] } }
+    expect(Date.now() - started).toBeLessThan(2000)
+    expect(slow.props.stats).toEqual([{ key: 'provinces', value: 77 }])
   })
 })

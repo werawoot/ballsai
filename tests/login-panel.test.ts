@@ -202,7 +202,7 @@ describe('/login stats bar and picture', () => {
     createElement(LoginPanel as ComponentType<never>, { adminEntry: false, nextPath: '/profile', stats }))))
   it('shows the provinces alone when that is all it was given, and no invented totals', () => {
     const page = withStats([{ key: 'provinces', value: 77 }])
-    expect(page).toContain('จังหวัดที่รองรับ 77')
+    expect(page).toContain('เปิดให้ทุกจังหวัด 77')
     expect(page).not.toMatch(/20K|500\+|1M/)
     expect(page).not.toContain('นักกีฬาที่มีคะแนนฝีมือ')
   })

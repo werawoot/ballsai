@@ -32,7 +32,7 @@ export function LoginJourney({ stats }: { stats: LoginStat[] }) {
   return (
     <div className="lg-story">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="lg-art" src={LOGIN_ART.src} alt="" width={1400} height={1120} fetchPriority="high" />
+      <img className="lg-art" src={LOGIN_ART.src} alt="" width={1400} height={1120} decoding="async" />
       <p className={`lg-tagline ${script.className}`} lang="en">More Than a Game</p>
       <ol className="lg-journey" aria-label={t("label")}>
         {STEPS.map(([key, Icon], index) => (
@@ -42,12 +42,12 @@ export function LoginJourney({ stats }: { stats: LoginStat[] }) {
           </li>
         ))}
       </ol>
-      <dl className="lg-stats">
+      {stats.length > 0 && <dl className="lg-stats">
         {stats.map(({ key, value }) => {
           const Icon = STAT_ICONS[key];
           return <div key={key}><Icon size={26} aria-hidden="true" /><dt>{tn(key)}</dt><dd className="gl-num">{value.toLocaleString("en-US")}</dd></div>;
         })}
-      </dl>
+      </dl>}
       <ul className="lg-sports" aria-label={ts("label")}>
         {SPORTS.map(([key, Icon, open], index) => {
           const photo = tilePhoto(key);
