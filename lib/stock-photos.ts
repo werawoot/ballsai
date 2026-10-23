@@ -24,7 +24,7 @@ export const STADIUM: StockPhoto | null = { src: '/photos/stadium-aerial-night.w
 
 const unsplash = (photographer: string, id: string) => `${photographer}, Unsplash, photo-${id}`
 
-export type PhotoPage = 'tournaments' | 'tournament' | 'login' | 'welcome' | 'ranking' | 'athletes' | 'hallOfFame' | 'player' | 'profile' | 'profileEdit'
+export type PhotoPage = 'tournaments' | 'tournament' | 'login' | 'welcome' | 'ranking' | 'athletes' | 'hallOfFame' | 'player' | 'profile' | 'profileEdit' | 'teams' | 'join'
 
 export const PAGE_PHOTOS: Readonly<Record<PhotoPage, StockPhoto>> = {
   tournaments: { src: '/photos/head-seats-colour.webp', credit: unsplash('Nico Smit', '1646801479598-6a00891d2039') },
@@ -37,6 +37,8 @@ export const PAGE_PHOTOS: Readonly<Record<PhotoPage, StockPhoto>> = {
   player: { src: '/photos/head-roof-sky.webp', credit: unsplash('Bangkit Ristant', '1494390438231-97c51a2de9c7') },
   profile: { src: '/photos/card-pitch-overhead.webp', credit: unsplash('Victor (victor_g)', '1546717003-caee5f93a9db') },
   profileEdit: { src: '/photos/head-corner-flag.webp', credit: unsplash('Ben Wiens', '1531861184681-f2de7dd72da5') },
+  teams: { src: '/photos/head-training-cones.webp', credit: 'Chris K, Pexels, photo 13204961' },
+  join: { src: '/photos/head-fence-sunrise.webp', credit: 'Alexander Mass, Pexels, photo 29741193' },
 }
 
 // Behind the whole page, so glass cards have grass to show through: the same grass close-up

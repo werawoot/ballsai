@@ -36,7 +36,7 @@ export default function AthleteSkillInbox({ proposals }: { proposals: SkillPropo
     <section className="ui-card" style={{ display: 'grid', gap: 10, marginBottom: 20, padding: 14 }}>
       <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: 'var(--ui-text)' }}>{t('inboxTitle')}</h2>
       <p style={{ margin: 0, fontSize: 13, color: 'var(--ui-mute)', lineHeight: 1.6 }}>{t('inboxRule')}</p>
-      {message && <p role={message.tone === 'ok' ? 'status' : 'alert'} style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: message.tone === 'ok' ? 'var(--ui-ok)' : '#ff8a8a' }}>{message.text}</p>}
+      {message && <p role={message.tone === 'ok' ? 'status' : 'alert'} style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: message.tone === 'ok' ? 'var(--ui-ok)' : 'var(--tm-error, #ff8a8a)' }}>{message.text}</p>}
       {proposals.map(item => <article key={item.id} style={{ display: 'grid', gap: 8, borderTop: '1px solid var(--ui-line)', paddingTop: 10 }}>
         <b style={{ fontSize: 14.5, color: 'var(--ui-text)' }}>{t('fromTeam', { team: item.teamName })}</b>
         <dl style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 6, margin: 0 }}>

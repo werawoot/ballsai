@@ -24,6 +24,8 @@ listed there exists in `public/photos/` and has a row here.
 | `head-roof-sky.webp` | PAGE_PHOTOS.player (/players/[id] head) | https://unsplash.com/photos/2APhya1dM_U (photo-1494390438231-97c51a2de9c7, a stadium roof against the sky) | Bangkit Ristant (@bangkitristant) | Unsplash Licence | 22 Oct 2026 |
 | `card-pitch-overhead.webp` | PAGE_PHOTOS.profile (/profile identity card) | https://unsplash.com/photos/empty-football-field-in-aerial-photgraphy-raesgfwU7iM (photo-1546717003-caee5f93a9db, a pitch from straight above, Netherlands; cropped to the pitch, leaving out the benches with a few people far away) | Victor (@victor_g) | Unsplash Licence | 22 Oct 2026 |
 | `head-corner-flag.webp` | PAGE_PHOTOS.profileEdit (/profile/edit head) | https://unsplash.com/photos/minimalist-photo-of-soccer-field-91yHQ1JMK9Y (photo-1531861184681-f2de7dd72da5, a corner flag and arc; cropped to leave out the far advertising boards) | Ben Wiens (@benwiens) | Unsplash Licence | 22 Oct 2026 |
+| `head-training-cones.webp` | PAGE_PHOTOS.teams (/team-members head) | https://www.pexels.com/photo/agility-ladder-and-marker-cones-on-a-football-field-13204961/ (an agility ladder and marker cones on a pitch, no people) | Chris K | Pexels Licence | 23 Oct 2026 |
+| `head-fence-sunrise.webp` | PAGE_PHOTOS.join (/join/[token] head) | https://www.pexels.com/photo/sunrise-over-empty-soccer-field-with-trees-29741193/ (sunrise through a fence over an empty pitch; cropped) | Alexander Mass | Pexels Licence | 23 Oct 2026 |
 
 Checked and left out on 21 Oct 2026: photos with people, the FIFA World Cup trophy (a trade
 mark), balls and boots with a readable Nike or Adidas mark, and photo-1510051640316 (a goal
@@ -32,7 +34,9 @@ right to license it could not be confirmed. On 22 Oct 2026 also left out: a ball
 Adidas mark, two night stadiums with a sponsor's name on the roof, a sky over a stand with
 Nike and club boards, a goal net with a player behind it, aerial pitches with people or a
 school name, and photo-1599204607024 (a goal net) whose EXIF names a different
-photographer from the uploader. Each page head is its own photo; none is reused. Files are re-encoded WebP with no EXIF, XMP or
+photographer from the uploader. On 23 Oct 2026 also left out: a ball with Premier League
+and Puma marks, a ball pile with Adidas marks and people behind, and a night goal with
+people, one of them a child, behind the net. Each page head is its own photo; none is reused. Files are re-encoded WebP with no EXIF, XMP or
 GPS data.
 
 The photographer of photo-1556056504 is not recorded because the Unsplash photo page could
