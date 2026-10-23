@@ -1414,7 +1414,6 @@
     }
   },
   "loginOtp": {
-    "emailSubtitle": "We will email you a code. No password to remember.",
     "title": "Enter the code from your email",
     "sentTo": "Sent to",
     "onlyLatest": "Only the code in the newest email works. Asking for a new code cancels the old one.",
@@ -2042,7 +2041,8 @@
     "orWith": "or continue with",
     "slogan1": "Every match",
     "slogan2": "opens a door",
-    "slogan3": "for Thai youth"
+    "slogan3": "for Thai youth",
+    "orSignUpWith": "or sign up with"
   },
   "guardianPage": {
     "title": "Link to your child’s account",

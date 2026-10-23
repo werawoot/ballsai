@@ -209,12 +209,12 @@ export default function LoginPanel({ adminEntry, nextPath }: { adminEntry: boole
               <label className="lg-input" htmlFor="email">
                 <Mail aria-hidden="true" size={19} />
                 <span className="lg-sr">{tp("emailLabel")}</span>
-                <input autoComplete="email" id="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && email) sendOtp(); }} placeholder={tp("emailPlaceholder")} type="email" value={email} />
+                <input autoComplete="email" id="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing && email) sendOtp(); }} placeholder={tp("emailPlaceholder")} type="email" value={email} />
               </label>
               <LoginConsent accepted={acceptedTerms} missing={consentMissing} missingText={tp("consentNeeded")} onChange={(accepted) => { setAcceptedTerms(accepted); if (accepted) setConsentMissing(false); }}>{consentText}</LoginConsent>
               {captcha}
               <button className="ui-btn ui-btn-primary" disabled={loading || !email || captchaMissing} onClick={() => sendOtp()} type="button">{loading ? tp("sending") : tp("email")}<ChevronRight size={18} /></button>
-              <p className="lg-or"><span>{tp("orWith")}</span></p>
+              <p className="lg-or"><span>{mode === "signup" ? tp("orSignUpWith") : tp("orWith")}</span></p>
               <button className="ui-btn ui-btn-white" disabled={loading} onClick={signInWithGoogle} type="button">
                 <GoogleLogo className="lg-google" />
                 {loading ? tp("googleLoading") : tp("google")}
