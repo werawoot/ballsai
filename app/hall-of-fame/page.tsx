@@ -69,7 +69,7 @@ export default async function HallOfFamePage(
   }
 
   return <main className="hall-page gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.hallOfFame)}>
-    <header className="hall-header"><Link href="/" className="hall-logo"><Trophy size={19} /> BallDoenSai.com</Link><Link href="/ranking" className="hall-ranking-link">{t('rankingLink')}</Link></header>
+    <header className="hall-header"><Link href="/" className="hall-logo"><Trophy size={19} /> DOENSAI.com</Link><Link href="/ranking" className="hall-ranking-link">{t('rankingLink')}</Link></header>
     <section className="hall-hero"><div className="hall-hero-orbit" /><div><span>{t('eyebrow')}</span><h1>{t('title')}<br /><em>{t('titleEm')}</em></h1><p>{t('intro')}</p></div><div className="hall-season"><small>{t('season')}</small><b>{season}</b></div></section>
     <DiscoverTabs current="/hall-of-fame" />
     <section className="hall-content">

@@ -144,7 +144,7 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
               {hasRanking
                 ? <div className="pp-card-stats">{cardSkills.map(item => <div key={item.key}><b>{skillText(item.value)}</b><span>{item.short}</span></div>)}</div>
                 : <p className="pp-card-unlock">{tCard('unlockBefore')}<b>{tCard('unlockRating')}</b>{tCard('unlockAfter')}</p>}
-              <div className="pp-card-foot"><span>BALLDOENSAI.COM</span><span>SEASON {rankSeason}</span></div>
+              <div className="pp-card-foot"><span>DOENSAI.COM</span><span>SEASON {rankSeason}</span></div>
             </div>
           </div>
           <div className="pp-hero-text">

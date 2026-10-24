@@ -108,7 +108,7 @@ export default async function AdminPage(props: { searchParams?: Promise<{ page?:
             textDecoration: "none",
           }}
         >
-          <Trophy size={22} strokeWidth={2.5} /> BallDoenSai.com
+          <Trophy size={22} strokeWidth={2.5} /> DOENSAI.com
         </Link>
         <div
           style={{

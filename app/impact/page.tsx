@@ -41,7 +41,7 @@ export default function ImpactPage() {
     <main className="impact-page">
       <header className="impact-header">
         <Link href="/" className="impact-back"><ArrowLeft size={17} /> {t('back')}</Link>
-        <Link href="/" className="impact-logo"><span className="bds-brand-mark"><Trophy size={14} /></span>BallDoenSai.com</Link>
+        <Link href="/" className="impact-logo"><span className="bds-brand-mark"><Trophy size={14} /></span>DOENSAI.com</Link>
         <Link href="/athletes" className="impact-directory">{t('directory')} <ArrowUpRight size={15} /></Link>
       </header>
 

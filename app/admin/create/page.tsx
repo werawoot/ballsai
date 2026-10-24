@@ -91,7 +91,7 @@ export default function CreatePlayerPage() {
     <main style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: 40 }}>
       <header style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', height: 54, background: '#CC0001', boxShadow: '0 2px 12px rgba(204,0,1,0.3)' }}>
         <Link href="/" style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 800, letterSpacing: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <Trophy size={22} strokeWidth={2.5} /> BallDoenSai.com
+          <Trophy size={22} strokeWidth={2.5} /> DOENSAI.com
         </Link>
         <Link href="/admin" className="tap-44" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
           <ArrowLeft size={16} /> กลับ
@@ -122,7 +122,7 @@ export default function CreatePlayerPage() {
           </div>
           <select value={selectedPlayerId} onChange={event => selectAthleteAccount(event.target.value)} disabled={loadingAccounts} style={{ ...inputStyle, background: 'white' }}>
             <option value="">{loadingAccounts ? 'กำลังโหลดบัญชี...' : 'เลือกบัญชีนักกีฬา'}</option>
-            {athleteAccounts.map(account => <option key={account.user_id} value={account.user_id}>{account.display_name} · {account.current_team || account.province || 'BallDoenSai.com Athlete'}</option>)}
+            {athleteAccounts.map(account => <option key={account.user_id} value={account.user_id}>{account.display_name} · {account.current_team || account.province || 'DOENSAI.com Athlete'}</option>)}
           </select>
           {!loadingAccounts && athleteAccounts.length === 0 && <p style={{ fontSize: 11, color: '#a16207', marginTop: 8 }}>ไม่พบบัญชีที่ยังไม่มี Ranking ลองค้นหาด้วยชื่ออื่น</p>}
           <p style={{ fontSize: 10, color: '#888', lineHeight: 1.5, marginTop: 8 }}>ค้นหาจาก Server ครั้งละไม่เกิน 20 บัญชี และแสดงเฉพาะ Athlete Account ที่ยังไม่มี Ranking ใน {ACTIVE_SEASON}</p>

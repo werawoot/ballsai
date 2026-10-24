@@ -91,7 +91,7 @@ export default async function CareerPage() {
   const videoType = (type: string) => (type === 'highlight' || type === 'match' || type === 'training' ? t(`videoType.${type}`) : type)
 
   return <main className="career-page">
-    <header className="career-header"><Link href="/" className="career-logo"><Trophy size={19} /> BallDoenSai.com</Link><div><Link href="/ranking?view=trending" className="career-hall-link"><Crown size={15} /> {t('trending')}</Link><Link href="/card" className="career-card-link">{t('cardLink')} <ChevronRight size={15} /></Link></div></header>
+    <header className="career-header"><Link href="/" className="career-logo"><Trophy size={19} /> DOENSAI.com</Link><div><Link href="/ranking?view=trending" className="career-hall-link"><Crown size={15} /> {t('trending')}</Link><Link href="/card" className="career-card-link">{t('cardLink')} <ChevronRight size={15} /></Link></div></header>
     <section className="career-hero"><div className="career-hero-orbit" /><div className="career-hero-copy"><p>{t('eyebrow', { season: ACTIVE_SEASON })}</p><h1>{t('titleLead')}<br /><em>{name}</em></h1><span>{t('intro')}</span></div><div className="career-rating"><small>{t('ratingLabel')}</small><b>{typedRating?.power_rating?.toLocaleString() || '—'}</b><span>{typedRating ? t('ratingMatches', { matches: typedRating.matches_played, confidence: t(`confidence.${typedRating.confidence === 'active' || typedRating.confidence === 'full' ? typedRating.confidence : 'provisional'}`) }) : t('noRating')}</span></div></section>
 
     <section className="career-content">

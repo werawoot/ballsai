@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "BallDoenSai.com — Thailand's youth sports platform",
+    "title": "DOENSAI.com — Thailand's youth sports platform",
     "description": "Rankings for Thai youth athletes"
   },
   "language": {
@@ -8,7 +8,7 @@
     "switchLabel": "เปลี่ยนเป็นภาษาไทย"
   },
   "header": {
-    "home": "BallDoenSai.com home",
+    "home": "DOENSAI.com home",
     "backTo": "Back to {label}",
     "back": {
       "profile": "My page",
@@ -199,7 +199,7 @@
     "needPublicProfile": "Turn on “Public profile” on your profile page before sharing your athlete link",
     "copyFailed": "Could not copy the link. Try the share button on your phone instead",
     "preparingShare": "Preparing your card for sharing…",
-    "shareText": "This is my player card from BallDoenSai.com ⚽",
+    "shareText": "This is my player card from DOENSAI.com ⚽",
     "shareOpened": "Share menu opened — choose Instagram, Facebook or TikTok",
     "shareDownloaded": "Image downloaded — open the app you want and pick this image to post",
     "shareFailed": "Could not share yet. Try downloading it and posting from the app",
@@ -293,7 +293,7 @@
   },
   "profileShare": {
     "needPublic": "Turn on “Public profile” and save first to get a share link",
-    "shareText": "This is my athlete profile on BallDoenSai.com ⚽",
+    "shareText": "This is my athlete profile on DOENSAI.com ⚽",
     "shareOpened": "Share menu opened",
     "copied": "Link copied",
     "shareFailed": "Could not share yet. Try copying the link instead",
@@ -391,7 +391,7 @@
     "slots": "{count, plural, one {# slot} other {# slots}}",
     "noPrice": "Price not set",
     "allVenues": "All venues",
-    "defaultDescription": "A venue you can request to book through BallDoenSai",
+    "defaultDescription": "A venue you can request to book through DOENSAI",
     "openSlots": "{count, plural, one {# open slot} other {# open slots}}",
     "details": "Venue details",
     "courtsTitle": "Courts and pitches",
@@ -414,7 +414,7 @@
       "allVenues": "All venues",
       "titleTop": "Run your venue",
       "titleBottom": "ready for kick-off",
-      "intro": "Create your venue, open free slots and answer booking requests from BallDoenSai users, all in one place."
+      "intro": "Create your venue, open free slots and answer booking requests from DOENSAI users, all in one place."
     },
     "stats": {
       "myVenues": "My venues",
@@ -672,7 +672,7 @@
       "line1": "Kids with a dream",
       "line2": "shouldn't have to ",
       "line3": "wait for a chance",
-      "body": "BallDoenSai.com turns what young Thai footballers do on the pitch into a sports identity where every number says where it came from, built to be safe for children."
+      "body": "DOENSAI.com turns what young Thai footballers do on the pitch into a sports identity where every number says where it came from, built to be safe for children."
     },
     "trust": {
       "consent": "Parents consent before a profile goes public",
@@ -1132,7 +1132,7 @@
   },
   "profileHome": {
     "eyebrow": "Me",
-    "noName": "BallDoenSai athlete",
+    "noName": "DOENSAI athlete",
     "age": "{age} yrs",
     "verification": {
       "self": "Entered by me",
@@ -1284,7 +1284,7 @@
       "title": "Which team are you in?",
       "body": "Coaches invite you with the email you signed up with. Send it to your coach, then accept the invitation when it arrives.",
       "button": "Send my email to my coach",
-      "text": "Coach, please invite me to the team on BallDoenSai with this email: {email}",
+      "text": "Coach, please invite me to the team on DOENSAI with this email: {email}",
       "copied": "Copied. Send it to your coach.",
       "failed": "Could not copy. Try again."
     }
@@ -1546,7 +1546,7 @@
     "starterChip": "Starter card",
     "level": "Level {level}",
     "share": "Share profile",
-    "shareText": "See {name}'s athlete profile on BallDoenSai.com",
+    "shareText": "See {name}'s athlete profile on DOENSAI.com",
     "shareCopied": "Link copied",
     "shareFailed": "Could not share. Copy the link from the address bar.",
     "inRanking": "See in ranking",
@@ -1620,7 +1620,7 @@
       "notAssessed": "Skills not assessed yet."
     },
     "trustNote": "Self-reported details are kept apart from what a coach or a match result confirms, and a starting value is never treated as performance.",
-    "fallbackName": "BallDoenSai athlete",
+    "fallbackName": "DOENSAI athlete",
     "tabsLabel": "Athlete details",
     "tabs": {
       "skills": "Skills",
@@ -1724,7 +1724,7 @@
     "partnerTitle": "Extra, when you have a partner",
     "coachTitle": "Only with a coach present",
     "sourcesTitle": "Sources and research",
-    "notOfficial": "A BallDoenSai programme based on research published under CC BY. Not an official programme of any organisation.",
+    "notOfficial": "A DOENSAI programme based on research published under CC BY. Not an official programme of any organisation.",
     "start": "Start this programme",
     "goToday": "Go to today's session",
     "signInToStart": "Sign in to start",
@@ -1803,7 +1803,7 @@
       "backToProgram": "Back to the programme"
     },
     "drill": {
-      "picture": "Picture: BallDoenSai (3D)",
+      "picture": "Picture: DOENSAI (3D)",
       "how": "How",
       "dose": "Amount",
       "study": "Study",
@@ -2082,7 +2082,7 @@
     "title": "Link to your child’s account",
     "sub": "You can see your child’s progress once they accept",
     "next": "Next: wait for your child to accept in their own account",
-    "athleteFallback": "BallDoenSai athlete",
+    "athleteFallback": "DOENSAI athlete",
     "notGuardian": {
       "body": "This page is for a parent linking to their child’s account. If you are a parent, change your role first.",
       "changeRole": "Change role"
@@ -2152,7 +2152,7 @@
     "openHighlight": "Open highlight",
     "highlightsEmptyTitle": "Keep every moment you are proud of",
     "highlightsEmptyBody": "Upload a photo or video, or paste a YouTube or TikTok link, to keep your best moments",
-    "nameFallback": "BallDoenSai athlete",
+    "nameFallback": "DOENSAI athlete",
     "badges": {
       "rookie": {
         "name": "Rookie",
@@ -2211,7 +2211,7 @@
       "rising_star": "Rising star",
       "fair_play": "Fair play"
     },
-    "honour": "Official BallDoenSai honour",
+    "honour": "Official DOENSAI honour",
     "emptyTitle": "Waiting for the first name in the Hall",
     "emptyBody": "The Hall of Fame shows only achievements an organizer or admin has confirmed and announced",
     "emptyAction": "See the live ranking meanwhile"
@@ -2661,7 +2661,7 @@
     "myTeamsTitle": "Teams I help coach",
     "openTeam": "Open team",
     "familyTitle": "Team staff",
-    "familyNote": "Every adult who looks after this team. If you do not know someone on this list, tell the head coach or the BallDoenSai team.",
+    "familyNote": "Every adult who looks after this team. If you do not know someone on this list, tell the head coach or the DOENSAI team.",
     "fromTeam": "Team {team}",
     "setName": "Add my name",
     "editName": "Edit name",
@@ -2750,7 +2750,7 @@
     "copied": "Link copied",
     "copyFailed": "Could not copy. Press and hold the link to copy it.",
     "line": "Send to LINE",
-    "shareText": "Ask to join {team} on BallDoenSai with this link {url}",
+    "shareText": "Ask to join {team} on DOENSAI with this link {url}",
     "qr": "Show QR",
     "hideQr": "Hide QR",
     "qrAlt": "QR code to join {team}",

@@ -76,7 +76,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
     : t(`provenance.${provenance}`)
   const unlock = `${t('unlockBefore')}${t('unlockRating')}${t('unlockAfter')}`
   const shareUrl = () => publicProfilePath ? `${window.location.origin}${publicProfilePath}` : null
-  const cardFilename = `balldoensai-${(fields.name.trim() || 'card').toLowerCase().replace(/\s+/g, '-')}-card.png`
+  const cardFilename = `doensai-${(fields.name.trim() || 'card').toLowerCase().replace(/\s+/g, '-')}-card.png`
 
   // "Add your name" opens the info tab; the field exists only after that render, so focus waits for it.
   const focusNameField = () => {
@@ -237,7 +237,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
       const blob = await makeImage(exportFormat)
       const file = new File([blob], cardFilename, { type: 'image/png' })
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: 'My BallDoenSai Player Card', text: t('shareText'), files: [file] })
+        await navigator.share({ title: 'My DOENSAI Player Card', text: t('shareText'), files: [file] })
         track('player_card_shared', { ...analytics, destination })
         setStatus(t('shareOpened'))
       } else {
@@ -296,7 +296,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
       {player.isRanked
         ? <div className="pc-stats">{stats.map(([key, value]) => <div key={key}><b>{skillText(value)}</b><span>{key}</span></div>)}</div>
         : <p className="pc-unlock">{t('unlockBefore')}<b>{t('unlockRating')}</b>{t('unlockAfter')}</p>}
-      <div className="pc-foot"><span>BALLDOENSAI.COM</span><span>SEASON {seasonLabel}</span></div>
+      <div className="pc-foot"><span>DOENSAI.COM</span><span>SEASON {seasonLabel}</span></div>
     </div>
     <div className="pc-sheen" />
   </div>

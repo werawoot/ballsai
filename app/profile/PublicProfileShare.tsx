@@ -16,7 +16,7 @@ export default function PublicProfileShare({ profilePath, isPublic }: { profileP
     if (!isPublic) return setMessage(t('needPublic'))
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'My BallDoenSai Athlete Profile', text: t('shareText'), url })
+        await navigator.share({ title: 'My DOENSAI Athlete Profile', text: t('shareText'), url })
         track('athlete_profile_shared', { method: 'native_share' })
         setCopied(false)
         setMessage(t('shareOpened'))

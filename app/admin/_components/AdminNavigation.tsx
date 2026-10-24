@@ -59,7 +59,7 @@ export default function AdminNavigation() {
     <aside className="admin-nav" aria-label="เมนูผู้ดูแลระบบ">
       <Link className="admin-nav-brand" href="/admin/operations">
         <span className="admin-nav-brand-mark"><Activity size={17} /></span>
-        <span><b>BALLDOENSAI</b><small>CONTROL PLANE</small></span>
+        <span><b>DOENSAI</b><small>CONTROL PLANE</small></span>
       </Link>
 
       <div className="admin-nav-status"><i /><span>ADMIN SESSION</span><b>Protected</b></div>

@@ -35,7 +35,7 @@ describe('every drill can say where it comes from (rule 1)', () => {
 
   it('names every programme as ours: never FIFA, 11+ or Knee Control+', () => {
     for (const program of TRAINING_PROGRAMS) {
-      expect(program.code).toMatch(/^BallDoenSai /)
+      expect(program.code).toMatch(/^DOENSAI /)
       for (const text of [program.code, program.title.th, program.title.en]) expect(text).not.toMatch(/FIFA|11\+|Knee Control/i)
       expect(existsSync(`${root}${drillImage(program.cover)}`)).toBe(true)
     }

@@ -117,7 +117,7 @@ async function drawCard(ctx: CanvasRenderingContext2D, card: ExportCard, x: numb
   const left = x + 18 * s, right = x + w - 18 * s
   let cursor = y + h - 16 * s
   ctx.textAlign = 'left'; ctx.globalAlpha = 0.62; ctx.fillStyle = '#fff'; ctx.font = `700 ${8.5 * s}px ${label}`
-  ctx.fillText('BALLDOENSAI.COM', left, cursor)
+  ctx.fillText('DOENSAI.COM', left, cursor)
   ctx.textAlign = 'right'; ctx.fillText(`SEASON ${card.season}`, right, cursor)
   ctx.globalAlpha = 1
   cursor -= 20 * s
@@ -192,7 +192,7 @@ export async function renderCardImage(card: ExportCard) {
   const label = fontStack('--font-barlow', 'Arial, sans-serif')
   if (card.format === 'story') {
     ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = `800 64px ${display}`; ctx.fillText('MY PLAYER CARD', width / 2, 205)
-    ctx.fillStyle = 'rgba(255,255,255,.62)'; ctx.font = `700 26px ${label}`; ctx.fillText('BALLDOENSAI.COM · YOUR GAME, YOUR STORY', width / 2, 252)
+    ctx.fillStyle = 'rgba(255,255,255,.62)'; ctx.font = `700 26px ${label}`; ctx.fillText('DOENSAI.COM · YOUR GAME, YOUR STORY', width / 2, 252)
     const cardW = 840
     const cardH = await drawCard(ctx, card, (width - cardW) / 2, 330, cardW)
     ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = `700 24px ${label}`; ctx.textAlign = 'center'

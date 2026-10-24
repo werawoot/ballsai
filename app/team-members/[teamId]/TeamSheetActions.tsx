@@ -45,7 +45,7 @@ export default function TeamSheetActions({ teamName, tournamentName, rows }: { t
       })
       context.fillStyle = '#5b6472'
       context.font = `500 26px ${family}`
-      context.fillText('BallDoenSai.com', pad, canvas.height - 56)
+      context.fillText('DOENSAI.com', pad, canvas.height - 56)
       const link = document.createElement('a')
       link.download = `${teamName.replace(/[\\/:*?"<>|]+/g, '-')}.png`
       link.href = canvas.toDataURL('image/png')

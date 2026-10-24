@@ -109,7 +109,7 @@ export default async function InfrastructurePage() {
             textDecoration: "none",
           }}
         >
-          <Trophy size={20} strokeWidth={2.5} /> BallDoenSai.com
+          <Trophy size={20} strokeWidth={2.5} /> DOENSAI.com
         </Link>
         <div
           style={{

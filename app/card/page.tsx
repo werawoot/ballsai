@@ -54,7 +54,7 @@ export default async function PlayerCardPage() {
   return (
     <main className="card-page">
       <header className="card-page-header">
-        <Link href="/" className="card-page-logo"><BrandMark size={22} />BallDoenSai.com</Link>
+        <Link href="/" className="card-page-logo"><BrandMark size={22} />DOENSAI.com</Link>
         <div><Link href="/career" className="card-page-profile-link">{t('myHistory')}</Link><Link href="/profile/edit" className="card-page-profile-link">{t('editProfile')}</Link></div>
       </header>
       <PlayerCardBuilder

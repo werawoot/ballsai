@@ -8,7 +8,7 @@ export default function TeamNotFound() {
   const t = useTranslations('teamPage')
   return (
     <main className="site-fallback">
-      <p className="site-fallback-kicker">BALLDOENSAI.COM · 404</p>
+      <p className="site-fallback-kicker">DOENSAI.COM · 404</p>
       <h1>{t('notFoundTitle')}</h1>
       <p>{t('notFoundBody')}</p>
       <div className="site-fallback-actions">

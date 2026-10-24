@@ -116,9 +116,9 @@ export default async function Home() {
       <div className="hm-stage" style={STADIUM ? { '--gl-stadium-photo': `url(${STADIUM.src})` } as React.CSSProperties : undefined}>
         <span className="hm-beam" aria-hidden="true" />
         <header className="hm-bar">
-          <Link href="/" className="hm-logo" aria-label="BallDoenSai.com หน้าหลัก">
+          <Link href="/" className="hm-logo" aria-label="DOENSAI.com หน้าหลัก">
             <BrandMark size={28} />
-            <span>BallDoenSai<em>.com</em></span>
+            <span>DOENSAI<em>.com</em></span>
           </Link>
           <nav className="hm-nav gl-panel" aria-label="เมนูหลัก">
             <Link href="/" aria-current="page" className="is-on">หน้าแรก</Link>
@@ -253,7 +253,7 @@ export default async function Home() {
         </section>
 
         <footer className="hm-foot">
-          <span>BallDoenSai.com · แพลตฟอร์มนักกีฬาเยาวชนไทย</span>
+          <span>DOENSAI.com · แพลตฟอร์มนักกีฬาเยาวชนไทย</span>
           <span>ไม่มีโฆษณา · ไม่ส่งข้อมูลเด็กให้ใครภายนอก · <Link href="/privacy">ความเป็นส่วนตัว</Link> · <Link href="/terms">ข้อกำหนด</Link></span>
         </footer>
       </div>
