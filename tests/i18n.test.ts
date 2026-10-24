@@ -196,14 +196,18 @@ describe('no new hard-coded Thai', () => {
 
   const baseline: string[] = JSON.parse(read('tests/i18n-thai-baseline.json'))
 
-  it('adds no file with Thai text written into the code', () => {
-    const current = thaiFiles()
-    expect(current.filter(path => !baseline.includes(path))).toEqual([])
+  // Reading every file under app/, components/ and lib/ takes under a second warm, but a first,
+  // cold run beside the other test files has taken over 6 s and hit the 5 s default (24 Oct
+  // 2026). Read the tree once for both checks and give that read room.
+  let scanned: string[] | null = null
+  const current = () => (scanned ??= thaiFiles())
+
+  it('adds no file with Thai text written into the code', { timeout: 30_000 }, () => {
+    expect(current().filter(path => !baseline.includes(path))).toEqual([])
   })
 
-  it('keeps the baseline honest: a translated file comes off the list', () => {
-    const current = thaiFiles()
-    expect(baseline.filter(path => !current.includes(path))).toEqual([])
+  it('keeps the baseline honest: a translated file comes off the list', { timeout: 30_000 }, () => {
+    expect(baseline.filter(path => !current().includes(path))).toEqual([])
   })
 
   it.each([

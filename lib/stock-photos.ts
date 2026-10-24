@@ -64,15 +64,16 @@ export const SPORT_TILES = {
   badminton: { src: '/photos/tile-badminton.webp', credit: pexels('Saif71.com', '7438726') },
 } as const satisfies Record<string, StockPhoto>
 
-// The programme cards on /training (owner, 24 Oct 2026): a real photo of the pitch for each
-// programme, no person and no readable brand. The drills keep their 3D pictures, which show
-// the movement exactly. Keyed by programme id (content/training/programs.json).
+// The programme cards on /training (owner, 24 Oct 2026): a real photo for each programme, of
+// an adult player whose face is not shown, or of the pitch; no child, no readable brand (boot
+// stripes retouched out where they showed). The drills keep their 3D pictures, which show the
+// movement exactly. Keyed by programme id (content/training/programs.json).
 export const PROGRAM_PHOTOS: Readonly<Record<string, StockPhoto>> = {
-  'u10-foundation-01': { src: '/photos/prog-corner-arc.webp', credit: pexels('nmr hrd', '3571065') },
-  'u10-ball-mastery-01': { src: '/photos/prog-ball-centre.webp', credit: pexels('BOOM Photography', '12585890') },
+  'u10-foundation-01': { src: '/photos/prog-ball-sky.webp', credit: pexels('Gabriel Rissi', '21908872') },
+  'u10-ball-mastery-01': { src: '/photos/prog-dribble-cones.webp', credit: pexels('RDNE Stock project', '7187841') },
   'u14-prevention-01': { src: '/photos/prog-line-corner.webp', credit: pexels('Wallace Chuck', '14658669') },
-  'u14-game-skills-01': { src: '/photos/prog-goal-aerial.webp', credit: pexels('Giant Asparagus', '37364066') },
-  'u16-hip-groin-01': { src: '/photos/prog-net.webp', credit: pexels('KoolShooters', '6495101') },
+  'u14-game-skills-01': { src: '/photos/prog-shadow-kick.webp', credit: pexels('Soner Arkan', '15172301') },
+  'u16-hip-groin-01': { src: '/photos/prog-wide-stretch.webp', credit: pexels('RDNE Stock project', '7187811') },
 }
 
 // Behind the whole page, so glass cards have grass to show through: the same grass close-up
