@@ -49,6 +49,11 @@ copyright we may not use.**
   the venue. The organizer's own photo replaces it once T57
   lets organizers upload one. `lib/stock-photos.ts` keeps the two kinds apart, and
   `tests/stock-photos.test.ts` fails a photo without a file or a credits row.
+- A training programme card on `/training` may show an **adult player whose face is not shown**
+  (from behind, head down, or a silhouette), with no readable brand (boot stripes retouched out
+  where they show); where no such photo fits, a pitch photo (owner, 24 Oct 2026). The drills keep
+  their own 3D pictures, which show each movement exactly. `PROGRAM_PHOTOS` in
+  `lib/stock-photos.ts`.
 - No stock photo shows an identifiable child, and no photo shows a club crest or brand logo.
   Athlete photos come only from the athlete's own upload under the consent rules (rule 6, 9).
 - Until a photo is added, a head is a plain pitch green (`--gl-stadium-photo: none`). No

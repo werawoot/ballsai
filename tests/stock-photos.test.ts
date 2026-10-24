@@ -36,7 +36,8 @@ describe('licensed stock photos', () => {
   })
 })
 
-// Owner, 24 Oct 2026: the programme cards on /training show a real photo (no person, no brand);
+// Owner, 24 Oct 2026: the programme cards on /training show a real photo: an adult player whose
+// face is not shown, or the pitch, never a brand;
 // the drills keep their 3D pictures, which show the movement exactly.
 describe('programme photos', () => {
   it('give every training programme its own real photo', () => {
