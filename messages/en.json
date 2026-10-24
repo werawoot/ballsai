@@ -1833,7 +1833,38 @@
     },
     "stop": "Stop this programme",
     "stopConfirm": "Stop this programme? Your training history stays.",
-    "stopped": "Programme stopped"
+    "stopped": "Programme stopped",
+    "tagline": "More Than a Game",
+    "heroLead": "Build youth football skills with research-based programmes. Pick an age band and start training.",
+    "features": {
+      "age": {
+        "title": "Train for your age",
+        "body": "Programmes for U10–U13 and U14–U17"
+      },
+      "source": {
+        "title": "Every drill has a source",
+        "body": "Based on published research; open the reference for any drill"
+      },
+      "anywhere": {
+        "title": "Train anywhere",
+        "body": "{min}–{max} minutes a session, little equipment"
+      }
+    },
+    "featuresLabel": "What training offers",
+    "skillsLabel": "Choose a skill",
+    "skills": {
+      "all": "All",
+      "control": "Ball control",
+      "dribble": "Dribbling",
+      "shoot": "Shooting",
+      "pass": "Passing & receiving",
+      "movement": "Movement",
+      "fitness": "Fitness",
+      "injury": "Injury prevention"
+    },
+    "programsTitle": "Programmes for {band}",
+    "skillDrillsTitle": "Drills by skill",
+    "skillDrillsCount": "{count} drills"
   },
   "guardianSteps": {
     "title": "Link with your child in 3 steps",
