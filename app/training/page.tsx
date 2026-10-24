@@ -9,13 +9,14 @@ import { fetchAthleteAge } from '@/lib/athlete-private'
 import { CONTENT_REVIEW, TRAINING_PROGRAMS, bandForAge, drillImage, programsForBand, say, type Band } from '@/lib/training/content'
 import { drillsForBand, isSkill, skillsForBand, type Skill } from '@/lib/training/skills'
 import { fetchMyTraining } from '@/lib/training/data'
-import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
+import { glassSceneStyle, PAGE_PHOTOS, PROGRAM_PHOTOS } from '@/lib/stock-photos'
 import '../glass.css'
 import './training-glass.css'
 
 // /training in the light glass design (owner's mockup, 24 Oct 2026; ADR-014): a head over a
 // real pitch photo with the age bands, three cards that say only what is true, then the
-// band's programmes and its drills by skill. Anyone can read them; starting one needs a
+// band's programmes (each on a real photo) and its drills by skill (3D pictures, which show
+// the movement). Anyone can read them; starting one needs a
 // signed-in athlete. The band opens on the athlete's own age (docs/training-flow-v1.md).
 
 const BANDS: Band[] = ['u10_u13', 'u14_u17']
@@ -93,7 +94,7 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
               const locked = program.access !== 'solo'
               return <Link className={`tg-program${locked ? ' is-locked' : ''}`} href={`/training/${program.id}`} key={program.id}>
                 <div className="tg-cover">
-                  <Image alt="" fill sizes="(max-width: 760px) 100vw, 360px" src={drillImage(program.cover)} unoptimized />
+                  <Image alt="" fill sizes="(max-width: 760px) 100vw, 360px" src={PROGRAM_PHOTOS[program.id]?.src ?? drillImage(program.cover)} unoptimized />
                   <span className="tg-time">{t('minutes', { count: program.minutes })}</span>
                   {locked && <span className="tg-lock"><Lock size={13} aria-hidden="true" />{t('coachOnly')}</span>}
                 </div>
