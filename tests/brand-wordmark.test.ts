@@ -23,7 +23,14 @@ describe('the moving wordmark', () => {
     expect(html).toContain('--bw-i:3')
     const css = readFileSync('app/brand-wordmark.css', 'utf8')
     expect(css).toMatch(/@keyframes bw-drop/)
-    expect(css).toMatch(/prefers-reduced-motion: reduce[^}]*\{[^}]*\.bw-roll span \{[^}]*animation: none/)
+    expect(css).toMatch(/prefers-reduced-motion: reduce[^}]*\{[^}]*\.bw-roll span[^{]*\{[^}]*animation: none/)
+  })
+
+  it('stops after three loops and rests on Ball, so it does not move beside the form for good', () => {
+    const css = readFileSync('app/brand-wordmark.css', 'utf8')
+    expect(css).toMatch(/\.bw-roll span \{[^}]*bw-drop 8s [^;]* 3 both/)
+    // Three 8 s loops end at 24 s; then the first word drops back in and stays.
+    expect(css).toMatch(/\.bw-roll span:first-child \{[^}]*bw-rest [^;]*24s forwards/)
   })
 
   it('stands on /login and the home page', () => {

@@ -1,9 +1,13 @@
 /* components/BrandWordmark: four sport words stacked in one grid cell (so the slot is as wide as
-   the longest), right-aligned against DOENSAI, each dropping in and out for 2 s of an 8 s loop. */
+   the longest), right-aligned against DOENSAI, each dropping in and out for 2 s of an 8 s loop.
+   The keyframe percentages assume SPORT_WORDS has four words (tests/brand-wordmark.test.ts).
+   It runs three loops and then rests on the first word, so nothing beside the login form keeps
+   moving for good (WCAG 2.2.2). */
 .bw { align-items: baseline; display: inline-flex; gap: .28em; white-space: nowrap; }
-.bw em { color: #16E06E; font-style: normal; }
+.bw em { color: var(--gl-green, #16E06E); font-style: normal; }
 .bw-roll { display: inline-grid; overflow: hidden; padding: .08em 0; }
-.bw-roll span { animation: bw-drop 8s cubic-bezier(.2,.8,.2,1) infinite both; animation-delay: calc(var(--bw-i) * 2s); color: #16E06E; grid-area: 1 / 1; justify-self: end; opacity: 0; }
+.bw-roll span { animation: bw-drop 8s cubic-bezier(.2,.8,.2,1) 3 both; animation-delay: calc(var(--bw-i) * 2s); color: var(--gl-green, #16E06E); grid-area: 1 / 1; justify-self: end; opacity: 0; }
+.bw-roll span:first-child { animation: bw-drop 8s cubic-bezier(.2,.8,.2,1) 3 both, bw-rest .4s cubic-bezier(.2,.8,.2,1) 24s forwards; }
 @keyframes bw-drop {
   0% { opacity: 0; transform: translateY(-75%); }
   5% { opacity: 1; transform: none; }
@@ -11,7 +15,8 @@
   27% { opacity: 0; transform: translateY(75%); }
   100% { opacity: 0; transform: translateY(75%); }
 }
+@keyframes bw-rest { from { opacity: 0; transform: translateY(-75%); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .bw-roll span { animation: none; }
+  .bw-roll span, .bw-roll span:first-child { animation: none; }
   .bw-roll span:first-child { opacity: 1; }
 }
