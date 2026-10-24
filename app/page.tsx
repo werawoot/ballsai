@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getLocale } from 'next-intl/server'
 import { ArrowRight, Bell, BarChart3, CalendarDays, ClipboardList, Crown, IdCard, MapPin, Plus, Search, Sparkles, Trophy, Users, UserSearch } from 'lucide-react'
 import BrandMark from '@/components/BrandMark'
+import BrandWordmark from '@/components/BrandWordmark'
 import HomeCardRing, { type RingCard } from './HomeCardRing'
 import { isSampleId, samplePlayerRanks, sampleTournaments, showDemoData } from '@/lib/sample-data'
 import { getPublicOpenTournaments, getPublicPlatformCounts, getPublicRankings } from '@/lib/public-data'
@@ -118,7 +119,7 @@ export default async function Home() {
         <header className="hm-bar">
           <Link href="/" className="hm-logo" aria-label="DOENSAI.com หน้าหลัก">
             <BrandMark size={28} />
-            <span>DOENSAI<em>.com</em></span>
+            <BrandWordmark />
           </Link>
           <nav className="hm-nav gl-panel" aria-label="เมนูหลัก">
             <Link href="/" aria-current="page" className="is-on">หน้าแรก</Link>

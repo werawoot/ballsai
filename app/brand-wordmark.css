@@ -1,0 +1,17 @@
+/* components/BrandWordmark: four sport words stacked in one grid cell (so the slot is as wide as
+   the longest), right-aligned against DOENSAI, each dropping in and out for 2 s of an 8 s loop. */
+.bw { align-items: baseline; display: inline-flex; gap: .28em; white-space: nowrap; }
+.bw em { color: #16E06E; font-style: normal; }
+.bw-roll { display: inline-grid; overflow: hidden; padding: .08em 0; }
+.bw-roll span { animation: bw-drop 8s cubic-bezier(.2,.8,.2,1) infinite both; animation-delay: calc(var(--bw-i) * 2s); color: #16E06E; grid-area: 1 / 1; justify-self: end; opacity: 0; }
+@keyframes bw-drop {
+  0% { opacity: 0; transform: translateY(-75%); }
+  5% { opacity: 1; transform: none; }
+  22% { opacity: 1; transform: none; }
+  27% { opacity: 0; transform: translateY(75%); }
+  100% { opacity: 0; transform: translateY(75%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bw-roll span { animation: none; }
+  .bw-roll span:first-child { opacity: 1; }
+}
