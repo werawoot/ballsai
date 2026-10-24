@@ -13,6 +13,7 @@ import { LoginJourney } from "./LoginJourney";
 import type { LoginStat } from "@/lib/home-stats";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import BrandMark from "@/components/BrandMark";
+import BrandWordmark from "@/components/BrandWordmark";
 import LanguageSwitch from "@/components/LanguageSwitch";
 import GoogleLogo from "@/components/GoogleLogo";
 import { LOGIN_ART, PAGE_PHOTOS } from "@/lib/stock-photos";
@@ -191,7 +192,7 @@ export default function LoginPanel({ adminEntry, nextPath, stats = [] }: { admin
       <div className="lg-shell">
         <section className="lg-hero">
           <div className="lg-hero-bar"><LanguageSwitch /></div>
-          <Link className="ui-brand lg-brand" href="/" aria-label="DOENSAI.com"><BrandMark size={30} /><span>DOENSAI<em>.com</em></span></Link>
+          <Link className="ui-brand lg-brand" href="/" aria-label="DOENSAI.com"><BrandMark size={30} /><BrandWordmark /></Link>
           {/* No example card: it carried numbers that belong to no one (AGENTS.md rule 8). */}
           <div className="lg-hero-copy">
             <p className="ui-hero">{tp("slogan1")}<br /><em>{tp("slogan2")}</em><br />{tp("slogan3")}</p>
