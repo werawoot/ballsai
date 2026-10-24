@@ -75,8 +75,8 @@ loading screen, error pages, cards, share text, admin pages and training program
 `tests/brand-name.test.ts` keeps it that way. The brand mark is the owner's own logo file
 (a green and white "D" on a dark rounded square, sent 24 Oct 2026): `public/brand/doensai-mark.webp`
 through `components/BrandMark.tsx`, and `app/icon.png` / `app/apple-icon.png` for the browser tab and
-phone home screen. Pages that still draw a trophy icon beside the name (career, hall of fame, admin)
-move with their page.
+phone home screen. The mark is shared, so pages still on the old dark look (career, hall of
+fame, admin) show the new logo too; that is deliberate (owner: every logo in the app).
 Not moved yet, on purpose, each needing the owner:
 
 - the terms and privacy pages (`app/terms`, `app/privacy`), under legal review (T25);

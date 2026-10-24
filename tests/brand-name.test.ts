@@ -6,16 +6,21 @@ import { join } from 'node:path'
 // logo the app shows. Left as they are, on purpose: the terms and privacy pages (under legal
 // review, T25), guardian consent and privacy wording (never edited without the owner),
 // e-mail and rate-limit internals, demo data and production host names.
+// Whole files left as they are.
 const KEEP = new Set([
   'app/terms/page.tsx',
   'app/privacy/page.tsx',
-  'app/guardian/GuardianLinksClient.tsx',
-  'app/sponsorships/SponsorshipsClient.tsx',
   'lib/email.ts',
   'lib/rate-limit.ts',
   'lib/seo.ts',
   'lib/sample-data.ts',
 ])
+// Files where only the guardian consent or privacy sentence keeps the old name: the number of
+// lines allowed to name it, so a new brand label in the same file still fails.
+const CONSENT_LINES: Record<string, number> = {
+  'app/guardian/GuardianLinksClient.tsx': 1,
+  'app/sponsorships/SponsorshipsClient.tsx': 1,
+}
 const OLD = /BallDoenSai|BALLDOENSAI|balldoensai/
 
 function files(dir: string): string[] {
@@ -29,7 +34,8 @@ describe('the product name', () => {
   it('reads DOENSAI.com wherever the app shows it', () => {
     const left = ['app', 'components', 'lib', 'content']
       .flatMap(files)
-      .filter(path => !KEEP.has(path) && OLD.test(readFileSync(path, 'utf8')))
+      .filter(path => !KEEP.has(path))
+      .filter(path => readFileSync(path, 'utf8').split('\n').filter(line => OLD.test(line)).length > (CONSENT_LINES[path] ?? 0))
     expect(left).toEqual([])
   })
 
@@ -65,7 +71,11 @@ describe('the brand mark', () => {
     expect([...ico.subarray(first, first + 4)]).toEqual([0x89, 0x50, 0x4e, 0x47])
   })
 
-  it('stands on every page that shows the brand, the impact page included', () => {
-    expect(readFileSync('app/impact/page.tsx', 'utf8')).toContain('<BrandMark')
+  it('stands on every page that shows the brand, admin and the old-look pages included', () => {
+    for (const page of ['app/impact/page.tsx', 'app/career/page.tsx', 'app/hall-of-fame/page.tsx', 'app/admin/page.tsx', 'app/admin/create/page.tsx', 'app/admin/moderation/page.tsx', 'app/admin/infrastructure/page.tsx']) {
+      const source = readFileSync(page, 'utf8')
+      expect(source, page).toContain('<BrandMark')
+      expect(source, page).not.toMatch(/<Trophy[^>]*\/>\s*DOENSAI\.com/)
+    }
   })
 })

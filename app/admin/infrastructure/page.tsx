@@ -1,7 +1,8 @@
+import BrandMark from "@/components/BrandMark";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Trophy, Database, MapPin, Building2, Users } from "lucide-react";
+import { Database, MapPin, Building2, Users } from "lucide-react";
 import Link from "next/link";
 import {
   getAllRegions,
@@ -109,7 +110,7 @@ export default async function InfrastructurePage() {
             textDecoration: "none",
           }}
         >
-          <Trophy size={20} strokeWidth={2.5} /> DOENSAI.com
+          <BrandMark size={22} /> DOENSAI.com
         </Link>
         <div
           style={{

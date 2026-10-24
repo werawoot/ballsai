@@ -233,4 +233,3 @@ body:has(.lg) { background: var(--gl-pitch); }
    as on the home page; the owner's logo beside it. */
 .lg-hero .lg-brand { font-family: var(--gl-font); font-weight: 800; letter-spacing: .4px; }
 .lg-hero .lg-brand em { color: var(--gl-green); font-style: normal; }
-.lg-hero .lg-brand > :first-child { border-radius: 22%; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
