@@ -45,3 +45,27 @@ describe('the product name', () => {
     expect(JSON.parse(readFileSync('messages/th.json', 'utf8')).meta.title).toMatch(/^DOENSAI\.com/)
   })
 })
+
+describe('the brand mark', () => {
+  it("is the owner's DOENSAI logo, not the old red trophy square", () => {
+    const mark = readFileSync('components/BrandMark.tsx', 'utf8')
+    expect(mark).toContain('/brand/doensai-mark.webp')
+    expect(mark).not.toContain('Trophy')
+    expect(statSync('public/brand/doensai-mark.webp').size).toBeGreaterThan(0)
+    expect(readFileSync('app/ui.css', 'utf8')).not.toMatch(/\.bds-brand-mark \{[^}]*--ui-red-hot/)
+  })
+
+  it('is the site icon in the browser tab and on a phone home screen', () => {
+    expect(statSync('app/icon.png').size).toBeGreaterThan(0)
+    expect(statSync('app/apple-icon.png').size).toBeGreaterThan(0)
+    // The .ico is the owner's logo too: a PNG-in-ICO whose first image starts with the PNG signature.
+    const ico = readFileSync('app/favicon.ico')
+    expect(ico.readUInt16LE(2)).toBe(1)
+    const first = ico.readUInt32LE(18)
+    expect([...ico.subarray(first, first + 4)]).toEqual([0x89, 0x50, 0x4e, 0x47])
+  })
+
+  it('stands on every page that shows the brand, the impact page included', () => {
+    expect(readFileSync('app/impact/page.tsx', 'utf8')).toContain('<BrandMark')
+  })
+})

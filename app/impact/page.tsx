@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
+import BrandMark from '@/components/BrandMark'
 import { ArrowLeft, ArrowUpRight, Bandage, Check, ClipboardList, Flag, IdCard, Lock, Medal, ShieldCheck, Trash2, Trophy, UserRound, UsersRound } from 'lucide-react'
 import { drillImage } from '@/lib/training/content'
 import './impact.css'
@@ -41,7 +42,7 @@ export default function ImpactPage() {
     <main className="impact-page">
       <header className="impact-header">
         <Link href="/" className="impact-back"><ArrowLeft size={17} /> {t('back')}</Link>
-        <Link href="/" className="impact-logo"><span className="bds-brand-mark"><Trophy size={14} /></span>DOENSAI.com</Link>
+        <Link href="/" className="impact-logo"><BrandMark size={22} />DOENSAI.com</Link>
         <Link href="/athletes" className="impact-directory">{t('directory')} <ArrowUpRight size={15} /></Link>
       </header>
 

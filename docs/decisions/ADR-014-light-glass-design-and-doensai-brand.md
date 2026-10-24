@@ -72,7 +72,11 @@ Until then the product name in the app stays BallDoenSai.com.
 **Update, 24 Oct 2026 (owner: "มันชื่อ doensai.com", then "ชื่อ/โลโก้ที่เห็นในแอปทั้งหมด"):**
 every name the app shows now reads DOENSAI.com or DOENSAI: page titles, headers, the
 loading screen, error pages, cards, share text, admin pages and training programme names.
-`tests/brand-name.test.ts` keeps it that way. The logo mark follows from the owner's own file.
+`tests/brand-name.test.ts` keeps it that way. The brand mark is the owner's own logo file
+(a green and white "D" on a dark rounded square, sent 24 Oct 2026): `public/brand/doensai-mark.webp`
+through `components/BrandMark.tsx`, and `app/icon.png` / `app/apple-icon.png` for the browser tab and
+phone home screen. Pages that still draw a trophy icon beside the name (career, hall of fame, admin)
+move with their page.
 Not moved yet, on purpose, each needing the owner:
 
 - the terms and privacy pages (`app/terms`, `app/privacy`), under legal review (T25);

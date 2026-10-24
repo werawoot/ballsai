@@ -189,6 +189,7 @@ body {
 .bds-route-skeleton { min-height:100vh; }
 .bds-skel-header { -webkit-backdrop-filter:blur(14px) saturate(1.3); backdrop-filter:blur(14px) saturate(1.3); align-items:center; background:rgba(11,18,32,.28); border-bottom:1px solid rgba(255,255,255,.16); display:flex; gap:10px; height:64px; padding:0 clamp(16px,4vw,48px); position:relative; z-index:1; }
 .bds-skel-name { color:#fff; font:800 19px/1 var(--gl-font); letter-spacing:.2px; }
+.bds-skel-name em { color:var(--gl-green); font-style:normal; }
 .bds-skel-hero { background:linear-gradient(180deg,rgba(11,18,32,.18),rgba(11,18,32,.5)),linear-gradient(118deg,var(--gl-pitch) 0%,#166534 55%,var(--gl-navy) 140%); display:grid; gap:12px; margin-top:-64px; padding:calc(64px + clamp(30px,5vw,52px)) max(20px,calc((100vw - 980px) / 2)) 46px; }
 .bds-skel-body { display:grid; gap:14px; margin:0 auto; max-width:1080px; padding:26px clamp(16px,4vw,42px) 30px; }
 .bds-skel-card { align-items:center; animation:bds-skel-rise .45s cubic-bezier(.2,.8,.2,1) both; border-radius:var(--gl-radius); box-shadow:var(--gl-glass-shadow); display:flex; gap:14px; padding:14px; }

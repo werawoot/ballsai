@@ -12,7 +12,7 @@ export default function Loading() {
   return <div className="bds-route-skeleton gl gl-scene" style={glassSceneStyle(null)} role="status" aria-live="polite">
     <span className="sr-only">{t('loading')}</span>
     <div className="bds-skel-header" aria-hidden="true">
-      <BrandMark size={26} /><span className="bds-skel-name">DOENSAI.com</span>
+      <BrandMark size={26} /><span className="bds-skel-name">DOENSAI<em>.com</em></span>
     </div>
     <div className="bds-skel-hero" aria-hidden="true">
       <i className="bds-skel-line is-eyebrow" />

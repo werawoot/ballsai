@@ -13,8 +13,7 @@
   --ui-s1: 4px; --ui-s2: 8px; --ui-s3: 12px; --ui-s4: 16px; --ui-s5: 24px; --ui-s6: 32px;
 }
 
-.bds-brand-mark { align-items: center; background: var(--ui-red-hot); color: #fff; display: inline-flex; flex: none; justify-content: center; transform: skew(-10deg); }
-.bds-brand-mark svg { transform: skew(10deg); }
+.bds-brand-mark { display: block; flex: none; height: auto; object-fit: contain; }
 .ui-brand { align-items: center; color: inherit; display: inline-flex; font: 700 19px/1 var(--font-oswald), sans-serif; gap: 9px; letter-spacing: 1.3px; min-height: 44px; text-decoration: none; }
 
 .ui-eyebrow { color: var(--ui-red-hot); font: 700 11.5px var(--font-barlow), sans-serif; letter-spacing: 2px; margin: 0; text-transform: uppercase; }
@@ -91,8 +90,6 @@ body:has(.bds-page.ui-matchday) { background: #07090f; }
 
 @media (prefers-reduced-motion: reduce) { .ui-btn, .ui-option { transition: none; } }
 
-/* The shared page header keeps its gold hover; the mark inside stays white on red. */
-.bds-page-header-brand .bds-brand-mark svg { color: #fff; }
 
 /* Report 11, Phase 2: the loading football (components/BallLoader.tsx). */
 .ui-ball { animation: ui-ball-roll 1.1s linear infinite; display: block; }
