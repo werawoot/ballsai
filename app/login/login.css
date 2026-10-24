@@ -212,3 +212,24 @@ body:has(.lg) { background: var(--gl-pitch); }
 /* The page's own scene (owner, 23 Oct 2026): a lighter wash, so the stadium light and the
    grass of the background show, as in the design; the text keeps its shadow. */
 .lg { background-image: linear-gradient(110deg, rgba(11,18,32,.72) 0%, rgba(11,18,32,.35) 55%, rgba(11,18,32,.25) 100%), var(--gl-stadium-photo); }
+
+/* Owner, 24 Oct 2026: the sign-in card needs a clearer edge against the photo, and the line
+   over the athletes picture needs to read first. A bright rim, a hairline and a deeper
+   shadow lift the card; a soft navy wash behind the copy, heavier shadows and a brighter
+   lead lift the words without hiding the picture. */
+.lg .lg-panel.gl-panel { border: 1.5px solid rgba(255,255,255,.95); box-shadow: 0 0 0 1px rgba(11,18,32,.1), 0 2px 0 rgba(255,255,255,.7) inset, 0 28px 64px rgba(11,18,32,.32); }
+.lg-input, .lg-consent { border-color: #CBD5E1; }
+.lg-socials .ui-btn-white { border: 1.5px solid #CBD5E1; }
+.lg-hero .ui-hero { text-shadow: 0 2px 4px rgba(0,0,0,.55), 0 6px 28px rgba(0,0,0,.6); }
+.lg-hero .ui-hero em { text-shadow: 0 2px 4px rgba(0,0,0,.5), 0 0 26px rgba(22,224,110,.35), 0 6px 28px rgba(0,0,0,.55); }
+.lg-lead { color: #fff; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,.7), 0 3px 14px rgba(0,0,0,.55); }
+@media (min-width: 900px) {
+  .lg-hero-copy::before { background: radial-gradient(ellipse 560px 300px at 34% 33%, rgba(11,18,32,.72) 0%, rgba(11,18,32,.5) 45%, rgba(11,18,32,0) 100%); content: ''; inset: -160px -120px -50px -90px; pointer-events: none; position: absolute; z-index: -1; }
+  .lg-hero .lg-brand { position: relative; z-index: 1; }
+  /* Under the wash: the picture comes later in the page, so at the same layer it would cover it. */
+  .lg-art { z-index: -2; }
+}
+/* The wordmark in the theme's colours (owner, 24 Oct 2026): DOENSAI in white, .com in green,
+   as on the home page; the owner's logo beside it. */
+.lg-hero .lg-brand { font-family: var(--gl-font); font-weight: 800; letter-spacing: .4px; }
+.lg-hero .lg-brand em { color: var(--gl-green); font-style: normal; }

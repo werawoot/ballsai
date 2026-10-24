@@ -69,6 +69,26 @@ and every logo. Multi-sport touches `lib/season.ts` (one active sport today), `p
 and the onboarding sport picker. Both need a design interview and their own ADR before code.
 Until then the product name in the app stays BallDoenSai.com.
 
+**Update, 24 Oct 2026 (owner: "มันชื่อ doensai.com", then "ชื่อ/โลโก้ที่เห็นในแอปทั้งหมด"):**
+every name the app shows now reads DOENSAI.com or DOENSAI: page titles, headers, the
+loading screen, error pages, cards, share text, admin pages and training programme names.
+`tests/brand-name.test.ts` keeps it that way. The brand mark is the owner's own logo file
+(a green and white "D" on a dark rounded square, sent 24 Oct 2026): `public/brand/doensai-mark.webp`
+through `components/BrandMark.tsx`, and `app/icon.png` / `app/apple-icon.png` for the browser tab and
+phone home screen. The mark is shared, so pages still on the old dark look (career, hall of
+fame, admin) show the new logo too; that is deliberate (owner: every logo in the app).
+Not moved yet, on purpose, each needing the owner:
+
+- the terms and privacy pages (`app/terms`, `app/privacy`), under legal review (T25);
+- guardian consent and privacy wording that names the site (`app/guardian/GuardianLinksClient.tsx`,
+  `app/sponsorships/SponsorshipsClient.tsx`, `profileHome.guardianInvite.text`), which is
+  never edited on the owner's behalf;
+- the e-mail sender name (`RESEND_FROM_EMAIL`, Supabase SMTP), the Google OAuth consent
+  screen and the domain itself (host names in `scripts/`), all set outside the repo;
+- internal keys (`lib/rate-limit.ts`) and demo data.
+
+Multi-sport (`lib/season.ts`, `player_ranks`) is still not started.
+
 ## Consequences
 
 - Hard rule 7 now reads: the light glass design of this ADR, page by page.

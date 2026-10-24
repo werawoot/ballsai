@@ -6,7 +6,7 @@
 .impact-back, .impact-directory { align-items: center; color: rgba(255,255,255,.76); display: flex; min-height: 44px; font-size: 14px; font-weight: 700; gap: 6px; text-decoration: none; }
 .impact-back:hover, .impact-directory:hover { color: #fff; }
 .impact-logo { align-items: center; color: #fff; display: flex; min-height: 44px; font: 700 20px/1 var(--font-oswald), sans-serif; gap: 9px; letter-spacing: 1.3px; text-decoration: none; }
-.impact-logo .bds-brand-mark { height: 24px; width: 26px; }
+.impact-logo .bds-brand-mark { height: 24px; width: 24px; }
 
 .im-wrap { margin: 0 auto; max-width: 1120px; padding: 0 20px; }
 .im-eyebrow { color: var(--ui-red-hot); font: 700 14px/1.4 var(--font-sarabun), sans-serif; margin: 0; }

@@ -1,3 +1,4 @@
+import BrandMark from "@/components/BrandMark";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -108,7 +109,7 @@ export default async function AdminPage(props: { searchParams?: Promise<{ page?:
             textDecoration: "none",
           }}
         >
-          <Trophy size={22} strokeWidth={2.5} /> BallDoenSai.com
+          <BrandMark size={24} /> DOENSAI.com
         </Link>
         <div
           style={{

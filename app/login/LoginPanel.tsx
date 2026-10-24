@@ -191,7 +191,7 @@ export default function LoginPanel({ adminEntry, nextPath, stats = [] }: { admin
       <div className="lg-shell">
         <section className="lg-hero">
           <div className="lg-hero-bar"><LanguageSwitch /></div>
-          <Link className="ui-brand lg-brand" href="/" aria-label="BallDoenSai.com"><BrandMark size={30} /><span>BallDoenSai.com</span></Link>
+          <Link className="ui-brand lg-brand" href="/" aria-label="DOENSAI.com"><BrandMark size={30} /><span>DOENSAI<em>.com</em></span></Link>
           {/* No example card: it carried numbers that belong to no one (AGENTS.md rule 8). */}
           <div className="lg-hero-copy">
             <p className="ui-hero">{tp("slogan1")}<br /><em>{tp("slogan2")}</em><br />{tp("slogan3")}</p>
@@ -245,7 +245,7 @@ export default function LoginPanel({ adminEntry, nextPath, stats = [] }: { admin
                   {Array.from({ length: otpSlots }, (_, index) => <i key={index} className={index === otp.length ? "is-next" : otp[index] ? "is-filled" : ""}>{otp[index] ?? ""}</i>)}
                 </span>
               </label>
-              <button className="ui-btn ui-btn-primary" disabled={loading || !canSubmitOtp(otp)} onClick={verifyOtp} type="button">{loading ? "กำลังตรวจสอบ..." : "เข้าสู่ BallDoenSai"}<ChevronRight size={18} /></button>
+              <button className="ui-btn ui-btn-primary" disabled={loading || !canSubmitOtp(otp)} onClick={verifyOtp} type="button">{loading ? "กำลังตรวจสอบ..." : "เข้าสู่ DOENSAI"}<ChevronRight size={18} /></button>
               {resendWait === 0 && captcha}
               <button className="lg-resend" disabled={loading || resendWait > 0 || captchaMissing} onClick={() => sendOtp(true)} type="button">{resendWait > 0 ? t("resendIn", { seconds: resendWait }) : t("resend")}</button>
               <p className="lg-note" role="status">{resent ? t("resent") : t("onlyLatest")}</p>

@@ -15,7 +15,7 @@ export default function TeamAskButton({ email }: { email: string }) {
     const text = t('text', { email })
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'BallDoenSai', text })
+        await navigator.share({ title: 'DOENSAI', text })
         return
       }
       await navigator.clipboard.writeText(text)

@@ -17,7 +17,7 @@ export default function GuardianInviteButton({ email }: { email: string }) {
     const text = t('text', { email })
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'BallDoenSai', text, url })
+        await navigator.share({ title: 'DOENSAI', text, url })
         return
       }
       await navigator.clipboard.writeText(`${text}\n${url}`)

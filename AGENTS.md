@@ -6,7 +6,8 @@ Read this before touching anything. Full context lives in two documents:
 - [`docs/closed-beta-runbook.md`](docs/closed-beta-runbook.md) — SQL apply order, storage,
   roles, the W1 pilot script, security and monitoring checks
 
-Repository name is `ballsai`. The product name is **BallDoenSai.com**. It is a Digital
+Repository name is `ballsai`. The product name is **DOENSAI.com** (owner, 24 Oct 2026; it was
+BallDoenSai.com, which some files still say: see ADR-014 for what has not moved yet). It is a Digital
 Sports Identity platform for Thai youth footballers: every verified match result must
 turn into Player Card, Power Rating, XP, Badge, Career Timeline, Highlight and Hall of
 Fame. Users are minors, their guardians, coaches and tournament organizers.

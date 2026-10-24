@@ -92,7 +92,7 @@ export default function OnboardingFlow({ nextPath, userId }: { email: string; ne
       <div className="wb-shell">
         <header className="wb-header">
           {step === 0
-            ? <Link className="ui-brand" href="/" aria-label="BallDoenSai.com"><BrandMark size={24} /><span className="wb-brand-text">BallDoenSai.com</span></Link>
+            ? <Link className="ui-brand" href="/" aria-label="DOENSAI.com"><BrandMark size={24} /><span className="wb-brand-text">DOENSAI.com</span></Link>
             : <button className="wb-back" onClick={() => setStep((value) => value - 1)} type="button" aria-label={t("back")}><ChevronLeft size={22} /></button>}
           <div className="wb-header-end">
             {/* The first screen after sign-up: someone who cannot read Thai must be able to switch here. */}

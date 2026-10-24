@@ -41,7 +41,7 @@ export default function PageHeader({ back, eyebrow, actions }: {
         </Link>
       : <Link href="/" className="bds-page-header-brand" aria-label={t('home')}>
           <BrandMark size={24} />
-          <span>BallDoenSai.com</span>
+          <span>DOENSAI.com</span>
         </Link>}
     <div className="bds-page-header-end">
       {actions

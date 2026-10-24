@@ -20,7 +20,7 @@ export default function GlobalError({
 
   return (
     <main className="site-fallback">
-      <p className="site-fallback-kicker">BALLDOENSAI.COM · SYSTEM NOTICE</p>
+      <p className="site-fallback-kicker">DOENSAI.COM · SYSTEM NOTICE</p>
       <h1>{t('errorTop')}<br /><em>{t('errorBottom')}</em></h1>
       <p>{t('errorBody')}</p>
       <div className="site-fallback-actions">

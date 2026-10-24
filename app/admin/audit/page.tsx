@@ -97,7 +97,7 @@ export default async function AdminAuditPage(
 
       {setupRequired ? <section className="audit-setup"><ShieldCheck size={30} /><div><b>Audit Log พร้อมในโค้ด แต่ฐานข้อมูลยังไม่เปิดใช้</b><p>ต้องตรวจและ apply <code>sql/35-admin-audit-log-v1.sql</code> ก่อน deploy ฟังก์ชันนี้ การดำเนินการ Ranking และ Hall of Fame จะหยุดอย่างปลอดภัยจนกว่า Audit จะพร้อม</p></div></section>
       : error ? <section className="audit-setup audit-error"><b>โหลดประวัติไม่สำเร็จ</b><p>ระบบไม่ได้เปลี่ยนแปลงข้อมูลใด ๆ กรุณาลองใหม่หรือตรวจ Logs</p></section>
-      : shown.length === 0 ? <section className="audit-empty"><FileClock size={35} /><b>ยังไม่มีประวัติตามตัวกรองนี้</b><p>รายการใหม่จะเกิดเมื่อแอดมินดำเนินการผ่านหน้า BallDoenSai หลัง SQL35 พร้อมใช้งาน</p></section>
+      : shown.length === 0 ? <section className="audit-empty"><FileClock size={35} /><b>ยังไม่มีประวัติตามตัวกรองนี้</b><p>รายการใหม่จะเกิดเมื่อแอดมินดำเนินการผ่านหน้า DOENSAI หลัง SQL35 พร้อมใช้งาน</p></section>
       : <div className="audit-timeline">{shown.map(row => <article key={row.id}>
         <div className="audit-dot"><Clock3 size={14} /></div>
         <div className="audit-card">

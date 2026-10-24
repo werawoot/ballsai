@@ -139,7 +139,7 @@ export default function EditPlayerButton({
                 <select id={`athlete-account-${player.id}`} value={form.player_id} onChange={event => selectAthleteAccount(event.target.value)} style={{ ...inputStyle, padding: '9px 10px', background: 'white' }}>
                   <option value="">ยังไม่เชื่อมบัญชี</option>
                   {form.player_id && !availableAccounts.some(account => account.user_id === form.player_id) && <option value={form.player_id}>{player.player_name} · บัญชีที่เชื่อมอยู่</option>}
-                  {availableAccounts.map(account => <option key={account.user_id} value={account.user_id}>{account.display_name} · {account.current_team || account.province || 'BallDoenSai.com Athlete'}</option>)}
+                  {availableAccounts.map(account => <option key={account.user_id} value={account.user_id}>{account.display_name} · {account.current_team || account.province || 'DOENSAI.com Athlete'}</option>)}
                 </select>
                 <p style={{ fontSize: 10, color: '#888', lineHeight: 1.5, marginTop: 7 }}>{searchingAccounts ? 'กำลังค้นหา…' : 'แสดงไม่เกิน 20 บัญชีจากการค้นหา ระบบไม่โหลดรายชื่อทั้งหมดขึ้นมาในครั้งเดียว'}</p>
               </div>
