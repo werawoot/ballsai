@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Kaushan_Script } from 'next/font/google'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { ArrowRightLeft, BookOpenCheck, CalendarDays, ChartColumn, ChevronRight, CircleDot, Clock, Dumbbell, Footprints, Goal, Lock, MapPinned, Repeat, Route, Shapes, ShieldPlus, TriangleAlert, type LucideIcon } from 'lucide-react'
+import { ArrowRightLeft, BookOpenCheck, CalendarDays, ChartColumn, ChevronRight, CircleDot, Dumbbell, Footprints, Goal, Lock, MapPinned, Repeat, Route, Shapes, ShieldPlus, TriangleAlert, type LucideIcon } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { fetchAthleteAge } from '@/lib/athlete-private'
@@ -22,7 +22,8 @@ const BANDS: Band[] = ['u10_u13', 'u14_u17']
 const SKILL_ICONS: Record<Skill | 'all', LucideIcon> = { all: Shapes, control: CircleDot, dribble: Route, shoot: Goal, pass: ArrowRightLeft, movement: Footprints, fitness: Dumbbell, injury: ShieldPlus }
 const FEATURES = [['age', ChartColumn], ['source', BookOpenCheck], ['anywhere', MapPinned]] as const
 const script = Kaushan_Script({ weight: '400', subsets: ['latin'], display: 'swap' })
-const sessionMinutes = TRAINING_PROGRAMS.map(program => program.minutes)
+// The range an athlete can start alone; a coach-guided programme is not counted.
+const sessionMinutes = TRAINING_PROGRAMS.filter(program => program.access === 'solo').map(program => program.minutes)
 
 export default async function TrainingPage(props: { searchParams: Promise<{ band?: string; skill?: string }> }) {
   const searchParams = await props.searchParams
@@ -50,7 +51,7 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
   return (
     <main className="bds-page tg gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.training)}>
       <PageHeader back={{ href: '/profile', label: t('back') }} />
-      <section className="tg-hero">
+      <section className="tg-hero gl-on-photo">
         <div className="tg-hero-inner">
           <div className="tg-hero-copy">
             <p className={`tg-tagline ${script.className}`} lang="en">{t('tagline')}</p>
@@ -105,7 +106,6 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
                   <b className="tg-program-title">{say(program.title, locale)}</b>
                   <p className="tg-goal">{say(program.goal, locale)}</p>
                   <div className="tg-meta">
-                    <span><Clock size={15} aria-hidden="true" />{t('minutes', { count: program.minutes })}</span>
                     <span><CalendarDays size={15} aria-hidden="true" />{t('weeks', { count: program.weeks })}</span>
                     <span><Repeat size={15} aria-hidden="true" />{t('perWeek', { count: program.perWeek })}</span>
                   </div>

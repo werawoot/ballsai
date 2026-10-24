@@ -1843,11 +1843,11 @@
       },
       "source": {
         "title": "Every drill has a source",
-        "body": "Based on published research; open the reference for any drill"
+        "body": "Based on published research and guidance; open the reference for any drill"
       },
       "anywhere": {
-        "title": "Train anywhere",
-        "body": "{min}–{max} minutes a session, little equipment"
+        "title": "Train on your own",
+        "body": "{min}–{max} minutes a session, with just a ball, cones or a wall"
       }
     },
     "featuresLabel": "What training offers",

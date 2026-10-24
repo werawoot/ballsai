@@ -2,18 +2,19 @@ import { TRAINING_PROGRAMS, type Band, type Drill, type Program } from '@/lib/tr
 
 // The skill each drill trains, for the skill row on /training (owner, 24 Oct 2026). Only the
 // drills we really have; a skill with no drill in a band is not offered in that band. One
-// skill per drill, by what the drill mainly asks of the player; injury-prevention warm-ups
-// (FIFA 11+ style) keep their own group so they are easy to find.
+// skill per drill. Every drill of the two injury-prevention warm-ups (u10-foundation-01 and
+// u14-prevention-01, a* and c*) is 'injury', so the warm-up stays together; the skill
+// programmes' drills go by what each mainly asks of the player.
 export const SKILLS = ['control', 'dribble', 'shoot', 'pass', 'movement', 'fitness', 'injury'] as const
 export type Skill = typeof SKILLS[number]
 
 export const DRILL_SKILL: Record<string, Skill> = {
-  'a1-react-jog': 'movement',
+  'a1-react-jog': 'injury',
   'a2-skater-hops': 'injury',
   'a3-single-leg-ball': 'injury',
-  'a4-pushup-ball': 'fitness',
+  'a4-pushup-ball': 'injury',
   'a5-single-leg-hops': 'injury',
-  'a6-spider-crawl': 'fitness',
+  'a6-spider-crawl': 'injury',
   'a7-falling': 'injury',
   'b1-sole-rolls': 'control',
   'b2-cone-gates': 'dribble',
@@ -27,15 +28,15 @@ export const DRILL_SKILL: Record<string, Skill> = {
   'c1-jog': 'injury',
   'c2-hip-out-in': 'injury',
   'c3-forward-back': 'injury',
-  'c4-plank': 'fitness',
-  'c5-side-plank': 'fitness',
+  'c4-plank': 'injury',
+  'c5-side-plank': 'injury',
   'c6-single-leg-balance': 'injury',
-  'c7-squat-heel': 'fitness',
+  'c7-squat-heel': 'injury',
   'c8-vertical-jump': 'injury',
-  'c9-runs': 'fitness',
-  'c10-bounding': 'fitness',
+  'c9-runs': 'injury',
+  'c10-bounding': 'injury',
   'c11-plant-cut': 'injury',
-  'c12-lunge': 'fitness',
+  'c12-lunge': 'injury',
   'c13-nordic': 'injury',
   'd1-half-turn': 'control',
   'd2-scan-pass': 'pass',

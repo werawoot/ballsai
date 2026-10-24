@@ -53,3 +53,12 @@ describe('the /training page', () => {
     }
   })
 })
+
+describe('the injury-prevention warm-ups', () => {
+  it('keep every one of their drills together under injury prevention', () => {
+    for (const id of ['u10-foundation-01', 'u14-prevention-01']) {
+      const program = TRAINING_PROGRAMS.find(item => item.id === id)!
+      for (const drill of program.drills) expect(DRILL_SKILL[drill.id], drill.id).toBe('injury')
+    }
+  })
+})
