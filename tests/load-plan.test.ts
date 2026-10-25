@@ -20,7 +20,8 @@ describe('where the load test may run', () => {
 
   it('refuses the Production site, a site wired to Production, or an unknown database', () => {
     expect(assertLoadTarget({ ...ok, targetUrl: 'https://ballsai-teal.vercel.app' })).toMatch(/Production/)
-    expect(assertLoadTarget({ ...ok, targetUrl: 'https://www.balldoensai.com/' })).toMatch(/Production/)
+    expect(assertLoadTarget({ ...ok, targetUrl: 'https://doensai.com' })).toMatch(/Production/)
+    expect(assertLoadTarget({ ...ok, targetUrl: 'https://www.doensai.com/' })).toMatch(/Production/)
     expect(assertLoadTarget({ ...ok, refs: [PRODUCTION] })).toMatch(/Production/)
     expect(assertLoadTarget({ ...ok, refs: [STAGING, PRODUCTION] })).toMatch(/Production/)
     expect(assertLoadTarget({ ...ok, refs: [] })).toMatch(/Staging/)

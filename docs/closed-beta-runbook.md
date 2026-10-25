@@ -427,7 +427,7 @@ Ranking ของเด็กจริงขยับได้ครบ** โด
 5. ตั้ง `profiles.role = 'organizer'` ให้ผู้จัด และ `'admin'` ให้ทีมงาน
 6. สร้างรายการแข่งจริง 1 รายการจาก `/dashboard/create` — ต้องมี `fee`, `promptpay`,
    จังหวัด, วันแข่ง และ `status = 'open'`
-7. รัน `npm run verify:production` และ `BASE_URL=https://ballsai-teal.vercel.app npm run smoke:public`
+7. รัน `npm run verify:production` และ `BASE_URL=https://doensai.com npm run smoke:public`
 
 ### 6.3 Flow ที่ต้องผ่านทุกขั้น
 

@@ -12,7 +12,7 @@ BallDoenSai.com คือแพลตฟอร์มสำหรับนัก�
 
 เอกสารส่งต่องาน Closed Beta ล่าสุดสำหรับผู้ช่วยพัฒนา: [`docs/claude-handoff-next-steps.md`](docs/claude-handoff-next-steps.md)
 
-Production: [ballsai-teal.vercel.app](https://ballsai-teal.vercel.app/)
+Production: [doensai.com](https://doensai.com/) (ตั้งแต่ 25 ต.ค. 2026; [ballsai-teal.vercel.app](https://ballsai-teal.vercel.app/) ยังเปิดได้)
 GitHub: [werawoot/ballsai](https://github.com/werawoot/ballsai)
 
 ---
@@ -130,7 +130,7 @@ Google Login ถูกตั้งค่าด้วยบัญชีเจ้�
 | รายการ | สถานะ |
 | --- | --- |
 | Google Cloud project | สร้างแล้ว: `BallDoenSai` |
-| Google Auth branding | สร้างแล้ว: `BallDoenSai.com` |
+| Google Auth branding | `DOENSAI.com` (25 ต.ค. 2026; ยังไม่ได้ยื่น Verify branding) |
 | OAuth Client | สร้างแล้ว: `BallDoenSai Web` |
 | Authorized JavaScript origin | `https://ballsai-teal.vercel.app` |
 | Google → Supabase callback | `https://hivedzrwrrcnjrlirhtv.supabase.co/auth/v1/callback` |
@@ -145,7 +145,7 @@ Google Login ถูกตั้งค่าด้วยบัญชีเจ้�
 
 1. เพิ่ม test users สำหรับกลุ่มทดลอง 10–20 คน หรือ
 2. ปรับ OAuth Audience เป็น production และทำตามขั้นตอน verification ของ Google หากระบบร้องขอ
-3. เมื่อได้โดเมน `balldoensai.com` แล้ว ให้เพิ่ม origin/โดเมนใหม่ใน Google Cloud และ Supabase URL configuration
+3. โดเมน `doensai.com` เพิ่มแล้ว (25 ต.ค. 2026): Google Authorized domains, Supabase Site URL `https://doensai.com` และ Redirect URL `https://doensai.com/auth/callback`
 
 **ห้าม commit หรือวาง Client Secret / API key ลง GitHub, README หรือไฟล์ฝั่ง client**
 
@@ -262,11 +262,9 @@ Migrations ด้านบนถูก apply ใน project ที่ถูก�
 
 ### Phase 2 — Production readiness
 
-1. ซื้อและผูก `balldoensai.com` กับ Vercel
+1. ~~ซื้อและผูกโดเมนกับ Vercel~~ เสร็จแล้ว: `doensai.com` (Hostatom, Nameservers ของ Vercel, 25 ต.ค. 2026)
 2. ยืนยันโดเมนใน Resend และกำหนด `RESEND_FROM_EMAIL`
-3. เพิ่มโดเมนจริงใน:
-   - Supabase Auth → URL Configuration
-   - Google Cloud OAuth → Authorized JavaScript origins / authorized domains
+3. ~~เพิ่มโดเมนจริงใน Supabase Auth → URL Configuration และ Google Cloud OAuth → authorized domains~~ เสร็จแล้ว (25 ต.ค. 2026; ยังไม่ได้ยื่น Google branding verification)
 4. ตั้ง Monitoring จริง: Vercel logs, uptime, error alerts, backup/restore drill
 5. ทดสอบ RLS ด้วย JWT ของ role จริง และทำ rate-limit/load testing
 6. จัดทำนโยบายดูแลข้อมูลผู้เยาว์, ขั้นตอนรายงานเนื้อหา, ทีมตรวจสลิป/ผลแข่ง

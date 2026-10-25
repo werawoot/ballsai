@@ -8,8 +8,9 @@
 
 export const STAGING_REF = 'vorpnkedpscsqhnrssrl'
 export const PRODUCTION_REF = 'hivedzrwrrcnjrlirhtv'
-// Web hosts that serve Production. A load test never goes there.
-export const PRODUCTION_HOSTS = ['ballsai-teal.vercel.app', 'balldoensai.com', 'www.balldoensai.com']
+// Web hosts that serve Production. A load test never goes there. doensai.com is the
+// Production domain since 25 Oct 2026; ballsai-teal.vercel.app still serves it too.
+export const PRODUCTION_HOSTS = ['ballsai-teal.vercel.app', 'doensai.com', 'www.doensai.com']
 
 export const DEFAULTS = {
   users: 200,
