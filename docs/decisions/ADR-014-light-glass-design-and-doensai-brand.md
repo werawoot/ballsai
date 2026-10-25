@@ -88,8 +88,10 @@ Not moved yet, on purpose, each needing the owner:
 - guardian consent and privacy wording that names the site (`app/guardian/GuardianLinksClient.tsx`,
   `app/sponsorships/SponsorshipsClient.tsx`, `profileHome.guardianInvite.text`), which is
   never edited on the owner's behalf;
-- the e-mail sender name (`RESEND_FROM_EMAIL`, Supabase SMTP), the Google OAuth consent
-  screen and the domain itself (host names in `scripts/`), all set outside the repo;
+- the e-mail sender name (`RESEND_FROM_EMAIL`, Supabase SMTP) and Google branding
+  verification, set outside the repo. The domain itself moved on 25 Oct 2026: doensai.com on
+  Vercel (Hostatom registrar, Vercel nameservers), `NEXT_PUBLIC_SITE_URL`, Supabase Site URL and
+  redirect URL, Google app name and authorized domain, and `scripts/load-plan.mjs`;
 - internal keys (`lib/rate-limit.ts`) and demo data.
 
 Multi-sport (`lib/season.ts`, `player_ranks`) is still not started.
