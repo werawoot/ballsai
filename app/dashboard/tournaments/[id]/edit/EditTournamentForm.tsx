@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Banknote, Calendar, FileText, MapPin, Phone, Save, Trophy, Users } from 'lucide-react'
 
 type TournamentRecord = {
@@ -64,6 +65,7 @@ export default function EditTournamentForm({ tournament, canOpen = true }: { tou
   const [maxTeams, setMaxTeams] = useState(String(tournament.max_teams ?? 16))
   // A draft stays a draft until opened (ADR-013); it never goes back. Only an organizer opens one.
   const isDraft = tournament.status === 'draft'
+  const td = useTranslations('tournamentDraft')
   const [status, setStatus] = useState(isDraft ? 'draft' : tournament.status === 'closed' ? 'closed' : 'open')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -155,14 +157,12 @@ export default function EditTournamentForm({ tournament, canOpen = true }: { tou
           สถานะรับสมัคร
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {!canOpen && <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 13, color: '#555', lineHeight: 1.6 }}>ร่าง: เห็นเฉพาะคุณและแอดมิน เปิดรับสมัครได้เมื่อได้รับอนุมัติเป็นผู้จัด</p>}
-          {canOpen && (isDraft ? [
-            { value: 'draft', label: 'ร่าง (ยังไม่เปิด)' },
+          {!canOpen && <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 13, color: '#555', lineHeight: 1.6 }}>{td('editNote')}</p>}
+          {canOpen && [
+            ...(isDraft ? [{ value: 'draft', label: td('badge') }] : []),
             { value: 'open', label: 'เปิดรับสมัคร' },
-          ] : [
-            { value: 'open', label: 'เปิดรับสมัคร' },
-            { value: 'closed', label: 'ปิดรับสมัคร' },
-          ]).map(option => (
+            ...(isDraft ? [] : [{ value: 'closed', label: 'ปิดรับสมัคร' }]),
+          ].map(option => (
             <button key={option.value} onClick={() => setStatus(option.value)} style={{ padding: '12px 10px', borderRadius: 12, border: '1.5px solid', borderColor: status === option.value ? '#CC0001' : '#e5e5e5', background: status === option.value ? '#CC0001' : 'white', color: status === option.value ? 'white' : '#555', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'var(--font-sarabun)' }}>
               {option.label}
             </button>

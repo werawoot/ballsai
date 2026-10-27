@@ -63,9 +63,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ tournam
 
   // An applicant may edit their own draft (ADR-013); opening it needs the organizer role,
   // which the database checks again (sql/89).
-  if (!isOrganizer && typedTournament.status !== 'draft') {
-    return NextResponse.json({ error: 'ไม่มีสิทธิ์แก้ไขรายการแข่งขัน' }, { status: 403 })
-  }
+  if (!isOrganizer && typedTournament.status !== 'draft') return apiError('organizerRequired', 403)
 
   const body = (await request.json().catch(() => null)) as UpdateTournamentBody | null
   if (!body) {

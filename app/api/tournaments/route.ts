@@ -72,8 +72,8 @@ export async function POST(request: Request) {
   if (error) {
     const known = organizerRpcError(error)
     if (known) return apiError(known.code, known.status)
-    // Before sql/89 the status check knows no 'draft'.
-    if (status === 'draft' && error.code === '23514') return apiError('featureNotReady', 503)
+    // Before sql/89 the insert policy refuses a non-organizer and the status check knows no 'draft'.
+    if (status === 'draft' && (error.code === '23514' || error.code === '42501')) return apiError('featureNotReady', 503)
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { apiError } from '@/lib/api-error'
@@ -37,6 +38,8 @@ export async function POST(request: Request) {
     logServerError({ event: 'admin_organizer_failed', userId: user.id, route: '/api/admin/organizers', metadata: { rpc }, error })
     return apiError('requestInvalid', 400)
   }
+  // A revoke closes the organizer's open tournaments; the public lists should say so now.
+  if (rpc === 'revoke_organizer_access') revalidateTag('public-tournaments')
   logServerEvent({ event: 'admin_organizer_decided', userId: user.id, route: '/api/admin/organizers', metadata: { rpc, result: String(data) } })
   return NextResponse.json({ ok: true, result: data })
 }

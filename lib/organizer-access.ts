@@ -54,10 +54,10 @@ export function organizerAccessState({ role, requests, lastRevocationAt, now }: 
   const pending = requests.find(request => request.status === 'pending')
   if (pending) return { kind: 'pending', requestId: pending.id, since: pending.created_at }
   const declined = requests.find(request => request.status === 'declined')
-  const revoked = requests.find(request => request.status === 'revoked')
   const times = [declined?.decided_at, lastRevocationAt].filter((at): at is string => Boolean(at)).map(at => Date.parse(at))
-  const latest = requests[0]
-  const lastReason = latest && (latest.status === 'declined' || latest.status === 'revoked') ? latest.decision_reason : (declined ?? revoked)?.decision_reason ?? null
+  // The reason of the newest decline or revocation, the one the person last heard.
+  const lastRefusal = requests.find(request => request.status === 'declined' || request.status === 'revoked')
+  const lastReason = lastRefusal?.decision_reason ?? null
   if (times.length) {
     const until = new Date(Math.max(...times) + REQUEST_COOLDOWN_DAYS * DAY_MS)
     if (until > now) return { kind: 'cooldown', until, reason: lastReason }
@@ -85,12 +85,15 @@ const REFUSALS: Array<[string, ApiErrorCode]> = [
   ['REASON_REQUIRED', 'reasonRequired'],
   ['INVALID_REQUEST', 'requestInvalid'],
   ['INVALID_DECISION', 'requestInvalid'],
+  ['ORGANIZER_CHANGE_NOT_ALLOWED', 'notAllowed'],
+  ['DRAFT_NOT_PUBLIC', 'draftNotPublic'],
+  ['AUTH_REQUIRED', 'signInFirst'],
   ['FORBIDDEN', 'notAllowed'],
 ]
 
 const STATUS: Partial<Record<ApiErrorCode, number>> = {
   organizerRequestRequired: 403, organizerRequired: 403, notAllowed: 403, notOrganizerAccount: 409,
-  organizerRequestNotFound: 404, reasonRequired: 400, requestInvalid: 400, featureNotReady: 503,
+  organizerRequestNotFound: 404, signInFirst: 401, reasonRequired: 400, requestInvalid: 400, featureNotReady: 503,
 }
 
 export function organizerRpcError(error: { code?: string | null; message?: string | null }): { code: ApiErrorCode; status: number } | null {

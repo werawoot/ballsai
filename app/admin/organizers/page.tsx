@@ -80,13 +80,13 @@ export default async function AdminOrganizersPage(props: { searchParams?: Promis
         : <>
           <section className="ao-section" aria-labelledby="ao-queue">
             <h2 id="ao-queue">{t('queueTitle')}</h2>
-            <OrganizerDecisionList requests={requestItems} organizers={[]} />
+            <OrganizerDecisionList requests={requestItems} />
             <Pagination basePath="/admin/organizers" page={page} hasNext={requestRows.length > PAGE_SIZE} params={{ opage: searchParams.opage ?? '' }} />
           </section>
           <section className="ao-section" aria-labelledby="ao-organizers">
             <h2 id="ao-organizers">{t('organizersTitle')}</h2>
             <p className="ao-muted">{t('organizersIntro')}</p>
-            <OrganizerDecisionList requests={[]} organizers={organizerItems} />
+            <OrganizerDecisionList organizers={organizerItems} />
             <Pagination basePath="/admin/organizers" page={organizerPage} hasNext={organizerRows.length > PAGE_SIZE} pageParam="opage" params={{ page: searchParams.page ?? '' }} />
           </section>
         </>}

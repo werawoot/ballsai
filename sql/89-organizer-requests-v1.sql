@@ -27,8 +27,11 @@
 --     a tournament never goes back to draft; only an admin moves one to another organizer.
 --     record_match_result_safely and confirm_payment_safely already refuse a non-organizer,
 --     and team registration already needs status 'open'.
+--   * Without the organizer role, nothing but one's own draft changes; a draft's fixtures
+--     cannot be published.
 --   * public_tournament_organizers(): "จัดโดย <organization> (<province>)" for tournaments that
---     are not drafts; phone and note stay admin-only.
+--     are not drafts, up to 100 ids a call (more returns nothing); phone and note stay
+--     admin-only.
 -- Concurrency: the request takes a per-user advisory lock; a draft insert by an applicant
 -- takes the same lock before counting; decide and revoke lock the rows they change.
 -- Scale: the admin queue reads organizer_requests_pending_idx; admins and organizers are
@@ -176,6 +179,12 @@ begin
   if new.organizer_id is distinct from old.organizer_id then
     raise exception 'ORGANIZER_CHANGE_NOT_ALLOWED' using errcode = '42501';
   end if;
+  -- Without the organizer role only one's own draft may change (an applicant's, or a draft
+  -- left after a revoke): name, dates, fee and PromptPay of a tournament teams could join
+  -- stay as they were once access is revoked.
+  if old.status is distinct from 'draft' and not public.is_organizer() then
+    raise exception 'ORGANIZER_REQUIRED' using errcode = '42501';
+  end if;
   if new.status is distinct from old.status then
     if new.status = 'draft' then
       raise exception 'CANNOT_RETURN_TO_DRAFT' using errcode = 'P0001';
@@ -184,6 +193,10 @@ begin
       raise exception 'ORGANIZER_REQUIRED' using errcode = '42501';
     end if;
   end if;
+  -- A draft is private, so its fixtures cannot be published (sql/57 reads them for anon).
+  if new.status = 'draft' and new.fixtures_published_at is not null then
+    raise exception 'DRAFT_NOT_PUBLIC' using errcode = 'P0001';
+  end if;
   return new;
 end;
 $$;
@@ -191,7 +204,7 @@ revoke all on function public.tournaments_guard_organizer() from public, anon, a
 
 drop trigger if exists tournaments_guard_organizer on public.tournaments;
 create trigger tournaments_guard_organizer
-before insert or update of status, organizer_id on public.tournaments
+before insert or update on public.tournaments
 for each row execute function public.tournaments_guard_organizer();
 
 drop policy if exists "tournaments_select_public" on public.tournaments;
@@ -436,14 +449,16 @@ security definer
 set search_path = ''
 as $$
   select t.id, r.org_name, r.province
-  from (select distinct u.id from unnest(p_tournament_ids[1:100]) as u(id)) ids
+  from (select distinct u.id from unnest(p_tournament_ids) as u(id)) ids
   join public.tournaments t on t.id = ids.id and t.status <> 'draft'
   cross join lateral (
+    -- A revoked organizer still ran their past tournaments, so a revoked request counts.
     select q.org_name, q.province from public.organizer_requests q
-    where q.user_id = t.organizer_id and q.status = 'approved'
+    where q.user_id = t.organizer_id and q.status in ('approved', 'revoked')
     order by q.created_at desc
     limit 1
-  ) r;
+  ) r
+  where coalesce(cardinality(p_tournament_ids), 0) <= 100;
 $$;
 revoke all on function public.public_tournament_organizers(uuid[]) from public;
 grant execute on function public.public_tournament_organizers(uuid[]) to anon, authenticated;

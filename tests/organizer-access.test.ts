@@ -93,6 +93,9 @@ describe('database refusals become words', () => {
       ['22023', 'INVALID_REQUEST', 'requestInvalid'],
       ['P0002', 'REQUEST_NOT_FOUND', 'organizerRequestNotFound'],
       ['42501', 'FORBIDDEN', 'notAllowed'],
+      ['42501', 'ORGANIZER_CHANGE_NOT_ALLOWED', 'notAllowed'],
+      ['P0001', 'DRAFT_NOT_PUBLIC', 'draftNotPublic'],
+      ['42501', 'AUTH_REQUIRED', 'signInFirst'],
       ['PGRST202', 'Could not find the function', 'featureNotReady'],
       ['42883', 'function does not exist', 'featureNotReady'],
     ]

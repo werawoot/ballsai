@@ -27,7 +27,14 @@ export default function OrganizerRequestForm() {
     setError('')
     if (problem) return
     setSending(true)
-    const response = await fetch('/api/organizer-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields) })
+    let response: Response
+    try {
+      response = await fetch('/api/organizer-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields) })
+    } catch {
+      setSending(false)
+      setError(apiErrors('requestInvalid'))
+      return
+    }
     if (response.status === 401) { router.push('/login?next=/organizer-request'); return }
     const data = await response.json().catch(() => null) as { code?: string; error?: string } | null
     setSending(false)

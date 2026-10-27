@@ -51,6 +51,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
   const { stats, tournaments: myTournaments, tournamentsHasNext, teamCounts, pendingTeams, pendingHasNext, paymentsByTeam } =
     await fetchOrganizerDashboard(supabase, { organizerId: user.id, tournamentsPage, pendingPage })
   const fixturesText = await getTranslations('fixtures')
+  const draftText = await getTranslations('tournamentDraft')
 
   return (
     <main className="bds-page ui-matchday" style={{ minHeight: '100vh', overflowX: 'hidden' }}>
@@ -141,7 +142,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
                             </div>
                           )}
                           <div style={{ background: 'var(--ui-sunk)', color: t.status === 'open' ? '#166534' : t.status === 'draft' ? '#854d0e' : '#991b1b', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20 }}>
-                            {t.status === 'open' ? 'เปิดรับสมัคร' : t.status === 'draft' ? 'ร่าง (ยังไม่เปิด)' : 'ปิดรับสมัคร'}
+                            {t.status === 'open' ? 'เปิดรับสมัคร' : t.status === 'draft' ? draftText('badge') : 'ปิดรับสมัคร'}
                           </div>
                         </div>
                       </div>

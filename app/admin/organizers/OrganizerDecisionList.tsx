@@ -9,7 +9,7 @@ export type OrganizerItem = { userId: string; name: string; email: string; orgNa
 
 // Approve, decline (with a reason) or revoke (with a reason). The database decides who may
 // and refuses a second decision; this only sends the choice and shows the answer.
-export default function OrganizerDecisionList({ requests, organizers }: { requests: RequestItem[]; organizers: OrganizerItem[] }) {
+export default function OrganizerDecisionList({ requests = [], organizers = [] }: { requests?: RequestItem[]; organizers?: OrganizerItem[] }) {
   const t = useTranslations('adminOrganizers')
   const apiErrors = useTranslations('apiErrors')
   const router = useRouter()
@@ -20,7 +20,14 @@ export default function OrganizerDecisionList({ requests, organizers }: { reques
   const send = async (key: string, body: Record<string, unknown>) => {
     setBusy(key)
     setMessages(current => ({ ...current, [key]: '' }))
-    const response = await fetch('/api/admin/organizers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    let response: Response
+    try {
+      response = await fetch('/api/admin/organizers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    } catch {
+      setBusy(null)
+      setMessages(current => ({ ...current, [key]: apiErrors('requestInvalid') }))
+      return
+    }
     const data = await response.json().catch(() => null) as { code?: string; error?: string } | null
     setBusy(null)
     if (!response.ok) {

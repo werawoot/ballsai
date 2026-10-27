@@ -675,7 +675,8 @@
     "notOrganizerAccount": "This account is no longer an organizer",
     "draftLimit": "While you wait for approval you can keep up to 3 drafts",
     "cannotReturnToDraft": "An opened tournament cannot go back to draft",
-    "reasonRequired": "Please give a reason of at least 3 characters"
+    "reasonRequired": "Please give a reason of at least 3 characters",
+    "draftNotPublic": "A draft cannot publish its fixtures; open it first"
   },
   "impact": {
     "back": "Home",
@@ -2958,5 +2959,11 @@
     "revokeEffect": "This organizer's open tournaments close. Team owners, athletes and guardians in them are told. No new result can be recorded.",
     "revokeReason": "Reason (at least 3 characters)",
     "revokeConfirm": "Confirm revoke"
+  },
+  "tournamentDraft": {
+    "savedTitle": "Saved as a draft",
+    "savedText": "Only you and admins can see it. You can open registration once you are approved as an organizer.",
+    "badge": "Draft (not open)",
+    "editNote": "Draft: only you and admins can see it. You can open registration once you are approved as an organizer."
   }
 }

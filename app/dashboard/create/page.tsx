@@ -44,6 +44,7 @@ function Field({ icon, label, value, onChange, placeholder, type = 'text', requi
 
 export default function CreateTournamentPage() {
   const tl = useTranslations('labels')
+  const td = useTranslations('tournamentDraft')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
@@ -106,8 +107,8 @@ export default function CreateTournamentPage() {
       <main className="bds-page" style={{ minHeight: '100vh', background: '#f8f8f8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div style={{ textAlign: 'center' }}>
           <CheckCircle size={64} color="#16a34a" strokeWidth={1.5} style={{ marginBottom: 16 }} />
-          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 700, color: '#111', marginBottom: 8 }}>{success === 'draft' ? 'บันทึกเป็นร่างแล้ว' : 'สร้างรายการสำเร็จ!'}</div>
-          <p style={{ fontSize: 14, color: '#888' }}>{success === 'draft' ? 'เห็นเฉพาะคุณและแอดมิน เปิดรับสมัครได้เมื่อได้รับอนุมัติเป็นผู้จัด' : 'กำลังกลับไปหน้า Dashboard...'}</p>
+          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 700, color: '#111', marginBottom: 8 }}>{success === 'draft' ? td('savedTitle') : 'สร้างรายการสำเร็จ!'}</div>
+          <p style={{ fontSize: 14, color: '#888' }}>{success === 'draft' ? td('savedText') : 'กำลังกลับไปหน้า Dashboard...'}</p>
         </div>
       </main>
     )
