@@ -29,8 +29,8 @@ function fakeClient(answers: { rpc?: Answer; select?: Answer; insert?: Answer; u
 
 const missingFunction = { data: null, error: { code: 'PGRST202', message: 'Could not find the function' } }
 
-// T50: once SQL58 is applied nobody but the athlete reads a birth date; everyone else gets
-// an age from the database. Before SQL58 the same answers come from the old reads.
+// T50: since SQL58 nobody but the athlete reads a birth date; everyone else gets an age
+// from the database. A missing function is reported, never answered from the table.
 describe('athlete birth date and consent', () => {
   it('never lists the birth date or the consent time among the public profile columns', () => {
     const columns = PUBLIC_PROFILE_COLUMNS.split(',').map(column => column.trim())
@@ -124,6 +124,11 @@ describe('reads of athlete_profiles across the app', () => {
     const source = readFileSync(file, 'utf8').replace(/\s+/g, ' ')
     return [...source.matchAll(/from\(['"]athlete_profiles['"]\)\s*\.select\(([^)]*)\)/g)].map(match => ({ file, columns: match[1] }))
   })
+  // A read of another table can embed athlete_profiles: athlete_profiles(...) or athlete_profiles!fk(...).
+  const embedded = files.flatMap(file => {
+    const source = readFileSync(file, 'utf8').replace(/\s+/g, ' ')
+    return [...source.matchAll(/athlete_profiles(?:!\w+)?\(([^)]*)\)/g)].map(match => ({ file, columns: match[1] }))
+  })
 
   it('finds the reads it guards', () => {
     expect(reads.length).toBeGreaterThan(5)
@@ -134,8 +139,12 @@ describe('reads of athlete_profiles across the app', () => {
   })
 
   it('never reads the birth date or consent time from the table (T50: only my_athlete_private does)', () => {
-    const private_ = reads.filter(read => /birth_date|guardian_consent_at|LEGACY_COLUMNS/.test(read.columns)).map(read => read.file).sort()
-    expect(private_).toEqual([])
+    expect(reads.filter(read => /birth_date|guardian_consent_at/.test(read.columns)).map(read => read.file)).toEqual([])
+  })
+
+  it('never asks for them through a read of another table either', () => {
+    expect(embedded.length).toBeGreaterThan(0)
+    expect(embedded.filter(read => /birth_date|guardian_consent_at|\*/.test(read.columns)).map(read => read.file)).toEqual([])
   })
 })
 
