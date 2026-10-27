@@ -12,6 +12,7 @@
 -- What: one function for one page of /scout. Public profiles of a sport only (the SQL58
 -- view, which applies the caller's RLS), with that season's Power Rating; highest first
 -- (the user id breaks ties), then athletes with no rating yet (STARTER cards), newest first.
+-- A rank row without points counts as no rating, so it never leads the list.
 -- Name (a plain substring, case-insensitive, so % and _ are literal), province, position
 -- and a minimum rating are filtered in the database. A page holds at most 50 rows; a larger
 -- or negative request is refused, never silently cut.
@@ -70,7 +71,7 @@ begin
            d.verification_level::text, r.id, r.pts::integer
     from public.player_ranks r
     join public.public_athlete_directory d on d.user_id = r.player_id and d.sport = r.sport
-    where r.sport = p_sport and r.season = p_season and r.player_id is not null
+    where r.sport = p_sport and r.season = p_season and r.player_id is not null and r.pts is not null
       and (v_search is null or strpos(lower(d.display_name), v_search) > 0)
       and (p_province is null or d.province = p_province)
       and (p_position is null or d.position = p_position)
@@ -82,21 +83,22 @@ begin
     return;
   end if;
 
-  -- How many rated athletes match: known from this page when it held some, counted when
-  -- the page lies wholly past them.
-  if v_rows > 0 then
+  -- How many rated athletes match: known from this page when it held some or when it is the
+  -- first page, counted only when the page lies wholly past them.
+  if v_rows > 0 or p_offset = 0 then
     v_ranked := p_offset + v_rows;
   else
     select count(1) into v_ranked
     from public.player_ranks r
     join public.public_athlete_directory d on d.user_id = r.player_id and d.sport = r.sport
-    where r.sport = p_sport and r.season = p_season and r.player_id is not null
+    where r.sport = p_sport and r.season = p_season and r.player_id is not null and r.pts is not null
       and (v_search is null or strpos(lower(d.display_name), v_search) > 0)
       and (p_province is null or d.province = p_province)
       and (p_position is null or d.position = p_position);
   end if;
 
-  -- Then athletes with no rating this season (STARTER cards), newest first, in the order
+  -- Then athletes with no rating this season (no rank row, or one without points: STARTER
+  -- cards), newest first, in the order
   -- athlete_profiles_directory_page_idx (sql/53) keeps.
   return query
     select d.user_id, d.display_name::text, d.position::text, d.province::text, d.current_team::text,
@@ -104,7 +106,8 @@ begin
     from public.public_athlete_directory d
     where d.sport = p_sport
       and not exists (select 1 from public.player_ranks r
-                      where r.player_id = d.user_id and r.sport = d.sport and r.season = p_season)
+                      where r.player_id = d.user_id and r.sport = d.sport and r.season = p_season
+                        and r.pts is not null)
       and (v_search is null or strpos(lower(d.display_name), v_search) > 0)
       and (p_province is null or d.province = p_province)
       and (p_position is null or d.position = p_position)

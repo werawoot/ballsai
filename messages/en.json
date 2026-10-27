@@ -2293,9 +2293,17 @@
       "privacy": "Only your account sees this; athletes do not know they are on your shortlist",
       "powerNote": "Power Rating comes from confirmed match results, not from anything athletes enter themselves",
       "search": "Search",
-      "notReady": "Scouting is not switched on for this server yet. Please try again later.",
       "order": "Highest Power Rating first; athletes with no rating yet come last",
-      "empty": "No athletes match these filters"
+      "empty": "No athletes match these filters",
+      "searchPlaceholder": "Search athlete names",
+      "searchLabel": "Athlete name",
+      "provinceLabel": "Province",
+      "allProvinces": "All provinces",
+      "positionLabel": "Position",
+      "allPositions": "All positions",
+      "powerLabel": "Minimum Power Rating",
+      "starter": "Starter card",
+      "fallback": "For now the newest athletes come first; sorting and filtering by Power Rating arrives with a system update"
     },
     "matchPlanBoard": {
       "teamLabel": "Team / tournament",
