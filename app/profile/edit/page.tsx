@@ -36,7 +36,7 @@ export default async function EditProfilePage() {
   // The birth date and consent time come only through my_athlete_private (sql/58).
   const storedAvatar = (athleteProfile as { profile_image_url?: string | null } | null)?.profile_image_url
   const [athletePrivate, avatarUrls] = await Promise.all([
-    athleteProfile ? fetchMyAthletePrivate(supabase, user.id).catch(error => {
+    athleteProfile ? fetchMyAthletePrivate(supabase).catch(error => {
       console.error(JSON.stringify({ level: 'error', event: 'athlete_private_read_failed', code: error?.code ?? null }))
       return { birth_date: null, guardian_consent_at: null }
     }) : null,

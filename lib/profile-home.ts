@@ -81,7 +81,7 @@ async function fetchProfileHomeSeparately(client: SupabaseClient, userId: string
   const athlete = (athleteResult.data ?? null) as Record<string, unknown> | null
   // The birth date and consent time come only through my_athlete_private (sql/58).
   const [athletePrivate, training] = athlete ? await Promise.all([
-    fetchMyAthletePrivate(client, userId).catch(error => {
+    fetchMyAthletePrivate(client).catch(error => {
       console.error(JSON.stringify({ level: 'error', event: 'athlete_private_read_failed', code: error?.code ?? null }))
       return { birth_date: null, guardian_consent_at: null }
     }),

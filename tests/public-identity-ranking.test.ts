@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { fetchIdentityRanking, IDENTITY_RANKING_LIMIT } from '@/lib/public-identity-ranking'
 
 type Row = Record<string, unknown>
@@ -91,30 +91,16 @@ describe('identity ranking (ดาวรุ่ง and MVP tabs on /ranking)', ()
     expect(asked.some(query => query.filters.includes('under_18=true'))).toBe(true)
   })
 
-  it('falls back to the old reads, and says so, until SQL52 creates the view', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  // SQL52 and SQL58 are on Staging and Production: a missing view is reported, never
+  // replaced by reading birth dates from the profiles table (T50).
+  it('reports a missing view and never reads the profiles table', async () => {
     const { client } = fakeSupabase({
-      athlete_profiles: [
-        { user_id: 'user-1', birth_date: '2012-05-01', sport: 'football', is_public: true },
-        { user_id: 'user-2', birth_date: '1990-05-01', sport: 'football', is_public: true },
-      ],
-      player_ranks: [
-        { id: 'rank-1', player_id: 'user-1', sport: 'football', season: '2026', pts: 1100, rank_change: 2 },
-        { id: 'rank-2', player_id: 'user-2', sport: 'football', season: '2026', pts: 1200, rank_change: 1 },
-      ],
-      player_ratings: [
-        { player_id: 'user-2', player_rank_id: 'rank-2', sport: 'football', season: '2026', goals: 4, assists: 1, clean_sheets: 0, mvps: 2, matches_played: 3 },
-      ],
+      athlete_profiles: [{ user_id: 'user-1', birth_date: '2012-05-01', sport: 'football', is_public: true }],
     })
-    const result = await fetchIdentityRanking(client as never, { sport: 'football', season: '2026', now: new Date('2026-09-28T00:00:00Z') })
-
-    expect(result.emerging.map(row => row.id)).toEqual(['rank-1'])
-    expect(result.performance.map(row => [row.id, row.mvps])).toEqual([['rank-2', 2], ['rank-1', 0]])
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('public_identity_ranking_view_missing'))
-    warn.mockRestore()
+    await expect(fetchIdentityRanking(client as never, { sport: 'football', season: '2026' })).rejects.toMatchObject({ code: 'PGRST205' })
   })
 
-  it('does not hide other database errors behind the fallback', async () => {
+  it('passes other database errors through', async () => {
     const { client } = fakeSupabase({ public_athlete_rankings: { error: { code: '42501', message: 'permission denied' } } })
     await expect(fetchIdentityRanking(client as never, { sport: 'football', season: '2026' })).rejects.toMatchObject({ code: '42501' })
   })

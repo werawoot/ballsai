@@ -1,17 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 // A child's birth date and the time a guardian consented are not the public's (T50).
-// After sql/58 no one but the athlete can read them; everyone else gets an age worked out
+// Since sql/58 (Staging and Production) no one but the athlete can read them; everyone else gets an age worked out
 // in the database. Read athlete_profiles with these columns, never with '*': SQL58 grants
 // SELECT column by column, and '*' would ask for the two it withholds.
 export const PUBLIC_PROFILE_COLUMNS = 'user_id, display_name, sport, position, province, height_cm, weight_kg, current_team, bio, profile_image_url, is_public, verification_level, verified_at, created_at, updated_at'
 
 type Failure = { code?: string; message: string } | null
 export type AthletePrivate = { birth_date: string | null; guardian_consent_at: string | null }
-
-// PostgREST answers PGRST202 for a function it does not know; Postgres itself 42883.
-// Either means SQL58 is not applied yet.
-const isMissingFunction = (error: Failure) => error?.code === 'PGRST202' || error?.code === '42883'
 
 // Today's date in Thailand as YYYY-MM-DD: an age turns over at midnight Bangkok time,
 // whatever time zone the server runs in.
@@ -44,33 +40,22 @@ export const shownAge = (age: number | null) => (age !== null && age >= MIN_ATHL
 
 // The age of a public athlete, or of the signed-in athlete's own profile; null when the
 // database gives none. A failed read shows no age rather than failing the page.
-export async function fetchAthleteAge(client: SupabaseClient, userId: string, now = new Date()): Promise<number | null> {
+export async function fetchAthleteAge(client: SupabaseClient, userId: string): Promise<number | null> {
   const { data, error } = await client.rpc('public_athlete_age', { p_user_id: userId })
   if (!error) return typeof data === 'number' ? shownAge(data) : null
-  if (!isMissingFunction(error)) {
-    console.error(JSON.stringify({ level: 'error', event: 'athlete_age_failed', code: error.code ?? null }))
-    return null
-  }
-  // Before SQL58. Delete once it is applied on Production.
-  const legacy = await client.from('athlete_profiles').select('birth_date').eq('user_id', userId).maybeSingle()
-  const birthDate = (legacy.data as { birth_date?: string | null } | null)?.birth_date
-  return birthDate ? shownAge(ageOn(birthDate, thaiDate(now))) : null
+  console.error(JSON.stringify({ level: 'error', event: 'athlete_age_failed', code: error.code ?? null }))
+  return null
 }
 
 // The signed-in athlete's own birth date and consent time, for /profile.
-export async function fetchMyAthletePrivate(client: SupabaseClient, userId: string): Promise<AthletePrivate> {
+export async function fetchMyAthletePrivate(client: SupabaseClient): Promise<AthletePrivate> {
   const empty = { birth_date: null, guardian_consent_at: null }
   const { data, error } = await client.rpc('my_athlete_private')
   if (!error) {
     const row = (Array.isArray(data) ? data[0] : data) as Partial<AthletePrivate> | undefined
     return row ? { birth_date: row.birth_date ?? null, guardian_consent_at: row.guardian_consent_at ?? null } : empty
   }
-  if (!isMissingFunction(error)) throw error
-  // Before SQL58. Delete once it is applied on Production.
-  const legacy = await client.from('athlete_profiles').select('birth_date, guardian_consent_at').eq('user_id', userId).maybeSingle()
-  if (legacy.error) throw legacy.error
-  const row = legacy.data as Partial<AthletePrivate> | null
-  return row ? { birth_date: row.birth_date ?? null, guardian_consent_at: row.guardian_consent_at ?? null } : empty
+  throw error
 }
 
 // Saves the athlete's own profile with a plain insert or update. An upsert would make
