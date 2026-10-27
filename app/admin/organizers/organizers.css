@@ -1,0 +1,22 @@
+/* /admin/organizers: the organizer request queue (ADR-013). */
+.ao-page { color: #0B1220; margin: 0 auto; max-width: 820px; padding: 24px 16px 80px; }
+.ao-head h1 { font-size: 26px; font-weight: 800; margin: 4px 0 6px; }
+.ao-head p, .ao-muted { color: #475569; font-size: 14px; line-height: 1.6; margin: 0; }
+.ao-eyebrow { color: #0F7A3F !important; font-size: 13px !important; font-weight: 700; }
+.ao-section { margin-top: 24px; }
+.ao-section h2 { font-size: 18px; font-weight: 800; margin: 0 0 8px; }
+.ao-alert { background: #FEF9C3; border-radius: 12px; color: #854D0E; font-size: 14px; font-weight: 700; margin-top: 16px; padding: 12px 14px; }
+.ao-list { display: grid; gap: 10px; list-style: none; margin: 10px 0; padding: 0; }
+.ao-item { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 14px; }
+.ao-item p { font-size: 14px; line-height: 1.55; margin: 0 0 4px; overflow-wrap: anywhere; }
+.ao-org { font-size: 15px !important; }
+.ao-note { background: #F3F6F9; border-radius: 10px; padding: 8px 10px; white-space: pre-wrap; }
+.ao-item label { display: block; font-size: 13px; font-weight: 700; margin: 10px 0 4px; }
+.ao-item input { border: 1.5px solid #E2E8F0; border-radius: 10px; font: inherit; font-size: 16px; min-height: 44px; padding: 8px 10px; width: 100%; }
+.ao-item summary { cursor: pointer; font-size: 14px; font-weight: 700; min-height: 44px; padding: 10px 0; }
+.ao-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.ao-actions button { border: 0; border-radius: 10px; cursor: pointer; font: inherit; font-size: 14px; font-weight: 800; min-height: 44px; padding: 0 18px; }
+.ao-actions button:disabled { cursor: default; opacity: .5; }
+.ao-approve { background: #16E06E; color: #0B1220; }
+.ao-decline { background: #DC2626; color: #fff; }
+.ao-error { color: #DC2626; font-weight: 700; margin-top: 8px !important; }

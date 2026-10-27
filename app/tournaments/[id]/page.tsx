@@ -1,13 +1,15 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { ArrowRight, Banknote, Calendar, ChevronRight, CircleDot, ListOrdered, MapPin, SearchX, Users } from 'lucide-react'
+import { ArrowRight, Banknote, Building2, Calendar, ChevronRight, CircleDot, ListOrdered, MapPin, SearchX, Users } from 'lucide-react'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { sampleTournaments, showDemoData } from '@/lib/sample-data'
 import { bangkokToday } from '@/lib/public-tournaments'
 import { tournamentCover } from '@/lib/tournament-cover'
 import { tournamentCountdown, tournamentDateRange, tournamentDayBox, tournamentFee, type TournamentCountdown } from '@/lib/tournament-dates'
 import { BACKDROP, PAGE_PHOTOS } from '@/lib/stock-photos'
+import { provinceName } from '@/lib/thai-provinces'
+import type { Locale } from '@/i18n/config'
 import PageHeader from '@/components/PageHeader'
 import TeamStep from './TeamStep'
 import PaymentStep from './PaymentStep'
@@ -41,8 +43,11 @@ type Tournament = {
 export default async function TournamentPage(props: { params: Promise<{ id: string }>; searchParams: Promise<{ step?: string; teamId?: string }> }) {
   const [{ id }, searchParams] = await Promise.all([props.params, props.searchParams])
   const supabase = await createServerSupabaseClient()
-  const [{ data }, t, list, cover, locale] = await Promise.all([
+  // "Organized by" (ADR-013, sql/89): the organization and province of an approved request;
+  // nothing for a draft, for an organizer from before requests, or before sql/89 is applied.
+  const [{ data }, organizers, t, list, cover, locale] = await Promise.all([
     supabase.from('tournaments').select('*').eq('id', id).maybeSingle(),
+    supabase.rpc('public_tournament_organizers', { p_tournament_ids: [id] }),
     getTranslations('tournament'),
     getTranslations('tournaments'),
     getTranslations('tournamentCover'),
@@ -61,6 +66,7 @@ export default async function TournamentPage(props: { params: Promise<{ id: stri
     </main>
   }
 
+  const organizer = (organizers.data as Array<{ org_name: string; province: string }> | null)?.[0] ?? null
   const today = bangkokToday()
   const finished = (tournament.end_date ?? tournament.start_date) < today
   const live = !finished && tournament.start_date < today
@@ -124,13 +130,14 @@ export default async function TournamentPage(props: { params: Promise<{ id: stri
               {heading.venue && <li><MapPin size={18} aria-hidden="true" /><span>{heading.venue}</span></li>}
               <li className="gl-num"><Banknote size={18} aria-hidden="true" /><span>{fee ? `${fee} ${t('perTeam')}` : t('free')}</span></li>
               {teams && <li className="gl-num"><Users size={18} aria-hidden="true" /><span>{t('maxTeams')} {teams} {t('teams')}</span></li>}
+              {organizer && <li><Building2 size={18} aria-hidden="true" /><span>{t('organizedBy', { org: organizer.org_name, province: provinceName(organizer.province, locale as Locale) })}</span></li>}
             </ul>
           </div>
           <aside className="tn-d-cta gl-panel" aria-label={registerLabel}>
             {countdown && <div className="tn-d-count"><small>{t('startsIn')}</small><b className={`gl-num${countdown.kind === 'live' ? ' is-live' : ''}`}>{countdownText(countdown)}</b></div>}
             {open
               ? <Link className="gl-btn gl-btn-primary tn-d-register" href={registerHref}>{registerLabel}<ArrowRight size={18} aria-hidden="true" /></Link>
-              : <p className="tn-d-closed" role="status">{finished ? t('finished') : t('closed')}</p>}
+              : <p className="tn-d-closed" role="status">{finished ? t('finished') : tournament.status === 'draft' ? t('draft') : t('closed')}</p>}
             <div className="tn-d-cta-row">
               <ShareButton title={tournament.name} label={t('share')} copiedLabel={t('shareCopied')} />
               <Link className="gl-btn gl-btn-secondary tn-d-fixtures" href={fixturesHref}><ListOrdered size={18} aria-hidden="true" />{t('fixturesTab')}</Link>

@@ -140,8 +140,8 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
                               {tPending} รอยืนยัน
                             </div>
                           )}
-                          <div style={{ background: t.status === 'open' ? 'var(--ui-sunk)' : 'var(--ui-sunk)', color: t.status === 'open' ? '#166534' : '#991b1b', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20 }}>
-                            {t.status === 'open' ? 'เปิดรับสมัคร' : 'ปิดรับสมัคร'}
+                          <div style={{ background: 'var(--ui-sunk)', color: t.status === 'open' ? '#166534' : t.status === 'draft' ? '#854d0e' : '#991b1b', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20 }}>
+                            {t.status === 'open' ? 'เปิดรับสมัคร' : t.status === 'draft' ? 'ร่าง (ยังไม่เปิด)' : 'ปิดรับสมัคร'}
                           </div>
                         </div>
                       </div>

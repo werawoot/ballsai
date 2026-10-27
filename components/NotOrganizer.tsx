@@ -3,9 +3,9 @@ import { useTranslations } from 'next-intl'
 import PageHeader from '@/components/PageHeader'
 
 // What an account without organizer access sees at /dashboard and /dashboard/results instead
-// of being sent back to the home page with no word (UX mockup v4-A). Organizer access is
-// turned on by an admin, so this says so and points at what the account can do now. There is
-// no contact button: no channel for asking has been chosen yet.
+// of being sent back to the home page with no word (UX mockup v4-A). The account can ask
+// for organizer access itself (ADR-013, /organizer-request) and draft tournaments while it
+// waits; browsing open tournaments stays the second choice.
 export default function NotOrganizer() {
   const t = useTranslations('notOrganizer')
   return <main className="bds-page" style={{ minHeight: '100vh' }}>
@@ -15,7 +15,10 @@ export default function NotOrganizer() {
       <h1 className="ui-h1" style={{ margin: '6px 0 10px', overflowWrap: 'anywhere' }}>{t('title')}</h1>
       <p style={{ color: 'var(--ui-mute)', fontSize: 15, lineHeight: 1.65, margin: 0 }}>{t('text')}</p>
       <p style={{ color: 'var(--ui-mute)', fontSize: 15, lineHeight: 1.65, margin: '16px 0 28px' }}>{t('meanwhile')}</p>
-      <Link className="ui-btn ui-btn-primary" href="/tournaments">{t('cta')}</Link>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+        <Link className="ui-btn ui-btn-primary" href="/organizer-request">{t('requestCta')}</Link>
+        <Link className="ui-btn ui-btn-ghost" href="/tournaments">{t('cta')}</Link>
+      </div>
     </div>
   </main>
 }

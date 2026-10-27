@@ -72,7 +72,8 @@ export function parseTournamentQuery(value: string | string[] | undefined): stri
 export async function fetchPublicTournamentsPage(client: SupabaseClient, { page, view, today, query: search = '', sort }: { page: number; view: TournamentView; today: string; query?: string; sort?: TournamentSort }) {
   const from = (page - 1) * TOURNAMENTS_PAGE_SIZE
   const order = sort ?? (view === 'past' ? 'latest' : 'soonest')
-  let query = client.from('tournaments').select('*')
+  // A signed-in organizer's client can read their own drafts (sql/89); a public list never shows one.
+  let query = client.from('tournaments').select('*').neq('status', 'draft')
   query = view === 'past' ? query.lt('end_date', today) : query.gte('end_date', today)
   if (view === 'open') query = query.eq('status', 'open')
   const words = parseTournamentQuery(search)

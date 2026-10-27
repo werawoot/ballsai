@@ -45,8 +45,8 @@ describe('what the six choices save', () => {
     expect(destinationFor('sponsor_brand')).toBe('/sponsor')
   })
 
-  it('takes someone who says they organize to ของฉัน, which shows what their account can do', () => {
-    expect(destinationFor('organizer')).toBe('/profile')
+  it('takes someone who says they organize straight to the organizer request (ADR-013)', () => {
+    expect(destinationFor('organizer')).toBe('/organizer-request')
   })
 
   it('writes the persona, sport and recommended goal together, or nothing when skipped', () => {
@@ -84,8 +84,8 @@ describe('the first /welcome screen', () => {
     expect(render('th')).toContain('aria-valuemax="2"')
   })
 
-  it('tells the organizer choice that the permission comes from an administrator', () => {
-    expect(text(render('th'))).toContain('ต้องให้ผู้ดูแลระบบเปิดสิทธิ์')
+  it('tells the organizer choice it can ask and start drafting at once', () => {
+    expect(text(render('th'))).toContain('ส่งคำขอ แล้วร่างรายการได้ทันที')
   })
 
   // ADR-014: /welcome follows /login onto the light glass design, each over its own photo.

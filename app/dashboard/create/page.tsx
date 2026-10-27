@@ -53,7 +53,7 @@ export default function CreateTournamentPage() {
   const [promptpay, setPromptpay] = useState('')
   const [maxTeams, setMaxTeams] = useState('16')
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [success, setSuccess] = useState<'open' | 'draft' | null>(null)
   const [message, setMessage] = useState('')
   const router = useRouter()
 
@@ -91,8 +91,11 @@ export default function CreateTournamentPage() {
       const data = (await response.json().catch(() => null)) as { error?: string } | null
       setMessage(data?.error ?? 'เกิดข้อผิดพลาดในการสร้างรายการ')
     } else {
-      setSuccess(true)
-      setTimeout(() => router.push('/dashboard'), 2000)
+      // An applicant's tournament is a draft until an admin approves them (ADR-013).
+      const data = (await response.json().catch(() => null)) as { status?: string } | null
+      const saved = data?.status === 'draft' ? 'draft' : 'open'
+      setSuccess(saved)
+      setTimeout(() => router.push(saved === 'draft' ? '/organizer-request' : '/dashboard'), 2000)
     }
 
     setLoading(false)
@@ -103,8 +106,8 @@ export default function CreateTournamentPage() {
       <main className="bds-page" style={{ minHeight: '100vh', background: '#f8f8f8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div style={{ textAlign: 'center' }}>
           <CheckCircle size={64} color="#16a34a" strokeWidth={1.5} style={{ marginBottom: 16 }} />
-          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 700, color: '#111', marginBottom: 8 }}>สร้างรายการสำเร็จ!</div>
-          <p style={{ fontSize: 14, color: '#888' }}>กำลังกลับไปหน้า Dashboard...</p>
+          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 24, fontWeight: 700, color: '#111', marginBottom: 8 }}>{success === 'draft' ? 'บันทึกเป็นร่างแล้ว' : 'สร้างรายการสำเร็จ!'}</div>
+          <p style={{ fontSize: 14, color: '#888' }}>{success === 'draft' ? 'เห็นเฉพาะคุณและแอดมิน เปิดรับสมัครได้เมื่อได้รับอนุมัติเป็นผู้จัด' : 'กำลังกลับไปหน้า Dashboard...'}</p>
         </div>
       </main>
     )

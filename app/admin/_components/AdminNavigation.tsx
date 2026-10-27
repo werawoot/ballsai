@@ -28,6 +28,7 @@ const primary: NavItem[] = [
   { href: '/admin/operations', label: 'Command Center', detail: 'คิวงานและความพร้อม', icon: <LayoutDashboard size={18} /> },
   { href: '/admin', label: 'Athletes & Ranking', detail: 'Card และ Power Rating', icon: <Medal size={18} /> },
   { href: '/admin/trust', label: 'Trust & Integrity', detail: 'หลักฐานและข้อโต้แย้ง', icon: <ShieldCheck size={18} /> },
+  { href: '/admin/organizers', label: 'Organizers', detail: 'คำขอเป็นผู้จัด', icon: <ClipboardList size={18} /> },
   { href: '/admin/moderation', label: 'Moderation', detail: 'รายงาน Highlight', icon: <Gavel size={18} /> },
   { href: '/admin/venue-photos', label: 'Venue Photos', detail: 'ตรวจรูปสนาม', icon: <ImageIcon size={18} /> },
   { href: '/admin/audit', label: 'Audit Trail', detail: 'ใครทำอะไร เมื่อไร', icon: <History size={18} /> },

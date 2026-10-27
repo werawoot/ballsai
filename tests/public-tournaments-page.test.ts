@@ -14,6 +14,7 @@ function fakeSupabase(table: Row[]) {
     gte: (column: keyof Row, value: string) => { calls.push(`${column}>=${value}`); rows = rows.filter(row => String(row[column]) >= value); return builder },
     lt: (column: keyof Row, value: string) => { calls.push(`${column}<${value}`); rows = rows.filter(row => String(row[column]) < value); return builder },
     eq: (column: keyof Row, value: string) => { calls.push(`${column}=${value}`); rows = rows.filter(row => row[column] === value); return builder },
+    neq: (column: keyof Row, value: string) => { calls.push(`${column}!=${value}`); rows = rows.filter(row => row[column] !== value); return builder },
     // PostgREST "or" of ilike filters, the shape the search sends: name.ilike.*x*,location.ilike.*x*
     or: (filter: string) => {
       calls.push(`or ${filter}`)
@@ -61,6 +62,15 @@ describe('the three tabs', () => {
     const page = await fetchPublicTournamentsPage(client, { page: 1, view: 'upcoming', today })
     expect(page.tournaments.map(item => item.id)).toEqual(['league-running', 'today', 'next-week-closed', 'next-month'])
     expect(calls).toContain('end_date>=2026-10-01')
+  })
+
+  it('never lists a draft, even to the organizer whose client can read it (sql/89)', async () => {
+    const { client, calls } = fakeSupabase([...season, { ...season[season.length - 1], id: 'my-draft', status: 'draft' }])
+    for (const view of ['upcoming', 'open', 'past'] as const) {
+      const page = await fetchPublicTournamentsPage(client, { page: 1, view, today })
+      expect(page.tournaments.map(item => item.id)).not.toContain('my-draft')
+    }
+    expect(calls).toContain('status!=draft')
   })
 
   it('open: only what still takes registrations', async () => {

@@ -10,7 +10,7 @@ import en from '@/messages/en.json'
 const table = vi.hoisted(() => ({ rows: [] as Record<string, unknown>[] }))
 function fakeClient() {
   const builder = {
-    select: () => builder, eq: () => builder, gt: () => builder, lte: () => builder, lt: () => builder, gte: () => builder, ilike: () => builder, in: () => builder, order: () => builder,
+    select: () => builder, eq: () => builder, neq: () => builder, gt: () => builder, lte: () => builder, lt: () => builder, gte: () => builder, ilike: () => builder, in: () => builder, order: () => builder,
     range: async (from: number, to: number) => ({ data: table.rows.slice(from, to + 1), error: null }),
     limit: async () => ({ data: [], error: null }),
   }

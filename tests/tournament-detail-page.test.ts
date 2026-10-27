@@ -7,9 +7,12 @@ import th from '@/messages/th.json'
 // /tournaments/[id] on the glass design: the facts the row holds, one way in when it is
 // open, and a map search for the venue the organizer typed. The data boundary is the
 // tournament row read.
-const db = vi.hoisted(() => ({ row: null as Record<string, unknown> | null }))
+const db = vi.hoisted(() => ({ row: null as Record<string, unknown> | null, organizers: null as unknown }))
 vi.mock('@/lib/supabase-server', () => ({
-  createServerSupabaseClient: async () => ({ from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: db.row, error: null }) }) }) }) }),
+  createServerSupabaseClient: async () => ({
+    from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: db.row, error: null }) }) }) }),
+    rpc: async () => db.organizers ?? { data: null, error: { code: 'PGRST202', message: 'Could not find the function' } },
+  }),
 }))
 vi.mock('@/lib/sample-data', () => ({ sampleTournaments: [], showDemoData: false }))
 vi.mock('next/navigation', () => ({ usePathname: () => '/tournaments/t1', useRouter: () => ({ push: () => {} }), useSearchParams: () => new URLSearchParams() }))
@@ -25,6 +28,23 @@ beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date('2026-10-12T03:
 afterEach(() => vi.useRealTimers())
 
 describe('/tournaments/[id]', () => {
+  it('says who organizes it from the approved request, and nothing before sql/89 (ADR-013)', async () => {
+    db.row = cup()
+    expect(await render()).not.toContain('จัดโดย')
+    db.organizers = { data: [{ tournament_id: 't1', org_name: 'สโมสรเยาวชนขอนแก่น', province: 'ขอนแก่น' }], error: null }
+    const html = await render()
+    db.organizers = null
+    expect(html).toContain('จัดโดย สโมสรเยาวชนขอนแก่น (ขอนแก่น)')
+    expect(html).not.toMatch(/tel:|08\d/)
+  })
+
+  it('tells the organizer their draft is not open yet', async () => {
+    db.row = cup({ status: 'draft' })
+    const html = await render()
+    expect(html).toContain('ร่าง: เห็นเฉพาะผู้จัดและแอดมิน')
+    expect(html).not.toContain('?step=team')
+  })
+
   it('shows the countdown and one way in while registration is open', async () => {
     db.row = cup()
     const html = await render()

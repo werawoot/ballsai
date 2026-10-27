@@ -53,7 +53,7 @@ function Field({ icon, label, value, onChange, placeholder, type = 'text', requi
   )
 }
 
-export default function EditTournamentForm({ tournament }: { tournament: TournamentRecord }) {
+export default function EditTournamentForm({ tournament, canOpen = true }: { tournament: TournamentRecord; canOpen?: boolean }) {
   const [name, setName] = useState(tournament.name)
   const [description, setDescription] = useState(tournament.description ?? '')
   const [location, setLocation] = useState(tournament.location)
@@ -62,7 +62,9 @@ export default function EditTournamentForm({ tournament }: { tournament: Tournam
   const [fee, setFee] = useState(String(tournament.fee ?? 0))
   const [promptpay, setPromptpay] = useState(tournament.promptpay ?? '')
   const [maxTeams, setMaxTeams] = useState(String(tournament.max_teams ?? 16))
-  const [status, setStatus] = useState(tournament.status === 'closed' ? 'closed' : 'open')
+  // A draft stays a draft until opened (ADR-013); it never goes back. Only an organizer opens one.
+  const isDraft = tournament.status === 'draft'
+  const [status, setStatus] = useState(isDraft ? 'draft' : tournament.status === 'closed' ? 'closed' : 'open')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
@@ -90,7 +92,7 @@ export default function EditTournamentForm({ tournament }: { tournament: Tournam
         fee: Number(fee),
         promptpay,
         maxTeams: Number(maxTeams) || 16,
-        status,
+        ...(status === tournament.status ? {} : { status }),
       }),
     })
 
@@ -153,10 +155,14 @@ export default function EditTournamentForm({ tournament }: { tournament: Tournam
           สถานะรับสมัคร
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {[
+          {!canOpen && <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 13, color: '#555', lineHeight: 1.6 }}>ร่าง: เห็นเฉพาะคุณและแอดมิน เปิดรับสมัครได้เมื่อได้รับอนุมัติเป็นผู้จัด</p>}
+          {canOpen && (isDraft ? [
+            { value: 'draft', label: 'ร่าง (ยังไม่เปิด)' },
+            { value: 'open', label: 'เปิดรับสมัคร' },
+          ] : [
             { value: 'open', label: 'เปิดรับสมัคร' },
             { value: 'closed', label: 'ปิดรับสมัคร' },
-          ].map(option => (
+          ]).map(option => (
             <button key={option.value} onClick={() => setStatus(option.value)} style={{ padding: '12px 10px', borderRadius: 12, border: '1.5px solid', borderColor: status === option.value ? '#CC0001' : '#e5e5e5', background: status === option.value ? '#CC0001' : 'white', color: status === option.value ? 'white' : '#555', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'var(--font-sarabun)' }}>
               {option.label}
             </button>

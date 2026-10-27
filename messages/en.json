@@ -121,7 +121,7 @@
       "athlete": "Make my card",
       "guardian": "Go to my page",
       "coach": "Go to my page",
-      "organizer": "Go to my page",
+      "organizer": "Ask to organize",
       "venue_owner": "Manage my venue",
       "sponsor_brand": "Go to the sponsor page"
     },
@@ -156,7 +156,7 @@
       },
       "organizer": {
         "title": "Organizer",
-        "description": "Run tournaments, check teams, record results · an administrator has to switch this on"
+        "description": "Run tournaments, check teams, record results · send a request, then start drafting at once"
       },
       "venue_owner": {
         "title": "Venue owner",
@@ -177,7 +177,7 @@
       "athlete": "Next: add your name and your first card is ready",
       "guardian": "Next: programmes by age right away, then link your child's account",
       "coach": "Next: coach tools work straight away, no team needed",
-      "organizer": "Next: see what your account can do",
+      "organizer": "Next: send an organizer request; while you wait you can draft 3 tournaments",
       "venue_owner": "Next: add a venue and open free times",
       "sponsor_brand": "Next: create a sponsorship"
     },
@@ -362,7 +362,9 @@
       "news": "Team news",
       "event": "Event",
       "training": "Training plan",
-      "other": "Notification"
+      "other": "Notification",
+      "organizer": "Organizer",
+      "tournament": "Tournament"
     }
   },
   "filters": {
@@ -662,7 +664,18 @@
     "joinTooMany": "You already have many requests waiting. Wait for coaches to answer first.",
     "joinNotClubTeam": "Only a coach’s own team works this way; for a tournament entry use withdraw.",
     "memberNotFound": "This athlete is not on the team. Refresh the page and try again.",
-    "joinNameRequired": "Add your name first so the coach knows who is asking."
+    "joinNameRequired": "Add your name first so the coach knows who is asking.",
+    "organizerRequestRequired": "Send an organizer request first; then you can create drafts",
+    "organizerRequired": "You need organizer approval before opening registration",
+    "organizerRequestPending": "You already have a request waiting for an admin",
+    "organizerRequestTooSoon": "You can ask again 7 days after the last answer",
+    "alreadyOrganizer": "This account is already an organizer",
+    "organizerRequestDecided": "An admin has already decided this request",
+    "organizerRequestNotFound": "This request was not found",
+    "notOrganizerAccount": "This account is no longer an organizer",
+    "draftLimit": "While you wait for approval you can keep up to 3 drafts",
+    "cannotReturnToDraft": "An opened tournament cannot go back to draft",
+    "reasonRequired": "Please give a reason of at least 3 characters"
   },
   "impact": {
     "back": "Home",
@@ -855,9 +868,10 @@
   "notOrganizer": {
     "eyebrow": "Organizer dashboard",
     "title": "This account is not an organizer yet",
-    "text": "An admin turns on organizer access. Once it is on, you can create tournaments and take team registrations from this page.",
+    "text": "You can ask to become an organizer yourself. An admin checks it and tells you in the app. While you wait you can draft 3 tournaments that only you can see.",
     "meanwhile": "Meanwhile you can browse open tournaments and register a team as a coach.",
-    "cta": "See open tournaments"
+    "cta": "See open tournaments",
+    "requestCta": "Ask to organize"
   },
   "teamRoster": {
     "title": "My teams",
@@ -1527,7 +1541,9 @@
     "startsIn": "Kick-off",
     "share": "Share",
     "shareCopied": "Link copied",
-    "viewFixtures": "Fixtures and results"
+    "viewFixtures": "Fixtures and results",
+    "organizedBy": "Organized by {org} ({province})",
+    "draft": "Draft: only the organizer and admins can see it; registration is not open"
   },
   "player": {
     "back": "Athletes",
@@ -2858,5 +2874,89 @@
     "nameLabel": "Name the coach will see",
     "nameSave": "Save name and ask to join",
     "nameFailed": "Could not save the name. Try again."
+  },
+  "organizerRequest": {
+    "eyebrow": "Organizers",
+    "title": "Ask to become an organizer",
+    "intro": "Organizers open registration, confirm slips and record results that change young athletes' ratings, so an admin checks every organizer first. While you wait you can start drafting tournaments.",
+    "notReady": "Organizer requests are not switched on for this server yet. Please try again later.",
+    "pending": {
+      "badge": "Waiting for an admin",
+      "title": "Request sent",
+      "text": "{org} ({province}) · sent {date} · an admin will tell you the answer in the app"
+    },
+    "drafts": {
+      "title": "Your drafts {count}/{limit}",
+      "text": "Up to {limit} drafts while you wait. Only you and admins see them. You can open registration once approved.",
+      "create": "Draft a tournament",
+      "full": "You have {limit} drafts. You can keep editing them while you wait."
+    },
+    "cooldown": {
+      "badge": "Not approved",
+      "title": "Your last request was not approved",
+      "reason": "Reason: {reason}",
+      "until": "You can ask again from {date}"
+    },
+    "lastReason": "Your last request was not approved. Reason: {reason}",
+    "meanwhile": {
+      "title": "Meanwhile",
+      "text": "Browse open tournaments and register a team as a coach straight away.",
+      "cta": "See open tournaments"
+    },
+    "form": {
+      "title": "About you as an organizer",
+      "text": "Five questions, no documents.",
+      "orgName": "Organization or event name",
+      "orgNamePlaceholder": "e.g. Ayutthaya Youth Football Club",
+      "orgType": "Type",
+      "types": {
+        "school": "School",
+        "association": "Association",
+        "club": "Club",
+        "independent": "Independent organizer"
+      },
+      "province": "Province",
+      "provincePick": "Choose a province",
+      "phone": "Contact phone",
+      "note": "What you plan to run (optional)",
+      "notePlaceholder": "e.g. a U12 youth league twice a year",
+      "privacy": "The organization name and province appear on your tournaments as \"Organized by\". Only admins see the phone and the note.",
+      "submit": "Send request",
+      "sending": "Sending...",
+      "issue": {
+        "orgName": "Use 2 to 120 characters",
+        "orgType": "Choose a type",
+        "province": "Choose a province",
+        "phone": "Use 9 to 15 digits",
+        "note": "Up to 500 characters"
+      }
+    }
+  },
+  "adminOrganizers": {
+    "eyebrow": "Organizers",
+    "title": "Organizer requests",
+    "intro": "Oldest first. Approval gives organizer access at once; a decline needs a reason. The applicant is told either way. The first admin to decide is the answer.",
+    "notReady": "Requests cannot be read yet: apply sql/89-organizer-requests-v1.sql on the right project first.",
+    "queueTitle": "Waiting",
+    "organizersTitle": "Current organizers",
+    "organizersIntro": "Revoke access with a reason. Their open tournaments close; teams and results stay.",
+    "empty": "Nothing here",
+    "noName": "No name",
+    "noOrg": "No organization on record (organizer before requests existed)",
+    "types": {
+      "school": "School",
+      "association": "Association",
+      "club": "Club",
+      "independent": "Independent organizer"
+    },
+    "phone": "Phone",
+    "sent": "sent",
+    "declineReason": "Reason if not approved (at least 3 characters)",
+    "approve": "Approve",
+    "decline": "Decline",
+    "revoke": "Revoke organizer access",
+    "revokeEffect": "This organizer's open tournaments close. Team owners, athletes and guardians in them are told. No new result can be recorded.",
+    "revokeReason": "Reason (at least 3 characters)",
+    "revokeConfirm": "Confirm revoke"
   }
 }
