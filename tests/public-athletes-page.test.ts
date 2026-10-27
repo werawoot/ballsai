@@ -5,7 +5,7 @@ type Row = Record<string, unknown>
 
 // A stand-in for PostgREST: each table is already in the order the query asks for, and
 // every filter, order and bound the code sends is recorded. Only the database is faked.
-// Before SQL58 there is no public_athlete_directory view: the fake answers PGRST205.
+// withoutView: the public_athlete_directory view is missing and the fake answers PGRST205.
 function fakeSupabase(tables: Record<string, Row[]>, { withoutView = false } = {}) {
   const asked: Record<string, string[]> = {}
   const from = (table: string) => {
@@ -32,7 +32,7 @@ function fakeSupabase(tables: Record<string, Row[]>, { withoutView = false } = {
 }
 
 const athletes = (count: number) => Array.from({ length: count }, (_, index) => ({ user_id: `user-${index + 1}`, display_name: `Athlete ${index + 1}` }))
-const base = { sport: 'football', season: '2026', today: new Date('2026-09-28T05:00:00Z') }
+const base = { sport: 'football', season: '2026' }
 
 describe('/athletes, one page at a time', () => {
   it('reaches every one of 101 athletes through the next pages, each exactly once', async () => {
@@ -86,21 +86,15 @@ describe('/athletes, one page at a time', () => {
     expect(result.athletes[0]).not.toHaveProperty('birth_date')
   })
 
-  it.each([
-    ['u12', 'birth_date>2014-09-28'],
-    ['u15', 'birth_date>2011-09-28'],
-    ['u18', 'birth_date>2008-09-28'],
-    ['adult', 'birth_date<=2006-09-28'],
-  ])('until SQL58, filters age group %s on the profiles table and still hands out only an age', async (ageGroup, filter) => {
+  // SQL58 is on Staging and Production (T50): a missing view is an error to report, never
+  // a reason to read birth dates from the profiles table.
+  it('reports a missing directory view and never reads the profiles table', async () => {
     const { client, asked } = fakeSupabase({
       public_athlete_directory: [],
-      // Born 29 Sep 2014: the day before the 12th birthday in Bangkok (28 Sep 2026).
-      athlete_profiles: [{ user_id: 'u1', display_name: 'A', birth_date: '2014-09-29' }, { user_id: 'u2', display_name: 'B', birth_date: '2014-09-28' }],
+      athlete_profiles: [{ user_id: 'u1', display_name: 'A', birth_date: '2014-09-29' }],
     }, { withoutView: true })
-    const result = await fetchPublicAthletesPage(client as never, { ...base, page: 1, ageGroup })
-    expect(asked.athlete_profiles).toEqual(expect.arrayContaining(['is_public=true', 'sport=football', filter]))
-    expect(result.athletes.map(athlete => athlete.age)).toEqual([11, 12])
-    for (const athlete of result.athletes) expect(athlete).not.toHaveProperty('birth_date')
+    await expect(fetchPublicAthletesPage(client as never, { ...base, page: 1, ageGroup: 'u12' })).rejects.toMatchObject({ code: 'PGRST205' })
+    expect(asked.athlete_profiles).toBeUndefined()
   })
 
   it('ignores an unknown age group and sends the other filters to the database', async () => {

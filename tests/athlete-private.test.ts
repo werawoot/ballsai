@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { execSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { PUBLIC_PROFILE_COLUMNS, ageOn, birthDateIssue, fetchAthleteAge, fetchMyAthletePrivate, saveAthleteProfile } from '@/lib/athlete-private'
@@ -28,10 +28,9 @@ function fakeClient(answers: { rpc?: Answer; select?: Answer; insert?: Answer; u
 }
 
 const missingFunction = { data: null, error: { code: 'PGRST202', message: 'Could not find the function' } }
-const now = new Date('2026-09-28T05:00:00Z')
 
-// T50: once SQL58 is applied nobody but the athlete reads a birth date; everyone else gets
-// an age from the database. Before SQL58 the same answers come from the old reads.
+// T50: since SQL58 nobody but the athlete reads a birth date; everyone else gets an age
+// from the database. A missing function is reported, never answered from the table.
 describe('athlete birth date and consent', () => {
   it('never lists the birth date or the consent time among the public profile columns', () => {
     const columns = PUBLIC_PROFILE_COLUMNS.split(',').map(column => column.trim())
@@ -50,36 +49,40 @@ describe('athlete birth date and consent', () => {
 
   it('asks the database for an athlete\'s age', async () => {
     const { client, calls } = fakeClient({ rpc: { data: 11, error: null } })
-    expect(await fetchAthleteAge(client, 'kid', now)).toBe(11)
+    expect(await fetchAthleteAge(client, 'kid')).toBe(11)
     expect(calls).toEqual(['rpc public_athlete_age {"p_user_id":"kid"}'])
   })
 
-  it('until SQL58, reads the birth date the old way and still hands back only an age', async () => {
+  // SQL58 is on Staging and Production (T50): the birth date is never read from the table,
+  // even when the function is missing.
+  it('shows no age, and never reads the birth date itself, when the age function is missing', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
     const { client, calls } = fakeClient({ rpc: missingFunction, select: { data: { birth_date: '2014-09-29' }, error: null } })
-    expect(await fetchAthleteAge(client, 'kid', now)).toBe(11)
-    expect(calls).toEqual(['rpc public_athlete_age {"p_user_id":"kid"}', 'select athlete_profiles birth_date', 'eq user_id=kid'])
+    expect(await fetchAthleteAge(client, 'kid')).toBeNull()
+    expect(calls).toEqual(['rpc public_athlete_age {"p_user_id":"kid"}'])
+    error.mockRestore()
   })
 
   it('shows no age rather than failing the page when the database errs', async () => {
     const { client } = fakeClient({ rpc: { data: null, error: { message: 'boom' } } })
-    expect(await fetchAthleteAge(client, 'kid', now)).toBeNull()
+    expect(await fetchAthleteAge(client, 'kid')).toBeNull()
   })
 
   it('reads the athlete\'s own birth date and consent through my_athlete_private', async () => {
     const { client, calls } = fakeClient({ rpc: { data: [{ birth_date: '2014-01-02', guardian_consent_at: '2026-01-01T00:00:00Z' }], error: null } })
-    expect(await fetchMyAthletePrivate(client, 'me')).toEqual({ birth_date: '2014-01-02', guardian_consent_at: '2026-01-01T00:00:00Z' })
+    expect(await fetchMyAthletePrivate(client)).toEqual({ birth_date: '2014-01-02', guardian_consent_at: '2026-01-01T00:00:00Z' })
     expect(calls).toEqual(['rpc my_athlete_private {}'])
   })
 
-  it('until SQL58, reads the athlete\'s own row', async () => {
+  it('reports a missing my_athlete_private instead of reading the row itself', async () => {
     const { client, calls } = fakeClient({ rpc: missingFunction, select: { data: { birth_date: '2014-01-02', guardian_consent_at: null }, error: null } })
-    expect(await fetchMyAthletePrivate(client, 'me')).toEqual({ birth_date: '2014-01-02', guardian_consent_at: null })
-    expect(calls.slice(1)).toEqual(['select athlete_profiles birth_date, guardian_consent_at', 'eq user_id=me'])
+    await expect(fetchMyAthletePrivate(client)).rejects.toMatchObject({ code: 'PGRST202' })
+    expect(calls).toEqual(['rpc my_athlete_private {}'])
   })
 
   it('answers nothing for an athlete with no profile yet', async () => {
     const { client } = fakeClient({ rpc: { data: [], error: null } })
-    expect(await fetchMyAthletePrivate(client, 'me')).toEqual({ birth_date: null, guardian_consent_at: null })
+    expect(await fetchMyAthletePrivate(client)).toEqual({ birth_date: null, guardian_consent_at: null })
   })
 })
 
@@ -121,6 +124,11 @@ describe('reads of athlete_profiles across the app', () => {
     const source = readFileSync(file, 'utf8').replace(/\s+/g, ' ')
     return [...source.matchAll(/from\(['"]athlete_profiles['"]\)\s*\.select\(([^)]*)\)/g)].map(match => ({ file, columns: match[1] }))
   })
+  // A read of another table can embed athlete_profiles: athlete_profiles(...) or athlete_profiles!fk(...).
+  const embedded = files.flatMap(file => {
+    const source = readFileSync(file, 'utf8').replace(/\s+/g, ' ')
+    return [...source.matchAll(/athlete_profiles(?:!\w+)?\(([^)]*)\)/g)].map(match => ({ file, columns: match[1] }))
+  })
 
   it('finds the reads it guards', () => {
     expect(reads.length).toBeGreaterThan(5)
@@ -130,9 +138,13 @@ describe('reads of athlete_profiles across the app', () => {
     expect(reads.filter(read => /\*/.test(read.columns))).toEqual([])
   })
 
-  it('reads the birth date or consent time only on the paths kept until SQL58 is applied', () => {
-    const private_ = reads.filter(read => /birth_date|guardian_consent_at|LEGACY_COLUMNS/.test(read.columns)).map(read => read.file).sort()
-    expect(private_).toEqual(['lib/athlete-private.ts', 'lib/athlete-private.ts', 'lib/public-athletes.ts', 'lib/public-identity-ranking.ts'])
+  it('never reads the birth date or consent time from the table (T50: only my_athlete_private does)', () => {
+    expect(reads.filter(read => /birth_date|guardian_consent_at/.test(read.columns)).map(read => read.file)).toEqual([])
+  })
+
+  it('never asks for them through a read of another table either', () => {
+    expect(embedded.length).toBeGreaterThan(0)
+    expect(embedded.filter(read => /birth_date|guardian_consent_at|\*/.test(read.columns)).map(read => read.file)).toEqual([])
   })
 })
 
