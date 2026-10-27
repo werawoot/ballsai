@@ -32,8 +32,9 @@ const DESTINATIONS: Record<Choice, string> = {
   guardian: '/profile',
   // Their own home first, where a coach can work at once (AGENTS.md product rule).
   coach: '/profile',
-  // "My page" shows an organizer their tournaments, or says plainly that the permission is not granted yet.
-  organizer: '/profile',
+  // The request form (ADR-013): ask, then draft tournaments while an admin checks. An account
+  // that is already an organizer is sent on to its dashboard from there.
+  organizer: '/organizer-request',
   venue_owner: '/venue',
   sponsor_brand: '/sponsor',
 }

@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Award, Bell, BellOff, CalendarClock, Check, CheckCheck, ChevronRight, ClipboardCheck, Dumbbell, HeartHandshake, MapPin, Megaphone, Trophy, Users } from 'lucide-react'
+import { Award, Bell, BellOff, CalendarClock, Check, CheckCheck, ChevronRight, ClipboardCheck, ClipboardList, Dumbbell, Flag, HeartHandshake, MapPin, Megaphone, Trophy, Users } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { bangkokToday } from '@/lib/public-tournaments'
 import { groupNotificationsByDay, notificationAge, notificationHref, notificationKind, type NotificationFilter, type NotificationKind } from '@/lib/notification-feed'
@@ -29,6 +29,8 @@ const ICONS: Record<NotificationKind, ReactNode> = {
   news: <Megaphone size={20} />,
   event: <CalendarClock size={20} />,
   training: <Dumbbell size={20} />,
+  organizer: <ClipboardList size={20} />,
+  tournament: <Flag size={20} />,
   other: <Bell size={20} />,
 }
 

@@ -9,10 +9,13 @@ describe('notification feed (/notifications)', () => {
   })
 
   it('draws every type the database allows, and a type it does not know yet as the plain bell', () => {
-    const types = ['match_result', 'badge_earned', 'team_status', 'team_invite', 'guardian_link', 'venue_booking', 'team_announcement', 'team_event_reminder', 'team_training_plan', 'hall_of_fame']
+    const types = ['match_result', 'badge_earned', 'team_status', 'team_invite', 'guardian_link', 'venue_booking', 'team_announcement', 'team_event_reminder', 'team_training_plan', 'hall_of_fame', 'organizer_request', 'organizer_decision', 'tournament_closed']
     for (const type of types) expect(notificationKind(type)).not.toBe('other')
     // sql/86: a Hall of Fame entry has its own picture, not the badge's.
     expect(notificationKind('hall_of_fame')).toBe('hall')
+    // sql/89: organizer access news and a tournament closed on revocation.
+    expect(notificationKind('organizer_decision')).toBe('organizer')
+    expect(notificationKind('tournament_closed')).toBe('tournament')
     expect(notificationKind('something_new')).toBe('other')
     expect(notificationKind(null)).toBe('other')
   })

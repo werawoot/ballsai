@@ -46,7 +46,7 @@ export default async function EditTournamentPage(props: { params: Promise<{ id: 
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'organizer' && profile?.role !== 'admin') redirect('/')
+  const isOrganizer = profile?.role === 'organizer' || profile?.role === 'admin'
 
   const { data: tournament } = await supabase
     .from('tournaments')
@@ -60,6 +60,8 @@ export default async function EditTournamentPage(props: { params: Promise<{ id: 
   if (profile?.role !== 'admin' && typedTournament.organizer_id !== user.id) {
     redirect('/dashboard')
   }
+  // An applicant edits their own draft while the request waits (ADR-013).
+  if (!isOrganizer && typedTournament.status !== 'draft') redirect('/organizer-request')
 
   return (
     <main style={{ background: '#f8f8f8', minHeight: '100vh', overflowX: 'hidden', paddingBottom: 40 }}>
@@ -80,7 +82,7 @@ export default async function EditTournamentPage(props: { params: Promise<{ id: 
         <path d="M0,0 C100,28 275,0 375,20 L375,0 Z" fill="#CC0001" />
       </svg>
 
-      <EditTournamentForm tournament={typedTournament} />
+      <EditTournamentForm tournament={typedTournament} canOpen={isOrganizer} />
     </main>
   )
 }

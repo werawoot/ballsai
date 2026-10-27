@@ -1,0 +1,26 @@
+/* /organizer-request on the light glass design (ADR-014). */
+.or-page { min-height: 100vh; }
+.or-wrap { margin: 0 auto; max-width: 600px; padding: 24px 16px 96px; }
+.or-eyebrow { color: var(--gl-green-ink); font-size: 13px; font-weight: 700; margin: 0; }
+.or-title { color: var(--gl-navy); font-size: clamp(26px, 7vw, 34px); font-weight: 800; line-height: 1.2; margin: 6px 0 8px; overflow-wrap: anywhere; }
+.or-intro { color: var(--gl-text-2); font-size: 15px; line-height: 1.65; margin: 0 0 18px; }
+.or-card { border-radius: var(--gl-radius); margin-bottom: 14px; padding: 18px; }
+.or-card h2 { color: var(--gl-navy); font-size: 18px; font-weight: 800; margin: 0 0 6px; }
+.or-card p { color: var(--gl-text); font-size: 15px; line-height: 1.6; margin: 0 0 8px; overflow-wrap: anywhere; }
+.or-badge { border-radius: 999px; display: inline-block; font-size: 12px; font-weight: 800; margin-bottom: 8px; padding: 3px 10px; }
+.or-badge.is-wait { background: #FEF3C7; color: #92400E; }
+.or-badge.is-no { background: #FEE2E2; color: #991B1B; }
+.or-cta { margin-top: 8px; min-height: 44px; width: 100%; }
+.or-note { color: var(--gl-text-2) !important; font-size: 13px !important; }
+.or-drafts { display: grid; gap: 8px; list-style: none; margin: 10px 0; padding: 0; }
+.or-drafts a { align-items: center; background: var(--gl-white); border: 1px solid var(--gl-line); border-radius: 12px; color: var(--gl-navy); display: flex; gap: 10px; justify-content: space-between; min-height: 44px; padding: 10px 14px; text-decoration: none; }
+.or-drafts span { color: var(--gl-text-2); font-size: 13px; white-space: nowrap; }
+.or-form label, .or-form legend { color: var(--gl-navy); display: block; font-size: 14px; font-weight: 700; margin: 14px 0 6px; }
+.or-form fieldset { border: 0; margin: 0; padding: 0; }
+.or-form input:not([type="radio"]), .or-form select, .or-form textarea { background: var(--gl-white); border: 1.5px solid var(--gl-line); border-radius: 12px; color: var(--gl-text); font: inherit; font-size: 16px; min-height: 44px; padding: 10px 12px; width: 100%; }
+.or-form textarea { resize: vertical; }
+.or-form [aria-invalid="true"] { border-color: var(--gl-error); }
+.or-types { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.or-types label { align-items: center; background: var(--gl-white); border: 1.5px solid var(--gl-line); border-radius: 12px; cursor: pointer; display: flex; font-weight: 600; gap: 8px; margin: 0; min-height: 44px; padding: 8px 12px; }
+.or-types label.is-on { background: var(--gl-green-surface); border-color: var(--gl-green-ink); }
+.or-field-error { color: var(--gl-error) !important; font-size: 13px !important; font-weight: 700; margin: 6px 0 0 !important; }

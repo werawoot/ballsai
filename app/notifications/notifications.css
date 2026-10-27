@@ -41,6 +41,7 @@
 .nt-icon.is-badge, .nt-icon.is-hall { background: #fdf3dc; color: #b7791f; }
 .nt-icon.is-team, .nt-icon.is-family { background: #e9f0fc; color: var(--ui-blue); }
 .nt-icon.is-news, .nt-icon.is-event, .nt-icon.is-training { background: var(--ui-red-soft); color: var(--ui-red); }
+.nt-icon.is-organizer, .nt-icon.is-tournament { background: #e8f5ee; color: var(--ui-green); }
 .nt-icon.is-venue { background: #ece9f9; color: #5b45c7; }
 .nt-text { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
 .nt-meta { align-items: center; color: var(--ui-mute); display: flex; flex-wrap: wrap; font-size: 12px; gap: 4px 8px; }

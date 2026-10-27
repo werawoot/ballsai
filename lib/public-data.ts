@@ -150,6 +150,7 @@ export const getSitemapTournamentIds = unstable_cache(
       const { data, error } = await publicSupabase
         .from('tournaments')
         .select('id')
+        .neq('status', 'draft')
         .order('start_date', { ascending: false })
         .limit(SITEMAP_TOURNAMENT_LIMIT)
       if (error) throw error

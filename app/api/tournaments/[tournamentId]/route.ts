@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
 import { apiError } from '@/lib/api-error'
 import { promptpayIssue } from '@/lib/promptpay'
+import { organizerRpcError } from '@/lib/organizer-access'
 
 type UpdateTournamentBody = {
   name?: string
@@ -19,6 +20,7 @@ type UpdateTournamentBody = {
 
 type TournamentOwner = {
   organizer_id: string
+  status: string
   fee: number | null
   promptpay: string | null
 }
@@ -40,13 +42,11 @@ export async function PATCH(request: Request, props: { params: Promise<{ tournam
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'organizer' && profile?.role !== 'admin') {
-    return NextResponse.json({ error: 'ไม่มีสิทธิ์แก้ไขรายการแข่งขัน' }, { status: 403 })
-  }
+  const isOrganizer = profile?.role === 'organizer' || profile?.role === 'admin'
 
   const { data: tournament, error: tournamentError } = await supabase
     .from('tournaments')
-    .select('organizer_id, fee, promptpay')
+    .select('organizer_id, fee, promptpay, status')
     .eq('id', params.tournamentId)
     .single()
 
@@ -61,10 +61,15 @@ export async function PATCH(request: Request, props: { params: Promise<{ tournam
     return NextResponse.json({ error: 'แก้ไขได้เฉพาะรายการของคุณ' }, { status: 403 })
   }
 
+  // An applicant may edit their own draft (ADR-013); opening it needs the organizer role,
+  // which the database checks again (sql/89).
+  if (!isOrganizer && typedTournament.status !== 'draft') return apiError('organizerRequired', 403)
+
   const body = (await request.json().catch(() => null)) as UpdateTournamentBody | null
   if (!body) {
     return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 })
   }
+  if (!isOrganizer && body.status !== undefined) return apiError('organizerRequired', 403)
 
   const update: Record<string, string | number> = {}
 
@@ -140,6 +145,8 @@ export async function PATCH(request: Request, props: { params: Promise<{ tournam
       metadata: { tournamentId: params.tournamentId, fields: Object.keys(update) },
       error,
     })
+    const known = organizerRpcError(error)
+    if (known) return apiError(known.code, known.status)
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 

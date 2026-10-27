@@ -3,6 +3,7 @@ import { revalidateTag } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { apiError } from '@/lib/api-error'
 import { promptpayIssue } from '@/lib/promptpay'
+import { createStatusFor, organizerRpcError } from '@/lib/organizer-access'
 
 type CreateTournamentBody = {
   name?: string
@@ -13,6 +14,7 @@ type CreateTournamentBody = {
   fee?: number
   promptpay?: string
   maxTeams?: number
+  draft?: boolean
 }
 
 export async function POST(request: Request) {
@@ -31,11 +33,10 @@ export async function POST(request: Request) {
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'organizer' && profile?.role !== 'admin') {
-    return NextResponse.json({ error: 'ไม่มีสิทธิ์สร้างรายการแข่งขัน' }, { status: 403 })
-  }
-
+  // An organizer's tournament opens unless kept as a draft. Anyone else's is a draft, which
+  // the database allows only with a pending organizer request, three at most (sql/89).
   const body = (await request.json()) as CreateTournamentBody
+  const status = createStatusFor(profile?.role, body.draft === true)
   const name = body.name?.trim()
   const location = body.location?.trim()
   const startDate = body.startDate?.trim()
@@ -65,14 +66,18 @@ export async function POST(request: Request) {
     promptpay,
     max_teams: Math.floor(maxTeams),
     organizer_id: user.id,
-    status: 'open',
+    status,
   })
 
   if (error) {
+    const known = organizerRpcError(error)
+    if (known) return apiError(known.code, known.status)
+    // Before sql/89 the insert policy refuses a non-organizer and the status check knows no 'draft'.
+    if (status === 'draft' && (error.code === '23514' || error.code === '42501')) return apiError('featureNotReady', 503)
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
-  revalidateTag('public-tournaments')
+  if (status === 'open') revalidateTag('public-tournaments')
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, status })
 }
