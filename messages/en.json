@@ -2291,7 +2291,11 @@
       "eyebrow": "My private list",
       "title": "Shortlist",
       "privacy": "Only your account sees this; athletes do not know they are on your shortlist",
-      "powerNote": "Power Rating comes from confirmed match results, not from anything athletes enter themselves"
+      "powerNote": "Power Rating comes from confirmed match results, not from anything athletes enter themselves",
+      "search": "Search",
+      "notReady": "Scouting is not switched on for this server yet. Please try again later.",
+      "order": "Highest Power Rating first; athletes with no rating yet come last",
+      "empty": "No athletes match these filters"
     },
     "matchPlanBoard": {
       "teamLabel": "Team / tournament",
