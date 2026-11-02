@@ -34,7 +34,9 @@
       "kids": "My children",
       "plan": "Match plan",
       "manage": "Manage",
-      "results": "Results"
+      "results": "Results",
+      "myHome": "Home",
+      "me": "Profile"
     }
   },
   "tournaments": {
@@ -1303,31 +1305,6 @@
       "copied": "Copied. Send it to your coach.",
       "failed": "Could not copy. Try again."
     },
-    "missions": {
-      "title": "Today's missions",
-      "progress": "{done}/{total} done",
-      "note": "Missions give no XP · XP comes only from results an organizer confirmed",
-      "done": "Done",
-      "todo": "Not done yet",
-      "items": {
-        "train": "Today's planned session",
-        "trainMeta": "{minutes} min",
-        "rest": "Rest day today",
-        "restMeta": "Rest is part of training",
-        "pickProgram": "Pick a training programme",
-        "pickProgramMeta": "We plan the sessions on the days you choose",
-        "answerInvites": "Answer team invitations",
-        "answerInvitesMeta": "{count} waiting for your answer",
-        "profileStep": "Next profile step",
-        "openTournament": "See tournaments open for entry",
-        "openTournamentMeta": "Real tournaments organizers have open now"
-      }
-    },
-    "weekGoal": {
-      "title": "This week",
-      "value": "{done}/{planned} sessions",
-      "note": "Counted from what you log yourself"
-    },
     "lastMatch": "{change} from the last match",
     "skills": {
       "title": "Skills assessed by a coach",
@@ -1341,6 +1318,31 @@
       "viewAll": "See all",
       "free": "Free",
       "perTeam": "{fee}/team"
+    },
+    "home": {
+      "hello": "Hello",
+      "notifications": "Notifications",
+      "unread": "{count} unread",
+      "profile": "My profile"
+    },
+    "today": {
+      "title": "Today's programme",
+      "rest": "Rest day today",
+      "done": "Trained today",
+      "start": "Start training",
+      "meta": "{minutes} min · week {week} of {weeks}"
+    },
+    "week": {
+      "title": "This week",
+      "open": "See programme",
+      "dayDone": "trained",
+      "dayPlanned": "training day",
+      "dayRest": "rest day",
+      "minutes": "Minutes",
+      "streak": "Weeks in a row",
+      "total": "Whole programme",
+      "note": "Counted from what you log yourself; minutes are the programme's planned time; no points",
+      "sessionsUnit": "sessions"
     }
   },
   "profileEdit": {
@@ -3016,5 +3018,29 @@
     "savedText": "Only you and admins can see it. You can open registration once you are approved as an organizer.",
     "badge": "Draft (not open)",
     "editNote": "Draft: only you and admins can see it. You can open registration once you are approved as an organizer."
+  },
+  "mePage": {
+    "eyebrow": "Profile",
+    "stats": {
+      "title": "Season {season}",
+      "note": "From results an organizer confirmed only",
+      "matches": "Matches",
+      "goals": "Goals",
+      "assists": "Assists",
+      "mvps": "MVP",
+      "none": "No confirmed result this season yet. The numbers start after the first match an organizer confirms."
+    },
+    "menu": {
+      "title": "Menu",
+      "unread": "{count} unread",
+      "notifications": {
+        "label": "Notifications",
+        "hint": "Team news, results and invitations"
+      },
+      "training": {
+        "label": "Training schedule",
+        "hint": "My programme and training days"
+      }
+    }
   }
 }

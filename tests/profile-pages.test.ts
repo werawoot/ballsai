@@ -24,7 +24,7 @@ function fakeClient() {
     let head = false
     let missingColumn = false
     const builder: Record<string, unknown> = {}
-    for (const name of ['eq', 'order', 'limit', 'in', 'gte']) builder[name] = () => builder
+    for (const name of ['eq', 'order', 'limit', 'in', 'gte', 'is']) builder[name] = () => builder
     builder.select = (columns: string, options?: { head?: boolean }) => {
       head = Boolean(options?.head)
       missingColumn = db.noKindColumn && table === 'teams' && /(^|[ ,])kind([ ,]|$)/.test(columns)
@@ -74,6 +74,7 @@ vi.mock('next-intl/server', () => ({
 
 import ProfilePage from '@/app/profile/page'
 import EditProfilePage from '@/app/profile/edit/page'
+import MePage from '@/app/me/page'
 
 const render = async (page: () => Promise<ReactElement>, locale: Locale = 'th') => {
   db.locale = locale
@@ -102,19 +103,13 @@ describe('/profile', () => {
     const html = await render(ProfilePage as never)
     const page = text(html)
     expect(page).toContain('Somchai Jaidee')
-    expect(page).toContain('Chiang Mai FC U15 · Chiang Mai')
-    expect(page).toContain('14 ปี')
-    expect(page).toContain('ฉันกรอกเอง')
-    // The audience chip follows is_public: this athlete is private, so it never says everyone can see.
-    expect(page).toContain('เห็นแค่ฉัน')
-    expect(page).not.toContain('ทุกคนเห็น')
+    expect(page).toContain('14 ปี · Chiang Mai FC U15 · Chiang Mai')
     expect(page).toContain('ก่อนเปิดโปรไฟล์สาธารณะ')
     expect(page).toContain('ผู้ปกครองยินยอม')
     expect(page).toContain('มีคำขอจากผู้ปกครองรอคุณตอบรับ 1 รายการ')
     expect(html).toContain('href="/guardian"')
     // Publishing is locked until the guardian step is done.
     expect(html).toMatch(/pf-step is-blocked[\s\S]*?เปิดโปรไฟล์สาธารณะ/)
-    expect(html).toContain('href="/profile/edit"')
     // AGENTS rule 8: no rank row means a starter card that says so, never a made-up rating.
     expect(page).toContain('การ์ดเริ่มต้น')
     expect(page).toContain('ยังไม่มีคะแนนฝีมือ')
@@ -122,8 +117,9 @@ describe('/profile', () => {
     // T50: the page shows an age, never the birth date itself.
     expect(html).not.toContain('2012-03-04')
     expect(html).not.toContain('04/03/2012')
-    expect(page).toContain('athlete@example.com')
-    expect(html).toContain('action="/auth/signout"')
+    // The account and sign-out live on /me, the profile tab (owner, 2 Nov 2026).
+    expect(page).not.toContain('athlete@example.com')
+    expect(html).toContain('href="/me"')
   })
 
   it('shows an athlete with no team how to get into one, after their own things, without a second primary button', async () => {
@@ -166,16 +162,9 @@ describe('/profile', () => {
     expect(page).toContain('1,520')
     expect(page).toContain('คะแนนฝีมือ')
     expect(page).toContain('คำนวณจากผลแข่งที่ผู้จัดบันทึกและยืนยันแล้ว')
-    // The audience chip follows is_public: this athlete is public.
-    expect(page).toContain('ทุกคนเห็น')
-    expect(page).not.toContain('เห็นแค่ฉัน')
-    expect(html).toContain('href="/players/rank-9"')
-    expect(page).toContain('โค้ชยืนยันแล้ว')
     expect(page).toContain('โปรไฟล์ของคุณพร้อมแล้ว')
     expect(page).toContain('Lions')
     expect(page).toContain('ยืนยันลงแข่งแล้ว')
-    // An organizer reaches their dashboard from here.
-    expect(html).toContain('href="/dashboard"')
   })
 
   it('offers to create an athlete profile to an athlete who has none yet', async () => {
@@ -403,9 +392,9 @@ describe('/profile for an athlete: training first, then the card (owner, report 
     expect(text(html)).toContain('เลือกโปรแกรมซ้อม')
     expect(text(html)).toMatch(/เหมาะกับอายุ \d+ ปี: /)
     expect(anchor(html, '/training')).toContain('ui-btn-primary')
-    // Before the card and before the checklist.
+    // After the card (DOENSAI dashboard design, owner 2 Nov 2026), before the checklist.
     expect(html.indexOf('tr-today')).toBeLessThan(html.indexOf('pf-next-card'))
-    expect(html.indexOf('tr-today')).toBeLessThan(html.indexOf('id="pf-card"'))
+    expect(html.indexOf('tr-today')).toBeGreaterThan(html.indexOf('id="pf-card"'))
   })
 
   it('has one primary button: the checklist step steps back while training holds it', async () => {
@@ -420,11 +409,12 @@ describe('/profile for an athlete: training first, then the card (owner, report 
     expect(html).toMatch(/pf-btn pf-btn-block pf-btn-primary/)
   })
 
-  it('keeps editing as a quiet button in the header, not a second red one', async () => {
+  it('keeps editing off the home: it is a quiet button on /me', async () => {
     athlete([])
-    const html = await render(ProfilePage as never)
-    expect(anchor(html, '/profile/edit')).toContain('pf-btn-ghost')
-    expect(anchor(html, '/profile/edit')).not.toContain('pf-btn-primary')
+    expect(await render(ProfilePage as never)).not.toContain('pf-btn-ghost')
+    const me = await render(MePage as never)
+    expect(anchor(me, '/profile/edit')).toContain('pf-btn-ghost')
+    expect(anchor(me, '/profile/edit')).not.toContain('pf-btn-primary')
   })
 
   it('keeps the card as a secondary shortcut', async () => {
@@ -509,24 +499,29 @@ describe('/profile athlete home in the DOENSAI dashboard design (owner, 2 Nov 20
   }
   const coachRow = { speed: 70, stamina: 64, strength: null, technique: 81, vision: 58, source_level: 'coach_verified', created_at: '2026-10-20T03:00:00Z' }
 
-  it('opens on today\'s missions, each pointing at the card that does it, with no XP reward', async () => {
+  it('opens on the greeting with the bell and the way to /me, then the card, today\'s programme and the week', async () => {
     athleteHome()
+    db.counts = { notifications: 3 }
     const html = await render(ProfilePage as never)
     const page = text(html)
-    expect(page).toContain('ภารกิจวันนี้')
-    expect(page).toContain('ซ้อมตามตารางวันนี้')
-    expect(html).toContain('href="#tr-today-title"')
-    expect(page).toContain('ภารกิจไม่มีแต้ม ·')
+    expect(page).toContain('สวัสดี Niran')
+    expect(html).toContain('href="/notifications"')
+    expect(html).toMatch(/aria-label="แจ้งเตือน · ยังไม่อ่าน 3 รายการ"/)
+    expect(html).toContain('href="/me"')
+    expect(page).toContain('โปรแกรมวันนี้')
+    expect(html.indexOf('id="pf-card"')).toBeLessThan(html.indexOf('tr-today'))
+    expect(html.indexOf('tr-today')).toBeLessThan(html.indexOf('id="pf-week"'))
     expect(page).not.toMatch(/\+\d+ ?XP/)
-    expect(html.indexOf('pf-missions')).toBeLessThan(html.indexOf('class="tr-today"'))
     expect(primaries(html)).toBe(1)
   })
 
-  it('shows the week\'s goal as self-reported', async () => {
+  it('shows the week from the athlete\'s own check-ins, minutes from the programme, no points', async () => {
     athleteHome({ training_checkins: [{ enrollment_id: 'e1', session_date: bangkokDay(0) }] })
     const page = text(await render(ProfilePage as never))
-    expect(page).toContain('เป้าสัปดาห์นี้')
+    expect(page).toContain('ความก้าวหน้าประจำสัปดาห์')
+    expect(page).toMatch(/1\/\d+ ครั้ง/)
     expect(page).toContain('นับจากที่คุณบันทึกเอง')
+    expect(page).toContain('ไม่มีแต้ม')
   })
 
   it('shows the change of the last verified match, and nothing once a void reset it', async () => {
@@ -561,7 +556,6 @@ describe('/profile athlete home in the DOENSAI dashboard design (owner, 2 Nov 20
     expect(html).toContain('href="/tournaments/t-1"')
     expect(text(html)).toContain('฿500/ทีม')
     expect(html).not.toContain('Old Cup')
-    expect(html).toContain('href="#pf-open"')
   })
 
   it('leaves the open list out when nothing is open', async () => {
@@ -574,9 +568,76 @@ describe('/profile athlete home in the DOENSAI dashboard design (owner, 2 Nov 20
     open.tournaments = [{ id: 't-1', name: 'Lopburi Youth Cup', location: 'Lopburi', start_date: bangkokDay(10), end_date: null, fee: 0, status: 'open' }]
     const html = await render(ProfilePage as never, 'en')
     const beforeDeletion = text(withoutSwitch(html.slice(0, html.indexOf('ลบข้อมูลของฉัน'))))
-    expect(beforeDeletion).toContain("Today's missions")
+    expect(beforeDeletion).toContain("Today's programme")
     expect(beforeDeletion).toContain('−8 from the last match')
     expect(beforeDeletion).toContain('Coach assessed ·')
     expect(beforeDeletion).not.toMatch(/[ก-ฺเ-๛]/)
+  })
+})
+
+describe('/me, the athlete\'s profile tab (owner, 2 Nov 2026)', () => {
+  const publicAthlete = (tables: Record<string, unknown> = {}) => {
+    db.tables = {
+      profiles: { full_name: 'Niran', role: 'organizer', onboarding_persona: 'athlete' },
+      athlete_profiles: { ...minor, display_name: 'Niran', is_public: true, verification_level: 'coach_verified' },
+      player_ranks: { id: 'rank-9', player_name: 'Niran', position: 'FW', ovr: 71, pts: 1520 },
+      ...tables,
+    }
+    db.counts = {}
+    db.private = { birth_date: '2012-03-04', guardian_consent_at: '2026-01-01T00:00:00Z' }
+  }
+
+  it('shows who the athlete is, who can see them, and how to edit, as quiet buttons', async () => {
+    publicAthlete()
+    const html = await render(MePage as never)
+    const page = text(html)
+    expect(page).toContain('Niran')
+    expect(page).toContain('14 ปี')
+    expect(page).toContain('โค้ชยืนยันแล้ว')
+    expect(page).toContain('ทุกคนเห็น')
+    expect(html).toContain('href="/players/rank-9"')
+    expect(primaries(html)).toBe(0)
+  })
+
+  it('says private when the profile is private, and offers no public page', async () => {
+    publicAthlete({ athlete_profiles: { ...minor, display_name: 'Niran', is_public: false, verification_level: 'self' } })
+    const html = await render(MePage as never)
+    expect(text(html)).toContain('เห็นแค่ฉัน')
+    expect(text(html)).toContain('ฉันกรอกเอง')
+    expect(html).not.toContain('href="/players/')
+  })
+
+  it('shows this season\'s confirmed numbers only when there is a match', async () => {
+    publicAthlete({ player_ratings: { matches_played: 12, goals: 8, assists: 5, mvps: 3, last_rating_change: 4 } })
+    const page = text(await render(MePage as never))
+    expect(page).toMatch(/แข่ง 12 ประตู 8 แอสซิสต์ 5 ยอดเยี่ยม 3/)
+    expect(page).toContain('จากผลแข่งที่ผู้จัดยืนยันเท่านั้น')
+    publicAthlete({ player_ratings: { matches_played: 0, goals: 0, assists: 0, mvps: 0, last_rating_change: 0 } })
+    expect(text(await render(MePage as never))).toContain('ยังไม่มีผลแข่งที่ยืนยันในฤดูกาลนี้')
+  })
+
+  it('keeps every place that left the home one tap away, with the unread count', async () => {
+    publicAthlete()
+    db.counts = { notifications: 2 }
+    const html = await render(MePage as never)
+    for (const href of ['/team-members', '/card', '/career', '/training', '/notifications', '/venues', '/sponsorships', '/dashboard']) expect(html, href).toContain(`href="${href}"`)
+    expect(html).not.toContain('href="/admin"')
+    expect(html).toMatch(/aria-label="ยังไม่อ่าน 2">2</)
+  })
+
+  it('holds the account, sign-out and PDPA data deletion', async () => {
+    publicAthlete()
+    const html = await render(MePage as never)
+    expect(text(html)).toContain('athlete@example.com')
+    expect(html).toContain('action="/auth/signout"')
+    expect(text(html)).toContain('ลบข้อมูลของฉัน')
+  })
+
+  it('speaks English without leaking Thai, apart from the data-deletion notice', async () => {
+    publicAthlete({ player_ratings: { matches_played: 2, goals: 1, assists: 0, mvps: 0, last_rating_change: 4 } })
+    const html = await render(MePage as never, 'en')
+    const before = text(withoutSwitch(html.slice(0, html.indexOf('ลบข้อมูลของฉัน'))))
+    expect(before).toContain('Season')
+    expect(before).not.toMatch(/[ก-ฺเ-๛]/)
   })
 })

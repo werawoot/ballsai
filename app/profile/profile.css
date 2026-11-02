@@ -355,9 +355,11 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .pf-team-ask { border-color: rgba(11,18,32,.18) !important; }
 
 /* The training card stays a navy card; its button turns green. */
-.pf.gl .tr-today { background: linear-gradient(150deg, #0B1220, #12325A); }
+/* "โปรแกรมวันนี้" is a light card like the rest of the home (DOENSAI dashboard design, 2 Nov 2026). */
+.pf.gl .tr-today { background: #fff; color: var(--gl-text); }
 .pf.gl .tr-today .ui-btn-primary { background: var(--gl-green); box-shadow: 0 8px 22px rgba(22,224,110,.35); color: var(--gl-navy); }
-.pf.gl .tr-today::after { background: radial-gradient(circle, rgba(22,224,110,.35), transparent 65%); }
+.pf.gl .tr-today::after { display: none; }
+.pf.gl .tr-today p { color: var(--pf-muted); }
 .pf.gl .ui-chip.is-red { background: var(--gl-green-surface); color: var(--gl-green-ink); }
 .pf.gl .rh-tool-icon { background: var(--gl-green-surface); color: var(--gl-green-ink); }
 
@@ -390,43 +392,73 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .pf-savebar.is-dirty span::before { background: var(--gl-green); }
 @media (min-width: 900px) { .pf.gl .pf-edit-head { padding-left: 24px; padding-right: 24px; } }
 
-/* The athlete home of the DOENSAI dashboard design (owner, 2 Nov 2026): today's missions, the
-   week's goal, the last match's change and the coach-assessed skills. Light glass (ADR-014). */
-.pf.gl .pf-mission-list { display: grid; gap: 8px; list-style: none; margin: 0; padding: 0; }
-.pf.gl .pf-mission-list a { align-items: center; background: var(--gl-canvas, #F3F6F9); border: 1px solid var(--pf-line); border-radius: 14px; color: inherit; display: flex; gap: 12px; min-height: 52px; padding: 10px 12px; text-decoration: none; }
-.pf.gl .pf-mission-list a:hover { border-color: var(--gl-green-ink, #0F7A3F); }
-.pf.gl .pf-mission-check { align-items: center; border: 2px solid #94a3b8; border-radius: 8px; color: var(--gl-navy, #0B1220); display: inline-flex; flex: none; height: 24px; justify-content: center; width: 24px; }
-.pf.gl .pf-mission-list li.is-done .pf-mission-check { background: var(--gl-green, #16E06E); border-color: var(--gl-green, #16E06E); }
-.pf.gl .pf-mission-list li.is-done b { color: var(--pf-muted); }
-.pf.gl .pf-mission-body { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
-.pf.gl .pf-mission-body b { font-size: 15px; font-weight: 700; }
-.pf.gl .pf-mission-body small { color: var(--pf-muted); font-size: 12.5px; }
-.pf.gl .pf-mission-list svg { color: var(--pf-muted); flex: none; }
+/* The athlete home and /me of the DOENSAI dashboard design (owner, 2 Nov 2026), light glass
+   (ADR-014): the greeting with the bell, today's programme, the week, the last match's change,
+   the coach-assessed skills and the profile menu. */
+.pf.gl .pf-home-top { align-items: flex-start; display: flex; gap: 12px; justify-content: space-between; }
+.pf.gl .pf-hello { color: rgba(255, 255, 255, .78); display: block; font-size: 14px; }
+.pf.gl .pf-home-hero .pf-name { font-size: 28px; margin-top: 2px; }
+.pf.gl .pf-home-icons { align-items: center; display: flex; flex: none; gap: 10px; }
+.pf.gl .pf-icon-btn { align-items: center; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .22); border-radius: 50%; color: #fff; display: inline-flex; height: 44px; justify-content: center; position: relative; width: 44px; }
+.pf.gl .pf-icon-badge { background: var(--gl-error); border-radius: 999px; color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; min-width: 18px; padding: 0 5px; position: absolute; right: -4px; text-align: center; top: -4px; }
+.pf.gl .pf-home-avatar { align-items: center; background: #223350 center top/cover no-repeat; border: 2px solid var(--gl-green); border-radius: 50%; color: #fff; display: inline-flex; font-weight: 700; height: 48px; justify-content: center; text-decoration: none; width: 48px; }
+.pf.gl .pf-icon-btn:focus-visible, .pf.gl .pf-home-avatar:focus-visible { outline-color: var(--gl-green); }
 
-.pf.gl .pf-goal { align-items: center; display: flex; gap: 12px; margin: 12px 0; }
-.pf.gl .pf-goal > div { display: grid; gap: 1px; }
-.pf.gl .pf-goal b { font-size: 16px; }
-.pf.gl .pf-goal small { color: var(--pf-muted, #5b6472); font-size: 12px; }
+.pf.gl .tr-today-head { align-items: center; display: flex; gap: 12px; justify-content: space-between; margin-bottom: 14px; }
+.pf.gl .tr-today-head .pf-card-title { font-size: 18px; }
+.pf.gl .tr-today .tr-start { border-radius: 999px; flex: none; font-size: 15px; min-height: 44px; padding: 0 18px; width: auto; }
+.pf.gl .tr-program-row { align-items: center; background: var(--gl-canvas); border: 1px solid var(--pf-line); border-radius: 14px; color: inherit; display: flex; gap: 12px; padding: 10px; text-decoration: none; }
+.pf.gl .tr-program-row img { border-radius: 10px; flex: none; height: 56px; object-fit: cover; width: 74px; }
+.pf.gl .tr-program-row > svg { color: var(--pf-muted); flex: none; }
+.pf.gl .tr-program-text { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
+.pf.gl .tr-program-text b { font-size: 15px; }
+.pf.gl .tr-program-text small { color: var(--pf-muted); font-size: 12.5px; }
+.pf.gl .tr-today-empty h2 { margin-bottom: 4px; }
+
+.pf.gl .pf-week-days { display: grid; gap: 6px; grid-template-columns: repeat(7, minmax(0, 1fr)); list-style: none; margin: 0 0 16px; padding: 0; }
+.pf.gl .pf-week-days li { align-items: center; background: var(--gl-canvas); border: 1.5px solid transparent; border-radius: 10px; color: var(--pf-muted); display: flex; font-size: 12.5px; font-weight: 700; height: 34px; justify-content: center; }
+.pf.gl .pf-week-days li.is-plan { border-color: #94a3b8; border-style: dashed; color: var(--gl-text); }
+.pf.gl .pf-week-days li.is-done { background: var(--gl-green); border-color: var(--gl-green); border-style: solid; color: var(--gl-navy); }
+.pf.gl .pf-week-days li.is-today { border-color: var(--gl-navy); border-style: solid; }
+.pf.gl .pf-week-stats { align-items: center; display: flex; gap: 16px; }
+.pf.gl .pf-week-ring { display: grid; flex: none; height: 64px; place-items: center; position: relative; width: 64px; }
+.pf.gl .pf-week-ring svg { inset: 0; position: absolute; }
+.pf.gl .pf-week-ring-text { display: grid; justify-items: center; line-height: 1.1; position: relative; }
+.pf.gl .pf-week-ring b { font-size: 16px; }
+.pf.gl .pf-week-ring small { color: var(--pf-muted); font-size: 11px; }
+.pf.gl .pf-week-stats dl { display: grid; flex: 1 1 auto; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+.pf.gl .pf-week-stats dt { color: var(--pf-muted); font-size: 12px; }
+.pf.gl .pf-week-stats dd { font-size: 18px; font-weight: 700; margin: 2px 0 0; }
 .pf.gl .pf-goal-track { fill: none; stroke: #e2e8f0; stroke-width: 6; }
-.pf.gl .pf-goal-fill { fill: none; stroke: var(--gl-green, #16E06E); stroke-linecap: round; stroke-width: 6; }
+.pf.gl .pf-goal-fill { fill: none; stroke: var(--gl-green); stroke-linecap: round; stroke-width: 6; }
 
 .pf.gl .pf-change { font-size: 13px; font-weight: 700; margin: 4px 0 0; }
-.pf.gl .pf-change.is-up { color: var(--gl-green-ink, #0F7A3F); }
-.pf.gl .pf-change.is-down { color: var(--gl-error, #DC2626); }
+.pf.gl .pf-change.is-up { color: var(--gl-green-ink); }
+.pf.gl .pf-change.is-down { color: var(--gl-error); }
 
-.pf.gl .pf-skills { border-top: 1px solid var(--pf-line); display: grid; justify-items: center; margin-top: 18px; padding-top: 16px; }
+.pf.gl .pf-skills { display: grid; justify-items: center; }
 .pf.gl .pf-skills.is-empty { justify-items: start; }
-.pf.gl .pf-skills-title { font-size: 15px; justify-self: start; }
+.pf.gl .pf-skills .pf-card-title { justify-self: start; }
 .pf.gl .pf-skills svg { margin-top: 8px; max-width: 100%; overflow: visible; }
 .pf.gl .pf-radar-ring { fill: none; stroke: #e2e8f0; stroke-width: 1; }
 .pf.gl .pf-radar-axis { stroke: #e2e8f0; stroke-width: 1; }
-.pf.gl .pf-radar-shape { fill: rgba(22, 224, 110, .28); stroke: var(--gl-green-ink, #0F7A3F); stroke-linejoin: round; stroke-width: 2; }
-.pf.gl .pf-radar-label { fill: var(--pf-muted, #5b6472); font-size: 10px; }
-.pf.gl .pf-radar-value { fill: var(--gl-navy, #0B1220); font-size: 12px; font-weight: 700; }
+.pf.gl .pf-radar-shape { fill: rgba(22, 224, 110, .28); stroke: var(--gl-green-ink); stroke-linejoin: round; stroke-width: 2; }
+.pf.gl .pf-radar-label { fill: var(--pf-muted); font-size: 10px; }
+.pf.gl .pf-radar-value { fill: var(--gl-navy); font-size: 12px; font-weight: 700; }
 
 .pf.gl .pf-open-row { align-items: center; color: inherit; display: flex; gap: 12px; justify-content: space-between; min-height: 44px; text-decoration: none; width: 100%; }
 .pf.gl .pf-open-row:hover b { text-decoration: underline; }
-/* The goal ring sits on the dark training card. */
-.pf.gl .tr-today .pf-goal b { color: #fff; }
-.pf.gl .tr-today .pf-goal small { color: rgba(255, 255, 255, .78); }
-.pf.gl .tr-today .pf-goal-track { stroke: rgba(255, 255, 255, .18); }
+
+.pf.gl .me-stats { display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; text-align: center; }
+.pf.gl .me-stats div { background: var(--gl-canvas); border-radius: 14px; padding: 12px 4px; }
+.pf.gl .me-stats dt { color: var(--pf-muted); font-size: 12px; }
+.pf.gl .me-stats dd { font-size: 22px; font-weight: 700; margin: 2px 0 0; }
+.pf.gl .me-menu { background: #fff; border: 1px solid var(--pf-line); border-radius: 20px; list-style: none; margin: 0; overflow: hidden; padding: 0; }
+.pf.gl .me-menu li + li { border-top: 1px solid var(--pf-line); }
+.pf.gl .me-menu a { align-items: center; color: inherit; display: flex; gap: 12px; min-height: 60px; padding: 10px 16px; text-decoration: none; }
+.pf.gl .me-menu a:hover { background: var(--gl-canvas); }
+.pf.gl .me-menu a > svg { color: var(--pf-muted); flex: none; }
+.pf.gl .me-menu-text { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
+.pf.gl .me-menu-text b { font-size: 15px; }
+.pf.gl .me-menu-text small { color: var(--pf-muted); font-size: 12.5px; }
+.pf.gl .me-menu-count { background: var(--gl-error); border-radius: 999px; color: #fff; flex: none; font-size: 12px; font-weight: 700; line-height: 20px; min-width: 20px; padding: 0 6px; text-align: center; }

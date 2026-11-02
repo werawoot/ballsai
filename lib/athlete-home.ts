@@ -1,58 +1,24 @@
-import type { ReadinessKey } from './profile-readiness'
-import type { TrainingHome } from './training/home'
 import type { Progress } from './training/schedule'
 import { COACH_SKILL_KEYS, type CoachSkillKey } from './coach-skills'
 
-// The athlete's "ของฉัน" in the DOENSAI dashboard design (owner, 2 Nov 2026). Free of React
+// The athlete's home (/profile) in the DOENSAI dashboard design (owner, 2 Nov 2026). Free of React
 // and of the database, so every rule can be tested directly. Each number shown has a source:
 // training counts come from the athlete's own check-ins (self-reported, SQL63) and earn no XP;
 // the rating change comes from verified match results; skills only from a coach's assessment
 // the athlete accepted (SQL69). Where the source is missing, nothing is shown.
 
-export const MISSION_LIMIT = 3
-
-export type Mission =
-  | { key: 'train'; done: boolean; target: string; minutes: number }
-  | { key: 'rest'; done: true; target: string }
-  | { key: 'pickProgram'; done: false; target: string }
-  | { key: 'answerInvites'; done: false; target: string; count: number }
-  | { key: 'profileStep'; done: false; target: string; step: ReadinessKey }
-  | { key: 'openTournament'; done: false; target: string }
-
-/**
- * Up to three things for today, each pointing at the card on this page that does it (`target`
- * is an element id). Training first, then what someone else waits on (a team invitation), then
- * the next step of the profile, then an open tournament. No mission carries a reward.
- */
-export function todayMissions({ training, pendingTeamInvites, readinessNext, hasOpenTournament }: {
-  training: TrainingHome
-  pendingTeamInvites: number
-  readinessNext: ReadinessKey | null
-  hasOpenTournament: boolean
-}): Mission[] {
-  const missions: Mission[] = []
-  const target = 'tr-today-title'
-  if (training.state === 'pick') missions.push({ key: 'pickProgram', done: false, target })
-  if (training.state === 'enrolled') missions.push(training.progress.today
-    ? { key: 'train', done: training.progress.doneToday, target, minutes: training.program.minutes }
-    : { key: 'rest', done: true, target })
-  if (pendingTeamInvites > 0) missions.push({ key: 'answerInvites', done: false, target: 'pf-teams', count: pendingTeamInvites })
-  if (readinessNext) missions.push({ key: 'profileStep', done: false, target: 'pf-readiness', step: readinessNext })
-  if (hasOpenTournament) missions.push({ key: 'openTournament', done: false, target: 'pf-open' })
-  return missions.slice(0, MISSION_LIMIT)
-}
-
-export type WeeklyGoal = { done: number; planned: number; percent: number }
+export type WeeklyGoal = { done: number; planned: number; percent: number; minutes: number }
 
 /**
  * Sessions done this week against sessions planned this week. A session made up on another day
  * of the same week counts (the rule of lib/training/schedule.ts); extra days never go past the plan.
+ * Minutes are the programme's planned minutes for each session done: self-reported, not timed.
  */
-export function weeklyGoal(progress: Progress): WeeklyGoal | null {
+export function weeklyGoal(progress: Progress, minutesPerSession = 0): WeeklyGoal | null {
   const planned = progress.thisWeek.filter(day => day.planned).length
   if (planned === 0) return null
   const done = Math.min(planned, progress.thisWeek.filter(day => day.done).length)
-  return { done, planned, percent: Math.round((done / planned) * 100) }
+  return { done, planned, percent: Math.round((done / planned) * 100), minutes: done * minutesPerSession }
 }
 
 /** The Power Rating change of the last verified match; a void sets it back to 0 (sql/65). */

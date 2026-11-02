@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { TRAINING_PROGRAMS } from '@/lib/training/content'
 import { trainingHome } from '@/lib/training/home'
 import type { MyTraining } from '@/lib/training/data'
-import { lastMatchChange, openTournamentsAhead, radarPoints, todayMissions, verifiedSkills, weeklyGoal } from '@/lib/athlete-home'
+import { lastMatchChange, openTournamentsAhead, radarPoints, verifiedSkills, weeklyGoal } from '@/lib/athlete-home'
 
-// The athlete's "ของฉัน" in the DOENSAI dashboard design (owner, 2 Nov 2026): today's
-// missions, the week's training goal, the change of the last verified match and the skills a
+// The athlete's home in the DOENSAI dashboard design (owner, 2 Nov 2026): the week's
+// training goal, the change of the last verified match and the skills a
 // coach assessed. Every number here has a source; nothing is shown in place of a missing one.
 
 const program = TRAINING_PROGRAMS[0]
@@ -17,60 +17,10 @@ const everyDay = (checkins: string[] = []): MyTraining => ({
 // 2026-10-28 is a Wednesday (weekday 2), a planned day of the plan above.
 const WED = '2026-10-28'
 
-describe('today\'s missions', () => {
-  const base = { readinessNext: null, pendingTeamInvites: 0, hasOpenTournament: false }
-
-  it('starts with training: today\'s session, not done yet', () => {
-    const missions = todayMissions({ ...base, training: trainingHome(everyDay(), WED, 12) })
-    expect(missions[0]).toMatchObject({ key: 'train', done: false, target: 'tr-today-title', minutes: program.minutes })
-  })
-
-  it('marks training done once today is checked in', () => {
-    const missions = todayMissions({ ...base, training: trainingHome(everyDay([WED]), WED, 12) })
-    expect(missions[0]).toMatchObject({ key: 'train', done: true })
-  })
-
-  it('calls a day off a rest day, done, not a missed task', () => {
-    const missions = todayMissions({ ...base, training: trainingHome(everyDay(), '2026-10-29', 12) })
-    expect(missions[0]).toMatchObject({ key: 'rest', done: true })
-  })
-
-  it('asks to pick a programme when there is none', () => {
-    const missions = todayMissions({ ...base, training: trainingHome({ available: true, enrollments: [], checkins: {} }, WED, 12) })
-    expect(missions[0]).toMatchObject({ key: 'pickProgram', done: false })
-  })
-
-  it('leaves training out before SQL63', () => {
-    expect(todayMissions({ ...base, training: { state: 'hidden' } })).toEqual([])
-  })
-
-  it('then team invitations, the next profile step, and open tournaments, at most three in all', () => {
-    const missions = todayMissions({
-      training: trainingHome(everyDay(), WED, 12),
-      pendingTeamInvites: 2,
-      readinessNext: 'photo',
-      hasOpenTournament: true,
-    })
-    expect(missions.map(item => item.key)).toEqual(['train', 'answerInvites', 'profileStep'])
-    expect(missions[1]).toMatchObject({ count: 2, target: 'pf-teams' })
-    expect(missions[2]).toMatchObject({ step: 'photo', target: 'pf-readiness' })
-  })
-
-  it('suggests an open tournament when nothing else waits', () => {
-    const missions = todayMissions({ ...base, training: trainingHome(everyDay([WED]), WED, 12), hasOpenTournament: true })
-    expect(missions.map(item => item.key)).toEqual(['train', 'openTournament'])
-  })
-
-  it('never carries an XP reward: training is self-reported (SQL63)', () => {
-    const missions = todayMissions({ training: trainingHome(everyDay(), WED, 12), pendingTeamInvites: 1, readinessNext: 'photo', hasOpenTournament: true })
-    for (const mission of missions) expect(mission).not.toHaveProperty('xp')
-  })
-})
-
 describe('the week\'s training goal', () => {
-  it('counts the sessions done against the sessions planned this week', () => {
+  it('counts the sessions done against the sessions planned this week, and their minutes', () => {
     const home = trainingHome(everyDay(['2026-10-26']), WED, 12)
-    expect(home.state === 'enrolled' && weeklyGoal(home.progress)).toEqual({ done: 1, planned: 3, percent: 33 })
+    expect(home.state === 'enrolled' && weeklyGoal(home.progress, 15)).toEqual({ done: 1, planned: 3, percent: 33, minutes: 15 })
   })
 
   it('counts a missed session made up on another day of the same week', () => {
@@ -80,7 +30,7 @@ describe('the week\'s training goal', () => {
 
   it('never goes past the plan', () => {
     const home = trainingHome(everyDay(['2026-10-26', '2026-10-27', WED, '2026-10-29']), WED, 12)
-    expect(home.state === 'enrolled' && weeklyGoal(home.progress)).toEqual({ done: 3, planned: 3, percent: 100 })
+    expect(home.state === 'enrolled' && weeklyGoal(home.progress, 20)).toEqual({ done: 3, planned: 3, percent: 100, minutes: 60 })
   })
 
   it('is nothing in a week with no planned session', () => {

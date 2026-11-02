@@ -16,6 +16,8 @@
 export type NavItemId = 'home' | 'discover' | 'tournaments' | 'notifications' | 'profile'
   // Role tabs (owner, 9 Oct 2026): the bar belongs to the person's role. See ROLE_NAV.
   | 'training' | 'card' | 'team' | 'kids' | 'plan' | 'manage' | 'results'
+  // The athlete's own home (/profile) and profile (/me), owner 2 Nov 2026.
+  | 'myHome' | 'me'
 
 export type NavItem = {
   id: NavItemId
@@ -62,12 +64,20 @@ function roleBar(first: NavItem[], middle: NavItem[] = []): readonly NavItem[] {
   return [...first, ...middle, NOTIFICATIONS, profile]
 }
 
+// The athlete bar (owner, 2 Nov 2026, DOENSAI dashboard design): their own home, training,
+// card, tournaments and profile. Notifications are the bell on the home page and a row of
+// /me; the profile tab owns every page the general profile tab owned that no other tab claims.
+const ATHLETE_CLAIMS = ['/profile', '/training', '/card', '/career', '/tournaments']
+const athleteBar: readonly NavItem[] = [
+  { id: 'myHome', href: '/profile', owns: ['/profile'] },
+  { id: 'training', href: '/training', owns: ['/training'] },
+  { id: 'card', href: '/card', owns: ['/card', '/career'] },
+  TOURNAMENTS,
+  { id: 'me', href: '/me', owns: ['/me', '/profile/edit', '/notifications', ...GENERAL_PROFILE.owns.filter(prefix => !ATHLETE_CLAIMS.includes(prefix))] },
+]
+
 export const ROLE_NAV: Readonly<Record<'athlete' | 'guardian' | 'coach' | 'organizer', readonly NavItem[]>> = {
-  athlete: roleBar([
-    { id: 'training', href: '/training', owns: ['/training'] },
-    { id: 'card', href: '/card', owns: ['/card', '/career'] },
-    { id: 'team', href: '/team-members', owns: ['/team-members'] },
-  ]),
+  athlete: athleteBar,
   guardian: roleBar([{ id: 'kids', href: '/guardian', owns: ['/guardian'] }], [TOURNAMENTS]),
   coach: roleBar([
     { id: 'team', href: '/team-members', owns: ['/team-members'] },
@@ -87,7 +97,7 @@ export function navItemsFor(kind: NavKind | null | undefined): readonly NavItem[
 const NAV_KINDS: readonly NavKind[] = ['athlete', 'guardian', 'coach', 'organizer', 'venue', 'sponsor']
 // Where a role is chosen (/welcome) or its home is shown (/profile): the bar reads it again
 // there, so a change of role shows without a new tab.
-const ROLE_READ_PATHS = ['/welcome', '/profile']
+const ROLE_READ_PATHS = ['/welcome', '/profile', '/me']
 
 /**
  * T60. The bar's tabs depend on the role, which used to be read on every route change. It is

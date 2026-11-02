@@ -5,18 +5,17 @@ import Link from 'next/link'
 import CardGuide from '@/components/CardGuide'
 import { getTranslations } from 'next-intl/server'
 import {
-  BadgeCheck, Building2, Camera, Check, ChevronRight, Compass, Crown, Eye, EyeOff, Handshake, LayoutDashboard, Lock, LogOut,
-  IdCard, MapPin, PencilLine, Route, Shield, ShieldCheck, Star, Trophy, UsersRound, Zap, type LucideIcon,
+  BadgeCheck, Building2, Camera, Check, ChevronRight, Compass, Crown, Handshake, LayoutDashboard, Lock, LogOut,
+  IdCard, MapPin, Route, Shield, ShieldCheck, Star, Trophy, UsersRound, Zap, type LucideIcon,
 } from 'lucide-react'
-import PublicProfileShare from './PublicProfileShare'
 import DeleteMyDataSection from './DeleteMyDataSection'
 import GuardianInviteButton from './GuardianInviteButton'
 import TeamAskButton from './TeamAskButton'
 import TrainingCard from './TrainingCard'
-import { MissionsCard, OpenTournaments, SkillRadar, type HomeTournament } from './AthleteHome'
+import { HomeHero, OpenTournaments, SkillRadar, WeekProgress, type HomeTournament } from './AthleteHome'
 import PageHeader from '@/components/PageHeader'
 import RoleHomeCard, { RoleLoadFailed } from '@/components/RoleHomeCard'
-import { calculateLevel, identityTierKey, levelProgress } from '@/lib/digital-identity'
+import { calculateLevel, levelProgress } from '@/lib/digital-identity'
 import { PROFILE_MENU } from '@/lib/site-nav'
 import { shownAge, thaiDate } from '@/lib/athlete-private'
 import { profileReadiness, type ReadinessItem } from '@/lib/profile-readiness'
@@ -25,7 +24,8 @@ import { fetchProfileHome } from '@/lib/profile-home'
 import { trainingHasPrimary, trainingHome } from '@/lib/training/home'
 import { homeKind, type HomeKind } from '@/lib/role-home'
 import { loadRoleHome } from '@/lib/role-home-data'
-import { lastMatchChange, openTournamentsAhead, todayMissions, verifiedSkills } from '@/lib/athlete-home'
+import { lastMatchChange, openTournamentsAhead, verifiedSkills, weeklyGoal } from '@/lib/athlete-home'
+import { fetchUnreadNotificationCount } from '@/lib/notification-count'
 import { fetchAthleteHomeExtras } from '@/lib/athlete-home-data'
 import { getPublicOpenTournaments } from '@/lib/public-data'
 import { bangkokToday } from '@/lib/public-tournaments'
@@ -97,7 +97,7 @@ export default async function ProfilePage() {
   // who coaches or runs a venue may also play, so their card stays one tap away.
   const hasAthleteProfile = home.athlete ? 1 : 0
   const homeRank = (athleteHome ? home.rank : null) as { id: string } | null
-  const [loaded, avatarUrls, extras, openRows] = await Promise.all([
+  const [loaded, avatarUrls, extras, openRows, unread] = await Promise.all([
     roleKind ? loadRoleHome(supabase, roleKind, user.id) : null,
     // The photo is a private object (T51); the owner may always sign their own.
     signAvatarUrls(supabase, [athleteHome ? (home.athlete?.profile_image_url as string | null | undefined) : null]),
@@ -105,6 +105,8 @@ export default async function ProfilePage() {
     athleteHome && home.athlete ? fetchAthleteHomeExtras(supabase, user.id, homeRank?.id ?? null) : null,
     // The same cached list as the home page (60 s), not a read per visit.
     athleteHome ? getPublicOpenTournaments() : null,
+    // The bell on the athlete's home: a head count, no notification row is read.
+    athleteHome ? fetchUnreadNotificationCount(supabase, user.id) : null,
   ])
   const athlete = (athleteHome ? home.athlete : null) as AthleteProfile | null
   const rank = (athleteHome ? home.rank : null) as PlayerRank | null
@@ -141,16 +143,11 @@ export default async function ProfilePage() {
   const trainingCard = trainingHome(training ?? { available: false, enrollments: [], checkins: {} }, today, age)
   const trainingPrimary = trainingHasPrimary(trainingCard)
   const openTournaments = openTournamentsAhead((openRows ?? []) as (HomeTournament & { status: string | null })[], bangkokToday())
-  const missions = athlete ? todayMissions({
-    training: trainingCard,
-    pendingTeamInvites,
-    readinessNext: readiness?.next?.key ?? null,
-    hasOpenTournament: openTournaments.length > 0,
-  }) : []
+  // This week's sessions and minutes, from the athlete's own check-ins (no XP, SQL63).
+  const goal = trainingCard.state === 'enrolled' ? weeklyGoal(trainingCard.progress, trainingCard.program.minutes) : null
   const matchChange = lastMatchChange(extras?.rating ?? null)
   const skills = verifiedSkills(extras?.skills ?? null)
   const name = athlete?.display_name?.trim() || profile?.full_name?.trim() || (athleteHome ? t('noName') : user.email ?? t('noName'))
-  const publicPath = `/players/${rank?.id || user.id}`
   const rt = await getTranslations('roleHome')
   // The organizer dashboard is for whoever an admin made an organizer, and only them: a coach
   // is never offered a page that tells them they have no access.
@@ -179,42 +176,14 @@ export default async function ProfilePage() {
                 <div className="pf-sub">{rt('as', { role: rt(`roles.${kind}`) })}</div>
               </div>
             </div>
-          </section> : <section className="pf-hero" aria-labelledby="pf-name">
-            <div className="pf-id">
-              <div className="pf-avatar" style={avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : undefined} aria-hidden="true">
-                {!avatarUrl && initials(name)}
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <h1 id="pf-name" className="pf-name">{name}</h1>
-                {athlete && <div className="pf-sub">{[athlete.current_team, athlete.province].filter(Boolean).join(' · ') || ' '}</div>}
-              </div>
-            </div>
-            {athlete && <div className="pf-chips">
-              {athlete.position && <span className="pf-chip is-gold">{athlete.position}</span>}
-              {age !== null && <span className="pf-chip">{t('age', { age })}</span>}
-              <span className={`pf-chip${athlete.verification_level !== 'self' ? ' is-green' : ''}`}>
-                {athlete.verification_level !== 'self' && <BadgeCheck size={13} aria-hidden="true" />}{t(`verification.${athlete.verification_level}`)}
-              </span>
-              <span className="pf-chip">{athlete.is_public ? <Eye size={13} aria-hidden="true" /> : <EyeOff size={13} aria-hidden="true" />}{t(athlete.is_public ? 'visibility.public' : 'visibility.private')}</span>
-            </div>}
-            {/* Level and points mean nothing before the first point, so they stay out of sight until then. */}
-            {athlete && xp > 0 && <div className="pf-level">
-              <div className="pf-level-num"><small>{t('levelLabel')}</small><b>{String(level).padStart(2, '0')}</b></div>
-              <div className="pf-level-body">
-                <strong>{t(`tiers.${identityTierKey(level)}`)}</strong>
-                <div className="pf-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(levelInfo.percentage)} aria-label={t('level', { level })}><i style={{ width: `${levelInfo.percentage}%` }} /></div>
-                <small>{t('xpToNext', { xp: xp.toLocaleString(), remaining: levelInfo.remaining.toLocaleString(), next: level + 1 })}</small>
-              </div>
-            </div>}
-            {athlete && <CardGuide />}
-            <div className="pf-actions">
-              {/* Editing is secondary: the one primary button on this page is the next thing to do. */}
-              <Link href="/profile/edit" className="pf-btn pf-btn-ghost"><PencilLine size={17} aria-hidden="true" />{athlete ? t('actions.edit') : t('noAthlete.cta')}</Link>
-              {athlete?.is_public
-                ? <Link href={publicPath} className="pf-btn pf-btn-ghost"><Eye size={17} aria-hidden="true" />{t('actions.viewPublic')}</Link>
-                : athlete && <Link href="/career" className="pf-btn pf-btn-ghost"><Route size={17} aria-hidden="true" />{t('actions.passport')}</Link>}
-            </div>
-          </section>}
+          </section> : <HomeHero
+            name={name}
+            line={athlete ? [age !== null ? t('age', { age }) : null, athlete.current_team, athlete.province].filter(Boolean).join(' · ') : ''}
+            avatarUrl={avatarUrl}
+            initials={initials(name)}
+            unread={unread ?? null}
+            level={athlete && xp > 0 ? { level, xp, next: levelInfo.remaining, percent: levelInfo.percentage } : null}
+          />}
         </aside>
 
         <div className="pf-main">
@@ -226,11 +195,39 @@ export default async function ProfilePage() {
             <Link href="/profile/edit" className="pf-btn pf-btn-primary"><Camera size={17} aria-hidden="true" />{t('noAthlete.cta')}</Link>
           </section>}
 
-          {/* Today at a glance: each mission points at the card below that does it. */}
-          <MissionsCard missions={missions} />
+          {/* The card first, then today's programme and the week (DOENSAI dashboard design, owner 2 Nov 2026). */}
+          {athlete && <section className="pf-card" aria-labelledby="pf-card">
+            <div className="pf-card-head"><h2 id="pf-card" className="pf-card-title">{t('card.title')}</h2></div>
+            <div className="pf-player">
+              {rank ? <div className="pf-fut">
+                <div className="pf-fut-top"><b>{rank.ovr}</b><span>{rank.position}</span></div>
+                <div className="pf-fut-mark"><PositionMark position={rank.position} size={46} /></div>
+                <div className="pf-fut-name">{rank.player_name}</div>
+              </div> : <div className="pf-fut is-starter">
+                <div className="pf-fut-top"><b>—</b><span>{athlete.position || 'FW'}</span></div>
+                <div className="pf-fut-mark"><PositionMark position={athlete.position || 'FW'} size={46} /></div>
+                <div className="pf-fut-name">{name}</div>
+              </div>}
+              <div style={{ minWidth: 0 }}>
+                {rank
+                  ? <><div className="pf-power">{rank.pts.toLocaleString()}<small>{t('card.power')}</small></div>
+                    {matchChange !== null && <p className={`pf-change ${matchChange > 0 ? 'is-up' : 'is-down'}`}>{t('lastMatch', { change: matchChange > 0 ? `+${matchChange}` : `−${Math.abs(matchChange)}` })}</p>}
+                    <p className="pf-note">{t('card.source')}</p></>
+                  : <><div className="pf-power" style={{ fontSize: 22 }}>{t('card.starterTitle')}</div><p className="pf-note">{t('card.starterBody')}</p></>}
+                <div className="pf-row">
+                  <Link href="/card" className="pf-btn pf-btn-line pf-btn-sm">{t('card.build')}</Link>
+                  {rank && <Link href="/ranking" className="pf-btn pf-btn-line pf-btn-sm">{t('card.myRanking')}</Link>}
+                  {!rank && <Link href="/tournaments" className="pf-btn pf-btn-line pf-btn-sm"><Crown size={15} aria-hidden="true" />{t('card.findTournament')}</Link>}
+                </div>
+              </div>
+            </div>
+            <CardGuide />
+          </section>}
 
-          {/* Training comes first (owner, report 9): today's session, or the programme to pick for their age. */}
+          {/* Today's session, or the programme to pick for their age. */}
           <TrainingCard home={trainingCard} age={age} />
+          {trainingCard.state === 'enrolled' && <WeekProgress progress={trainingCard.progress} goal={goal} programId={trainingCard.program.id} />}
+          {athlete && <SkillRadar skills={skills} />}
 
           {readiness && (athlete?.is_public && readiness.next ? <Link href={readiness.next.href} className="pf-card pf-ready-line" id="pf-readiness">
             <span>{t('readiness.compact', { done: readiness.done, total: readiness.total, next: t(`readiness.items.${readiness.next.key}.title`) })}</span>
@@ -274,36 +271,6 @@ export default async function ProfilePage() {
             <p className="pf-ready"><BadgeCheck size={20} aria-hidden="true" />{t('readiness.doneNote')}</p>
           </section>)}
 
-          {athlete?.is_public && <PublicProfileShare profilePath={publicPath} isPublic />}
-
-          {athlete && <section className="pf-card" aria-labelledby="pf-card">
-            <div className="pf-card-head"><h2 id="pf-card" className="pf-card-title">{t('card.title')}</h2></div>
-            <div className="pf-player">
-              {rank ? <div className="pf-fut">
-                <div className="pf-fut-top"><b>{rank.ovr}</b><span>{rank.position}</span></div>
-                <div className="pf-fut-mark"><PositionMark position={rank.position} size={46} /></div>
-                <div className="pf-fut-name">{rank.player_name}</div>
-              </div> : <div className="pf-fut is-starter">
-                <div className="pf-fut-top"><b>—</b><span>{athlete.position || 'FW'}</span></div>
-                <div className="pf-fut-mark"><PositionMark position={athlete.position || 'FW'} size={46} /></div>
-                <div className="pf-fut-name">{name}</div>
-              </div>}
-              <div style={{ minWidth: 0 }}>
-                {rank
-                  ? <><div className="pf-power">{rank.pts.toLocaleString()}<small>{t('card.power')}</small></div>
-                    {matchChange !== null && <p className={`pf-change ${matchChange > 0 ? 'is-up' : 'is-down'}`}>{t('lastMatch', { change: matchChange > 0 ? `+${matchChange}` : `−${Math.abs(matchChange)}` })}</p>}
-                    <p className="pf-note">{t('card.source')}</p></>
-                  : <><div className="pf-power" style={{ fontSize: 22 }}>{t('card.starterTitle')}</div><p className="pf-note">{t('card.starterBody')}</p></>}
-                <div className="pf-row">
-                  <Link href="/card" className="pf-btn pf-btn-line pf-btn-sm">{t('card.build')}</Link>
-                  {rank && <Link href="/ranking" className="pf-btn pf-btn-line pf-btn-sm">{t('card.myRanking')}</Link>}
-                  {!rank && <Link href="/tournaments" className="pf-btn pf-btn-line pf-btn-sm"><Crown size={15} aria-hidden="true" />{t('card.findTournament')}</Link>}
-                </div>
-              </div>
-            </div>
-            <SkillRadar skills={skills} />
-          </section>}
-
           <OpenTournaments tournaments={openTournaments} />
 
           {memberships.length > 0 && <section className="pf-card" aria-labelledby="pf-teams">
@@ -339,6 +306,8 @@ export default async function ProfilePage() {
 
           </>}
 
+          {/* An athlete reaches these from /me, their profile tab; every other role keeps them here. */}
+          {!athleteHome && <>
           <section aria-labelledby="pf-shortcuts">
             <h2 id="pf-shortcuts" className="pf-card-title" style={{ marginBottom: 14 }}>{t('shortcuts.title')}</h2>
             <div className="pf-links">
@@ -364,6 +333,7 @@ export default async function ProfilePage() {
           </section>
 
           <DeleteMyDataSection />
+          </>}
         </div>
       </div>
     </main>

@@ -9,27 +9,37 @@ import type { SkillRow } from './athlete-home'
 // the athlete reads their own; index athlete_id, created_at desc). A failed read leaves that
 // part out and is logged; it never takes the page down.
 
+// This season's verified totals (player_ratings), shown on /me and behind the rating change.
+export type SeasonStats = { matches_played: number | null; goals: number | null; assists: number | null; mvps: number | null; last_rating_change: number | null }
+
 export type AthleteHomeExtras = {
-  rating: { matches_played: number | null; last_rating_change: number | null } | null
+  rating: SeasonStats | null
   skills: SkillRow | null
 }
 
 const logFailure = (event: string, error: { code?: string } | null) =>
   console.error(JSON.stringify({ level: 'error', event, code: error?.code ?? null }))
 
+const SEASON_STATS = 'matches_played, goals, assists, mvps, last_rating_change'
+
+/** This season's verified totals behind a rank row; null with no rank row or on a failed read. */
+export async function fetchSeasonStats(client: SupabaseClient, rankId: string | null): Promise<SeasonStats | null> {
+  if (!rankId) return null
+  const { data, error } = await client.from('player_ratings').select(SEASON_STATS).eq('player_rank_id', rankId).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).maybeSingle()
+  if (error) { logFailure('athlete_season_stats_read_failed', error); return null }
+  return (data as SeasonStats | null) ?? null
+}
+
 export async function fetchAthleteHomeExtras(client: SupabaseClient, userId: string, rankId: string | null): Promise<AthleteHomeExtras> {
-  const [ratingResult, skillResult] = await Promise.all([
-    rankId
-      ? client.from('player_ratings').select('matches_played, last_rating_change').eq('player_rank_id', rankId).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).maybeSingle()
-      : null,
+  const [rating, skillResult] = await Promise.all([
+    fetchSeasonStats(client, rankId),
     client.from('athlete_skill_assessments').select(`${COACH_SKILL_KEYS.join(', ')}, source_level, created_at`)
       .eq('athlete_id', userId).in('source_level', ['coach_verified', 'performance_verified'])
       .order('created_at', { ascending: false }).limit(1).maybeSingle(),
   ])
-  if (ratingResult?.error) logFailure('athlete_home_rating_read_failed', ratingResult.error)
   if (skillResult.error) logFailure('athlete_home_skills_read_failed', skillResult.error)
   return {
-    rating: ratingResult && !ratingResult.error ? (ratingResult.data as AthleteHomeExtras['rating']) ?? null : null,
+    rating,
     skills: skillResult.error ? null : (skillResult.data as SkillRow | null) ?? null,
   }
 }

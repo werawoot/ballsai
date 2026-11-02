@@ -9,7 +9,9 @@ const ids = (kind: Parameters<typeof navItemsFor>[0]) => navItemsFor(kind).map(i
 
 describe('a bottom bar per role', () => {
   it('opens on each role\'s main job', () => {
-    expect(ids('athlete')).toEqual(['training', 'card', 'team', 'notifications', 'profile'])
+    // Owner, 2 Nov 2026 (DOENSAI dashboard design): the athlete's own home, training, card,
+    // tournaments and profile; notifications move to the bell on the home page.
+    expect(ids('athlete')).toEqual(['myHome', 'training', 'card', 'tournaments', 'me'])
     expect(ids('guardian')).toEqual(['kids', 'tournaments', 'notifications', 'profile'])
     expect(ids('coach')).toEqual(['team', 'plan', 'tournaments', 'notifications', 'profile'])
     expect(ids('organizer')).toEqual(['manage', 'results', 'tournaments', 'notifications', 'profile'])
@@ -24,16 +26,31 @@ describe('a bottom bar per role', () => {
       const items = navItemsFor(kind)
       expect(items.length).toBeLessThanOrEqual(MAX_NAV_ITEMS)
       expect(new Set(items.map(item => item.href)).size).toBe(items.length)
+    }
+    for (const kind of ['guardian', 'coach', 'organizer'] as const) {
       expect(ids(kind)).toContain('notifications')
       expect(ids(kind)).toContain('profile')
     }
   })
 
+  it('gives the athlete a home tab on their own page and a profile tab that keeps the rest', () => {
+    const items = navItemsFor('athlete')
+    expect(items.find(item => item.id === 'myHome')?.href).toBe('/profile')
+    expect(items.find(item => item.id === 'me')?.href).toBe('/me')
+    // Every page the general profile tab owned still lights a tab of the athlete bar.
+    const general = NAV_ITEMS.find(item => item.id === 'profile')!
+    for (const prefix of [...general.owns, '/notifications']) expect(activeNavItem(prefix, items), prefix).not.toBeNull()
+  })
+
   it('lights the right tab inside a role bar', () => {
     expect(activeNavItem('/training/u14-game-skills-01', navItemsFor('athlete'))).toBe('training')
     expect(activeNavItem('/career', navItemsFor('athlete'))).toBe('card')
-    expect(activeNavItem('/team-members', navItemsFor('athlete'))).toBe('team')
-    expect(activeNavItem('/profile/edit', navItemsFor('athlete'))).toBe('profile')
+    expect(activeNavItem('/profile', navItemsFor('athlete'))).toBe('myHome')
+    expect(activeNavItem('/tournaments/abc', navItemsFor('athlete'))).toBe('tournaments')
+    expect(activeNavItem('/me', navItemsFor('athlete'))).toBe('me')
+    expect(activeNavItem('/team-members', navItemsFor('athlete'))).toBe('me')
+    expect(activeNavItem('/notifications', navItemsFor('athlete'))).toBe('me')
+    expect(activeNavItem('/profile/edit', navItemsFor('athlete'))).toBe('me')
     expect(activeNavItem('/guardian', navItemsFor('guardian'))).toBe('kids')
     expect(activeNavItem('/match-plan', navItemsFor('coach'))).toBe('plan')
     expect(activeNavItem('/dashboard', navItemsFor('organizer'))).toBe('manage')
@@ -72,6 +89,7 @@ describe('when the bottom bar reads the role again', () => {
     const cached = JSON.stringify({ userId: me, kind: 'athlete' })
     expect(rolePlan(cached, me, '/welcome')).toEqual({ use: 'athlete', read: true })
     expect(rolePlan(cached, me, '/profile')).toEqual({ use: 'athlete', read: true })
+    expect(rolePlan(cached, me, '/me')).toEqual({ use: 'athlete', read: true })
   })
 
   it('keeps nothing for a signed-out visitor', () => {
