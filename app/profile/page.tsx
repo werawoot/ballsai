@@ -13,6 +13,7 @@ import DeleteMyDataSection from './DeleteMyDataSection'
 import GuardianInviteButton from './GuardianInviteButton'
 import TeamAskButton from './TeamAskButton'
 import TrainingCard from './TrainingCard'
+import { MissionsCard, OpenTournaments, SkillRadar, type HomeTournament } from './AthleteHome'
 import PageHeader from '@/components/PageHeader'
 import RoleHomeCard, { RoleLoadFailed } from '@/components/RoleHomeCard'
 import { calculateLevel, identityTierKey, levelProgress } from '@/lib/digital-identity'
@@ -24,6 +25,10 @@ import { fetchProfileHome } from '@/lib/profile-home'
 import { trainingHasPrimary, trainingHome } from '@/lib/training/home'
 import { homeKind, type HomeKind } from '@/lib/role-home'
 import { loadRoleHome } from '@/lib/role-home-data'
+import { lastMatchChange, openTournamentsAhead, todayMissions, verifiedSkills } from '@/lib/athlete-home'
+import { fetchAthleteHomeExtras } from '@/lib/athlete-home-data'
+import { getPublicOpenTournaments } from '@/lib/public-data'
+import { bangkokToday } from '@/lib/public-tournaments'
 import type messagesTh from '@/messages/th.json'
 import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
 import '../glass.css'
@@ -91,10 +96,15 @@ export default async function ProfilePage() {
   // A guardian, coach, organizer or venue owner is not shown the athlete's own parts; someone
   // who coaches or runs a venue may also play, so their card stays one tap away.
   const hasAthleteProfile = home.athlete ? 1 : 0
-  const [loaded, avatarUrls] = await Promise.all([
+  const homeRank = (athleteHome ? home.rank : null) as { id: string } | null
+  const [loaded, avatarUrls, extras, openRows] = await Promise.all([
     roleKind ? loadRoleHome(supabase, roleKind, user.id) : null,
     // The photo is a private object (T51); the owner may always sign their own.
     signAvatarUrls(supabase, [athleteHome ? (home.athlete?.profile_image_url as string | null | undefined) : null]),
+    // The athlete home's rating change and coach-assessed skills: two indexed one-row reads.
+    athleteHome && home.athlete ? fetchAthleteHomeExtras(supabase, user.id, homeRank?.id ?? null) : null,
+    // The same cached list as the home page (60 s), not a read per visit.
+    athleteHome ? getPublicOpenTournaments() : null,
   ])
   const athlete = (athleteHome ? home.athlete : null) as AthleteProfile | null
   const rank = (athleteHome ? home.rank : null) as PlayerRank | null
@@ -130,6 +140,15 @@ export default async function ProfilePage() {
   // What the training card asks for, and so whether it holds this page's one primary button.
   const trainingCard = trainingHome(training ?? { available: false, enrollments: [], checkins: {} }, today, age)
   const trainingPrimary = trainingHasPrimary(trainingCard)
+  const openTournaments = openTournamentsAhead((openRows ?? []) as (HomeTournament & { status: string | null })[], bangkokToday())
+  const missions = athlete ? todayMissions({
+    training: trainingCard,
+    pendingTeamInvites,
+    readinessNext: readiness?.next?.key ?? null,
+    hasOpenTournament: openTournaments.length > 0,
+  }) : []
+  const matchChange = lastMatchChange(extras?.rating ?? null)
+  const skills = verifiedSkills(extras?.skills ?? null)
   const name = athlete?.display_name?.trim() || profile?.full_name?.trim() || (athleteHome ? t('noName') : user.email ?? t('noName'))
   const publicPath = `/players/${rank?.id || user.id}`
   const rt = await getTranslations('roleHome')
@@ -207,10 +226,13 @@ export default async function ProfilePage() {
             <Link href="/profile/edit" className="pf-btn pf-btn-primary"><Camera size={17} aria-hidden="true" />{t('noAthlete.cta')}</Link>
           </section>}
 
+          {/* Today at a glance: each mission points at the card below that does it. */}
+          <MissionsCard missions={missions} />
+
           {/* Training comes first (owner, report 9): today's session, or the programme to pick for their age. */}
           <TrainingCard home={trainingCard} age={age} />
 
-          {readiness && (athlete?.is_public && readiness.next ? <Link href={readiness.next.href} className="pf-card pf-ready-line">
+          {readiness && (athlete?.is_public && readiness.next ? <Link href={readiness.next.href} className="pf-card pf-ready-line" id="pf-readiness">
             <span>{t('readiness.compact', { done: readiness.done, total: readiness.total, next: t(`readiness.items.${readiness.next.key}.title`) })}</span>
             <ChevronRight size={17} aria-hidden="true" />
           </Link> : readiness.next || !athlete?.is_public ? <section className="pf-card pf-next-card" aria-labelledby="pf-readiness">
@@ -268,7 +290,9 @@ export default async function ProfilePage() {
               </div>}
               <div style={{ minWidth: 0 }}>
                 {rank
-                  ? <><div className="pf-power">{rank.pts.toLocaleString()}<small>{t('card.power')}</small></div><p className="pf-note">{t('card.source')}</p></>
+                  ? <><div className="pf-power">{rank.pts.toLocaleString()}<small>{t('card.power')}</small></div>
+                    {matchChange !== null && <p className={`pf-change ${matchChange > 0 ? 'is-up' : 'is-down'}`}>{t('lastMatch', { change: matchChange > 0 ? `+${matchChange}` : `−${Math.abs(matchChange)}` })}</p>}
+                    <p className="pf-note">{t('card.source')}</p></>
                   : <><div className="pf-power" style={{ fontSize: 22 }}>{t('card.starterTitle')}</div><p className="pf-note">{t('card.starterBody')}</p></>}
                 <div className="pf-row">
                   <Link href="/card" className="pf-btn pf-btn-line pf-btn-sm">{t('card.build')}</Link>
@@ -277,7 +301,10 @@ export default async function ProfilePage() {
                 </div>
               </div>
             </div>
+            <SkillRadar skills={skills} />
           </section>}
+
+          <OpenTournaments tournaments={openTournaments} />
 
           {memberships.length > 0 && <section className="pf-card" aria-labelledby="pf-teams">
             <div className="pf-card-head">

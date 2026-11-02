@@ -5,6 +5,8 @@ import { ChevronRight, Dumbbell } from 'lucide-react'
 import { drillImage, say } from '@/lib/training/content'
 import type { TrainingHome } from '@/lib/training/home'
 import { tournamentDateRange } from '@/lib/tournament-dates'
+import { weeklyGoal } from '@/lib/athlete-home'
+import { WeekGoal } from './AthleteHome'
 import '@/app/training/training.css'
 
 // The entry to /training on /profile (docs/training-flow-v1.md): today's session for the
@@ -30,6 +32,8 @@ export default function TrainingCard({ home, age }: { home: TrainingHome; age: n
   </section>
 
   const { program, progress } = home
+  // Sessions this week against the plan, self-reported (SQL63): no XP, and labelled so.
+  const goal = weeklyGoal(progress)
   const eyebrow = progress.doneToday ? 'card.eyebrowDone' : progress.today ? 'card.eyebrow' : 'card.eyebrowRest'
   return <section className="tr-today" aria-labelledby="tr-today-title">
     <div className="tr-today-top">
@@ -43,6 +47,7 @@ export default function TrainingCard({ home, age }: { home: TrainingHome; age: n
     <ol className="tr-week" aria-hidden="true">
       {progress.thisWeek.map(day => <li className={[day.planned && 'is-plan', day.done && 'is-done', day.isToday && day.planned && 'is-today'].filter(Boolean).join(' ')} key={day.date}>{t(`schedule.days.d${day.weekday as 0 | 1 | 2 | 3 | 4 | 5 | 6}`)}</li>)}
     </ol>
+    {goal && <WeekGoal goal={goal} />}
     {progress.today && !progress.doneToday
       ? <Link className="ui-btn ui-btn-primary" href={`/training/${program.id}/session`}>{t('card.cta')}</Link>
       : <Link className="ui-btn ui-btn-ghost-d" href={`/training/${program.id}`}>{progress.next ? t('card.nextOn', { date: tournamentDateRange(locale, progress.next) }) : t('card.ctaRest')}</Link>}

@@ -1302,6 +1302,45 @@
       "text": "Coach, please invite me to the team on DOENSAI with this email: {email}",
       "copied": "Copied. Send it to your coach.",
       "failed": "Could not copy. Try again."
+    },
+    "missions": {
+      "title": "Today's missions",
+      "progress": "{done}/{total} done",
+      "note": "Missions give no XP · XP comes only from results an organizer confirmed",
+      "done": "Done",
+      "todo": "Not done yet",
+      "items": {
+        "train": "Today's planned session",
+        "trainMeta": "{minutes} min",
+        "rest": "Rest day today",
+        "restMeta": "Rest is part of training",
+        "pickProgram": "Pick a training programme",
+        "pickProgramMeta": "We plan the sessions on the days you choose",
+        "answerInvites": "Answer team invitations",
+        "answerInvitesMeta": "{count} waiting for your answer",
+        "profileStep": "Next profile step",
+        "openTournament": "See tournaments open for entry",
+        "openTournamentMeta": "Real tournaments organizers have open now"
+      }
+    },
+    "weekGoal": {
+      "title": "This week",
+      "value": "{done}/{planned} sessions",
+      "note": "Counted from what you log yourself"
+    },
+    "lastMatch": "{change} from the last match",
+    "skills": {
+      "title": "Skills assessed by a coach",
+      "coach_verified": "Coach assessed · {date}",
+      "performance_verified": "From verified performance · {date}",
+      "empty": "No assessment yet. A coach of your team can assess your skills; once you accept, they show here.",
+      "chartLabel": "Skill chart: {list}"
+    },
+    "open": {
+      "title": "Open for entry",
+      "viewAll": "See all",
+      "free": "Free",
+      "perTeam": "{fee}/team"
     }
   },
   "profileEdit": {

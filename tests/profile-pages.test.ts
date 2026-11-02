@@ -63,6 +63,9 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }))
 vi.mock('@vercel/analytics', () => ({ track: () => {} }))
+// The open tournaments the athlete home lists: the same cached read as the home page.
+const open = vi.hoisted(() => ({ tournaments: [] as Record<string, unknown>[] }))
+vi.mock('@/lib/public-data', () => ({ getPublicOpenTournaments: async () => open.tournaments }))
 const messagesFor = (locale: Locale) => locale === 'th' ? th : withFallback(en, th)
 vi.mock('next-intl/server', () => ({
   getLocale: async () => db.locale,
@@ -485,5 +488,95 @@ describe('/profile with a birth date that cannot be right', () => {
     db.private = { birth_date: `${new Date().getFullYear()}-01-01`, guardian_consent_at: null }
     const page = text(await render(ProfilePage as never))
     expect(page).not.toMatch(/(^|\D)0 ปี/)
+  })
+})
+
+describe('/profile athlete home in the DOENSAI dashboard design (owner, 2 Nov 2026)', () => {
+  const bangkokDay = (days = 0) => new Date(Date.now() + 7 * 3600_000 + days * 86_400_000).toISOString().slice(0, 10)
+  const athleteHome = (tables: Record<string, unknown> = {}) => {
+    db.tables = {
+      profiles: { full_name: 'Niran', role: 'player', onboarding_persona: 'athlete' },
+      athlete_profiles: { ...minor, display_name: 'Niran', is_public: true, verification_level: 'performance_verified' },
+      player_ranks: { id: 'rank-9', player_name: 'Niran', position: 'MF', ovr: 71, pts: 1520 },
+      athlete_progress: { xp_total: 900, current_level: 4 },
+      training_enrollments: [{ id: 'e1', program_id: 'u10-foundation-01', weekdays: [0, 1, 2, 3, 4, 5, 6], start_date: bangkokDay(-3), status: 'active' }],
+      training_checkins: [],
+      ...tables,
+    }
+    db.counts = {}
+    db.private = { birth_date: '2012-03-04', guardian_consent_at: '2026-01-01T00:00:00Z' }
+    open.tournaments = []
+  }
+  const coachRow = { speed: 70, stamina: 64, strength: null, technique: 81, vision: 58, source_level: 'coach_verified', created_at: '2026-10-20T03:00:00Z' }
+
+  it('opens on today\'s missions, each pointing at the card that does it, with no XP reward', async () => {
+    athleteHome()
+    const html = await render(ProfilePage as never)
+    const page = text(html)
+    expect(page).toContain('ภารกิจวันนี้')
+    expect(page).toContain('ซ้อมตามตารางวันนี้')
+    expect(html).toContain('href="#tr-today-title"')
+    expect(page).toContain('ภารกิจไม่มีแต้ม ·')
+    expect(page).not.toMatch(/\+\d+ ?XP/)
+    expect(html.indexOf('pf-missions')).toBeLessThan(html.indexOf('class="tr-today"'))
+    expect(primaries(html)).toBe(1)
+  })
+
+  it('shows the week\'s goal as self-reported', async () => {
+    athleteHome({ training_checkins: [{ enrollment_id: 'e1', session_date: bangkokDay(0) }] })
+    const page = text(await render(ProfilePage as never))
+    expect(page).toContain('เป้าสัปดาห์นี้')
+    expect(page).toContain('นับจากที่คุณบันทึกเอง')
+  })
+
+  it('shows the change of the last verified match, and nothing once a void reset it', async () => {
+    athleteHome({ player_ratings: { matches_played: 3, last_rating_change: 15 } })
+    expect(text(await render(ProfilePage as never))).toContain('+15 จากนัดล่าสุด')
+    athleteHome({ player_ratings: { matches_played: 3, last_rating_change: 0 } })
+    expect(text(await render(ProfilePage as never))).not.toContain('จากนัดล่าสุด')
+  })
+
+  it('draws the skills a coach assessed, with who and when', async () => {
+    athleteHome({ athlete_skill_assessments: coachRow })
+    const html = await render(ProfilePage as never)
+    expect(html).toContain('class="pf-radar-shape"')
+    expect(html).toMatch(/aria-label="กราฟทักษะ: ความเร็ว 70, ความอึด 64, เทคนิค 81, การอ่านเกม 58"/)
+    expect(text(html)).toContain('โค้ชประเมิน ·')
+  })
+
+  it('draws no shape from a self-assessment, and says how a coach assessment arrives', async () => {
+    athleteHome({ athlete_skill_assessments: { ...coachRow, source_level: 'self' } })
+    const html = await render(ProfilePage as never)
+    expect(html).not.toContain('pf-radar-shape')
+    expect(text(html)).toContain('ยังไม่มีการประเมิน')
+  })
+
+  it('lists real open tournaments that are not over, and links each one', async () => {
+    athleteHome()
+    open.tournaments = [
+      { id: 'over', name: 'Old Cup', location: null, start_date: '2020-01-01', end_date: '2020-01-02', fee: 0, status: 'open' },
+      { id: 't-1', name: 'Lopburi Youth Cup', location: 'Lopburi', start_date: bangkokDay(10), end_date: null, fee: 500, status: 'open' },
+    ]
+    const html = await render(ProfilePage as never)
+    expect(html).toContain('href="/tournaments/t-1"')
+    expect(text(html)).toContain('฿500/ทีม')
+    expect(html).not.toContain('Old Cup')
+    expect(html).toContain('href="#pf-open"')
+  })
+
+  it('leaves the open list out when nothing is open', async () => {
+    athleteHome()
+    expect(await render(ProfilePage as never)).not.toContain('id="pf-open"')
+  })
+
+  it('speaks English without Thai across the new parts', async () => {
+    athleteHome({ athlete_skill_assessments: coachRow, player_ratings: { matches_played: 3, last_rating_change: -8 } })
+    open.tournaments = [{ id: 't-1', name: 'Lopburi Youth Cup', location: 'Lopburi', start_date: bangkokDay(10), end_date: null, fee: 0, status: 'open' }]
+    const html = await render(ProfilePage as never, 'en')
+    const beforeDeletion = text(withoutSwitch(html.slice(0, html.indexOf('ลบข้อมูลของฉัน'))))
+    expect(beforeDeletion).toContain("Today's missions")
+    expect(beforeDeletion).toContain('−8 from the last match')
+    expect(beforeDeletion).toContain('Coach assessed ·')
+    expect(beforeDeletion).not.toMatch(/[ก-ฺเ-๛]/)
   })
 })

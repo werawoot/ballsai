@@ -389,3 +389,44 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .pf-savebar { -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3); background: rgba(255,255,255,.9); border: 1px solid var(--gl-card-border); border-radius: 999px; box-shadow: 0 12px 30px rgba(11,18,32,.18); padding-left: 20px; }
 .pf.gl .pf-savebar.is-dirty span::before { background: var(--gl-green); }
 @media (min-width: 900px) { .pf.gl .pf-edit-head { padding-left: 24px; padding-right: 24px; } }
+
+/* The athlete home of the DOENSAI dashboard design (owner, 2 Nov 2026): today's missions, the
+   week's goal, the last match's change and the coach-assessed skills. Light glass (ADR-014). */
+.pf.gl .pf-mission-list { display: grid; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.pf.gl .pf-mission-list a { align-items: center; background: var(--gl-canvas, #F3F6F9); border: 1px solid var(--pf-line); border-radius: 14px; color: inherit; display: flex; gap: 12px; min-height: 52px; padding: 10px 12px; text-decoration: none; }
+.pf.gl .pf-mission-list a:hover { border-color: var(--gl-green-ink, #0F7A3F); }
+.pf.gl .pf-mission-check { align-items: center; border: 2px solid #94a3b8; border-radius: 8px; color: var(--gl-navy, #0B1220); display: inline-flex; flex: none; height: 24px; justify-content: center; width: 24px; }
+.pf.gl .pf-mission-list li.is-done .pf-mission-check { background: var(--gl-green, #16E06E); border-color: var(--gl-green, #16E06E); }
+.pf.gl .pf-mission-list li.is-done b { color: var(--pf-muted); }
+.pf.gl .pf-mission-body { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
+.pf.gl .pf-mission-body b { font-size: 15px; font-weight: 700; }
+.pf.gl .pf-mission-body small { color: var(--pf-muted); font-size: 12.5px; }
+.pf.gl .pf-mission-list svg { color: var(--pf-muted); flex: none; }
+
+.pf.gl .pf-goal { align-items: center; display: flex; gap: 12px; margin: 12px 0; }
+.pf.gl .pf-goal > div { display: grid; gap: 1px; }
+.pf.gl .pf-goal b { font-size: 16px; }
+.pf.gl .pf-goal small { color: var(--pf-muted, #5b6472); font-size: 12px; }
+.pf.gl .pf-goal-track { fill: none; stroke: #e2e8f0; stroke-width: 6; }
+.pf.gl .pf-goal-fill { fill: none; stroke: var(--gl-green, #16E06E); stroke-linecap: round; stroke-width: 6; }
+
+.pf.gl .pf-change { font-size: 13px; font-weight: 700; margin: 4px 0 0; }
+.pf.gl .pf-change.is-up { color: var(--gl-green-ink, #0F7A3F); }
+.pf.gl .pf-change.is-down { color: var(--gl-error, #DC2626); }
+
+.pf.gl .pf-skills { border-top: 1px solid var(--pf-line); display: grid; justify-items: center; margin-top: 18px; padding-top: 16px; }
+.pf.gl .pf-skills.is-empty { justify-items: start; }
+.pf.gl .pf-skills-title { font-size: 15px; justify-self: start; }
+.pf.gl .pf-skills svg { margin-top: 8px; max-width: 100%; overflow: visible; }
+.pf.gl .pf-radar-ring { fill: none; stroke: #e2e8f0; stroke-width: 1; }
+.pf.gl .pf-radar-axis { stroke: #e2e8f0; stroke-width: 1; }
+.pf.gl .pf-radar-shape { fill: rgba(22, 224, 110, .28); stroke: var(--gl-green-ink, #0F7A3F); stroke-linejoin: round; stroke-width: 2; }
+.pf.gl .pf-radar-label { fill: var(--pf-muted, #5b6472); font-size: 10px; }
+.pf.gl .pf-radar-value { fill: var(--gl-navy, #0B1220); font-size: 12px; font-weight: 700; }
+
+.pf.gl .pf-open-row { align-items: center; color: inherit; display: flex; gap: 12px; justify-content: space-between; min-height: 44px; text-decoration: none; width: 100%; }
+.pf.gl .pf-open-row:hover b { text-decoration: underline; }
+/* The goal ring sits on the dark training card. */
+.pf.gl .tr-today .pf-goal b { color: #fff; }
+.pf.gl .tr-today .pf-goal small { color: rgba(255, 255, 255, .78); }
+.pf.gl .tr-today .pf-goal-track { stroke: rgba(255, 255, 255, .18); }
