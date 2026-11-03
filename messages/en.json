@@ -291,6 +291,15 @@
       "red": "Red",
       "gold": "Gold",
       "ice": "Ice"
+    },
+    "summary": {
+      "level": "Lv.{level}",
+      "xp": "{xp} / {target} XP",
+      "noXp": "XP starts with the first result an organizer confirms",
+      "statsTitle": "Season {season} stats",
+      "statsNote": "From results an organizer confirmed only",
+      "noStats": "No confirmed result this season yet",
+      "history": "See my match history"
     }
   },
   "profileShare": {

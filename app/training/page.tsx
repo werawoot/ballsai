@@ -107,12 +107,12 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
               <b>{t('my.rest')}</b><small>{t('my.restBody')}</small>
               {(() => { const next = view.programs.map(item => item.progress.next).filter((day): day is string => Boolean(day)).sort()[0]; return next ? <small>{t('my.next', { date: tournamentDateRange(locale, next) })}</small> : null })()}
             </div> : view.today.map(item => <article key={item.enrollment.id} className={`tg-session${item.done ? ' is-done' : ''}`}>
-              <header>
+              <div className="tg-session-head">
                 <Link href={`/training/${item.program.id}`} className="tg-session-title"><b>{say(item.program.title, locale)}</b><small>{t('minutes', { count: item.program.minutes })}</small></Link>
                 {item.done
                   ? <span className="tg-session-done"><Check size={16} strokeWidth={3} aria-hidden="true" />{t('my.done')}</span>
                   : <Link href={`/training/${item.program.id}/session`} className={`tg-session-start${item === firstOpen ? ' is-primary' : ''}`}>{t('my.start')}</Link>}
-              </header>
+              </div>
               <ol className="tg-timeline">
                 {item.program.drills.map(drill => <li key={drill.id}>
                   <Link href={`/training/drills/${drill.id}`}>

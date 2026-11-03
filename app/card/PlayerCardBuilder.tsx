@@ -1,6 +1,6 @@
 'use client'
 
-import { type ChangeEvent, type PointerEvent, useEffect, useRef, useState } from 'react'
+import { type ChangeEvent, type PointerEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
@@ -36,14 +36,16 @@ const POSITIONS = ['FW', 'MF', 'DF', 'GK']
 const THEMES: CardTheme[] = ['red', 'gold', 'ice']
 const MAX_PHOTO = 8 * 1024 * 1024
 
-export default function PlayerCardBuilder({ player, publicProfilePath, userId, seasonLabel = '' }: { player: Player; publicProfilePath: string | null; userId: string; seasonLabel?: string }) {
+// `summary` sits under the card (second reference, owner 2 Nov 2026): the level and this season's verified numbers.
+export default function PlayerCardBuilder({ player, publicProfilePath, userId, seasonLabel = '', summary }: { player: Player; publicProfilePath: string | null; userId: string; seasonLabel?: string; summary?: ReactNode }) {
   const router = useRouter()
   const t = useTranslations('card')
   const locale = useLocale()
   const [tab, setTab] = useState<Tab>(player.imageUrl ? 'style' : 'photo')
   // Until there is a name the page has one thing to do, so the tabs and the share bar wait for it.
   const [naming, setNaming] = useState(false)
-  const [theme, setTheme] = useState<CardTheme>('red')
+  // Gold first, as in the second reference (owner, 2 Nov 2026); the athlete can still pick another.
+  const [theme, setTheme] = useState<CardTheme>('gold')
   const [format, setFormat] = useState<CardFormat>('story')
   const [flipped, setFlipped] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
@@ -333,6 +335,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
         <div className="pc-flipper">{front}{back}</div>
       </div>
       <button type="button" className="pc-flip-button" onClick={() => setFlipped(value => !value)} aria-pressed={flipped}><RotateCw size={15} />{flipped ? t('flipBackHint') : t('flipHint')}</button>
+      {summary}
       {minimal && <>
         <button type="button" className="pc-name-cta" onClick={startNaming}><PencilLine size={18} aria-hidden="true" />{t('enterName')}</button>
         <p className="pc-start-hint">{t('startHint')}</p>
