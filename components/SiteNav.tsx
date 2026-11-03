@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Bell, ClipboardCheck, ClipboardList, Dumbbell, House, IdCard, LayoutDashboard, Search, Shield, Trophy, User, Users, type LucideIcon } from 'lucide-react'
+import { Bell, CircleUserRound, ClipboardCheck, ClipboardList, Dumbbell, House, IdCard, LayoutDashboard, Search, Shield, Trophy, User, Users, type LucideIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { fetchUnreadNotificationCount } from '@/lib/notification-count'
 import { unreadBadge } from '@/lib/notification-unread'
@@ -40,6 +40,8 @@ const ICONS: Record<NavItemId, LucideIcon> = {
   plan: LayoutDashboard,
   manage: Trophy,
   results: ClipboardCheck,
+  myHome: House,
+  me: CircleUserRound,
 }
 
 // The role seen last in this tab, with the account it belongs to (lib/site-nav rolePlan).
@@ -160,7 +162,8 @@ export default function SiteNav() {
         const Icon = ICONS[item.id]
         const isActive = item.id === active
         const isPending = loading && pending?.href === item.href
-        const itemBadge = item.id === 'notifications' ? badge : null
+        // Unread notifications: on their tab, or on the athlete's home, which holds the bell.
+        const itemBadge = item.id === 'notifications' || item.id === 'myHome' ? badge : null
         return <Link
           key={item.id}
           href={item.href}

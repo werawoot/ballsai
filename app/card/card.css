@@ -2,8 +2,9 @@
    in three tabs below it (beside it on a wide screen), one primary action shares it.
    Sizes inside the card use cqw of the card itself, so the card scales as one piece. */
 
-.card-page { --pc-bg: #07090d; --pc-panel: #10141c; --pc-line: rgba(255,255,255,.1); --pc-mute: rgba(255,255,255,.6); --pc-red: #CC0001; background: var(--pc-bg); }
-body:has(.card-page) { background: #07090d; }
+/* Navy and green (ADR-014 brand colours, second reference, owner 2 Nov 2026) in place of black and red. */
+.card-page { --pc-bg: #0B1220; --pc-panel: #111B30; --pc-line: rgba(255,255,255,.1); --pc-mute: rgba(255,255,255,.66); --pc-accent: #16E06E; background: var(--pc-bg); }
+body:has(.card-page) { background: #0B1220; }
 .card-page .card-page-header { border-bottom: 1px solid var(--pc-line); min-height: 60px; }
 .card-page .card-page-logo { font-size: 19px; gap: 9px; letter-spacing: 1.2px; }
 .card-page .card-page-header > div { display: flex; gap: 8px; }
@@ -34,7 +35,7 @@ body:has(.card-page) { background: #07090d; }
 .pc-ovr span { display: block; font: 700 4.2cqw var(--font-barlow), sans-serif; letter-spacing: .6cqw; margin-top: 1.5cqw; }
 .pc-ovr.is-empty b { font-size: 14cqw; line-height: 1; }
 .pc-ovr small { display: block; font: 700 2.7cqw var(--font-barlow), sans-serif; letter-spacing: .4cqw; margin-top: 2cqw; opacity: .75; }
-.pc-brand { background: #fff; color: var(--pc-red); display: grid; font: 800 4.4cqw var(--font-oswald), sans-serif; height: 8.3cqw; place-items: center; position: absolute; right: 4.4cqw; top: 5cqw; transform: skew(-10deg); width: 8.3cqw; z-index: 2; }
+.pc-brand { background: #fff; color: var(--pc-accent); display: grid; font: 800 4.4cqw var(--font-oswald), sans-serif; height: 8.3cqw; place-items: center; position: absolute; right: 4.4cqw; top: 5cqw; transform: skew(-10deg); width: 8.3cqw; z-index: 2; }
 .pc-face.is-gold .pc-brand { color: #8a6112; }
 .pc-face.is-ice .pc-brand { color: #1d5a86; }
 .pc-info { bottom: 0; left: 0; padding: 0 5cqw 4.2cqw; position: absolute; right: 0; z-index: 2; }
@@ -118,7 +119,7 @@ body:has(.card-page) { background: #07090d; }
 .pc-spin { animation: pc-spin 1s linear infinite; }
 @keyframes pc-spin { to { transform: rotate(360deg); } }
 .pc-cta { flex-wrap: wrap; background: var(--pc-panel); bottom: calc(70px + env(safe-area-inset-bottom)); display: flex; gap: 10px; margin: auto -16px 0; padding: 10px 16px 14px; position: sticky; z-index: 5; }
-.pc-primary { align-items: center; background: var(--pc-red); border: 0; border-radius: 16px; box-shadow: 0 10px 24px rgba(204,0,1,.35); color: #fff; cursor: pointer; display: flex; flex: 1; font: 800 17px var(--font-sarabun), sans-serif; gap: 9px; justify-content: center; min-height: 56px; transition: transform .15s, background .2s; }
+.pc-primary { align-items: center; background: var(--pc-accent); border: 0; border-radius: 16px; box-shadow: 0 10px 24px rgba(204,0,1,.35); color: #fff; cursor: pointer; display: flex; flex: 1; font: 800 17px var(--font-sarabun), sans-serif; gap: 9px; justify-content: center; min-height: 56px; transition: transform .15s, background .2s; }
 .pc-primary:hover { background: #e00001; }
 .pc-primary:active { transform: scale(.98); }
 .pc-secondary { background: rgba(255,255,255,.08); border: 0; border-radius: 16px; color: #fff; cursor: pointer; display: grid; flex: 0 0 56px; min-height: 56px; place-items: center; }
@@ -185,3 +186,28 @@ body:has(.card-page) { background: #07090d; }
 .pc-start-hint { color: var(--pc-mute); font-size: 13px; line-height: 1.5; margin: 10px 0 0; text-align: center; }
 .pc-name-cta:focus-visible { outline: 3px solid var(--ui-gold); outline-offset: 2px; }
 .pc-cta .pc-savebar.is-dirty { flex: 1 1 100%; margin-top: 0; }
+
+/* Navy and green actions (second reference, owner 2 Nov 2026). */
+.card-page .pc-primary, .card-page .pc-name-cta { background: #16E06E; box-shadow: 0 10px 24px rgba(22,224,110,.32); color: #0B1220; }
+.card-page .pc-primary:hover { background: #12C961; }
+.card-page .pc-stage::before { background: radial-gradient(circle, rgba(22,224,110,.32), rgba(22,224,110,0) 66%); }
+.card-page .pc-option em { background: rgba(22,224,110,.16); color: #16E06E; }
+.card-page .pc-brand { color: #0B1220; }
+
+/* Under the card: the level and this season's verified numbers. */
+.card-page .pc-summary { display: grid; gap: 12px; max-width: 420px; width: 100%; }
+.card-page .pc-level { background: rgba(255,255,255,.06); border: 1px solid var(--pc-line); border-radius: 16px; padding: 12px 14px; }
+.card-page .pc-level p, .card-page .pc-season p { color: var(--pc-mute); font-size: 13px; margin: 0; }
+.card-page .pc-level-row { align-items: baseline; display: flex; justify-content: space-between; }
+.card-page .pc-level-row b { color: #16E06E; font-size: 17px; }
+.card-page .pc-level-row span { color: var(--pc-mute); font-size: 13px; }
+.card-page .pc-level-bar { background: rgba(255,255,255,.14); border-radius: 99px; height: 8px; margin-top: 8px; overflow: hidden; }
+.card-page .pc-level-bar i { background: #16E06E; border-radius: 99px; display: block; height: 100%; }
+.card-page .pc-season { background: #fff; border-radius: 18px; color: #0B1220; padding: 14px; }
+.card-page .pc-season h2 { font: 700 16px var(--font-sarabun), sans-serif; margin: 0 0 10px; }
+.card-page .pc-season p { color: #475569; }
+.card-page .pc-season dl { display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 10px; text-align: center; }
+.card-page .pc-season dl div { background: #F3F6F9; border-radius: 12px; padding: 10px 2px; }
+.card-page .pc-season dd { font: 800 22px var(--font-sarabun), sans-serif; margin: 0; }
+.card-page .pc-season dt { color: #475569; font-size: 12px; }
+.card-page .pc-season-note a { color: #0F7A3F; font-weight: 700; }

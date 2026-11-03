@@ -34,7 +34,9 @@
       "kids": "My children",
       "plan": "Match plan",
       "manage": "Manage",
-      "results": "Results"
+      "results": "Results",
+      "myHome": "Home",
+      "me": "Profile"
     }
   },
   "tournaments": {
@@ -289,6 +291,15 @@
       "red": "Red",
       "gold": "Gold",
       "ice": "Ice"
+    },
+    "summary": {
+      "level": "Lv.{level}",
+      "xp": "{xp} / {target} XP",
+      "noXp": "XP starts with the first result an organizer confirms",
+      "statsTitle": "Season {season} stats",
+      "statsNote": "From results an organizer confirmed only",
+      "noStats": "No confirmed result this season yet",
+      "history": "See my match history"
     }
   },
   "profileShare": {
@@ -1213,14 +1224,16 @@
       "compact": "Profile {done} of {total} steps done · next: {next}"
     },
     "card": {
-      "title": "Player card",
+      "title": "My card",
       "power": "Power Rating",
       "source": "Calculated from match results recorded and confirmed by organizers",
       "starterTitle": "Starter card",
       "starterBody": "No Power Rating yet. It comes only from match results recorded and confirmed by organizers. Play your first tournament to start.",
       "build": "Build and share card",
       "findTournament": "Find a tournament",
-      "myRanking": "See my ranking"
+      "myRanking": "See my ranking",
+      "powerLine": "Power Rating {power}",
+      "starterShort": "Starter card · ratings come only from results an organizer confirmed"
     },
     "teams": {
       "title": "My teams",
@@ -1302,6 +1315,42 @@
       "text": "Coach, please invite me to the team on DOENSAI with this email: {email}",
       "copied": "Copied. Send it to your coach.",
       "failed": "Could not copy. Try again."
+    },
+    "lastMatch": "{change} from the last match",
+    "skills": {
+      "title": "Skills assessed by a coach",
+      "coach_verified": "Coach assessed · {date}",
+      "performance_verified": "From verified performance · {date}",
+      "empty": "No assessment yet. A coach of your team can assess your skills; once you accept, they show here.",
+      "chartLabel": "Skill chart: {list}"
+    },
+    "home": {
+      "hello": "Hello",
+      "notifications": "Notifications",
+      "unread": "{count} unread",
+      "profile": "My profile",
+      "level": "Lv.{level}",
+      "xp": "{xp} / {target} XP",
+      "tagline": "More Than a Game"
+    },
+    "today": {
+      "title": "Today's programme",
+      "rest": "Rest day today",
+      "done": "Trained today",
+      "start": "Start training",
+      "meta": "{minutes} min · week {week} of {weeks}"
+    },
+    "week": {
+      "title": "This week",
+      "sessionsUnit": "sessions",
+      "minutes": "Minutes",
+      "skills": "Skills",
+      "xp": "XP from matches",
+      "note": "Sessions and minutes count what you log yourself · skills are those of the programmes you trained this week · XP comes only from results an organizer confirmed"
+    },
+    "teamLine": {
+      "invites": "{count, plural, one {# team invitation} other {# team invitations}} waiting for you",
+      "none": "No team yet · how to get a coach to invite you"
     }
   },
   "profileEdit": {
@@ -1881,7 +1930,31 @@
     },
     "programsTitle": "Programmes for {band}",
     "skillDrillsTitle": "Drills by skill",
-    "skillDrillsCount": "{count} drills"
+    "skillDrillsCount": "{count} drills",
+    "tabs": {
+      "label": "Training views",
+      "mine": "My schedule",
+      "programs": "Programmes",
+      "skills": "By skill"
+    },
+    "my": {
+      "weekLabel": "This week",
+      "today": "Today · {date}",
+      "progress": "{done}/{planned} done",
+      "rest": "Rest day today",
+      "restBody": "Rest is part of training",
+      "next": "Next session {date}",
+      "start": "Start",
+      "done": "Done",
+      "add": "Add a training programme",
+      "myPrograms": "My programmes",
+      "programLine": "{done}/{total} sessions · week {week} of {weeks}",
+      "dayDone": "trained",
+      "dayPlanned": "training day",
+      "dayRest": "rest day",
+      "drillMeta": "{name} · {dose}",
+      "selfNote": "Done counts what you mark as finished yourself, per programme per day"
+    }
   },
   "guardianSteps": {
     "title": "Link with your child in 3 steps",
@@ -2977,5 +3050,29 @@
     "savedText": "Only you and admins can see it. You can open registration once you are approved as an organizer.",
     "badge": "Draft (not open)",
     "editNote": "Draft: only you and admins can see it. You can open registration once you are approved as an organizer."
+  },
+  "mePage": {
+    "eyebrow": "Profile",
+    "stats": {
+      "title": "Season {season}",
+      "note": "From results an organizer confirmed only",
+      "matches": "Matches",
+      "goals": "Goals",
+      "assists": "Assists",
+      "mvps": "MVP",
+      "none": "No confirmed result this season yet. The numbers start after the first match an organizer confirms."
+    },
+    "menu": {
+      "title": "Menu",
+      "unread": "{count} unread",
+      "notifications": {
+        "label": "Notifications",
+        "hint": "Team news, results and invitations"
+      },
+      "training": {
+        "label": "Training schedule",
+        "hint": "My programme and training days"
+      }
+    }
   }
 }

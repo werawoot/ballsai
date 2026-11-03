@@ -2,20 +2,18 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import CardGuide from '@/components/CardGuide'
 import { getTranslations } from 'next-intl/server'
 import {
-  BadgeCheck, Building2, Camera, Check, ChevronRight, Compass, Crown, Eye, EyeOff, Handshake, LayoutDashboard, Lock, LogOut,
-  IdCard, MapPin, PencilLine, Route, Shield, ShieldCheck, Star, Trophy, UsersRound, Zap, type LucideIcon,
+  Building2, Camera, Check, ChevronRight, Compass, Handshake, LayoutDashboard, Lock, LogOut,
+  IdCard, Route, ShieldCheck, Trophy, UsersRound, type LucideIcon,
 } from 'lucide-react'
-import PublicProfileShare from './PublicProfileShare'
 import DeleteMyDataSection from './DeleteMyDataSection'
 import GuardianInviteButton from './GuardianInviteButton'
-import TeamAskButton from './TeamAskButton'
 import TrainingCard from './TrainingCard'
+import { HomeHero, MyCardPanel, WeekProgress } from './AthleteHome'
 import PageHeader from '@/components/PageHeader'
 import RoleHomeCard, { RoleLoadFailed } from '@/components/RoleHomeCard'
-import { calculateLevel, identityTierKey, levelProgress } from '@/lib/digital-identity'
+import { calculateLevel, levelProgress } from '@/lib/digital-identity'
 import { PROFILE_MENU } from '@/lib/site-nav'
 import { shownAge, thaiDate } from '@/lib/athlete-private'
 import { profileReadiness, type ReadinessItem } from '@/lib/profile-readiness'
@@ -24,6 +22,10 @@ import { fetchProfileHome } from '@/lib/profile-home'
 import { trainingHasPrimary, trainingHome } from '@/lib/training/home'
 import { homeKind, type HomeKind } from '@/lib/role-home'
 import { loadRoleHome } from '@/lib/role-home-data'
+import { bangkokWeekStart, lastMatchChange, weekTotals } from '@/lib/athlete-home'
+import { trainingToday } from '@/lib/training/today'
+import { fetchUnreadNotificationCount } from '@/lib/notification-count'
+import { fetchAthleteHomeExtras } from '@/lib/athlete-home-data'
 import type messagesTh from '@/messages/th.json'
 import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
 import '../glass.css'
@@ -45,12 +47,7 @@ type AthleteProfile = {
   verification_level: 'self' | 'coach_verified' | 'performance_verified'
 }
 type PlayerRank = { id: string; player_name: string; position: string; ovr: number; pts: number }
-type Membership = {
-  status: 'pending' | 'accepted' | 'declined' | 'removed'
-  teams: { id: string; name: string; status: string; tournaments: { name: string | null; location: string | null }[] | { name: string | null; location: string | null } | null } | null
-}
 type ShortcutKey = keyof (typeof messagesTh)['profileHome']['shortcuts']['items']
-type TeamStatus = keyof (typeof messagesTh)['profileHome']['teams']['status']
 type Shortcut = { key: ShortcutKey; href: string; icon: LucideIcon }
 
 const MENU_KEYS: Record<(typeof PROFILE_MENU)[number]['href'], { key: ShortcutKey; icon: LucideIcon }> = {
@@ -58,12 +55,6 @@ const MENU_KEYS: Record<(typeof PROFILE_MENU)[number]['href'], { key: ShortcutKe
   '/sponsorships': { key: 'sponsorships', icon: Handshake },
   '/team-members': { key: 'teamMembers', icon: UsersRound },
   '/career': { key: 'career', icon: Route },
-}
-
-function PositionMark({ position, size }: { position: string; size: number }) {
-  if (position === 'GK' || position === 'DF') return <Shield size={size} strokeWidth={1.5} />
-  if (position === 'MF') return <Zap size={size} strokeWidth={1.5} />
-  return <Star size={size} strokeWidth={1.5} />
 }
 
 const KIND_ICONS: Record<HomeKind, LucideIcon> = { athlete: IdCard, guardian: UsersRound, coach: Compass, organizer: Trophy, venue: Building2, sponsor: Handshake }
@@ -91,15 +82,20 @@ export default async function ProfilePage() {
   // A guardian, coach, organizer or venue owner is not shown the athlete's own parts; someone
   // who coaches or runs a venue may also play, so their card stays one tap away.
   const hasAthleteProfile = home.athlete ? 1 : 0
-  const [loaded, avatarUrls] = await Promise.all([
+  const homeRank = (athleteHome ? home.rank : null) as { id: string } | null
+  const [loaded, avatarUrls, extras, unread] = await Promise.all([
     roleKind ? loadRoleHome(supabase, roleKind, user.id) : null,
     // The photo is a private object (T51); the owner may always sign their own.
     signAvatarUrls(supabase, [athleteHome ? (home.athlete?.profile_image_url as string | null | undefined) : null]),
+    // The card's skills, the last match's change and this week's XP: small indexed reads.
+    athleteHome && home.athlete ? fetchAthleteHomeExtras(supabase, user.id, homeRank?.id ?? null, bangkokWeekStart(today)) : null,
+    // The bell on the athlete's home: a head count, no notification row is read.
+    athleteHome ? fetchUnreadNotificationCount(supabase, user.id) : null,
   ])
   const athlete = (athleteHome ? home.athlete : null) as AthleteProfile | null
+  const teamInvites = athleteHome ? home.memberships.filter(membership => membership.status === 'pending').length : 0
+  const inTeam = athleteHome && home.memberships.some(membership => membership.status === 'accepted')
   const rank = (athleteHome ? home.rank : null) as PlayerRank | null
-  const memberships = (athleteHome ? home.memberships : []) as unknown as Membership[]
-  const pendingTeamInvites = memberships.filter(membership => membership.status === 'pending').length
   const athletePrivate = athlete ? home.private : null
   const training = athlete ? home.training : null
   const progressRow = athleteHome ? home.progress : null
@@ -130,8 +126,10 @@ export default async function ProfilePage() {
   // What the training card asks for, and so whether it holds this page's one primary button.
   const trainingCard = trainingHome(training ?? { available: false, enrollments: [], checkins: {} }, today, age)
   const trainingPrimary = trainingHasPrimary(trainingCard)
+  // This week across every active programme, as /training counts it (the athlete's own check-ins, SQL63).
+  const goal = training?.available && training.enrollments.length > 0 ? weekTotals(trainingToday(training, today)) : null
+  const matchChange = lastMatchChange(extras?.rating ?? null)
   const name = athlete?.display_name?.trim() || profile?.full_name?.trim() || (athleteHome ? t('noName') : user.email ?? t('noName'))
-  const publicPath = `/players/${rank?.id || user.id}`
   const rt = await getTranslations('roleHome')
   // The organizer dashboard is for whoever an admin made an organizer, and only them: a coach
   // is never offered a page that tells them they have no access.
@@ -160,42 +158,14 @@ export default async function ProfilePage() {
                 <div className="pf-sub">{rt('as', { role: rt(`roles.${kind}`) })}</div>
               </div>
             </div>
-          </section> : <section className="pf-hero" aria-labelledby="pf-name">
-            <div className="pf-id">
-              <div className="pf-avatar" style={avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : undefined} aria-hidden="true">
-                {!avatarUrl && initials(name)}
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <h1 id="pf-name" className="pf-name">{name}</h1>
-                {athlete && <div className="pf-sub">{[athlete.current_team, athlete.province].filter(Boolean).join(' · ') || ' '}</div>}
-              </div>
-            </div>
-            {athlete && <div className="pf-chips">
-              {athlete.position && <span className="pf-chip is-gold">{athlete.position}</span>}
-              {age !== null && <span className="pf-chip">{t('age', { age })}</span>}
-              <span className={`pf-chip${athlete.verification_level !== 'self' ? ' is-green' : ''}`}>
-                {athlete.verification_level !== 'self' && <BadgeCheck size={13} aria-hidden="true" />}{t(`verification.${athlete.verification_level}`)}
-              </span>
-              <span className="pf-chip">{athlete.is_public ? <Eye size={13} aria-hidden="true" /> : <EyeOff size={13} aria-hidden="true" />}{t(athlete.is_public ? 'visibility.public' : 'visibility.private')}</span>
-            </div>}
-            {/* Level and points mean nothing before the first point, so they stay out of sight until then. */}
-            {athlete && xp > 0 && <div className="pf-level">
-              <div className="pf-level-num"><small>{t('levelLabel')}</small><b>{String(level).padStart(2, '0')}</b></div>
-              <div className="pf-level-body">
-                <strong>{t(`tiers.${identityTierKey(level)}`)}</strong>
-                <div className="pf-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(levelInfo.percentage)} aria-label={t('level', { level })}><i style={{ width: `${levelInfo.percentage}%` }} /></div>
-                <small>{t('xpToNext', { xp: xp.toLocaleString(), remaining: levelInfo.remaining.toLocaleString(), next: level + 1 })}</small>
-              </div>
-            </div>}
-            {athlete && <CardGuide />}
-            <div className="pf-actions">
-              {/* Editing is secondary: the one primary button on this page is the next thing to do. */}
-              <Link href="/profile/edit" className="pf-btn pf-btn-ghost"><PencilLine size={17} aria-hidden="true" />{athlete ? t('actions.edit') : t('noAthlete.cta')}</Link>
-              {athlete?.is_public
-                ? <Link href={publicPath} className="pf-btn pf-btn-ghost"><Eye size={17} aria-hidden="true" />{t('actions.viewPublic')}</Link>
-                : athlete && <Link href="/career" className="pf-btn pf-btn-ghost"><Route size={17} aria-hidden="true" />{t('actions.passport')}</Link>}
-            </div>
-          </section>}
+          </section> : <HomeHero
+            name={name}
+            line={athlete ? [age !== null ? t('age', { age }) : null, athlete.current_team, athlete.province].filter(Boolean).join(' · ') : ''}
+            avatarUrl={avatarUrl}
+            initials={initials(name)}
+            unread={unread ?? null}
+            level={athlete && xp > 0 ? { level, xp, target: levelInfo.nextFloor, percent: levelInfo.percentage } : null}
+          />}
         </aside>
 
         <div className="pf-main">
@@ -207,10 +177,29 @@ export default async function ProfilePage() {
             <Link href="/profile/edit" className="pf-btn pf-btn-primary"><Camera size={17} aria-hidden="true" />{t('noAthlete.cta')}</Link>
           </section>}
 
-          {/* Training comes first (owner, report 9): today's session, or the programme to pick for their age. */}
+          {/* The card, then today's programme and the week (second reference, owner 2 Nov 2026). */}
+          {athlete && <MyCardPanel
+            name={name}
+            team={athlete.current_team ?? null}
+            position={rank?.position || athlete.position || null}
+            avatarUrl={avatarUrl}
+            initials={initials(name)}
+            ovr={rank?.ovr ?? null}
+            skills={extras?.cardSkills ?? null}
+            power={rank ? rank.pts : null}
+            change={matchChange}
+            ranked={Boolean(rank)}
+          />}
+          {/* Today's session, or the programme to pick for their age. */}
           <TrainingCard home={trainingCard} age={age} />
+          {/* The team is one clear next step, not a wall (AGENTS.md product rule): an invitation
+              waiting, or how to get into a team, as one line; the list itself is on /me. */}
+          {athlete && (teamInvites > 0
+            ? <Link href="/team-members" className="pf-card pf-ready-line pf-team-line"><span>{t('teamLine.invites', { count: teamInvites })}</span><ChevronRight size={17} aria-hidden="true" /></Link>
+            : !inTeam && <Link href="/me#pf-team-ask" className="pf-card pf-ready-line pf-team-line"><span>{t('teamLine.none')}</span><ChevronRight size={17} aria-hidden="true" /></Link>)}
+          {trainingCard.state === 'enrolled' && <WeekProgress goal={goal} xp={extras ? extras.weekXp : null} />}
 
-          {readiness && (athlete?.is_public && readiness.next ? <Link href={readiness.next.href} className="pf-card pf-ready-line">
+          {readiness && (athlete?.is_public && readiness.next ? <Link href={readiness.next.href} className="pf-card pf-ready-line" id="pf-readiness">
             <span>{t('readiness.compact', { done: readiness.done, total: readiness.total, next: t(`readiness.items.${readiness.next.key}.title`) })}</span>
             <ChevronRight size={17} aria-hidden="true" />
           </Link> : readiness.next || !athlete?.is_public ? <section className="pf-card pf-next-card" aria-labelledby="pf-readiness">
@@ -247,71 +236,12 @@ export default async function ProfilePage() {
                 })}
               </ol>
             </details>
-          </section> : <section className="pf-card" aria-labelledby="pf-readiness">
-            <div className="pf-card-head"><h2 id="pf-readiness" className="pf-card-title">{t('readiness.titleDone')}</h2></div>
-            <p className="pf-ready"><BadgeCheck size={20} aria-hidden="true" />{t('readiness.doneNote')}</p>
-          </section>)}
-
-          {athlete?.is_public && <PublicProfileShare profilePath={publicPath} isPublic />}
-
-          {athlete && <section className="pf-card" aria-labelledby="pf-card">
-            <div className="pf-card-head"><h2 id="pf-card" className="pf-card-title">{t('card.title')}</h2></div>
-            <div className="pf-player">
-              {rank ? <div className="pf-fut">
-                <div className="pf-fut-top"><b>{rank.ovr}</b><span>{rank.position}</span></div>
-                <div className="pf-fut-mark"><PositionMark position={rank.position} size={46} /></div>
-                <div className="pf-fut-name">{rank.player_name}</div>
-              </div> : <div className="pf-fut is-starter">
-                <div className="pf-fut-top"><b>—</b><span>{athlete.position || 'FW'}</span></div>
-                <div className="pf-fut-mark"><PositionMark position={athlete.position || 'FW'} size={46} /></div>
-                <div className="pf-fut-name">{name}</div>
-              </div>}
-              <div style={{ minWidth: 0 }}>
-                {rank
-                  ? <><div className="pf-power">{rank.pts.toLocaleString()}<small>{t('card.power')}</small></div><p className="pf-note">{t('card.source')}</p></>
-                  : <><div className="pf-power" style={{ fontSize: 22 }}>{t('card.starterTitle')}</div><p className="pf-note">{t('card.starterBody')}</p></>}
-                <div className="pf-row">
-                  <Link href="/card" className="pf-btn pf-btn-line pf-btn-sm">{t('card.build')}</Link>
-                  {rank && <Link href="/ranking" className="pf-btn pf-btn-line pf-btn-sm">{t('card.myRanking')}</Link>}
-                  {!rank && <Link href="/tournaments" className="pf-btn pf-btn-line pf-btn-sm"><Crown size={15} aria-hidden="true" />{t('card.findTournament')}</Link>}
-                </div>
-              </div>
-            </div>
-          </section>}
-
-          {memberships.length > 0 && <section className="pf-card" aria-labelledby="pf-teams">
-            <div className="pf-card-head">
-              <h2 id="pf-teams" className="pf-card-title">{t('teams.title')}</h2>
-              <Link href="/team-members" className="pf-card-meta tap-44" style={{ textDecoration: 'none' }}>{pendingTeamInvites > 0 ? t('teams.viewAll') : t('teams.viewTeams')}</Link>
-            </div>
-            <ul className="pf-list">
-              {memberships.map((membership, index) => {
-                const team = membership.teams
-                const tournament = Array.isArray(team?.tournaments) ? team?.tournaments[0] : team?.tournaments
-                const accepted = membership.status === 'accepted'
-                const [status, tone]: [TeamStatus, string] = !accepted
-                  ? membership.status === 'pending' ? ['invited', 'is-wait'] : ['declined', 'is-muted']
-                  : team?.status === 'confirmed' ? ['confirmed', 'is-ok'] : team?.status === 'pending' ? ['teamPending', 'is-wait'] : ['forming', 'is-muted']
-                return <li key={`${team?.id ?? 'team'}-${index}`}>
-                  <div className="pf-list-main">
-                    <b>{team?.name ?? t('teams.unnamed')}</b>
-                    <span>{tournament?.name ?? t('teams.tournament')}{tournament?.location ? <> · <MapPin size={11} aria-hidden="true" style={{ verticalAlign: '-1px' }} /> {tournament.location}</> : null}</span>
-                  </div>
-                  <span className={`pf-badge ${tone}`}>{t(`teams.status.${status}`)}</span>
-                </li>
-              })}
-            </ul>
-          </section>}
-
-          {/* No team yet: the coach's invitation is the step after, not a wall (AGENTS.md product rule). */}
-          {athlete && memberships.length === 0 && <section className="pf-card pf-team-ask" aria-labelledby="pf-team-ask">
-            <h2 id="pf-team-ask" className="pf-card-title">{t('teamAsk.title')}</h2>
-            <p className="pf-card-desc">{t('teamAsk.body')}</p>
-            <TeamAskButton email={user.email ?? ''} />
-          </section>}
+          </section> : null)}
 
           </>}
 
+          {/* An athlete reaches these from /me, their profile tab; every other role keeps them here. */}
+          {!athleteHome && <>
           <section aria-labelledby="pf-shortcuts">
             <h2 id="pf-shortcuts" className="pf-card-title" style={{ marginBottom: 14 }}>{t('shortcuts.title')}</h2>
             <div className="pf-links">
@@ -337,6 +267,7 @@ export default async function ProfilePage() {
           </section>
 
           <DeleteMyDataSection />
+          </>}
         </div>
       </div>
     </main>

@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { robotsHeader } from '@/lib/seo'
 
-const PROTECTED_PREFIXES = ['/dashboard', '/admin', '/profile', '/organizer-request']
+const PROTECTED_PREFIXES = ['/dashboard', '/admin', '/profile', '/me', '/organizer-request']
 
 // Next prefetches the links on screen. A prefetch of a public page needs no session check
 // here: the page checks the user itself when it renders, and the real visit refreshes the
@@ -16,7 +16,8 @@ function isPrefetch(request: NextRequest) {
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
   const pathname = request.nextUrl.pathname
-  const isProtectedRoute = PROTECTED_PREFIXES.some(prefix => pathname.startsWith(prefix))
+  // Segment-aware, so /me never claims a future /media or /members.
+  const isProtectedRoute = PROTECTED_PREFIXES.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`))
   if (!isProtectedRoute && isPrefetch(request)) return withRobots(supabaseResponse, pathname)
 
   const supabase = createServerClient(
