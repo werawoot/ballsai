@@ -1,24 +1,27 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
-import { Bell, ChevronRight } from 'lucide-react'
-import { radarPoints, type VerifiedSkills, type WeekTotals } from '@/lib/athlete-home'
+import { Bell, CalendarDays, Check, ChevronRight, Clock3, Flame, MapPin, Play, Target, Trophy } from 'lucide-react'
+import { radarPoints, type EffortSummary, type MissionItem, type NextSession, type VerifiedSkills, type WeekTotals } from '@/lib/athlete-home'
 import { unreadBadge } from '@/lib/notification-unread'
-import { SKILL_KEYS } from '@/lib/skill-ratings'
-import type { CardSkills } from '@/lib/athlete-home-data'
+import { drillImage, say } from '@/lib/training/content'
+import { coverDetailFor, PROGRAM_PHOTOS } from '@/lib/stock-photos'
+import { tournamentDateRange } from '@/lib/tournament-dates'
 
-// The athlete's home (/profile) in the DOENSAI dashboard layout (owner, 2 Nov 2026, second
+// The athlete's home (/profile) in the DOENSAI home module (owner, 3 Nov 2026, third
 // reference), on the light glass of ADR-014. What each part shows is decided in
-// lib/athlete-home.ts; these only draw it. Only the training card holds the page's one
-// primary button. Every number has a source; a missing one shows as a dash or not at all.
+// lib/athlete-home.ts; these only draw it. One primary button: today's first open mission, or
+// picking a programme. Effort points ("แต้มขยัน") are the athlete's own check-ins and never XP.
 
-/** Greeting, the bell and the way to /me, then the level from verified matches. */
-export function HomeHero({ name, line, avatarUrl, initials, unread, level }: {
+/** 1 and 2: greeting, the sport, the bell and the way to /me, then the level from verified matches. */
+export function HomeHero({ name, line, avatarUrl, initials, unread, level, sport }: {
   name: string
   line: string
   avatarUrl: string | null
   initials: string
   unread: number | null
   level: { level: number; xp: number; target: number; percent: number } | null
+  sport: string
 }) {
   const t = useTranslations('profileHome')
   const badge = unreadBadge(unread)
@@ -29,7 +32,7 @@ export function HomeHero({ name, line, avatarUrl, initials, unread, level }: {
         <small className="pf-hello">{t('home.hello')}</small>
         <h1 id="pf-name" className="pf-name">{name}</h1>
         {line && <div className="pf-sub">{line}</div>}
-        <p className="pf-tagline" lang="en">{t('home.tagline')}</p>
+        <p className="pf-motivate">{t('home.motivate')}</p>
       </div>
       <div className="pf-home-icons">
         <Link href="/notifications" className="pf-icon-btn" aria-label={badge ? `${t('home.notifications')} · ${t('home.unread', { count: unread ?? 0 })}` : t('home.notifications')}>
@@ -41,6 +44,14 @@ export function HomeHero({ name, line, avatarUrl, initials, unread, level }: {
         </Link>
       </div>
     </div>
+    <div className="pf-hero-row">
+      {/* One sport today (lib/season.ts); choosing another waits for its own design (ADR-014). */}
+      <details className="pf-sport">
+        <summary>{t('home.sport', { sport })}</summary>
+        <p>{t('home.sportMore')}</p>
+      </details>
+      <p className="pf-tagline" lang="en">{t('home.tagline')}</p>
+    </div>
     {/* Level and points mean nothing before the first point, so they stay out of sight until then. */}
     {level && <div className="pf-lv">
       <div className="pf-lv-row"><b>{t('home.level', { level: level.level })}</b><span>{t('home.xp', { xp: level.xp.toLocaleString('en-US'), target: level.target.toLocaleString('en-US') })}</span></div>
@@ -50,51 +61,116 @@ export function HomeHero({ name, line, avatarUrl, initials, unread, level }: {
 }
 
 /**
- * "การ์ดของฉัน": the athlete's card in small, all of it one link to /card. The big number is
- * the card's own OVR from the rank row, the five skills a coach or admin assessed; a dash where
- * nobody did. No rank row is a STARTER card and says so (AGENTS.md rule 8).
+ * 3: the athlete's card (one link to /card) and "ภาพรวมของฉัน" beside it. The card's number is
+ * the rank row's OVR; no rank row is a STARTER card and says so (AGENTS.md rule 8). Minutes and
+ * days in a row are self-reported; the rating change comes from verified matches.
  */
-export function MyCardPanel({ name, team, position, avatarUrl, initials, ovr, skills, power, change, ranked }: {
+export function CardOverview({ name, team, position, avatarUrl, initials, ovr, power, change, ranked, minutes, streak }: {
   name: string
   team: string | null
   position: string | null
   avatarUrl: string | null
   initials: string
   ovr: number | null
-  skills: CardSkills | null
   power: number | null
   change: number | null
   ranked: boolean
+  minutes: number | null
+  streak: number | null
 }) {
   const t = useTranslations('profileHome')
-  const value = (input: number | null | undefined) => typeof input === 'number' ? String(input) : '—'
-  return <section className="pf-mycard" aria-labelledby="pf-card">
-    <Link href="/card" className="pf-mycard-link">
-      <span className="pf-mycard-head"><h2 id="pf-card" className="pf-card-title">{t('card.title')}</h2><ChevronRight size={20} aria-hidden="true" /></span>
-      <span className="pf-mycard-body">
-        <span className={`pf-mini${ranked ? '' : ' is-starter'}`} aria-hidden="true">
-          <span className="pf-mini-top"><b>{ranked ? value(ovr) : '—'}</b><small>{position || '—'}</small></span>
-          <span className="pf-mini-photo" style={avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : undefined}>{!avatarUrl && initials}</span>
-        </span>
-        <span className="pf-mycard-info">
-          <b className="pf-mycard-name">{name}</b>
-          {team && <small className="pf-mycard-team">{team}</small>}
-          {ranked
-            ? <span className="pf-mycard-stats">{SKILL_KEYS.map(key => <span key={key}><small>{key.toUpperCase()}</small><b>{value(skills?.[key])}</b></span>)}</span>
-            : <span className="pf-mycard-starter">{t('card.starterTitle')}</span>}
-        </span>
-      </span>
-      <span className="pf-mycard-foot">
-        {ranked && power !== null
-          ? <>{t('card.powerLine', { power: power.toLocaleString('en-US') })}{change !== null && <em className={change > 0 ? 'is-up' : 'is-down'}>{t('lastMatch', { change: change > 0 ? `+${change}` : `−${Math.abs(change)}` })}</em>}</>
-          : t('card.starterShort')}
-      </span>
+  return <section className="pf-cardrow" aria-labelledby="pf-card">
+    <h2 id="pf-card" className="pf-sr">{t('card.title')}</h2>
+    <Link href="/card" className={`pf-bigcard${ranked ? '' : ' is-starter'}`} aria-label={t('overview.openCard', { name })}>
+      <span className="pf-bigcard-top"><b>{ranked && ovr !== null ? ovr : '—'}</b><small>{position || '—'}</small></span>
+      <span className="pf-bigcard-photo" style={avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : undefined} aria-hidden="true">{!avatarUrl && initials}</span>
+      <span className="pf-bigcard-name">{name}</span>
+      {team && <span className="pf-bigcard-team">{team}</span>}
+      {!ranked && <span className="pf-bigcard-starter">{t('card.starterTitle')}</span>}
+    </Link>
+    <div className="pf-overview">
+      <b className="pf-overview-title">{t('overview.title')}</b>
+      <div className="pf-overview-ovr">
+        <small>{t('overview.power')}</small>
+        <b>{ranked && power !== null ? power.toLocaleString('en-US') : '—'}</b>
+        {change !== null && <em className={change > 0 ? 'is-up' : 'is-down'}>{change > 0 ? `↑ +${change}` : `↓ ${change}`}</em>}
+      </div>
+      <div className="pf-overview-cells">
+        <span><Clock3 size={16} aria-hidden="true" /><small>{t('overview.minutes')}</small><b>{minutes === null ? '—' : t('overview.minutesValue', { count: minutes })}</b></span>
+        <span><Flame size={16} aria-hidden="true" /><small>{t('overview.streak')}</small><b>{streak === null ? '—' : t('overview.streakValue', { count: streak })}</b></span>
+      </div>
+      <p className="pf-overview-note">{ranked ? t('overview.note') : t('card.starterShort')}</p>
+    </div>
+  </section>
+}
+
+/** 4: today's missions, one per programme planned today, each worth effort points (never XP). */
+export function MissionsCard({ missions, effort, firstOpen }: { missions: MissionItem[]; effort: EffortSummary; firstOpen: string | null }) {
+  const t = useTranslations('profileHome')
+  const locale = useLocale()
+  return <section className="pf-card pf-missions" aria-labelledby="pf-missions">
+    <div className="pf-card-head">
+      <h2 id="pf-missions" className="pf-card-title"><Target size={20} aria-hidden="true" />{t('missions.title')}</h2>
+      {effort.todayPossible > 0 && <span className="pf-effort-chip">{effort.todayEarned >= effort.todayPossible ? t('missions.earned', { points: effort.todayEarned }) : effort.todayEarned > 0 ? t('missions.partial', { earned: effort.todayEarned, points: effort.todayPossible }) : t('missions.possible', { points: effort.todayPossible })}</span>}
+    </div>
+    {missions.length === 0
+      ? <p className="pf-missions-rest"><b>{t('missions.rest')}</b><small>{t('missions.restBody')}</small></p>
+      : <ul className="pf-mission-list">
+        {missions.map(item => <li key={item.programId} className={item.done ? 'is-done' : undefined}>
+          {item.done
+            ? <span className="pf-mission-mark is-done" aria-hidden="true"><Check size={16} strokeWidth={3} /></span>
+            : <Link href={`/training/${item.programId}/session`} className={`pf-mission-mark${item.programId === firstOpen ? ' is-primary' : ''}`} aria-label={t('missions.start', { title: say(item.program.title, locale) })}><Play size={15} aria-hidden="true" /></Link>}
+          <Link href={`/training/${item.programId}`} className="pf-mission-text"><b>{say(item.program.title, locale)}</b><small>{t('missions.minutes', { count: item.minutes })}{item.done ? ` · ${t('missions.done')}` : ''}</small></Link>
+          <span className="pf-mission-points">{t('missions.points', { points: item.points })}</span>
+        </li>)}
+      </ul>}
+    <p className="pf-note">{t('missions.note')}</p>
+  </section>
+}
+
+/** 5: the next session not done yet. */
+export function NextTraining({ next, today }: { next: NextSession; today: string }) {
+  const t = useTranslations('profileHome')
+  const locale = useLocale()
+  const isToday = next.date === today
+  return <section className="pf-card pf-next" aria-labelledby="pf-next">
+    <div className="pf-card-head">
+      <h2 id="pf-next" className="pf-card-title"><CalendarDays size={20} aria-hidden="true" />{t('next.title')}</h2>
+      <Link href="/training" className="pf-card-meta tap-44" style={{ textDecoration: 'none' }}>{t('next.all')}</Link>
+    </div>
+    <Link href={isToday ? `/training/${next.programId}/session` : `/training/${next.programId}`} className="pf-next-row">
+      <span className="pf-next-img"><Image alt="" fill sizes="96px" src={PROGRAM_PHOTOS[next.programId]?.src ?? drillImage(next.program.cover)} unoptimized /></span>
+      <span className="pf-next-text"><b>{say(next.program.title, locale)}</b><small>{isToday ? t('next.today', { count: next.program.minutes }) : t('next.on', { date: tournamentDateRange(locale, next.date), count: next.program.minutes })}</small></span>
+      <span className="pf-next-play" aria-hidden="true"><Play size={18} /></span>
     </Link>
   </section>
 }
 
-/** The week of the athlete's programme: sessions, minutes and skills (self-reported), and XP from verified matches. */
-export function WeekProgress({ goal, xp }: { goal: WeekTotals | null; xp: number | null }) {
+export type HomeTournament = { id: string; name: string; location: string | null; start_date: string; end_date?: string | null; status: string | null }
+
+/** 6: one open tournament, soonest first; matching age or area waits for T57. */
+export function Opportunity({ tournament }: { tournament: HomeTournament }) {
+  const t = useTranslations('profileHome')
+  const locale = useLocale()
+  const cover = coverDetailFor(tournament.id)
+  return <section className="pf-card pf-opp" aria-labelledby="pf-opp">
+    <div className="pf-card-head">
+      <h2 id="pf-opp" className="pf-card-title"><Trophy size={20} aria-hidden="true" />{t('opportunity.title')}</h2>
+      <Link href="/tournaments" className="pf-card-meta tap-44" style={{ textDecoration: 'none' }}>{t('opportunity.all')}</Link>
+    </div>
+    <div className="pf-opp-card" style={cover ? { '--pf-opp-photo': `url(${cover.src})` } as React.CSSProperties : undefined}>
+      <div className="pf-opp-text">
+        <b>{tournament.name}</b>
+        {tournament.location && <small><MapPin size={13} aria-hidden="true" />{tournament.location}</small>}
+        <small><CalendarDays size={13} aria-hidden="true" />{tournamentDateRange(locale, tournament.start_date, tournament.end_date)}</small>
+      </div>
+      <Link href={`/tournaments/${tournament.id}`} className="pf-opp-cta">{t('opportunity.join')}<ChevronRight size={16} aria-hidden="true" /></Link>
+    </div>
+  </section>
+}
+
+/** 7: the week in numbers: sessions against the plan, minutes, effort points, and XP from verified matches. */
+export function WeekProgress({ goal, effort, xp }: { goal: WeekTotals | null; effort: number | null; xp: number | null }) {
   const t = useTranslations('profileHome')
   const radius = 30
   const circumference = 2 * Math.PI * radius
@@ -113,7 +189,7 @@ export function WeekProgress({ goal, xp }: { goal: WeekTotals | null; xp: number
       </div>
       <dl>
         <div><dd>{goal ? goal.minutes : '—'}</dd><dt>{t('week.minutes')}</dt></div>
-        <div><dd>{goal ? goal.skills : '—'}</dd><dt>{t('week.skills')}</dt></div>
+        <div><dd className="is-effort">{effort === null ? '—' : `+${effort}`}</dd><dt>{t('week.effort')}</dt></div>
         {/* A failed read is a dash, never a zero (AGENTS.md rule 8). */}
         <div><dd className="is-xp">{xp === null ? '—' : xp > 0 ? `+${xp.toLocaleString('en-US')}` : '0'}</dd><dt>{t('week.xp')}</dt></div>
       </dl>

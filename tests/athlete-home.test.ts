@@ -3,6 +3,7 @@ import { TRAINING_PROGRAMS } from '@/lib/training/content'
 import { trainingHome } from '@/lib/training/home'
 import type { MyTraining } from '@/lib/training/data'
 import { trainingToday } from '@/lib/training/today'
+import { EFFORT_PER_SESSION, dayStreak, effortSummary, nextSession, openTournamentsAhead, todayMissionList, totalMinutes } from '@/lib/athlete-home'
 import { bangkokWeekStart, lastMatchChange, programSkills, weekTotals, radarPoints, verifiedSkills, weekXp, weeklyGoal } from '@/lib/athlete-home'
 
 // The athlete's home in the DOENSAI dashboard design (owner, 2 Nov 2026): the week's
@@ -131,5 +132,80 @@ describe('the week across every programme (review, 3 Nov 2026)', () => {
 
   it('is nothing in a week with no planned session', () => {
     expect(weekTotals(trainingToday(two({}), '2026-10-04'))).toBeNull()
+  })
+})
+
+describe('the home of the third reference (owner, 3 Nov 2026): effort points and missions', () => {
+  const plan = (checkins: Record<string, string[]>): MyTraining => ({
+    available: true,
+    enrollments: [
+      { id: 'e1', program_id: program.id, weekdays: [0, 2, 4], start_date: '2026-10-05', status: 'active' },
+      { id: 'e2', program_id: TRAINING_PROGRAMS[1].id, weekdays: [2], start_date: '2026-10-05', status: 'active' },
+    ],
+    checkins,
+  })
+
+  it('makes each programme planned today a mission worth 50 effort points, done or not', () => {
+    const missions = todayMissionList(trainingToday(plan({ e2: [WED] }), WED))
+    expect(missions.map(item => [item.programId, item.done, item.points])).toEqual([[program.id, false, EFFORT_PER_SESSION], [TRAINING_PROGRAMS[1].id, true, EFFORT_PER_SESSION]])
+    expect(missions[0].minutes).toBe(program.minutes)
+    expect(EFFORT_PER_SESSION).toBe(50)
+  })
+
+  it('offers what today can still earn and what this week earned, from check-ins only', () => {
+    const view = trainingToday(plan({ e1: ['2026-10-26', WED], e2: [WED] }), WED)
+    expect(effortSummary(view)).toEqual({ todayEarned: 100, todayPossible: 100, week: 150 })
+  })
+
+  it('earns nothing on a rest day and nothing without a check-in', () => {
+    expect(effortSummary(trainingToday(plan({}), '2026-10-27'))).toEqual({ todayEarned: 0, todayPossible: 0, week: 0 })
+  })
+
+  it('adds up minutes of every session done on the active programmes', () => {
+    const view = trainingToday(plan({ e1: ['2026-10-12', '2026-10-26'], e2: ['2026-10-21'] }), WED)
+    expect(totalMinutes(view)).toBe(2 * program.minutes + TRAINING_PROGRAMS[1].minutes)
+  })
+
+  it('names the next session that is not done yet, today first', () => {
+    expect(nextSession(trainingToday(plan({}), WED))).toMatchObject({ date: WED, programId: program.id })
+    expect(nextSession(trainingToday(plan({ e1: [WED], e2: [WED] }), WED))).toMatchObject({ date: '2026-10-30', programId: program.id })
+    expect(nextSession(trainingToday({ available: true, enrollments: [], checkins: {} }, WED))).toBeNull()
+  })
+})
+
+describe('days in a row', () => {
+  const daily = (checkins: string[], weekdays = [0, 1, 2, 3, 4, 5, 6]): MyTraining => ({
+    available: true,
+    enrollments: [{ id: 'e1', program_id: program.id, weekdays, start_date: '2026-10-05', status: 'active' }],
+    checkins: { e1: checkins },
+  })
+
+  it('counts planned days trained, back from today', () => {
+    expect(dayStreak(daily(['2026-10-26', '2026-10-27', WED]), WED)).toBe(3)
+  })
+
+  it('does not break on today before it is trained', () => {
+    expect(dayStreak(daily(['2026-10-26', '2026-10-27']), WED)).toBe(2)
+  })
+
+  it('skips rest days instead of breaking on them', () => {
+    // Mon, Wed, Fri plan: Mon and Wed trained, Tuesday is rest.
+    expect(dayStreak(daily(['2026-10-26', WED], [0, 2, 4]), WED)).toBe(2)
+  })
+
+  it('stops at a planned day that was missed', () => {
+    expect(dayStreak(daily(['2026-10-26', WED]), WED)).toBe(1)
+  })
+
+  it('is zero with nothing trained', () => {
+    expect(dayStreak(daily([]), WED)).toBe(0)
+  })
+})
+
+describe('open tournaments on the athlete home', () => {
+  const row = (id: string, start: string, end: string | null = null) => ({ id, status: 'open', start_date: start, end_date: end })
+  it('keeps open ones not over yet, soonest first', () => {
+    const rows = [row('past', '2026-10-01', '2026-10-02'), row('b', '2026-11-10'), row('running', '2026-10-30', '2026-11-20'), { ...row('closed', '2026-11-05'), status: 'closed' }]
+    expect(openTournamentsAhead(rows, '2026-11-02').map(item => item.id)).toEqual(['running', 'b'])
   })
 })

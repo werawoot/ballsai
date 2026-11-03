@@ -1,5 +1,6 @@
-import type { Progress } from './training/schedule'
-import type { Program } from './training/content'
+import { getProgram, type Program } from './training/content'
+import type { MyTraining } from './training/data'
+import { sessionDates, type Progress } from './training/schedule'
 import { DRILL_SKILL, type Skill } from './training/skills'
 import type { TrainingTodayView } from './training/today'
 import { COACH_SKILL_KEYS, type CoachSkillKey } from './coach-skills'
@@ -90,4 +91,90 @@ export function weekTotals(view: TrainingTodayView): WeekTotals | null {
   const minutes = goals.reduce((sum, item) => sum + (item.goal?.minutes ?? 0), 0)
   const skills = new Set(goals.filter(item => (item.goal?.done ?? 0) > 0).flatMap(item => programSkills(item.program)))
   return { done, planned, percent: Math.round((done / planned) * 100), minutes, skills: skills.size }
+}
+
+// --- The home of the third reference (owner, 3 Nov 2026) ----------------------------------
+//
+// "แต้มขยัน" (effort points, owner's choice "เอาแต้มขยัน"): 50 for each programme session the
+// athlete checks in. They are worked out from training_checkins, which the database already
+// holds to one per programme per day, at most 3 active programmes, back-dated 6 days at most
+// (SQL63), so a repeated tap cannot add any. They are kept apart from XP: they never change
+// the level, the card or a rank, and the page says they are self-reported.
+
+export const EFFORT_PER_SESSION = 50
+
+export type MissionItem = { programId: string; program: Program; minutes: number; done: boolean; points: number }
+
+/** Today's missions: each programme planned today, in the order /training lists them. */
+export function todayMissionList(view: TrainingTodayView): MissionItem[] {
+  return view.today.map(item => ({ programId: item.program.id, program: item.program, minutes: item.program.minutes, done: item.done, points: EFFORT_PER_SESSION }))
+}
+
+export type EffortSummary = { todayEarned: number; todayPossible: number; week: number }
+
+export function effortSummary(view: TrainingTodayView): EffortSummary {
+  const week = view.programs.reduce((sum, item) => sum + (weeklyGoal(item.progress)?.done ?? 0), 0)
+  return {
+    todayEarned: view.doneToday * EFFORT_PER_SESSION,
+    todayPossible: view.plannedToday * EFFORT_PER_SESSION,
+    week: week * EFFORT_PER_SESSION,
+  }
+}
+
+/** Minutes of every session done on the active programmes, at each programme's planned length. */
+export function totalMinutes(view: TrainingTodayView): number {
+  return view.programs.reduce((sum, item) => sum + item.progress.done * item.program.minutes, 0)
+}
+
+export type NextSession = { date: string; programId: string; program: Program }
+
+/** The next session not done yet: one of today's first, else the soonest coming one. */
+export function nextSession(view: TrainingTodayView): NextSession | null {
+  const open = view.today.find(item => !item.done)
+  if (open) return { date: open.progress.today ?? '', programId: open.program.id, program: open.program }
+  const coming = view.programs
+    .filter(item => item.progress.next && item.progress.next !== item.progress.today)
+    .sort((a, b) => (a.progress.next ?? '').localeCompare(b.progress.next ?? ''))[0]
+  return coming ? { date: coming.progress.next!, programId: coming.program.id, program: coming.program } : null
+}
+
+/**
+ * Days in a row: planned training days that were trained, counted back from today. A day no
+ * programme plans (a rest day) is skipped, never a break, so a child is not pushed to train every
+ * day; today does not break the run before it is trained. Self-reported, like every check-in.
+ */
+export function dayStreak(training: MyTraining, today: string): number {
+  const planned = new Set<string>()
+  const done = new Set<string>()
+  let earliest = today
+  for (const enrollment of training.enrollments) {
+    const program = getProgram(enrollment.program_id)
+    if (!program) continue
+    for (const day of sessionDates(enrollment.start_date, enrollment.weekdays, program.weeks)) planned.add(day)
+    for (const day of training.checkins[enrollment.id] ?? []) done.add(day)
+    if (enrollment.start_date < earliest) earliest = enrollment.start_date
+  }
+  let streak = 0
+  const cursor = new Date(`${today}T00:00:00Z`)
+  for (let step = 0; step < 400; step++) {
+    const day = cursor.toISOString().slice(0, 10)
+    if (day < earliest) break
+    if (planned.has(day)) {
+      if (done.has(day)) streak++
+      else if (day !== today) break
+    }
+    cursor.setUTCDate(cursor.getUTCDate() - 1)
+  }
+  return streak
+}
+
+export const HOME_TOURNAMENT_LIMIT = 3
+type OpenRow = { id: string; status: string | null; start_date: string; end_date?: string | null }
+
+/** Open for registration and not over yet, soonest first. */
+export function openTournamentsAhead<Row extends OpenRow>(rows: Row[], today: string): Row[] {
+  return rows
+    .filter(row => row.status === 'open' && (row.end_date ?? row.start_date) >= today)
+    .sort((a, b) => a.start_date.localeCompare(b.start_date))
+    .slice(0, HOME_TOURNAMENT_LIMIT)
 }

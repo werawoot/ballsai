@@ -1331,7 +1331,10 @@
       "profile": "My profile",
       "level": "Lv.{level}",
       "xp": "{xp} / {target} XP",
-      "tagline": "More Than a Game"
+      "tagline": "More Than a Game",
+      "motivate": "Ready to get better today?",
+      "sport": "⚽ {sport}",
+      "sportMore": "Football first. Other sports are coming, each with its own records."
     },
     "today": {
       "title": "Today's programme",
@@ -1344,13 +1347,51 @@
       "title": "This week",
       "sessionsUnit": "sessions",
       "minutes": "Minutes",
-      "skills": "Skills",
+      "effort": "Effort points",
       "xp": "XP from matches",
-      "note": "Sessions and minutes count what you log yourself · skills are those of the programmes you trained this week · XP comes only from results an organizer confirmed"
+      "note": "Sessions, minutes and effort points count what you log yourself · XP comes only from results an organizer confirmed"
     },
     "teamLine": {
       "invites": "{count, plural, one {# team invitation} other {# team invitations}} waiting for you",
       "none": "No team yet · how to get a coach to invite you"
+    },
+    "sports": {
+      "football": "Football",
+      "futsal": "Futsal"
+    },
+    "overview": {
+      "title": "My overview",
+      "openCard": "Open {name}'s card",
+      "power": "Power Rating",
+      "minutes": "Training total",
+      "minutesValue": "{count} min",
+      "streak": "In a row",
+      "streakValue": "{count, plural, one {# day} other {# days}}",
+      "note": "Power Rating from matches an organizer confirmed · minutes and days in a row count what you log yourself"
+    },
+    "missions": {
+      "title": "Today's missions",
+      "possible": "Up to +{points} effort points",
+      "rest": "Rest day today",
+      "restBody": "Rest is part of training. Your next session is below.",
+      "start": "Start {title}",
+      "minutes": "{count} min",
+      "done": "done",
+      "points": "+{points}",
+      "note": "Effort points come when you mark a session as finished yourself. They are not match XP and never change your level, card or rank.",
+      "earned": "Earned +{points} effort points",
+      "partial": "+{earned} of +{points} effort points"
+    },
+    "next": {
+      "title": "Next training",
+      "all": "See all",
+      "today": "Today · {count} min",
+      "on": "{date} · {count} min"
+    },
+    "opportunity": {
+      "title": "Competitions and opportunities",
+      "all": "See all",
+      "join": "Enter"
     }
   },
   "profileEdit": {
