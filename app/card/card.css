@@ -211,3 +211,55 @@ body:has(.card-page) { background: #0B1220; }
 .card-page .pc-season dd { font: 800 22px var(--font-sarabun), sans-serif; margin: 0; }
 .card-page .pc-season dt { color: #475569; font-size: 12px; }
 .card-page .pc-season-note a { color: #0F7A3F; font-weight: 700; }
+
+/* The card module (owner, 3 Nov 2026): view tabs, shortcuts beside the card, the collection
+   strip and grid with its four rarities, and how to make the card better. Navy and green. */
+.card-page .cd-tabs { background: rgba(255,255,255,.08); border-radius: 999px; display: grid; gap: 4px; grid-auto-flow: column; grid-auto-columns: 1fr; margin: 14px auto 0; max-width: 520px; padding: 4px; width: calc(100% - 32px); }
+.card-page .cd-tabs a { align-items: center; border-radius: 999px; color: rgba(255,255,255,.75); display: flex; font: 700 14px var(--font-sarabun), sans-serif; justify-content: center; min-height: 44px; text-align: center; text-decoration: none; }
+.card-page .cd-tabs a.is-on { background: #16E06E; color: #0B1220; }
+.card-page .pc-actions { display: grid; gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 420px; width: 100%; }
+.card-page .pc-action { align-items: center; background: rgba(255,255,255,.07); border: 1px solid var(--pc-line); border-radius: 16px; color: #fff; cursor: pointer; display: grid; font: 700 13px var(--font-sarabun), sans-serif; gap: 4px; justify-items: center; min-height: 64px; padding: 8px 4px; text-decoration: none; }
+.card-page .pc-action svg { color: #16E06E; }
+.card-page .pc-action:hover { border-color: rgba(22,224,110,.6); }
+.card-page .cd-strip, .card-page .cd-improve { background: rgba(255,255,255,.06); border: 1px solid var(--pc-line); border-radius: 18px; padding: 14px; }
+.card-page .cd-strip-head { align-items: baseline; display: flex; justify-content: space-between; margin-bottom: 10px; }
+.card-page .cd-strip h2, .card-page .cd-improve h2 { font: 700 16px var(--font-sarabun), sans-serif; margin: 0; }
+.card-page .cd-strip-head a { align-items: center; color: #16E06E; display: inline-flex; font-size: 13px; font-weight: 700; gap: 2px; text-decoration: none; }
+.card-page .cd-strip p, .card-page .cd-improve p { color: var(--pc-mute); font-size: 13px; margin: 0 0 8px; }
+.card-page .cd-row { display: grid; gap: 8px; grid-auto-columns: 92px; grid-auto-flow: column; list-style: none; margin: 0 0 12px; overflow-x: auto; padding: 0 0 4px; }
+.card-page .cd-row .cd-tile-text { display: none; }
+.card-page .cd-improve ul { color: rgba(255,255,255,.88); display: grid; font-size: 13.5px; gap: 6px; line-height: 1.5; margin: 0; padding-left: 18px; }
+.card-page .cd-rarities { display: grid; gap: 6px; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0 0 14px; }
+.card-page .cd-rarity { align-items: center; background: rgba(255,255,255,.06); border: 1.5px solid transparent; border-radius: 14px; color: #fff; display: grid; font-size: 12.5px; font-weight: 700; justify-items: center; min-height: 52px; padding: 6px 2px; text-decoration: none; }
+.card-page .cd-rarity b { font-size: 16px; }
+.card-page .cd-rarity.is-on { background: #16E06E; color: #0B1220; }
+.card-page .cd-rarity.is-common:not(.is-on) b { color: #CBD5E1; }
+.card-page .cd-rarity.is-rare:not(.is-on) b { color: #60A5FA; }
+.card-page .cd-rarity.is-special:not(.is-on) b { color: #C084FC; }
+.card-page .cd-rarity.is-legend:not(.is-on) b { color: #F6D365; }
+.card-page .cd-page { margin: 0 auto; max-width: 960px; padding: 20px 16px 40px; }
+.card-page .cd-title { font: 800 26px var(--font-sarabun), sans-serif; margin: 0; }
+.card-page .cd-lead { color: var(--pc-mute); font-size: 14px; margin: 4px 0 0; }
+.card-page .cd-page .cd-tabs { margin: 16px 0; width: 100%; }
+.card-page .cd-h2 { font: 700 17px var(--font-sarabun), sans-serif; margin: 22px 0 10px; }
+.card-page .cd-empty { color: var(--pc-mute); font-size: 14px; }
+.card-page .cd-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); list-style: none; margin: 0; padding: 0; }
+.card-page .cd-tile { display: grid; gap: 6px; }
+.card-page .cd-tile-face { aspect-ratio: 3 / 4; border: 2px solid; border-radius: 14px; display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; padding: 6px; }
+.card-page .cd-tile.is-common .cd-tile-face { background: linear-gradient(160deg, #E2E8F0, #64748B); border-color: #CBD5E1; color: #0B1220; }
+.card-page .cd-tile.is-rare .cd-tile-face { background: linear-gradient(160deg, #93C5FD, #1D4ED8); border-color: #60A5FA; color: #fff; }
+.card-page .cd-tile.is-special .cd-tile-face { background: linear-gradient(160deg, #D8B4FE, #6D28D9); border-color: #C084FC; color: #fff; }
+.card-page .cd-tile.is-legend .cd-tile-face { background: linear-gradient(160deg, #F6D365, #8A6112); border-color: #F6D365; color: #1a1205; }
+.card-page .cd-tile.is-locked .cd-tile-face { filter: grayscale(.85); opacity: .5; }
+.card-page .cd-tile-rarity { font-size: 11px; font-weight: 800; letter-spacing: .3px; }
+.card-page .cd-tile-photo { align-items: center; background: rgba(0,0,0,.18) center top / cover no-repeat; border-radius: 10px; display: flex; font-size: 22px; font-weight: 700; justify-content: center; margin: 4px 0; }
+.card-page .cd-tile-name { font-size: 11.5px; font-weight: 800; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.card-page .cd-tile-text { display: grid; gap: 2px; }
+.card-page .cd-tile-text b { font-size: 14px; }
+.card-page .cd-tile-text small { color: var(--pc-mute); font-size: 12px; line-height: 1.4; }
+.card-page .cd-sr { clip: rect(0 0 0 0); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
+.card-page .cd-rules { background: rgba(255,255,255,.06); border-radius: 14px; color: rgba(255,255,255,.85); font-size: 13px; line-height: 1.6; margin: 24px 0 0; padding: 12px 14px; }
+.card-page .cd-tabs a:focus-visible, .card-page .cd-rarity:focus-visible, .card-page .pc-action:focus-visible, .card-page .cd-strip-head a:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+/* The collection row scrolls inside its box; it never widens the page. */
+.card-page .pc-summary { grid-template-columns: minmax(0, 1fr); }
+.card-page .cd-strip, .card-page .cd-improve { min-width: 0; }

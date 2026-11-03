@@ -28,7 +28,7 @@ const text = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' '
 describe('a nameless card', () => {
   it('says what the page is and how to start, at the top, on a phone too', () => {
     const html = render('')
-    expect(text(html)).toContain('การ์ดนักกีฬาของคุณ')
+    expect(text(html)).toContain('การ์ดของฉัน')
     expect(text(html)).toContain('ใส่ชื่อ แล้วแชร์ให้เพื่อนดูได้')
     expect(html.indexOf('pc-intro')).toBeLessThan(html.indexOf('pc-stage'))
     expect(readFileSync(new URL('../app/card/card.css', import.meta.url), 'utf8')).not.toMatch(/\.pc-intro \{[^}]*display: none/)
