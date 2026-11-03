@@ -1331,26 +1331,65 @@
       "profile": "My profile",
       "level": "Lv.{level}",
       "xp": "{xp} / {target} XP",
-      "tagline": "More Than a Game"
-    },
-    "today": {
-      "title": "Today's programme",
-      "rest": "Rest day today",
-      "done": "Trained today",
-      "start": "Start training",
-      "meta": "{minutes} min · week {week} of {weeks}"
+      "tagline": "More Than a Game",
+      "motivate": "Ready to get better today?",
+      "sport": "⚽ {sport}",
+      "sportMore": "Football first. Other sports are coming, each with its own records."
     },
     "week": {
       "title": "This week",
       "sessionsUnit": "sessions",
       "minutes": "Minutes",
-      "skills": "Skills",
+      "effort": "Effort points",
       "xp": "XP from matches",
-      "note": "Sessions and minutes count what you log yourself · skills are those of the programmes you trained this week · XP comes only from results an organizer confirmed"
+      "note": "Sessions, minutes and effort points count what you log yourself · XP comes only from results an organizer confirmed"
     },
     "teamLine": {
       "invites": "{count, plural, one {# team invitation} other {# team invitations}} waiting for you",
       "none": "No team yet · how to get a coach to invite you"
+    },
+    "sports": {
+      "football": "Football",
+      "futsal": "Futsal"
+    },
+    "overview": {
+      "title": "My overview",
+      "power": "Power Rating",
+      "minutes": "Training minutes",
+      "minutesValue": "{count} min",
+      "streak": "Training days kept",
+      "streakValue": "{count, plural, one {# day} other {# days}}",
+      "note": "Power Rating from matches an organizer confirmed · minutes use your current programmes' planned length and rest days never break the run; both count what you log yourself"
+    },
+    "missions": {
+      "title": "Today's missions",
+      "possible": "Up to +{points} effort points",
+      "rest": "Rest day today",
+      "restBody": "Rest is part of training. Your next session is below.",
+      "start": "Start {title}",
+      "minutes": "{count} min",
+      "done": "done",
+      "points": "+{points}",
+      "note": "Effort points come when you mark a session as finished yourself. They are not match XP and never change your level, card or rank.",
+      "earned": "Earned +{points} effort points",
+      "partial": "+{earned} of +{points} effort points",
+      "restOnly": "Rest is part of training"
+    },
+    "next": {
+      "title": "Next training",
+      "all": "See all",
+      "today": "Today · {count} min",
+      "on": "{date} · {count} min"
+    },
+    "opportunity": {
+      "title": "Competitions and opportunities",
+      "all": "See all",
+      "view": "See details",
+      "note": "Real tournaments open now, not yet matched to your age or area · a coach or team manager enters the team"
+    },
+    "pickAgain": {
+      "title": "Your programme is finished",
+      "body": "Pick a new programme to keep training; we plan the sessions"
     }
   },
   "profileEdit": {

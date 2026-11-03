@@ -1,50 +1,26 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
 import { ChevronRight, Dumbbell } from 'lucide-react'
-import { drillImage, say } from '@/lib/training/content'
-import type { TrainingHome } from '@/lib/training/home'
-import { tournamentDateRange } from '@/lib/tournament-dates'
+import { say, type Program } from '@/lib/training/content'
 import '@/app/training/training.css'
 
-// "โปรแกรมวันนี้" on the athlete's home (docs/training-flow-v1.md; DOENSAI dashboard design,
-// owner 2 Nov 2026): today's session of the athlete's most recent programme with one button,
-// or the programme to pick for their age. The week itself is WeekProgress. What the card shows
-// is decided in lib/training/home.ts, which also says whether it carries the page's primary
-// button. Hidden until SQL63 is applied.
-export default function TrainingCard({ home, age }: { home: TrainingHome; age: number | null }) {
+// Picking a programme on the athlete's home (docs/training-flow-v1.md): shown when there is no
+// programme, or when the programmes there are have no session left. It names the programme that
+// fits the athlete's age and holds the page's one primary button. Today's sessions themselves are
+// the missions (app/profile/AthleteHome.tsx, third reference, owner 3 Nov 2026).
+export default function TrainingCard({ recommended, age, finished = false }: { recommended: Program | null; age: number | null; finished?: boolean }) {
   const t = useTranslations('training')
-  const p = useTranslations('profileHome.today')
+  const p = useTranslations('profileHome')
   const locale = useLocale()
-  if (home.state === 'hidden') return null
-
-  if (home.state === 'pick') return <section className="tr-today pf-card" aria-labelledby="tr-today-title">
+  return <section className="tr-today pf-card" aria-labelledby="tr-today-title">
     <div className="tr-today-empty">
       <Dumbbell size={28} aria-hidden="true" />
       <div>
-        <h2 className="tr-today-title pf-card-title" id="tr-today-title">{t('card.emptyTitle')}</h2>
-        <p>{t('card.emptyText')}</p>
-        {home.recommended && age !== null && <p className="tr-reco">{t('card.recommended', { age, title: say(home.recommended.title, locale) })}</p>}
+        <h2 className="tr-today-title pf-card-title" id="tr-today-title">{finished ? p('pickAgain.title') : t('card.emptyTitle')}</h2>
+        <p>{finished ? p('pickAgain.body') : t('card.emptyText')}</p>
+        {recommended && age !== null && <p className="tr-reco">{t('card.recommended', { age, title: say(recommended.title, locale) })}</p>}
       </div>
     </div>
-    <Link className="ui-btn ui-btn-primary" href="/training">{t('card.pickCta')}<ChevronRight size={18} aria-hidden="true" /></Link>
-  </section>
-
-  const { program, progress } = home
-  const title = progress.doneToday ? p('done') : progress.today ? p('title') : p('rest')
-  return <section className="tr-today pf-card" aria-labelledby="tr-today-title">
-    <div className="tr-today-head">
-      <h2 className="tr-today-title pf-card-title" id="tr-today-title">{title}</h2>
-      {home.needsAction && <Link className="ui-btn ui-btn-primary tr-start" href={`/training/${program.id}/session`}>{p('start')}</Link>}
-    </div>
-    <Link className="tr-program-row" href={`/training/${program.id}`}>
-      <Image alt="" height={64} src={drillImage(program.cover)} unoptimized width={86} />
-      <span className="tr-program-text">
-        <b>{say(program.title, locale)}</b>
-        <small>{p('meta', { minutes: program.minutes, week: progress.week, weeks: program.weeks })}</small>
-        {!home.needsAction && <small>{progress.next ? t('card.nextOn', { date: tournamentDateRange(locale, progress.next) }) : t('card.ctaRest')}</small>}
-      </span>
-      <ChevronRight size={18} aria-hidden="true" />
-    </Link>
+    <Link className="ui-btn ui-btn-primary" href={finished ? '/training?tab=programs' : '/training'}>{t('card.pickCta')}<ChevronRight size={18} aria-hidden="true" /></Link>
   </section>
 }

@@ -404,15 +404,6 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .pf-home-avatar { align-items: center; background: #223350 center top/cover no-repeat; border: 2px solid var(--gl-green); border-radius: 50%; color: #fff; display: inline-flex; font-weight: 700; height: 48px; justify-content: center; text-decoration: none; width: 48px; }
 .pf.gl .pf-icon-btn:focus-visible, .pf.gl .pf-home-avatar:focus-visible { outline-color: var(--gl-green); }
 
-.pf.gl .tr-today-head { align-items: center; display: flex; gap: 12px; justify-content: space-between; margin-bottom: 14px; }
-.pf.gl .tr-today-head .pf-card-title { font-size: 18px; }
-.pf.gl .tr-today .tr-start { border-radius: 999px; flex: none; font-size: 15px; min-height: 44px; padding: 0 18px; width: auto; }
-.pf.gl .tr-program-row { align-items: center; background: var(--gl-canvas); border: 1px solid var(--pf-line); border-radius: 14px; color: inherit; display: flex; gap: 12px; padding: 10px; text-decoration: none; }
-.pf.gl .tr-program-row img { border-radius: 10px; flex: none; height: 56px; object-fit: cover; width: 74px; }
-.pf.gl .tr-program-row > svg { color: var(--pf-muted); flex: none; }
-.pf.gl .tr-program-text { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
-.pf.gl .tr-program-text b { font-size: 15px; }
-.pf.gl .tr-program-text small { color: var(--pf-muted); font-size: 12.5px; }
 .pf.gl .tr-today-empty h2 { margin-bottom: 4px; }
 
 .pf.gl .pf-week-stats { align-items: center; display: flex; gap: 16px; }
@@ -469,29 +460,6 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .pf-lv .pf-bar { background: rgba(255, 255, 255, .18); border-radius: 99px; height: 8px; margin-top: 8px; }
 .pf.gl .pf-lv .pf-bar i { background: var(--gl-green); border-radius: 99px; }
 
-.pf.gl .pf-mycard { background: linear-gradient(150deg, #0B1220 0%, #12325A 70%, #0F7A3F 140%); border-radius: 22px; box-shadow: 0 14px 34px rgba(11, 18, 32, .22); color: #fff; overflow: hidden; }
-.pf.gl .pf-mycard-link { color: inherit; display: grid; gap: 14px; padding: 18px; text-decoration: none; }
-.pf.gl .pf-mycard-link:focus-visible { outline: 3px solid var(--gl-green); outline-offset: -3px; }
-.pf.gl .pf-mycard-head { align-items: center; display: flex; justify-content: space-between; }
-.pf.gl .pf-mycard-head .pf-card-title { color: #fff; }
-.pf.gl .pf-mycard-body { align-items: center; display: flex; gap: 16px; }
-.pf.gl .pf-mini { background: linear-gradient(160deg, #F6D365 0%, #C9952B 55%, #6B4A12 100%); border-radius: 14px; box-shadow: 0 8px 20px rgba(0, 0, 0, .35); color: #1a1205; display: grid; flex: none; grid-template-rows: auto 1fr; height: 132px; overflow: hidden; padding: 8px; width: 98px; }
-.pf.gl .pf-mini.is-starter { background: linear-gradient(160deg, #CBD5E1 0%, #94A3B8 60%, #475569 100%); }
-.pf.gl .pf-mini-top { display: grid; line-height: 1; }
-.pf.gl .pf-mini-top b { font-size: 26px; font-weight: 800; }
-.pf.gl .pf-mini-top small { font-size: 12px; font-weight: 700; }
-.pf.gl .pf-mini-photo { align-items: center; background: rgba(0, 0, 0, .18) center top / cover no-repeat; border-radius: 10px; color: #fff; display: flex; font-size: 22px; font-weight: 700; justify-content: center; margin-top: 6px; }
-.pf.gl .pf-mycard-info { display: grid; gap: 4px; min-width: 0; }
-.pf.gl .pf-mycard-name { font-size: 20px; line-height: 1.2; }
-.pf.gl .pf-mycard-team { color: rgba(255, 255, 255, .75); font-size: 13px; }
-.pf.gl .pf-mycard-stats { display: grid; gap: 4px; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 8px; text-align: center; }
-.pf.gl .pf-mycard-stats small { color: rgba(255, 255, 255, .7); display: block; font-size: 11px; font-weight: 700; }
-.pf.gl .pf-mycard-stats b { display: block; font-size: 18px; }
-.pf.gl .pf-mycard-starter { background: rgba(255, 255, 255, .14); border-radius: 99px; font-size: 12px; font-weight: 700; justify-self: start; margin-top: 6px; padding: 4px 10px; }
-.pf.gl .pf-mycard-foot { border-top: 1px solid rgba(255, 255, 255, .14); color: rgba(255, 255, 255, .85); display: flex; flex-wrap: wrap; font-size: 13px; gap: 4px 12px; padding-top: 12px; }
-.pf.gl .pf-mycard-foot em { font-style: normal; font-weight: 700; }
-.pf.gl .pf-mycard-foot em.is-up { color: var(--gl-green); }
-.pf.gl .pf-mycard-foot em.is-down { color: #FCA5A5; }
 
 .pf.gl .pf-week-head { align-items: center; color: inherit; display: flex; justify-content: space-between; margin-bottom: 14px; text-decoration: none; }
 .pf.gl .pf-week-head > svg { color: var(--pf-muted); }
@@ -500,3 +468,72 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl.pf-me .pf-hero .pf-id { flex-direction: column; text-align: center; }
 .pf.gl.pf-me .pf-hero .pf-avatar { border-radius: 50%; height: 104px; width: 104px; }
 .pf.gl.pf-me .pf-hero .pf-chips, .pf.gl.pf-me .pf-hero .pf-actions { justify-content: center; }
+
+/* The home module of the third reference (owner, 3 Nov 2026), in the agreed light glass colours:
+   motivation and sport, the card with "ภาพรวมของฉัน", today's missions with effort points, the
+   next session, one open tournament, and the week. */
+.pf.gl .pf-motivate { color: rgba(255, 255, 255, .88); font-size: 15px; margin: 8px 0 0; }
+.pf.gl .pf-hero-row { align-items: center; display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: space-between; margin-top: 12px; }
+.pf.gl .pf-hero-row .pf-tagline { margin: 0; }
+.pf.gl .pf-sport { position: relative; }
+.pf.gl .pf-sport summary { background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .28); border-radius: 999px; color: #fff; cursor: pointer; font-size: 14px; font-weight: 700; list-style: none; min-height: 36px; padding: 6px 14px; }
+.pf.gl .pf-sport summary::-webkit-details-marker { display: none; }
+.pf.gl .pf-sport p { background: #fff; border-radius: 12px; box-shadow: var(--gl-glass-shadow); color: var(--gl-text); font-size: 13px; left: 0; margin: 6px 0 0; padding: 10px 12px; position: absolute; width: min(260px, 70vw); z-index: 3; }
+
+.pf.gl .pf-sr { clip: rect(0 0 0 0); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
+.pf.gl .pf-cardrow { display: grid; gap: 12px; grid-template-columns: minmax(130px, 42%) minmax(0, 1fr); }
+.pf.gl .pf-bigcard { background: linear-gradient(160deg, #F6D365 0%, #C9952B 48%, #6B4A12 100%); border: 2px solid #F6D365; border-radius: 18px; box-shadow: 0 14px 30px rgba(107, 74, 18, .35); color: #1a1205; display: grid; gap: 4px; grid-template-rows: auto 1fr auto auto; min-height: 230px; padding: 10px; text-decoration: none; }
+.pf.gl .pf-bigcard.is-starter { background: linear-gradient(160deg, #E2E8F0 0%, #94A3B8 55%, #475569 100%); border-color: #E2E8F0; box-shadow: 0 14px 30px rgba(11, 18, 32, .2); }
+.pf.gl .pf-bigcard:focus-visible { outline: 3px solid var(--gl-navy); outline-offset: 3px; }
+.pf.gl .pf-bigcard-top { display: grid; line-height: 1; }
+.pf.gl .pf-bigcard-top b { font-size: 34px; font-weight: 800; }
+.pf.gl .pf-bigcard-top small { font-size: 13px; font-weight: 800; }
+.pf.gl .pf-bigcard-photo { align-items: center; background: rgba(0, 0, 0, .18) center top / cover no-repeat; border-radius: 12px; color: #fff; display: flex; font-size: 30px; font-weight: 700; justify-content: center; min-height: 96px; }
+.pf.gl .pf-bigcard-name { font-size: 16px; font-weight: 800; line-height: 1.2; text-align: center; }
+.pf.gl .pf-bigcard-team { font-size: 12px; font-weight: 600; opacity: .85; text-align: center; }
+.pf.gl .pf-bigcard-starter { background: rgba(255, 255, 255, .55); border-radius: 99px; font-size: 11px; font-weight: 800; justify-self: center; padding: 3px 10px; }
+.pf.gl .pf-overview { background: linear-gradient(160deg, #0B1220 0%, #12325A 100%); border-radius: 18px; box-shadow: 0 14px 30px rgba(11, 18, 32, .22); color: #fff; display: grid; gap: 10px; padding: 14px; }
+.pf.gl .pf-overview-title { font-size: 15px; }
+.pf.gl .pf-overview-ovr { align-items: baseline; background: rgba(255, 255, 255, .08); border-radius: 12px; display: flex; flex-wrap: wrap; gap: 4px 8px; padding: 8px 10px; }
+.pf.gl .pf-overview-ovr small { color: rgba(255, 255, 255, .75); font-size: 12px; width: 100%; }
+.pf.gl .pf-overview-ovr b { font-size: 26px; }
+.pf.gl .pf-overview-ovr em { font-size: 14px; font-style: normal; font-weight: 700; }
+.pf.gl .pf-overview-ovr em.is-up { color: var(--gl-green); }
+.pf.gl .pf-overview-ovr em.is-down { color: #FCA5A5; }
+.pf.gl .pf-overview-cells { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+.pf.gl .pf-overview-cells span { background: rgba(255, 255, 255, .08); border-radius: 12px; display: grid; gap: 2px; padding: 8px 10px; }
+.pf.gl .pf-overview-cells svg { color: var(--gl-green); }
+.pf.gl .pf-overview-cells small { color: rgba(255, 255, 255, .75); font-size: 12px; }
+.pf.gl .pf-overview-cells b { font-size: 17px; }
+.pf.gl .pf-overview-note { color: rgba(255, 255, 255, .7); font-size: 11.5px; line-height: 1.45; margin: 0; }
+
+.pf.gl .pf-missions .pf-card-title svg, .pf.gl .pf-next .pf-card-title svg, .pf.gl .pf-opp .pf-card-title svg { color: var(--gl-green-ink); }
+.pf.gl .pf-effort-chip { background: #FEF3C7; border-radius: 999px; color: #92400E; flex: none; font-size: 13px; font-weight: 800; padding: 5px 10px; }
+.pf.gl .pf-mission-list { display: grid; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.pf.gl .pf-mission-list li { align-items: center; background: var(--gl-canvas); border: 1px solid var(--pf-line); border-radius: 14px; display: flex; gap: 12px; min-height: 60px; padding: 8px 12px; }
+.pf.gl .pf-mission-mark { align-items: center; border: 2px solid var(--gl-navy); border-radius: 50%; color: var(--gl-navy); display: inline-flex; flex: none; height: 44px; justify-content: center; text-decoration: none; width: 44px; }
+.pf.gl .pf-mission-mark.is-primary { background: var(--gl-green); border-color: var(--gl-green); box-shadow: 0 6px 16px rgba(22, 224, 110, .35); }
+.pf.gl .pf-mission-mark.is-done { background: var(--gl-green); border-color: var(--gl-green); }
+.pf.gl .pf-mission-text { color: inherit; display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; text-decoration: none; }
+.pf.gl .pf-mission-text b { font-size: 15px; }
+.pf.gl .pf-mission-text small { color: var(--pf-muted); font-size: 12.5px; }
+.pf.gl .pf-mission-list li.is-done .pf-mission-text b { color: var(--pf-muted); }
+.pf.gl .pf-mission-points { color: var(--gl-green-ink); flex: none; font-size: 15px; font-weight: 800; }
+.pf.gl .pf-missions-rest { display: grid; gap: 2px; margin: 0; }
+.pf.gl .pf-missions-rest small { color: var(--pf-muted); }
+
+.pf.gl .pf-next-row { align-items: center; background: var(--gl-canvas); border-radius: 14px; color: inherit; display: flex; gap: 12px; padding: 8px; text-decoration: none; }
+.pf.gl .pf-next-img { border-radius: 10px; flex: none; height: 64px; overflow: hidden; position: relative; width: 96px; }
+.pf.gl .pf-next-img img { object-fit: cover; }
+.pf.gl .pf-next-text { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
+.pf.gl .pf-next-text b { font-size: 15px; }
+.pf.gl .pf-next-text small { color: var(--pf-muted); font-size: 13px; }
+.pf.gl .pf-next-play { align-items: center; border: 2px solid var(--gl-green-ink); border-radius: 50%; color: var(--gl-green-ink); display: inline-flex; flex: none; height: 44px; justify-content: center; width: 44px; }
+
+.pf.gl .pf-opp-card { align-items: center; background: linear-gradient(100deg, rgba(11, 18, 32, .92) 0%, rgba(11, 18, 32, .7) 60%, rgba(11, 18, 32, .45) 100%), var(--pf-opp-photo, none) center / cover no-repeat, var(--gl-navy); border-radius: 16px; color: #fff; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; padding: 16px; }
+.pf.gl .pf-opp-text { display: grid; gap: 4px; min-width: 0; }
+.pf.gl .pf-opp-text b { font-size: 18px; }
+.pf.gl .pf-opp-text small { align-items: center; color: rgba(255, 255, 255, .85); display: inline-flex; font-size: 13px; gap: 5px; }
+.pf.gl .pf-opp-cta { align-items: center; background: transparent; border: 1.5px solid #fff; border-radius: 999px; color: #fff; display: inline-flex; font-size: 15px; font-weight: 700; gap: 4px; min-height: 44px; padding: 0 18px; text-decoration: none; }
+.pf.gl .pf-opp-cta:focus-visible { outline: 3px solid var(--gl-green); outline-offset: 2px; }
+.pf.gl .pf-week-stats dd.is-effort { color: #B45309; }

@@ -10,7 +10,7 @@ import {
 import DeleteMyDataSection from './DeleteMyDataSection'
 import GuardianInviteButton from './GuardianInviteButton'
 import TrainingCard from './TrainingCard'
-import { HomeHero, MyCardPanel, WeekProgress } from './AthleteHome'
+import { CardOverview, HomeHero, MissionsCard, NextTraining, Opportunity, WeekProgress, type HomeTournament } from './AthleteHome'
 import PageHeader from '@/components/PageHeader'
 import RoleHomeCard, { RoleLoadFailed } from '@/components/RoleHomeCard'
 import { calculateLevel, levelProgress } from '@/lib/digital-identity'
@@ -19,10 +19,12 @@ import { shownAge, thaiDate } from '@/lib/athlete-private'
 import { profileReadiness, type ReadinessItem } from '@/lib/profile-readiness'
 import { signAvatarUrls } from '@/lib/athlete-avatar'
 import { fetchProfileHome } from '@/lib/profile-home'
-import { trainingHasPrimary, trainingHome } from '@/lib/training/home'
+import { recommendedProgram } from '@/lib/training/home'
 import { homeKind, type HomeKind } from '@/lib/role-home'
 import { loadRoleHome } from '@/lib/role-home-data'
-import { bangkokWeekStart, lastMatchChange, weekTotals } from '@/lib/athlete-home'
+import { bangkokWeekStart, dayStreak, effortSummary, lastMatchChange, nextSession, openTournamentsAhead, todayMissionList, totalMinutes, weekTotals } from '@/lib/athlete-home'
+import { getPublicOpenTournaments } from '@/lib/public-data'
+import { ACTIVE_SPORT } from '@/lib/season'
 import { trainingToday } from '@/lib/training/today'
 import { fetchUnreadNotificationCount } from '@/lib/notification-count'
 import { fetchAthleteHomeExtras } from '@/lib/athlete-home-data'
@@ -82,15 +84,16 @@ export default async function ProfilePage() {
   // A guardian, coach, organizer or venue owner is not shown the athlete's own parts; someone
   // who coaches or runs a venue may also play, so their card stays one tap away.
   const hasAthleteProfile = home.athlete ? 1 : 0
-  const homeRank = (athleteHome ? home.rank : null) as { id: string } | null
-  const [loaded, avatarUrls, extras, unread] = await Promise.all([
+  const [loaded, avatarUrls, extras, unread, openRows] = await Promise.all([
     roleKind ? loadRoleHome(supabase, roleKind, user.id) : null,
     // The photo is a private object (T51); the owner may always sign their own.
     signAvatarUrls(supabase, [athleteHome ? (home.athlete?.profile_image_url as string | null | undefined) : null]),
     // The card's skills, the last match's change and this week's XP: small indexed reads.
-    athleteHome && home.athlete ? fetchAthleteHomeExtras(supabase, user.id, homeRank?.id ?? null, bangkokWeekStart(today)) : null,
+    athleteHome && home.athlete ? fetchAthleteHomeExtras(supabase, user.id, bangkokWeekStart(today)) : null,
     // The bell on the athlete's home: a head count, no notification row is read.
     athleteHome ? fetchUnreadNotificationCount(supabase, user.id) : null,
+    // The same cached list as the home page (60 s), not a read per visit.
+    athleteHome ? getPublicOpenTournaments(today) : null,
   ])
   const athlete = (athleteHome ? home.athlete : null) as AthleteProfile | null
   const teamInvites = athleteHome ? home.memberships.filter(membership => membership.status === 'pending').length : 0
@@ -123,11 +126,23 @@ export default async function ProfilePage() {
   // Shown and used for the training suggestion only when it can be right (5-80); the consent rule
   // in readiness still uses the real value.
   const age = shownAge(readiness?.age ?? null)
-  // What the training card asks for, and so whether it holds this page's one primary button.
-  const trainingCard = trainingHome(training ?? { available: false, enrollments: [], checkins: {} }, today, age)
-  const trainingPrimary = trainingHasPrimary(trainingCard)
   // This week across every active programme, as /training counts it (the athlete's own check-ins, SQL63).
-  const goal = training?.available && training.enrollments.length > 0 ? weekTotals(trainingToday(training, today)) : null
+  const built = training?.available && training.enrollments.length > 0 ? trainingToday(training, today) : null
+  // An enrolment in a programme that no longer exists is no programme at all.
+  const view = built && built.programs.length > 0 ? built : null
+  const goal = view ? weekTotals(view) : null
+  // The home of the third reference (owner, 3 Nov 2026): missions worth effort points (never XP),
+  // the next session, minutes and days in a row; all of it the athlete's own check-ins (SQL63).
+  const missions = view ? todayMissionList(view) : []
+  const effort = view ? effortSummary(view) : null
+  const firstOpen = missions.find(item => !item.done)?.programId ?? null
+  const next = view ? nextSession(view) : null
+  const opportunity = openTournamentsAhead((openRows ?? []) as HomeTournament[], today)[0] ?? null
+  // Programmes with no session today and none to come (finished): pick the next one, as the primary.
+  const finished = Boolean(view && view.plannedToday === 0 && !next)
+  const pickProgramme = Boolean(athlete && training?.available && (!view || finished))
+  // The training part holds the one primary button: picking a programme, or today's first open mission.
+  const trainingPrimary = pickProgramme || Boolean(firstOpen)
   const matchChange = lastMatchChange(extras?.rating ?? null)
   const name = athlete?.display_name?.trim() || profile?.full_name?.trim() || (athleteHome ? t('noName') : user.email ?? t('noName'))
   const rt = await getTranslations('roleHome')
@@ -165,6 +180,7 @@ export default async function ProfilePage() {
             initials={initials(name)}
             unread={unread ?? null}
             level={athlete && xp > 0 ? { level, xp, target: levelInfo.nextFloor, percent: levelInfo.percentage } : null}
+            sport={t(`sports.${ACTIVE_SPORT === 'futsal' ? 'futsal' : 'football'}`)}
           />}
         </aside>
 
@@ -177,27 +193,32 @@ export default async function ProfilePage() {
             <Link href="/profile/edit" className="pf-btn pf-btn-primary"><Camera size={17} aria-hidden="true" />{t('noAthlete.cta')}</Link>
           </section>}
 
-          {/* The card, then today's programme and the week (second reference, owner 2 Nov 2026). */}
-          {athlete && <MyCardPanel
+          {/* The third reference (owner, 3 Nov 2026): card and overview, today's missions, the
+              next session, an open tournament, then the week. */}
+          {athlete && <CardOverview
             name={name}
             team={athlete.current_team ?? null}
             position={rank?.position || athlete.position || null}
             avatarUrl={avatarUrl}
             initials={initials(name)}
             ovr={rank?.ovr ?? null}
-            skills={extras?.cardSkills ?? null}
             power={rank ? rank.pts : null}
             change={matchChange}
             ranked={Boolean(rank)}
+            minutes={view ? totalMinutes(view) : null}
+            streak={view && training ? dayStreak(training, today) : null}
           />}
-          {/* Today's session, or the programme to pick for their age. */}
-          <TrainingCard home={trainingCard} age={age} />
+          {/* No programme yet: the programme to pick for their age, as the page's primary step. */}
+          {pickProgramme && <TrainingCard recommended={recommendedProgram(age)} age={age} finished={finished} />}
+          {view && effort && !finished && <MissionsCard missions={missions} effort={effort} firstOpen={firstOpen} hasNext={Boolean(next)} />}
+          {next && <NextTraining next={next} today={today} />}
           {/* The team is one clear next step, not a wall (AGENTS.md product rule): an invitation
               waiting, or how to get into a team, as one line; the list itself is on /me. */}
           {athlete && (teamInvites > 0
             ? <Link href="/team-members" className="pf-card pf-ready-line pf-team-line"><span>{t('teamLine.invites', { count: teamInvites })}</span><ChevronRight size={17} aria-hidden="true" /></Link>
             : !inTeam && <Link href="/me#pf-team-ask" className="pf-card pf-ready-line pf-team-line"><span>{t('teamLine.none')}</span><ChevronRight size={17} aria-hidden="true" /></Link>)}
-          {trainingCard.state === 'enrolled' && <WeekProgress goal={goal} xp={extras ? extras.weekXp : null} />}
+          {athlete && opportunity && <Opportunity tournament={opportunity} />}
+          {view && <WeekProgress goal={goal} effort={effort ? effort.week : null} xp={extras ? extras.weekXp : null} />}
 
           {readiness && (athlete?.is_public && readiness.next ? <Link href={readiness.next.href} className="pf-card pf-ready-line" id="pf-readiness">
             <span>{t('readiness.compact', { done: readiness.done, total: readiness.total, next: t(`readiness.items.${readiness.next.key}.title`) })}</span>
