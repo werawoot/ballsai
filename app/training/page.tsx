@@ -62,24 +62,25 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
   return (
     <main className="bds-page tg gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.training)}>
       <PageHeader back={{ href: '/profile', label: t('back') }} />
-      <section className="tg-hero gl-on-photo">
+      <section className={`tg-hero gl-on-photo${tab === 'mine' ? ' is-compact' : ''}`}>
         <div className="tg-hero-inner">
           <div className="tg-hero-copy">
             <p className={`tg-tagline ${script.className}`} lang="en">{t('tagline')}</p>
             <h1>{t('title')}</h1>
-            <p className="tg-lead">{t('heroLead')}</p>
+            {tab !== 'mine' && <p className="tg-lead">{t('heroLead')}</p>}
             <nav className="tg-bands" aria-label={t('bandLabel')}>
               {BANDS.map(item => <Link aria-current={item === band ? 'page' : undefined} className={item === band ? 'is-on' : undefined} href={href({ band: item, skill: null })} key={item}>
                 {item === ownBand ? t('yourBand', { band: t(`bands.${item}`) }) : t(`bands.${item}`)}
               </Link>)}
             </nav>
           </div>
-          <ul className="tg-features" aria-label={t('featuresLabel')}>
+          {/* My schedule opens straight on the week (second reference); the pitch for the programmes stays on the other tabs. */}
+          {tab !== 'mine' && <ul className="tg-features" aria-label={t('featuresLabel')}>
             {FEATURES.map(([key, Icon]) => <li key={key}>
               <span className="tg-feature-icon" aria-hidden="true"><Icon size={24} /></span>
               <span><b>{t(`features.${key}.title`)}</b><small>{t(`features.${key}.body`, { min: Math.min(...sessionMinutes), max: Math.max(...sessionMinutes) })}</small></span>
             </li>)}
-          </ul>
+          </ul>}
         </div>
       </section>
 
