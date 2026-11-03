@@ -2,17 +2,15 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import CardGuide from '@/components/CardGuide'
 import { getTranslations } from 'next-intl/server'
 import {
-  BadgeCheck, Building2, Camera, Check, ChevronRight, Compass, Crown, Handshake, LayoutDashboard, Lock, LogOut,
-  IdCard, MapPin, Route, Shield, ShieldCheck, Star, Trophy, UsersRound, Zap, type LucideIcon,
+  Building2, Camera, Check, ChevronRight, Compass, Handshake, LayoutDashboard, Lock, LogOut,
+  IdCard, Route, ShieldCheck, Trophy, UsersRound, type LucideIcon,
 } from 'lucide-react'
 import DeleteMyDataSection from './DeleteMyDataSection'
 import GuardianInviteButton from './GuardianInviteButton'
-import TeamAskButton from './TeamAskButton'
 import TrainingCard from './TrainingCard'
-import { HomeHero, OpenTournaments, SkillRadar, WeekProgress, type HomeTournament } from './AthleteHome'
+import { HomeHero, MyCardPanel, WeekProgress } from './AthleteHome'
 import PageHeader from '@/components/PageHeader'
 import RoleHomeCard, { RoleLoadFailed } from '@/components/RoleHomeCard'
 import { calculateLevel, levelProgress } from '@/lib/digital-identity'
@@ -24,11 +22,9 @@ import { fetchProfileHome } from '@/lib/profile-home'
 import { trainingHasPrimary, trainingHome } from '@/lib/training/home'
 import { homeKind, type HomeKind } from '@/lib/role-home'
 import { loadRoleHome } from '@/lib/role-home-data'
-import { lastMatchChange, openTournamentsAhead, verifiedSkills, weeklyGoal } from '@/lib/athlete-home'
+import { bangkokWeekStart, lastMatchChange, weekSkills, weeklyGoal } from '@/lib/athlete-home'
 import { fetchUnreadNotificationCount } from '@/lib/notification-count'
 import { fetchAthleteHomeExtras } from '@/lib/athlete-home-data'
-import { getPublicOpenTournaments } from '@/lib/public-data'
-import { bangkokToday } from '@/lib/public-tournaments'
 import type messagesTh from '@/messages/th.json'
 import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
 import '../glass.css'
@@ -50,12 +46,7 @@ type AthleteProfile = {
   verification_level: 'self' | 'coach_verified' | 'performance_verified'
 }
 type PlayerRank = { id: string; player_name: string; position: string; ovr: number; pts: number }
-type Membership = {
-  status: 'pending' | 'accepted' | 'declined' | 'removed'
-  teams: { id: string; name: string; status: string; tournaments: { name: string | null; location: string | null }[] | { name: string | null; location: string | null } | null } | null
-}
 type ShortcutKey = keyof (typeof messagesTh)['profileHome']['shortcuts']['items']
-type TeamStatus = keyof (typeof messagesTh)['profileHome']['teams']['status']
 type Shortcut = { key: ShortcutKey; href: string; icon: LucideIcon }
 
 const MENU_KEYS: Record<(typeof PROFILE_MENU)[number]['href'], { key: ShortcutKey; icon: LucideIcon }> = {
@@ -63,12 +54,6 @@ const MENU_KEYS: Record<(typeof PROFILE_MENU)[number]['href'], { key: ShortcutKe
   '/sponsorships': { key: 'sponsorships', icon: Handshake },
   '/team-members': { key: 'teamMembers', icon: UsersRound },
   '/career': { key: 'career', icon: Route },
-}
-
-function PositionMark({ position, size }: { position: string; size: number }) {
-  if (position === 'GK' || position === 'DF') return <Shield size={size} strokeWidth={1.5} />
-  if (position === 'MF') return <Zap size={size} strokeWidth={1.5} />
-  return <Star size={size} strokeWidth={1.5} />
 }
 
 const KIND_ICONS: Record<HomeKind, LucideIcon> = { athlete: IdCard, guardian: UsersRound, coach: Compass, organizer: Trophy, venue: Building2, sponsor: Handshake }
@@ -97,21 +82,17 @@ export default async function ProfilePage() {
   // who coaches or runs a venue may also play, so their card stays one tap away.
   const hasAthleteProfile = home.athlete ? 1 : 0
   const homeRank = (athleteHome ? home.rank : null) as { id: string } | null
-  const [loaded, avatarUrls, extras, openRows, unread] = await Promise.all([
+  const [loaded, avatarUrls, extras, unread] = await Promise.all([
     roleKind ? loadRoleHome(supabase, roleKind, user.id) : null,
     // The photo is a private object (T51); the owner may always sign their own.
     signAvatarUrls(supabase, [athleteHome ? (home.athlete?.profile_image_url as string | null | undefined) : null]),
-    // The athlete home's rating change and coach-assessed skills: two indexed one-row reads.
-    athleteHome && home.athlete ? fetchAthleteHomeExtras(supabase, user.id, homeRank?.id ?? null) : null,
-    // The same cached list as the home page (60 s), not a read per visit.
-    athleteHome ? getPublicOpenTournaments() : null,
+    // The card's skills, the last match's change and this week's XP: small indexed reads.
+    athleteHome && home.athlete ? fetchAthleteHomeExtras(supabase, user.id, homeRank?.id ?? null, bangkokWeekStart(thaiDate(new Date()))) : null,
     // The bell on the athlete's home: a head count, no notification row is read.
     athleteHome ? fetchUnreadNotificationCount(supabase, user.id) : null,
   ])
   const athlete = (athleteHome ? home.athlete : null) as AthleteProfile | null
   const rank = (athleteHome ? home.rank : null) as PlayerRank | null
-  const memberships = (athleteHome ? home.memberships : []) as unknown as Membership[]
-  const pendingTeamInvites = memberships.filter(membership => membership.status === 'pending').length
   const athletePrivate = athlete ? home.private : null
   const training = athlete ? home.training : null
   const progressRow = athleteHome ? home.progress : null
@@ -142,11 +123,9 @@ export default async function ProfilePage() {
   // What the training card asks for, and so whether it holds this page's one primary button.
   const trainingCard = trainingHome(training ?? { available: false, enrollments: [], checkins: {} }, today, age)
   const trainingPrimary = trainingHasPrimary(trainingCard)
-  const openTournaments = openTournamentsAhead((openRows ?? []) as (HomeTournament & { status: string | null })[], bangkokToday())
   // This week's sessions and minutes, from the athlete's own check-ins (no XP, SQL63).
   const goal = trainingCard.state === 'enrolled' ? weeklyGoal(trainingCard.progress, trainingCard.program.minutes) : null
   const matchChange = lastMatchChange(extras?.rating ?? null)
-  const skills = verifiedSkills(extras?.skills ?? null)
   const name = athlete?.display_name?.trim() || profile?.full_name?.trim() || (athleteHome ? t('noName') : user.email ?? t('noName'))
   const rt = await getTranslations('roleHome')
   // The organizer dashboard is for whoever an admin made an organizer, and only them: a coach
@@ -182,7 +161,7 @@ export default async function ProfilePage() {
             avatarUrl={avatarUrl}
             initials={initials(name)}
             unread={unread ?? null}
-            level={athlete && xp > 0 ? { level, xp, next: levelInfo.remaining, percent: levelInfo.percentage } : null}
+            level={athlete && xp > 0 ? { level, xp, target: levelInfo.nextFloor, percent: levelInfo.percentage } : null}
           />}
         </aside>
 
@@ -195,39 +174,22 @@ export default async function ProfilePage() {
             <Link href="/profile/edit" className="pf-btn pf-btn-primary"><Camera size={17} aria-hidden="true" />{t('noAthlete.cta')}</Link>
           </section>}
 
-          {/* The card first, then today's programme and the week (DOENSAI dashboard design, owner 2 Nov 2026). */}
-          {athlete && <section className="pf-card" aria-labelledby="pf-card">
-            <div className="pf-card-head"><h2 id="pf-card" className="pf-card-title">{t('card.title')}</h2></div>
-            <div className="pf-player">
-              {rank ? <div className="pf-fut">
-                <div className="pf-fut-top"><b>{rank.ovr}</b><span>{rank.position}</span></div>
-                <div className="pf-fut-mark"><PositionMark position={rank.position} size={46} /></div>
-                <div className="pf-fut-name">{rank.player_name}</div>
-              </div> : <div className="pf-fut is-starter">
-                <div className="pf-fut-top"><b>—</b><span>{athlete.position || 'FW'}</span></div>
-                <div className="pf-fut-mark"><PositionMark position={athlete.position || 'FW'} size={46} /></div>
-                <div className="pf-fut-name">{name}</div>
-              </div>}
-              <div style={{ minWidth: 0 }}>
-                {rank
-                  ? <><div className="pf-power">{rank.pts.toLocaleString()}<small>{t('card.power')}</small></div>
-                    {matchChange !== null && <p className={`pf-change ${matchChange > 0 ? 'is-up' : 'is-down'}`}>{t('lastMatch', { change: matchChange > 0 ? `+${matchChange}` : `−${Math.abs(matchChange)}` })}</p>}
-                    <p className="pf-note">{t('card.source')}</p></>
-                  : <><div className="pf-power" style={{ fontSize: 22 }}>{t('card.starterTitle')}</div><p className="pf-note">{t('card.starterBody')}</p></>}
-                <div className="pf-row">
-                  <Link href="/card" className="pf-btn pf-btn-line pf-btn-sm">{t('card.build')}</Link>
-                  {rank && <Link href="/ranking" className="pf-btn pf-btn-line pf-btn-sm">{t('card.myRanking')}</Link>}
-                  {!rank && <Link href="/tournaments" className="pf-btn pf-btn-line pf-btn-sm"><Crown size={15} aria-hidden="true" />{t('card.findTournament')}</Link>}
-                </div>
-              </div>
-            </div>
-            <CardGuide />
-          </section>}
-
+          {/* The card, then today's programme and the week (second reference, owner 2 Nov 2026). */}
+          {athlete && <MyCardPanel
+            name={name}
+            team={athlete.current_team ?? null}
+            position={rank?.position || athlete.position || null}
+            avatarUrl={avatarUrl}
+            initials={initials(name)}
+            ovr={rank?.ovr ?? null}
+            skills={extras?.cardSkills ?? null}
+            power={rank ? rank.pts : null}
+            change={matchChange}
+            ranked={Boolean(rank)}
+          />}
           {/* Today's session, or the programme to pick for their age. */}
           <TrainingCard home={trainingCard} age={age} />
-          {trainingCard.state === 'enrolled' && <WeekProgress progress={trainingCard.progress} goal={goal} programId={trainingCard.program.id} />}
-          {athlete && <SkillRadar skills={skills} />}
+          {trainingCard.state === 'enrolled' && <WeekProgress goal={goal} skills={weekSkills(goal, trainingCard.program)} xp={extras?.weekXp ?? null} programId={trainingCard.program.id} />}
 
           {readiness && (athlete?.is_public && readiness.next ? <Link href={readiness.next.href} className="pf-card pf-ready-line" id="pf-readiness">
             <span>{t('readiness.compact', { done: readiness.done, total: readiness.total, next: t(`readiness.items.${readiness.next.key}.title`) })}</span>
@@ -266,43 +228,7 @@ export default async function ProfilePage() {
                 })}
               </ol>
             </details>
-          </section> : <section className="pf-card" aria-labelledby="pf-readiness">
-            <div className="pf-card-head"><h2 id="pf-readiness" className="pf-card-title">{t('readiness.titleDone')}</h2></div>
-            <p className="pf-ready"><BadgeCheck size={20} aria-hidden="true" />{t('readiness.doneNote')}</p>
-          </section>)}
-
-          <OpenTournaments tournaments={openTournaments} />
-
-          {memberships.length > 0 && <section className="pf-card" aria-labelledby="pf-teams">
-            <div className="pf-card-head">
-              <h2 id="pf-teams" className="pf-card-title">{t('teams.title')}</h2>
-              <Link href="/team-members" className="pf-card-meta tap-44" style={{ textDecoration: 'none' }}>{pendingTeamInvites > 0 ? t('teams.viewAll') : t('teams.viewTeams')}</Link>
-            </div>
-            <ul className="pf-list">
-              {memberships.map((membership, index) => {
-                const team = membership.teams
-                const tournament = Array.isArray(team?.tournaments) ? team?.tournaments[0] : team?.tournaments
-                const accepted = membership.status === 'accepted'
-                const [status, tone]: [TeamStatus, string] = !accepted
-                  ? membership.status === 'pending' ? ['invited', 'is-wait'] : ['declined', 'is-muted']
-                  : team?.status === 'confirmed' ? ['confirmed', 'is-ok'] : team?.status === 'pending' ? ['teamPending', 'is-wait'] : ['forming', 'is-muted']
-                return <li key={`${team?.id ?? 'team'}-${index}`}>
-                  <div className="pf-list-main">
-                    <b>{team?.name ?? t('teams.unnamed')}</b>
-                    <span>{tournament?.name ?? t('teams.tournament')}{tournament?.location ? <> · <MapPin size={11} aria-hidden="true" style={{ verticalAlign: '-1px' }} /> {tournament.location}</> : null}</span>
-                  </div>
-                  <span className={`pf-badge ${tone}`}>{t(`teams.status.${status}`)}</span>
-                </li>
-              })}
-            </ul>
-          </section>}
-
-          {/* No team yet: the coach's invitation is the step after, not a wall (AGENTS.md product rule). */}
-          {athlete && memberships.length === 0 && <section className="pf-card pf-team-ask" aria-labelledby="pf-team-ask">
-            <h2 id="pf-team-ask" className="pf-card-title">{t('teamAsk.title')}</h2>
-            <p className="pf-card-desc">{t('teamAsk.body')}</p>
-            <TeamAskButton email={user.email ?? ''} />
-          </section>}
+          </section> : null)}
 
           </>}
 

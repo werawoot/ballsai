@@ -49,9 +49,9 @@ describe('the card guide', () => {
     expect(Object.keys(en.cardGuide).sort()).toEqual(Object.keys(th.cardGuide).sort())
   })
 
-  it('sits on /card and on /profile', () => {
+  it('sits on /card and on /me, the athlete\'s profile tab (owner, 2 Nov 2026)', () => {
     expect(readFileSync('app/card/page.tsx', 'utf8')).toContain('<CardGuide')
-    expect(readFileSync('app/profile/page.tsx', 'utf8')).toContain('<CardGuide')
+    expect(readFileSync('app/me/page.tsx', 'utf8')).toContain('<CardGuide')
   })
 })
 

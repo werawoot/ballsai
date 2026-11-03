@@ -40,9 +40,10 @@ describe('withdrawing from a tournament entry', () => {
 })
 
 describe('the profile team card link', () => {
-  const source = readFileSync('app/profile/page.tsx', 'utf8')
+  // On /me, the athlete's profile tab, since the second reference (owner, 2 Nov 2026).
+  const source = readFileSync('app/me/page.tsx', 'utf8')
   it('says "invitations" only when one is waiting, otherwise "my teams"', () => {
-    expect(source).toMatch(/pendingTeamInvites > 0 \? t\('teams\.viewAll'\) : t\('teams\.viewTeams'\)/)
+    expect(source).toMatch(/pendingInvites > 0 \? p\('teams\.viewAll'\) : p\('teams\.viewTeams'\)/)
     expect(th.profileHome.teams.viewTeams).toBe('ดูทีมของฉัน')
   })
 })

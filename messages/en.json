@@ -1215,14 +1215,16 @@
       "compact": "Profile {done} of {total} steps done · next: {next}"
     },
     "card": {
-      "title": "Player card",
+      "title": "My card",
       "power": "Power Rating",
       "source": "Calculated from match results recorded and confirmed by organizers",
       "starterTitle": "Starter card",
       "starterBody": "No Power Rating yet. It comes only from match results recorded and confirmed by organizers. Play your first tournament to start.",
       "build": "Build and share card",
       "findTournament": "Find a tournament",
-      "myRanking": "See my ranking"
+      "myRanking": "See my ranking",
+      "powerLine": "Power Rating {power}",
+      "starterShort": "Starter card · ratings come only from results an organizer confirmed"
     },
     "teams": {
       "title": "My teams",
@@ -1313,17 +1315,13 @@
       "empty": "No assessment yet. A coach of your team can assess your skills; once you accept, they show here.",
       "chartLabel": "Skill chart: {list}"
     },
-    "open": {
-      "title": "Open for entry",
-      "viewAll": "See all",
-      "free": "Free",
-      "perTeam": "{fee}/team"
-    },
     "home": {
       "hello": "Hello",
       "notifications": "Notifications",
       "unread": "{count} unread",
-      "profile": "My profile"
+      "profile": "My profile",
+      "level": "Lv.{level}",
+      "xp": "{xp} / {target} XP"
     },
     "today": {
       "title": "Today's programme",
@@ -1334,15 +1332,11 @@
     },
     "week": {
       "title": "This week",
-      "open": "See programme",
-      "dayDone": "trained",
-      "dayPlanned": "training day",
-      "dayRest": "rest day",
+      "sessionsUnit": "sessions",
       "minutes": "Minutes",
-      "streak": "Weeks in a row",
-      "total": "Whole programme",
-      "note": "Counted from what you log yourself; minutes are the programme's planned time; no points",
-      "sessionsUnit": "sessions"
+      "skills": "Skills",
+      "xp": "XP from matches",
+      "note": "Sessions, minutes and skills count what you log yourself · XP comes only from results an organizer confirmed"
     }
   },
   "profileEdit": {

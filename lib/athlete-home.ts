@@ -1,4 +1,6 @@
 import type { Progress } from './training/schedule'
+import type { Program } from './training/content'
+import { DRILL_SKILL, type Skill } from './training/skills'
 import { COACH_SKILL_KEYS, type CoachSkillKey } from './coach-skills'
 
 // The athlete's home (/profile) in the DOENSAI dashboard design (owner, 2 Nov 2026). Free of React
@@ -52,13 +54,25 @@ export function radarPoints(values: number[], radius: number): { x: number; y: n
   })
 }
 
-export const HOME_TOURNAMENT_LIMIT = 3
-type OpenRow = { id: string; status: string | null; start_date: string; end_date?: string | null }
+/** Monday 00:00 in Thailand (UTC+7, no daylight saving) of the week holding `today`, as UTC. */
+export function bangkokWeekStart(today: string): string {
+  const date = new Date(`${today}T00:00:00Z`)
+  const weekday = (date.getUTCDay() + 6) % 7
+  date.setUTCDate(date.getUTCDate() - weekday)
+  return new Date(date.getTime() - 7 * 3600_000).toISOString()
+}
 
-/** Open for registration and not over yet, soonest first. */
-export function openTournamentsAhead<Row extends OpenRow>(rows: Row[], today: string): Row[] {
-  return rows
-    .filter(row => row.status === 'open' && (row.end_date ?? row.start_date) >= today)
-    .sort((a, b) => a.start_date.localeCompare(b.start_date))
-    .slice(0, HOME_TOURNAMENT_LIMIT)
+/** XP earned this week. The rows are athlete_xp_events, written only by verified match results. */
+export function weekXp(rows: { xp_amount: number | null }[] | null | undefined): number {
+  return (rows ?? []).reduce((sum, row) => sum + (typeof row.xp_amount === 'number' ? row.xp_amount : 0), 0)
+}
+
+/** Each skill a programme's drills train, once (lib/training/skills.ts). */
+export function programSkills(program: Program): Skill[] {
+  return [...new Set(program.drills.map(drill => DRILL_SKILL[drill.id]).filter((skill): skill is Skill => Boolean(skill)))]
+}
+
+/** Skills trained this week: the programme's skills once a session is checked in, else none. */
+export function weekSkills(goal: WeeklyGoal | null, program: Program): number {
+  return goal && goal.done > 0 ? programSkills(program).length : 0
 }

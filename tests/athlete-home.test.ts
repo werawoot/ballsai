@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { TRAINING_PROGRAMS } from '@/lib/training/content'
 import { trainingHome } from '@/lib/training/home'
 import type { MyTraining } from '@/lib/training/data'
-import { lastMatchChange, openTournamentsAhead, radarPoints, verifiedSkills, weeklyGoal } from '@/lib/athlete-home'
+import { bangkokWeekStart, lastMatchChange, programSkills, radarPoints, verifiedSkills, weekSkills, weekXp, weeklyGoal } from '@/lib/athlete-home'
 
 // The athlete's home in the DOENSAI dashboard design (owner, 2 Nov 2026): the week's
 // training goal, the change of the last verified match and the skills a
@@ -85,15 +85,30 @@ describe('the skills a coach assessed', () => {
   })
 })
 
-describe('open tournaments on the athlete home', () => {
-  const row = (id: string, start: string, end: string | null = null) => ({ id, name: id, location: null, start_date: start, end_date: end, fee: 0, status: 'open' })
-
-  it('leaves out what is already over and keeps the soonest three', () => {
-    const rows = [row('past', '2026-10-01', '2026-10-02'), row('a', '2026-11-05'), row('running', '2026-10-30', '2026-11-20'), row('b', '2026-11-10'), row('c', '2026-12-01')]
-    expect(openTournamentsAhead(rows, '2026-11-02').map(item => item.id)).toEqual(['running', 'a', 'b'])
+describe('the week on the athlete home (second reference, owner 2 Nov 2026)', () => {
+  it('starts the week on Monday at midnight in Thailand', () => {
+    // 2026-11-04 is a Wednesday; Monday 2026-11-02 00:00 in Bangkok is 2026-11-01 17:00 UTC.
+    expect(bangkokWeekStart('2026-11-04')).toBe('2026-11-01T17:00:00.000Z')
+    expect(bangkokWeekStart('2026-11-02')).toBe('2026-11-01T17:00:00.000Z')
+    expect(bangkokWeekStart('2026-11-08')).toBe('2026-11-01T17:00:00.000Z')
   })
 
-  it('takes nothing that is not open', () => {
-    expect(openTournamentsAhead([{ ...row('x', '2026-11-05'), status: 'closed' }], '2026-11-02')).toEqual([])
+  it('adds up only the XP of verified matches this week', () => {
+    expect(weekXp([{ xp_amount: 50 }, { xp_amount: 20 }])).toBe(70)
+    expect(weekXp([])).toBe(0)
+    expect(weekXp(null)).toBe(0)
+  })
+
+  it('names each skill a programme trains once', () => {
+    const skills = programSkills(program)
+    expect(skills.length).toBeGreaterThan(0)
+    expect(new Set(skills).size).toBe(skills.length)
+  })
+
+  it('counts the skills trained this week only once a session is done', () => {
+    const none = trainingHome(everyDay(), WED, 12)
+    const one = trainingHome(everyDay(['2026-10-26']), WED, 12)
+    expect(none.state === 'enrolled' && weekSkills(weeklyGoal(none.progress), program)).toBe(0)
+    expect(one.state === 'enrolled' && weekSkills(weeklyGoal(one.progress), program)).toBe(programSkills(program).length)
   })
 })

@@ -5,16 +5,21 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import {
   BadgeCheck, Bell, Building2, ChevronRight, Compass, Dumbbell, Eye, EyeOff, Handshake, IdCard, LayoutDashboard, LogOut,
-  PencilLine, Route, ShieldCheck, Trophy, UsersRound, type LucideIcon,
+  MapPin, PencilLine, Route, ShieldCheck, Trophy, UsersRound, type LucideIcon,
 } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
+import CardGuide from '@/components/CardGuide'
 import PublicProfileShare from '@/app/profile/PublicProfileShare'
 import DeleteMyDataSection from '@/app/profile/DeleteMyDataSection'
 import { fetchProfileHome } from '@/lib/profile-home'
 import { homeKind, type HomeKind } from '@/lib/role-home'
 import { ageOn, shownAge, thaiDate } from '@/lib/athlete-private'
 import { signAvatarUrls } from '@/lib/athlete-avatar'
-import { fetchSeasonStats } from '@/lib/athlete-home-data'
+import { fetchSeasonStats, fetchVerifiedSkillRow } from '@/lib/athlete-home-data'
+import { verifiedSkills } from '@/lib/athlete-home'
+import { SkillRadar } from '@/app/profile/AthleteHome'
+import TeamAskButton from '@/app/profile/TeamAskButton'
+import type messagesTh from '@/messages/th.json'
 import { fetchUnreadNotificationCount } from '@/lib/notification-count'
 import { unreadBadge } from '@/lib/notification-unread'
 import { ACTIVE_SEASON } from '@/lib/season'
@@ -35,6 +40,11 @@ type AthleteRow = {
   profile_image_url?: string | null
   is_public: boolean
   verification_level: 'self' | 'coach_verified' | 'performance_verified'
+}
+type TeamStatus = keyof (typeof messagesTh)['profileHome']['teams']['status']
+type Membership = {
+  status: 'pending' | 'accepted' | 'declined' | 'removed'
+  teams: { id: string; name: string; status: string; tournaments: { name: string | null; location: string | null }[] | { name: string | null; location: string | null } | null } | null
 }
 type MenuKey = 'teamMembers' | 'card' | 'career' | 'venues' | 'sponsorships' | 'admin' | 'dashboard'
 type MenuItem = { href: string; icon: LucideIcon; shortcut?: MenuKey; own?: 'notifications' | 'training'; count?: number }
@@ -59,12 +69,15 @@ export default async function MePage() {
   const kind = homeKind({ persona: home.profile?.onboarding_persona, role: home.profile?.role })
   const athlete = home.athlete as AthleteRow | null
   const rank = home.rank
-  const [avatarUrls, stats, unread] = await Promise.all([
+  const [avatarUrls, stats, unread, skillRow] = await Promise.all([
     // The photo is a private object (T51); the owner may always sign their own.
     signAvatarUrls(supabase, [athlete?.profile_image_url ?? null]),
     fetchSeasonStats(supabase, rank?.id ?? null),
     fetchUnreadNotificationCount(supabase, user.id),
+    athlete ? fetchVerifiedSkillRow(supabase, user.id) : null,
   ])
+  const skills = verifiedSkills(skillRow)
+  const memberships = home.memberships as unknown as Membership[]
   const avatarUrl = athlete?.profile_image_url ? avatarUrls.get(athlete.profile_image_url) ?? null : null
   const birthDate = home.private?.birth_date
   const age = shownAge(birthDate ? ageOn(birthDate, thaiDate(new Date())) : null)
@@ -135,8 +148,6 @@ export default async function MePage() {
             {statCells && <p className="pf-note">{t('stats.note')}</p>}
           </section>}
 
-          {athlete?.is_public && <PublicProfileShare profilePath={publicPath} isPublic />}
-
           <section aria-labelledby="me-menu">
             <h2 id="me-menu" className="pf-card-title" style={{ marginBottom: 14 }}>{t('menu.title')}</h2>
             <ul className="me-menu">
@@ -156,6 +167,44 @@ export default async function MePage() {
               })}
             </ul>
           </section>
+
+          {athlete && <SkillRadar skills={skills} />}
+          {athlete && <CardGuide />}
+
+          {memberships.length > 0 && <section className="pf-card" aria-labelledby="pf-teams">
+            <div className="pf-card-head">
+              <h2 id="pf-teams" className="pf-card-title">{p('teams.title')}</h2>
+              <Link href="/team-members" className="pf-card-meta tap-44" style={{ textDecoration: 'none' }}>{pendingInvites > 0 ? p('teams.viewAll') : p('teams.viewTeams')}</Link>
+            </div>
+            <ul className="pf-list">
+              {memberships.map((membership, index) => {
+                const team = membership.teams
+                const tournament = Array.isArray(team?.tournaments) ? team?.tournaments[0] : team?.tournaments
+                const accepted = membership.status === 'accepted'
+                const [status, tone]: [TeamStatus, string] = !accepted
+                  ? membership.status === 'pending' ? ['invited', 'is-wait'] : ['declined', 'is-muted']
+                  : team?.status === 'confirmed' ? ['confirmed', 'is-ok'] : team?.status === 'pending' ? ['teamPending', 'is-wait'] : ['forming', 'is-muted']
+                return <li key={`${team?.id ?? 'team'}-${index}`}>
+                  <div className="pf-list-main">
+                    <b>{team?.name ?? p('teams.unnamed')}</b>
+                    <span>{tournament?.name ?? p('teams.tournament')}{tournament?.location ? <> · <MapPin size={11} aria-hidden="true" style={{ verticalAlign: '-1px' }} /> {tournament.location}</> : null}</span>
+                  </div>
+                  <span className={`pf-badge ${tone}`}>{p(`teams.status.${status}`)}</span>
+                </li>
+              })}
+            </ul>
+          </section>}
+
+          {/* No team yet: the coach's invitation is the step after, not a wall (AGENTS.md product rule). */}
+          {athlete && memberships.length === 0 && <section className="pf-card pf-team-ask" aria-labelledby="pf-team-ask">
+            <h2 id="pf-team-ask" className="pf-card-title">{p('teamAsk.title')}</h2>
+            <p className="pf-card-desc">{p('teamAsk.body')}</p>
+            <TeamAskButton email={user.email ?? ''} />
+          </section>}
+
+
+          {athlete?.is_public && <PublicProfileShare profilePath={publicPath} isPublic />}
+
 
           <section className="pf-card" aria-labelledby="pf-account">
             <div className="pf-card-head"><h2 id="pf-account" className="pf-card-title">{p('account.title')}</h2></div>

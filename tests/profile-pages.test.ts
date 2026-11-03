@@ -63,9 +63,6 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }))
 vi.mock('@vercel/analytics', () => ({ track: () => {} }))
-// The open tournaments the athlete home lists: the same cached read as the home page.
-const open = vi.hoisted(() => ({ tournaments: [] as Record<string, unknown>[] }))
-vi.mock('@/lib/public-data', () => ({ getPublicOpenTournaments: async () => open.tournaments }))
 const messagesFor = (locale: Locale) => locale === 'th' ? th : withFallback(en, th)
 vi.mock('next-intl/server', () => ({
   getLocale: async () => db.locale,
@@ -112,7 +109,7 @@ describe('/profile', () => {
     expect(html).toMatch(/pf-step is-blocked[\s\S]*?เปิดโปรไฟล์สาธารณะ/)
     // AGENTS rule 8: no rank row means a starter card that says so, never a made-up rating.
     expect(page).toContain('การ์ดเริ่มต้น')
-    expect(page).toContain('ยังไม่มีคะแนนฝีมือ')
+    expect(page).toContain('คะแนนมาจากผลแข่งที่ผู้จัดยืนยันเท่านั้น')
     expect(page).not.toMatch(/\d[\d,]* คะแนนฝีมือ/)
     // T50: the page shows an age, never the birth date itself.
     expect(html).not.toContain('2012-03-04')
@@ -122,18 +119,19 @@ describe('/profile', () => {
     expect(html).toContain('href="/me"')
   })
 
-  it('shows an athlete with no team how to get into one, after their own things, without a second primary button', async () => {
-    const html = await render(ProfilePage as never)
+  it('shows an athlete with no team how to get into one on /me, without a primary button', async () => {
+    const html = await render(MePage as never)
     // AGENTS.md product rule (report 10, mockup v10-3): the team is the step that needs a coach.
+    // Since the second reference (owner, 2 Nov 2026) it lives on /me, the profile tab.
     expect(text(html)).toContain('อยู่ทีมไหน?')
     expect(html).toContain('pf-team-ask')
-    expect(html.indexOf('pf-team-ask')).toBeGreaterThan(html.indexOf('href="/card"'))
+    expect(primaries(html)).toBe(0)
   })
 
   it('names the team an athlete joined, which RLS hides from the old read (sql/82)', async () => {
     db.tables.team_members = [{ status: 'accepted', teams: null }]
     db.memberships = [{ member_id: 'm1', team_id: 't1', status: 'accepted', invited_at: null, created_at: '2026-10-18T01:00:00Z', team_name: 'QA ทดสอบ 18ตค', team_status: 'draft', team_kind: 'club', tournament_name: null, tournament_location: null }]
-    const page = text(await render(ProfilePage as never))
+    const page = text(await render(MePage as never))
     db.memberships = null
     expect(page).toContain('QA ทดสอบ 18ตค')
     expect(page).toContain('ดูทีมของฉัน')
@@ -143,7 +141,7 @@ describe('/profile', () => {
 
   it('does not ask an athlete who is already in a team', async () => {
     db.tables.team_members = [{ status: 'accepted', teams: { id: 't1', name: 'Lions', status: 'confirmed', tournaments: [] } }]
-    const html = await render(ProfilePage as never)
+    const html = await render(MePage as never)
     expect(html).not.toContain('pf-team-ask')
   })
 
@@ -159,12 +157,15 @@ describe('/profile', () => {
     db.private = { birth_date: '1999-05-05', guardian_consent_at: null }
     const html = await render(ProfilePage as never)
     const page = text(html)
-    expect(page).toContain('1,520')
-    expect(page).toContain('คะแนนฝีมือ')
-    expect(page).toContain('คำนวณจากผลแข่งที่ผู้จัดบันทึกและยืนยันแล้ว')
-    expect(page).toContain('โปรไฟล์ของคุณพร้อมแล้ว')
-    expect(page).toContain('Lions')
-    expect(page).toContain('ยืนยันลงแข่งแล้ว')
+    expect(page).toContain('คะแนนฝีมือ 1,520')
+    // The card's own OVR from the rank row, and a dash for each skill nobody assessed.
+    expect(page).toMatch(/71 FW/)
+    expect(page).toMatch(/PAC — SHO — PAS — DRI — DEF —/)
+    // A finished checklist leaves the home; the team is on /me.
+    expect(html).not.toContain('pf-readiness')
+    const me = text(await render(MePage as never))
+    expect(me).toContain('Lions')
+    expect(me).toContain('ยืนยันลงแข่งแล้ว')
   })
 
   it('offers to create an athlete profile to an athlete who has none yet', async () => {
@@ -231,12 +232,11 @@ describe('/profile for an athlete who comes back to train (UX mockup v5-A)', () 
     expect(html).toContain('ก่อนเปิดโปรไฟล์สาธารณะ')
   })
 
-  it('links the rating to the ranking page, without counting a position here', async () => {
+  it('shows the rating on the card, which opens /card, without counting a position here', async () => {
     returning()
     const html = await render(ProfilePage as never)
-    expect(html).toContain('href="/ranking"')
-    expect(text(html)).toContain('ดูอันดับของฉัน')
-    expect(text(html)).toContain('1,520')
+    expect(anchor(html, '/card')).toContain('pf-mycard-link')
+    expect(text(html)).toContain('คะแนนฝีมือ 1,520')
   })
 
   it('does not show a streak of zero weeks to someone who has just started', async () => {
@@ -417,19 +417,20 @@ describe('/profile for an athlete: training first, then the card (owner, report 
     expect(anchor(me, '/profile/edit')).not.toContain('pf-btn-primary')
   })
 
-  it('keeps the card as a secondary shortcut', async () => {
+  it('keeps the card a link, never a primary button', async () => {
     athlete([])
     const html = await render(ProfilePage as never)
-    expect(anchor(html, '/card')).toContain('pf-btn-line')
+    expect(anchor(html, '/card')).toContain('pf-mycard-link')
+    expect(anchor(html, '/card')).not.toContain('primary')
   })
 
   it('hides level and points until the first point', async () => {
     athlete([])
-    expect(await render(ProfilePage as never)).not.toContain('class="pf-level"')
+    expect(await render(ProfilePage as never)).not.toContain('class="pf-lv"')
     ;(db.tables as Record<string, unknown>).athlete_progress = { xp_total: 40, current_level: 1 }
     const html = await render(ProfilePage as never)
-    expect(html).toContain('class="pf-level"')
-    expect(text(html)).toContain('40 แต้ม')
+    expect(html).toContain('class="pf-lv"')
+    expect(text(html)).toContain('ระดับ 1 40 / 100 แต้ม')
   })
 })
 
@@ -495,7 +496,6 @@ describe('/profile athlete home in the DOENSAI dashboard design (owner, 2 Nov 20
     }
     db.counts = {}
     db.private = { birth_date: '2012-03-04', guardian_consent_at: '2026-01-01T00:00:00Z' }
-    open.tournaments = []
   }
   const coachRow = { speed: 70, stamina: 64, strength: null, technique: 81, vision: 58, source_level: 'coach_verified', created_at: '2026-10-20T03:00:00Z' }
 
@@ -519,9 +519,9 @@ describe('/profile athlete home in the DOENSAI dashboard design (owner, 2 Nov 20
     athleteHome({ training_checkins: [{ enrollment_id: 'e1', session_date: bangkokDay(0) }] })
     const page = text(await render(ProfilePage as never))
     expect(page).toContain('ความก้าวหน้าประจำสัปดาห์')
-    expect(page).toMatch(/1\/\d+ ครั้ง/)
+    expect(page).toMatch(/1\/\d+ ฝึกซ้อม \d+ นาที \d+ ทักษะ/)
     expect(page).toContain('นับจากที่คุณบันทึกเอง')
-    expect(page).toContain('ไม่มีแต้ม')
+    expect(page).toContain('แต้มมาจากผลแข่งที่ผู้จัดยืนยันเท่านั้น')
   })
 
   it('shows the change of the last verified match, and nothing once a void reset it', async () => {
@@ -531,9 +531,16 @@ describe('/profile athlete home in the DOENSAI dashboard design (owner, 2 Nov 20
     expect(text(await render(ProfilePage as never))).not.toContain('จากนัดล่าสุด')
   })
 
-  it('draws the skills a coach assessed, with who and when', async () => {
+  it('shows the XP of verified matches this week, and 0 without one', async () => {
+    athleteHome({ athlete_xp_events: [{ xp_amount: 50 }, { xp_amount: 20 }] })
+    expect(text(await render(ProfilePage as never))).toMatch(/\+70 แต้มจากแมตช์/)
+    athleteHome()
+    expect(text(await render(ProfilePage as never))).toMatch(/ 0 แต้มจากแมตช์/)
+  })
+
+  it('draws the skills a coach assessed on /me, with who and when', async () => {
     athleteHome({ athlete_skill_assessments: coachRow })
-    const html = await render(ProfilePage as never)
+    const html = await render(MePage as never)
     expect(html).toContain('class="pf-radar-shape"')
     expect(html).toMatch(/aria-label="กราฟทักษะ: ความเร็ว 70, ความอึด 64, เทคนิค 81, การอ่านเกม 58"/)
     expect(text(html)).toContain('โค้ชประเมิน ·')
@@ -541,37 +548,23 @@ describe('/profile athlete home in the DOENSAI dashboard design (owner, 2 Nov 20
 
   it('draws no shape from a self-assessment, and says how a coach assessment arrives', async () => {
     athleteHome({ athlete_skill_assessments: { ...coachRow, source_level: 'self' } })
-    const html = await render(ProfilePage as never)
+    const html = await render(MePage as never)
     expect(html).not.toContain('pf-radar-shape')
     expect(text(html)).toContain('ยังไม่มีการประเมิน')
   })
 
-  it('lists real open tournaments that are not over, and links each one', async () => {
-    athleteHome()
-    open.tournaments = [
-      { id: 'over', name: 'Old Cup', location: null, start_date: '2020-01-01', end_date: '2020-01-02', fee: 0, status: 'open' },
-      { id: 't-1', name: 'Lopburi Youth Cup', location: 'Lopburi', start_date: bangkokDay(10), end_date: null, fee: 500, status: 'open' },
-    ]
-    const html = await render(ProfilePage as never)
-    expect(html).toContain('href="/tournaments/t-1"')
-    expect(text(html)).toContain('฿500/ทีม')
-    expect(html).not.toContain('Old Cup')
-  })
-
-  it('leaves the open list out when nothing is open', async () => {
-    athleteHome()
-    expect(await render(ProfilePage as never)).not.toContain('id="pf-open"')
-  })
-
   it('speaks English without Thai across the new parts', async () => {
     athleteHome({ athlete_skill_assessments: coachRow, player_ratings: { matches_played: 3, last_rating_change: -8 } })
-    open.tournaments = [{ id: 't-1', name: 'Lopburi Youth Cup', location: 'Lopburi', start_date: bangkokDay(10), end_date: null, fee: 0, status: 'open' }]
     const html = await render(ProfilePage as never, 'en')
     const beforeDeletion = text(withoutSwitch(html.slice(0, html.indexOf('ลบข้อมูลของฉัน'))))
     expect(beforeDeletion).toContain("Today's programme")
     expect(beforeDeletion).toContain('−8 from the last match')
-    expect(beforeDeletion).toContain('Coach assessed ·')
+    expect(beforeDeletion).toContain('XP from matches')
     expect(beforeDeletion).not.toMatch(/[ก-ฺเ-๛]/)
+    const me = await render(MePage as never, 'en')
+    const meBefore = text(withoutSwitch(me.slice(0, me.indexOf('ลบข้อมูลของฉัน'))))
+    expect(meBefore).toContain('Coach assessed ·')
+    expect(meBefore).not.toMatch(/[ก-ฺเ-๛]/)
   })
 })
 
