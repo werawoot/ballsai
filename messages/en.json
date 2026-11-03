@@ -1336,13 +1336,6 @@
       "sport": "⚽ {sport}",
       "sportMore": "Football first. Other sports are coming, each with its own records."
     },
-    "today": {
-      "title": "Today's programme",
-      "rest": "Rest day today",
-      "done": "Trained today",
-      "start": "Start training",
-      "meta": "{minutes} min · week {week} of {weeks}"
-    },
     "week": {
       "title": "This week",
       "sessionsUnit": "sessions",
@@ -1361,13 +1354,12 @@
     },
     "overview": {
       "title": "My overview",
-      "openCard": "Open {name}'s card",
       "power": "Power Rating",
-      "minutes": "Training total",
+      "minutes": "Training minutes",
       "minutesValue": "{count} min",
-      "streak": "In a row",
+      "streak": "Training days kept",
       "streakValue": "{count, plural, one {# day} other {# days}}",
-      "note": "Power Rating from matches an organizer confirmed · minutes and days in a row count what you log yourself"
+      "note": "Power Rating from matches an organizer confirmed · minutes use your current programmes' planned length and rest days never break the run; both count what you log yourself"
     },
     "missions": {
       "title": "Today's missions",
@@ -1380,7 +1372,8 @@
       "points": "+{points}",
       "note": "Effort points come when you mark a session as finished yourself. They are not match XP and never change your level, card or rank.",
       "earned": "Earned +{points} effort points",
-      "partial": "+{earned} of +{points} effort points"
+      "partial": "+{earned} of +{points} effort points",
+      "restOnly": "Rest is part of training"
     },
     "next": {
       "title": "Next training",
@@ -1391,7 +1384,12 @@
     "opportunity": {
       "title": "Competitions and opportunities",
       "all": "See all",
-      "join": "Enter"
+      "view": "See details",
+      "note": "Real tournaments open now, not yet matched to your age or area · a coach or team manager enters the team"
+    },
+    "pickAgain": {
+      "title": "Your programme is finished",
+      "body": "Pick a new programme to keep training; we plan the sessions"
     }
   },
   "profileEdit": {

@@ -28,4 +28,3 @@ export function trainingHome(training: MyTraining, today: string, age: number | 
   return { state: 'enrolled', enrollment, program, progress, needsAction: Boolean(progress.today && !progress.doneToday) }
 }
 
-export const trainingHasPrimary = (home: TrainingHome) => home.state === 'pick' || (home.state === 'enrolled' && home.needsAction)

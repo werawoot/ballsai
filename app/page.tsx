@@ -86,7 +86,7 @@ export default async function Home() {
   const [{ data: { user } }, rankings, tournaments, stats, locale] = await Promise.all([
     supabase.auth.getUser(),
     getPublicRankings({ sport: ACTIVE_SPORT, season: ACTIVE_SEASON }),
-    getPublicOpenTournaments(),
+    getPublicOpenTournaments(today),
     getPublicPlatformCounts(today),
     getLocale(),
   ])

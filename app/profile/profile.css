@@ -404,15 +404,6 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .pf-home-avatar { align-items: center; background: #223350 center top/cover no-repeat; border: 2px solid var(--gl-green); border-radius: 50%; color: #fff; display: inline-flex; font-weight: 700; height: 48px; justify-content: center; text-decoration: none; width: 48px; }
 .pf.gl .pf-icon-btn:focus-visible, .pf.gl .pf-home-avatar:focus-visible { outline-color: var(--gl-green); }
 
-.pf.gl .tr-today-head { align-items: center; display: flex; gap: 12px; justify-content: space-between; margin-bottom: 14px; }
-.pf.gl .tr-today-head .pf-card-title { font-size: 18px; }
-.pf.gl .tr-today .tr-start { border-radius: 999px; flex: none; font-size: 15px; min-height: 44px; padding: 0 18px; width: auto; }
-.pf.gl .tr-program-row { align-items: center; background: var(--gl-canvas); border: 1px solid var(--pf-line); border-radius: 14px; color: inherit; display: flex; gap: 12px; padding: 10px; text-decoration: none; }
-.pf.gl .tr-program-row img { border-radius: 10px; flex: none; height: 56px; object-fit: cover; width: 74px; }
-.pf.gl .tr-program-row > svg { color: var(--pf-muted); flex: none; }
-.pf.gl .tr-program-text { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
-.pf.gl .tr-program-text b { font-size: 15px; }
-.pf.gl .tr-program-text small { color: var(--pf-muted); font-size: 12.5px; }
 .pf.gl .tr-today-empty h2 { margin-bottom: 4px; }
 
 .pf.gl .pf-week-stats { align-items: center; display: flex; gap: 16px; }
@@ -543,5 +534,6 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .pf-opp-text { display: grid; gap: 4px; min-width: 0; }
 .pf.gl .pf-opp-text b { font-size: 18px; }
 .pf.gl .pf-opp-text small { align-items: center; color: rgba(255, 255, 255, .85); display: inline-flex; font-size: 13px; gap: 5px; }
-.pf.gl .pf-opp-cta { align-items: center; background: #fff; border-radius: 999px; color: var(--gl-navy); display: inline-flex; font-size: 15px; font-weight: 800; gap: 4px; min-height: 44px; padding: 0 18px; text-decoration: none; }
+.pf.gl .pf-opp-cta { align-items: center; background: transparent; border: 1.5px solid #fff; border-radius: 999px; color: #fff; display: inline-flex; font-size: 15px; font-weight: 700; gap: 4px; min-height: 44px; padding: 0 18px; text-decoration: none; }
+.pf.gl .pf-opp-cta:focus-visible { outline: 3px solid var(--gl-green); outline-offset: 2px; }
 .pf.gl .pf-week-stats dd.is-effort { color: #B45309; }

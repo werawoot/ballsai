@@ -81,7 +81,7 @@ export function CardOverview({ name, team, position, avatarUrl, initials, ovr, p
   const t = useTranslations('profileHome')
   return <section className="pf-cardrow" aria-labelledby="pf-card">
     <h2 id="pf-card" className="pf-sr">{t('card.title')}</h2>
-    <Link href="/card" className={`pf-bigcard${ranked ? '' : ' is-starter'}`} aria-label={t('overview.openCard', { name })}>
+    <Link href="/card" className={`pf-bigcard${ranked ? '' : ' is-starter'}`}>
       <span className="pf-bigcard-top"><b>{ranked && ovr !== null ? ovr : '—'}</b><small>{position || '—'}</small></span>
       <span className="pf-bigcard-photo" style={avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : undefined} aria-hidden="true">{!avatarUrl && initials}</span>
       <span className="pf-bigcard-name">{name}</span>
@@ -93,7 +93,7 @@ export function CardOverview({ name, team, position, avatarUrl, initials, ovr, p
       <div className="pf-overview-ovr">
         <small>{t('overview.power')}</small>
         <b>{ranked && power !== null ? power.toLocaleString('en-US') : '—'}</b>
-        {change !== null && <em className={change > 0 ? 'is-up' : 'is-down'}>{change > 0 ? `↑ +${change}` : `↓ ${change}`}</em>}
+        {ranked && change !== null && <em className={change > 0 ? 'is-up' : 'is-down'}>{change > 0 ? `↑ +${change}` : `↓ −${Math.abs(change)}`}</em>}
       </div>
       <div className="pf-overview-cells">
         <span><Clock3 size={16} aria-hidden="true" /><small>{t('overview.minutes')}</small><b>{minutes === null ? '—' : t('overview.minutesValue', { count: minutes })}</b></span>
@@ -105,7 +105,7 @@ export function CardOverview({ name, team, position, avatarUrl, initials, ovr, p
 }
 
 /** 4: today's missions, one per programme planned today, each worth effort points (never XP). */
-export function MissionsCard({ missions, effort, firstOpen }: { missions: MissionItem[]; effort: EffortSummary; firstOpen: string | null }) {
+export function MissionsCard({ missions, effort, firstOpen, hasNext }: { missions: MissionItem[]; effort: EffortSummary; firstOpen: string | null; hasNext: boolean }) {
   const t = useTranslations('profileHome')
   const locale = useLocale()
   return <section className="pf-card pf-missions" aria-labelledby="pf-missions">
@@ -114,7 +114,7 @@ export function MissionsCard({ missions, effort, firstOpen }: { missions: Missio
       {effort.todayPossible > 0 && <span className="pf-effort-chip">{effort.todayEarned >= effort.todayPossible ? t('missions.earned', { points: effort.todayEarned }) : effort.todayEarned > 0 ? t('missions.partial', { earned: effort.todayEarned, points: effort.todayPossible }) : t('missions.possible', { points: effort.todayPossible })}</span>}
     </div>
     {missions.length === 0
-      ? <p className="pf-missions-rest"><b>{t('missions.rest')}</b><small>{t('missions.restBody')}</small></p>
+      ? <p className="pf-missions-rest"><b>{t('missions.rest')}</b><small>{hasNext ? t('missions.restBody') : t('missions.restOnly')}</small></p>
       : <ul className="pf-mission-list">
         {missions.map(item => <li key={item.programId} className={item.done ? 'is-done' : undefined}>
           {item.done
@@ -148,7 +148,10 @@ export function NextTraining({ next, today }: { next: NextSession; today: string
 
 export type HomeTournament = { id: string; name: string; location: string | null; start_date: string; end_date?: string | null; status: string | null }
 
-/** 6: one open tournament, soonest first; matching age or area waits for T57. */
+/**
+ * 6: one open tournament, soonest first. Entering is a team's step (a coach registers the team),
+ * so the button opens the details; matching the athlete's age or area waits for T57.
+ */
 export function Opportunity({ tournament }: { tournament: HomeTournament }) {
   const t = useTranslations('profileHome')
   const locale = useLocale()
@@ -164,8 +167,9 @@ export function Opportunity({ tournament }: { tournament: HomeTournament }) {
         {tournament.location && <small><MapPin size={13} aria-hidden="true" />{tournament.location}</small>}
         <small><CalendarDays size={13} aria-hidden="true" />{tournamentDateRange(locale, tournament.start_date, tournament.end_date)}</small>
       </div>
-      <Link href={`/tournaments/${tournament.id}`} className="pf-opp-cta">{t('opportunity.join')}<ChevronRight size={16} aria-hidden="true" /></Link>
+      <Link href={`/tournaments/${tournament.id}`} className="pf-opp-cta">{t('opportunity.view')}<ChevronRight size={16} aria-hidden="true" /></Link>
     </div>
+    <p className="pf-note">{t('opportunity.note')}</p>
   </section>
 }
 

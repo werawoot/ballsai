@@ -406,8 +406,10 @@ describe('/profile for an athlete: training first, then the card (owner, report 
     expect(primaries(await render(ProfilePage as never))).toBe(1)
   })
 
-  it('gives the primary back to the checklist when there is nothing to train today', async () => {
-    athlete([{ id: 'e1', program_id: 'u10-foundation-01', weekdays: [], start_date: '2026-01-05', status: 'active' }])
+  it('gives the primary back to the checklist on a rest day', async () => {
+    const todayBkk = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10)
+    const weekday = (new Date(`${todayBkk}T00:00:00Z`).getUTCDay() + 6) % 7
+    athlete([{ id: 'e1', program_id: 'u10-foundation-01', weekdays: [(weekday + 1) % 7], start_date: todayBkk, status: 'active' }])
     const html = await render(ProfilePage as never)
     expect(primaries(html)).toBe(1)
     expect(html).toMatch(/pf-btn pf-btn-block pf-btn-primary/)
@@ -567,7 +569,7 @@ describe('/profile athlete home in the DOENSAI dashboard design (owner, 2 Nov 20
     const html = await render(ProfilePage as never, 'en')
     const beforeDeletion = text(withoutSwitch(html.slice(0, html.indexOf('ลบข้อมูลของฉัน'))))
     expect(beforeDeletion).toContain("Today's missions")
-    expect(beforeDeletion).toContain('↓ -8')
+    expect(beforeDeletion).toContain('↓ −8')
     expect(beforeDeletion).toContain('XP from matches')
     expect(beforeDeletion).not.toMatch(/[ก-ฺเ-๛]/)
     const me = await render(MePage as never, 'en')
@@ -609,8 +611,8 @@ describe('/profile home module of the third reference (owner, 3 Nov 2026)', () =
     const html = await render(ProfilePage as never)
     const page = text(html)
     expect(html).toContain('pf-mission-mark is-done')
-    expect(page).toMatch(/ติดต่อกัน 2 วัน/)
-    expect(page).toMatch(/ฝึกซ้อมรวม \d+ นาที/)
+    expect(page).toMatch(/ซ้อมตามแผนติดกัน 2 วันซ้อม/)
+    expect(page).toMatch(/นาทีซ้อม \d+ นาที/)
     expect(page).toContain('ได้แล้ว +50 แต้มขยัน')
     expect(page).toMatch(/ตารางฝึกซ้อมถัดไป ดูทั้งหมด .* · \d+ นาที/)
     expect(page).not.toMatch(/ตารางฝึกซ้อมถัดไป ดูทั้งหมด [^ ]+ วันนี้/)
@@ -630,6 +632,34 @@ describe('/profile home module of the third reference (owner, 3 Nov 2026)', () =
     open.tournaments = []
     expect(text(html)).toContain('การแข่งขันและโอกาส')
     expect(html).toContain('href="/tournaments/t-9"')
+  })
+
+  it('asks for a new programme once the programme is finished, as the primary', async () => {
+    setup()
+    db.tables.training_enrollments = [{ id: 'e1', program_id: 'u10-foundation-01', weekdays: [0, 1, 2, 3, 4, 5, 6], start_date: '2025-01-06', status: 'active' }]
+    const html = await render(ProfilePage as never)
+    expect(text(html)).toContain('โปรแกรมของคุณจบแล้ว')
+    expect(html).not.toContain('id="pf-missions"')
+    expect(anchor(html, '/training\\?tab=programs')).toContain('ui-btn-primary')
+    expect(primaries(html)).toBe(1)
+  })
+
+  it('treats an enrolment in a removed programme as no programme', async () => {
+    setup()
+    db.tables.training_enrollments = [{ id: 'e1', program_id: 'gone-programme', weekdays: [0, 1, 2, 3, 4, 5, 6], start_date: bangkok(-3), status: 'active' }]
+    const html = await render(ProfilePage as never)
+    expect(html).not.toContain('id="pf-missions"')
+    expect(html).not.toContain('id="pf-week"')
+    expect(text(html)).toContain('เลือกโปรแกรมซ้อม')
+  })
+
+  it('opens the tournament details, says entering is a team\'s step, and is not matched yet', async () => {
+    setup()
+    open.tournaments = [{ id: 't-9', name: 'Lopburi Youth Cup', location: 'Lopburi', start_date: bangkok(10), end_date: bangkok(11), status: 'open' }]
+    const page = text(await render(ProfilePage as never))
+    open.tournaments = []
+    expect(page).toContain('ดูรายละเอียด')
+    expect(page).toContain('ยังไม่ได้เลือกตามรุ่นอายุหรือพื้นที่ของคุณ')
   })
 
   it('shows no opportunity when nothing is open', async () => {

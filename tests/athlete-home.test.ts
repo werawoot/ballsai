@@ -4,7 +4,7 @@ import { trainingHome } from '@/lib/training/home'
 import type { MyTraining } from '@/lib/training/data'
 import { trainingToday } from '@/lib/training/today'
 import { EFFORT_PER_SESSION, dayStreak, effortSummary, nextSession, openTournamentsAhead, todayMissionList, totalMinutes } from '@/lib/athlete-home'
-import { bangkokWeekStart, lastMatchChange, programSkills, weekTotals, radarPoints, verifiedSkills, weekXp, weeklyGoal } from '@/lib/athlete-home'
+import { bangkokWeekStart, lastMatchChange, weekTotals, radarPoints, verifiedSkills, weekXp, weeklyGoal } from '@/lib/athlete-home'
 
 // The athlete's home in the DOENSAI dashboard design (owner, 2 Nov 2026): the week's
 // training goal, the change of the last verified match and the skills a
@@ -101,11 +101,6 @@ describe('the week on the athlete home (second reference, owner 2 Nov 2026)', ()
     expect(weekXp(null)).toBe(0)
   })
 
-  it('names each skill a programme trains once', () => {
-    const skills = programSkills(program)
-    expect(skills.length).toBeGreaterThan(0)
-    expect(new Set(skills).size).toBe(skills.length)
-  })
 
 })
 
@@ -121,14 +116,9 @@ describe('the week across every programme (review, 3 Nov 2026)', () => {
 
   it('adds up sessions, plan and minutes of all active programmes, as /training does', () => {
     const totals = weekTotals(trainingToday(two({ e2: ['2026-10-27'] }), WED))
-    expect(totals).toEqual({ done: 1, planned: 4, percent: 25, minutes: TRAINING_PROGRAMS[1].minutes, skills: programSkills(TRAINING_PROGRAMS[1]).length })
+    expect(totals).toEqual({ done: 1, planned: 4, percent: 25, minutes: TRAINING_PROGRAMS[1].minutes })
   })
 
-  it('counts each skill once across programmes trained this week', () => {
-    const totals = weekTotals(trainingToday(two({ e1: ['2026-10-26'], e2: ['2026-10-27'] }), WED))
-    const union = new Set([...programSkills(program), ...programSkills(TRAINING_PROGRAMS[1])])
-    expect(totals?.skills).toBe(union.size)
-  })
 
   it('is nothing in a week with no planned session', () => {
     expect(weekTotals(trainingToday(two({}), '2026-10-04'))).toBeNull()
@@ -166,8 +156,8 @@ describe('the home of the third reference (owner, 3 Nov 2026): effort points and
     expect(totalMinutes(view)).toBe(2 * program.minutes + TRAINING_PROGRAMS[1].minutes)
   })
 
-  it('names the next session that is not done yet, today first', () => {
-    expect(nextSession(trainingToday(plan({}), WED))).toMatchObject({ date: WED, programId: program.id })
+  it('names the next session after today, so today\'s missions are not shown twice', () => {
+    expect(nextSession(trainingToday(plan({}), WED))).toMatchObject({ date: '2026-10-30', programId: program.id })
     expect(nextSession(trainingToday(plan({ e1: [WED], e2: [WED] }), WED))).toMatchObject({ date: '2026-10-30', programId: program.id })
     expect(nextSession(trainingToday({ available: true, enrollments: [], checkins: {} }, WED))).toBeNull()
   })
@@ -195,6 +185,11 @@ describe('days in a row', () => {
 
   it('stops at a planned day that was missed', () => {
     expect(dayStreak(daily(['2026-10-26', WED]), WED)).toBe(1)
+  })
+
+  it('keeps the run when a missed day was made up later in the same week', () => {
+    // Mon, Tue, Wed planned (Thu off): Tuesday missed, made up on Thursday; today is Thursday.
+    expect(dayStreak(daily(['2026-10-26', WED, '2026-10-29'], [0, 1, 2]), '2026-10-29')).toBe(3)
   })
 
   it('is zero with nothing trained', () => {

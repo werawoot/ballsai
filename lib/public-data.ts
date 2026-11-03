@@ -55,13 +55,17 @@ export const getPublicTournamentsPage = unstable_cache(
   { revalidate: 60, tags: ['public-tournaments'] },
 )
 
+// Open and not over yet (end_date >= today, as the /tournaments list filters), soonest first: a
+// tournament left "open" after it ended can no longer fill the six and hide current ones.
+// `today` in the key turns the cache over at midnight Bangkok time.
 export const getPublicOpenTournaments = unstable_cache(
-  async () => {
+  async (today: string) => {
     try {
       const { data, error } = await publicSupabase
         .from('tournaments')
         .select('*')
         .eq('status', 'open')
+        .gte('end_date', today)
         .order('start_date', { ascending: true })
         .limit(6)
       if (error) throw error
