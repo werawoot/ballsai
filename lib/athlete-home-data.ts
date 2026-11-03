@@ -31,17 +31,19 @@ const logFailure = (event: string, error: { code?: string } | null) =>
 
 const SEASON_STATS = 'matches_played, goals, assists, mvps, last_rating_change'
 
-/** This season's verified totals behind a rank row; null with no rank row or on a failed read. */
-export async function fetchSeasonStats(client: SupabaseClient, rankId: string | null): Promise<SeasonStats | null> {
-  if (!rankId) return null
-  const { data, error } = await client.from('player_ratings').select(SEASON_STATS).eq('player_rank_id', rankId).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).maybeSingle()
+/**
+ * This season's verified totals, read by the account (player_id) as /card reads them, so a
+ * private athlete's numbers show even without a public rank row (review, 3 Nov 2026).
+ */
+export async function fetchSeasonStats(client: SupabaseClient, userId: string): Promise<SeasonStats | null> {
+  const { data, error } = await client.from('player_ratings').select(SEASON_STATS).eq('player_id', userId).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).maybeSingle()
   if (error) { logFailure('athlete_season_stats_read_failed', error); return null }
   return (data as SeasonStats | null) ?? null
 }
 
 export async function fetchAthleteHomeExtras(client: SupabaseClient, userId: string, rankId: string | null, weekStart: string): Promise<AthleteHomeExtras> {
   const [rating, skillResult, xpResult] = await Promise.all([
-    fetchSeasonStats(client, rankId),
+    fetchSeasonStats(client, userId),
     rankId ? client.from('player_ranks').select(SKILL_KEYS.join(', ')).eq('id', rankId).maybeSingle() : null,
     client.from('athlete_xp_events').select('xp_amount').eq('athlete_id', userId).gte('created_at', weekStart).limit(WEEK_XP_ROWS),
   ])
@@ -57,7 +59,7 @@ export async function fetchAthleteHomeExtras(client: SupabaseClient, userId: str
 /** The latest assessment a coach made (or performance gave), which the athlete accepted (SQL69). */
 export async function fetchVerifiedSkillRow(client: SupabaseClient, userId: string): Promise<SkillRow | null> {
   const { data, error } = await client.from('athlete_skill_assessments').select(`${COACH_SKILL_KEYS.join(', ')}, source_level, created_at`)
-    .eq('athlete_id', userId).in('source_level', ['coach_verified', 'performance_verified'])
+    .eq('athlete_id', userId).eq('season', ACTIVE_SEASON).in('source_level', ['coach_verified', 'performance_verified'])
     .order('created_at', { ascending: false }).limit(1).maybeSingle()
   if (error) { logFailure('athlete_skills_read_failed', error); return null }
   return (data as SkillRow | null) ?? null

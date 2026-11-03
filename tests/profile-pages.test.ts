@@ -568,6 +568,55 @@ describe('/profile athlete home in the DOENSAI dashboard design (owner, 2 Nov 20
   })
 })
 
+describe('/profile after the code review (3 Nov 2026)', () => {
+  const base = () => {
+    db.tables = {
+      profiles: { full_name: 'Niran', role: 'player', onboarding_persona: 'athlete' },
+      athlete_profiles: { ...minor, display_name: 'Niran', is_public: true, verification_level: 'self' },
+    }
+    db.counts = {}
+    db.failing = []
+    db.private = { birth_date: '2012-03-04', guardian_consent_at: '2026-01-01T00:00:00Z' }
+  }
+
+  it('puts a waiting team invitation on the home as one line to /team-members', async () => {
+    base()
+    db.tables.team_members = [{ status: 'pending', teams: { id: 't1', name: 'Lions', status: 'draft', tournaments: [] } }]
+    const html = await render(ProfilePage as never)
+    expect(text(html)).toContain('มีคำเชิญเข้าทีม 1 รายการ รอคุณตอบ')
+    expect(anchor(html, '/team-members')).toContain('pf-team-line')
+  })
+
+  it('points an athlete with no team at how to get one', async () => {
+    base()
+    const html = await render(ProfilePage as never)
+    expect(html).toContain('href="/me#pf-team-ask"')
+    expect(await render(MePage as never)).toContain('id="pf-team-ask"')
+  })
+
+  it('says nothing about teams once the athlete is in one', async () => {
+    base()
+    db.tables.team_members = [{ status: 'accepted', teams: { id: 't1', name: 'Lions', status: 'confirmed', tournaments: [] } }]
+    expect(await render(ProfilePage as never)).not.toContain('pf-team-line')
+  })
+
+  it('shows a dash, not 0, when this week\'s XP could not be read', async () => {
+    base()
+    db.tables.training_enrollments = [{ id: 'e1', program_id: 'u10-foundation-01', weekdays: [0, 1, 2, 3, 4, 5, 6], start_date: '2026-01-05', status: 'active' }]
+    db.failing = ['athlete_xp_events']
+    const page = text(await render(ProfilePage as never))
+    db.failing = []
+    expect(page).toMatch(/ — แต้มจากแมตช์/)
+  })
+
+  it('shows a private athlete\'s confirmed numbers on /me without a rank row', async () => {
+    base()
+    db.tables.athlete_profiles = { ...minor, display_name: 'Niran', is_public: false, verification_level: 'self' }
+    db.tables.player_ratings = { matches_played: 2, goals: 1, assists: 0, mvps: 0, last_rating_change: 3 }
+    expect(text(await render(MePage as never))).toMatch(/แข่ง 2 ประตู 1/)
+  })
+})
+
 describe('/me, the athlete\'s profile tab (owner, 2 Nov 2026)', () => {
   const publicAthlete = (tables: Record<string, unknown> = {}) => {
     db.tables = {

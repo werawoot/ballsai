@@ -72,7 +72,7 @@ export default async function MePage() {
   const [avatarUrls, stats, unread, skillRow] = await Promise.all([
     // The photo is a private object (T51); the owner may always sign their own.
     signAvatarUrls(supabase, [athlete?.profile_image_url ?? null]),
-    fetchSeasonStats(supabase, rank?.id ?? null),
+    fetchSeasonStats(supabase, user.id),
     fetchUnreadNotificationCount(supabase, user.id),
     athlete ? fetchVerifiedSkillRow(supabase, user.id) : null,
   ])
@@ -148,29 +148,6 @@ export default async function MePage() {
             {statCells && <p className="pf-note">{t('stats.note')}</p>}
           </section>}
 
-          <section aria-labelledby="me-menu">
-            <h2 id="me-menu" className="pf-card-title" style={{ marginBottom: 14 }}>{t('menu.title')}</h2>
-            <ul className="me-menu">
-              {menu.map(item => {
-                const Icon = item.icon
-                const label = item.shortcut ? p(`shortcuts.items.${item.shortcut}.label`) : t(`menu.${item.own!}.label`)
-                const hint = item.shortcut ? p(`shortcuts.items.${item.shortcut}.hint`) : t(`menu.${item.own!}.hint`)
-                const count = item.own === 'notifications' ? badge : unreadBadge(item.count)
-                return <li key={item.href}>
-                  <Link href={item.href}>
-                    <span className="pf-link-icon"><Icon size={19} aria-hidden="true" /></span>
-                    <span className="me-menu-text"><b>{label}</b><small>{hint}</small></span>
-                    {count && <span className="me-menu-count" aria-label={t('menu.unread', { count: count.count })}>{count.text}</span>}
-                    <ChevronRight size={17} aria-hidden="true" />
-                  </Link>
-                </li>
-              })}
-            </ul>
-          </section>
-
-          {athlete && <SkillRadar skills={skills} />}
-          {athlete && <CardGuide />}
-
           {memberships.length > 0 && <section className="pf-card" aria-labelledby="pf-teams">
             <div className="pf-card-head">
               <h2 id="pf-teams" className="pf-card-title">{p('teams.title')}</h2>
@@ -196,11 +173,35 @@ export default async function MePage() {
           </section>}
 
           {/* No team yet: the coach's invitation is the step after, not a wall (AGENTS.md product rule). */}
-          {athlete && memberships.length === 0 && <section className="pf-card pf-team-ask" aria-labelledby="pf-team-ask">
-            <h2 id="pf-team-ask" className="pf-card-title">{p('teamAsk.title')}</h2>
+          {athlete && memberships.length === 0 && <section className="pf-card pf-team-ask" id="pf-team-ask" aria-labelledby="pf-team-ask-title">
+            <h2 id="pf-team-ask-title" className="pf-card-title">{p('teamAsk.title')}</h2>
             <p className="pf-card-desc">{p('teamAsk.body')}</p>
             <TeamAskButton email={user.email ?? ''} />
           </section>}
+
+          <section aria-labelledby="me-menu">
+            <h2 id="me-menu" className="pf-card-title" style={{ marginBottom: 14 }}>{t('menu.title')}</h2>
+            <ul className="me-menu">
+              {menu.map(item => {
+                const Icon = item.icon
+                const label = item.shortcut ? p(`shortcuts.items.${item.shortcut}.label`) : t(`menu.${item.own!}.label`)
+                const hint = item.shortcut ? p(`shortcuts.items.${item.shortcut}.hint`) : t(`menu.${item.own!}.hint`)
+                const count = item.own === 'notifications' ? badge : unreadBadge(item.count)
+                return <li key={item.href}>
+                  <Link href={item.href}>
+                    <span className="pf-link-icon"><Icon size={19} aria-hidden="true" /></span>
+                    <span className="me-menu-text"><b>{label}</b><small>{hint}</small></span>
+                    {count && <span className="me-menu-count" aria-label={t('menu.unread', { count: count.count })}>{count.text}</span>}
+                    <ChevronRight size={17} aria-hidden="true" />
+                  </Link>
+                </li>
+              })}
+            </ul>
+          </section>
+
+          {athlete && <SkillRadar skills={skills} />}
+          {athlete && <CardGuide />}
+
 
 
           {athlete?.is_public && <PublicProfileShare profilePath={publicPath} isPublic />}

@@ -1,6 +1,7 @@
 import type { Progress } from './training/schedule'
 import type { Program } from './training/content'
 import { DRILL_SKILL, type Skill } from './training/skills'
+import type { TrainingTodayView } from './training/today'
 import { COACH_SKILL_KEYS, type CoachSkillKey } from './coach-skills'
 
 // The athlete's home (/profile) in the DOENSAI dashboard design (owner, 2 Nov 2026). Free of React
@@ -72,7 +73,21 @@ export function programSkills(program: Program): Skill[] {
   return [...new Set(program.drills.map(drill => DRILL_SKILL[drill.id]).filter((skill): skill is Skill => Boolean(skill)))]
 }
 
-/** Skills trained this week: the programme's skills once a session is checked in, else none. */
-export function weekSkills(goal: WeeklyGoal | null, program: Program): number {
-  return goal && goal.done > 0 ? programSkills(program).length : 0
+
+export type WeekTotals = { done: number; planned: number; percent: number; minutes: number; skills: number }
+
+/**
+ * The week of every active programme, counted as /training "my schedule" counts it (review,
+ * 3 Nov 2026): sessions done against planned per programme, added up; minutes are each
+ * programme's planned minutes per session done; skills are those of the programmes trained
+ * this week, each once. All of it is the athlete's own check-ins (SQL63).
+ */
+export function weekTotals(view: TrainingTodayView): WeekTotals | null {
+  const goals = view.programs.map(item => ({ program: item.program, goal: weeklyGoal(item.progress, item.program.minutes) }))
+  const planned = goals.reduce((sum, item) => sum + (item.goal?.planned ?? 0), 0)
+  if (planned === 0) return null
+  const done = goals.reduce((sum, item) => sum + (item.goal?.done ?? 0), 0)
+  const minutes = goals.reduce((sum, item) => sum + (item.goal?.minutes ?? 0), 0)
+  const skills = new Set(goals.filter(item => (item.goal?.done ?? 0) > 0).flatMap(item => programSkills(item.program)))
+  return { done, planned, percent: Math.round((done / planned) * 100), minutes, skills: skills.size }
 }

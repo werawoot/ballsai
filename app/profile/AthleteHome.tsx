@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { Bell, ChevronRight } from 'lucide-react'
-import { radarPoints, type VerifiedSkills, type WeeklyGoal } from '@/lib/athlete-home'
+import { radarPoints, type VerifiedSkills, type WeekTotals } from '@/lib/athlete-home'
 import { unreadBadge } from '@/lib/notification-unread'
 import { SKILL_KEYS } from '@/lib/skill-ratings'
 import type { CardSkills } from '@/lib/athlete-home-data'
@@ -29,7 +29,7 @@ export function HomeHero({ name, line, avatarUrl, initials, unread, level }: {
         <small className="pf-hello">{t('home.hello')}</small>
         <h1 id="pf-name" className="pf-name">{name}</h1>
         {line && <div className="pf-sub">{line}</div>}
-        <p className="pf-tagline">More Than a Game</p>
+        <p className="pf-tagline" lang="en">{t('home.tagline')}</p>
       </div>
       <div className="pf-home-icons">
         <Link href="/notifications" className="pf-icon-btn" aria-label={badge ? `${t('home.notifications')} · ${t('home.unread', { count: unread ?? 0 })}` : t('home.notifications')}>
@@ -94,12 +94,12 @@ export function MyCardPanel({ name, team, position, avatarUrl, initials, ovr, sk
 }
 
 /** The week of the athlete's programme: sessions, minutes and skills (self-reported), and XP from verified matches. */
-export function WeekProgress({ goal, skills, xp, programId }: { goal: WeeklyGoal | null; skills: number; xp: number | null; programId: string }) {
+export function WeekProgress({ goal, xp }: { goal: WeekTotals | null; xp: number | null }) {
   const t = useTranslations('profileHome')
   const radius = 30
   const circumference = 2 * Math.PI * radius
   return <section className="pf-card pf-week" aria-labelledby="pf-week">
-    <Link href={`/training/${programId}`} className="pf-week-head">
+    <Link href="/training" className="pf-week-head">
       <h2 id="pf-week" className="pf-card-title">{t('week.title')}</h2>
       <ChevronRight size={20} aria-hidden="true" />
     </Link>
@@ -112,9 +112,10 @@ export function WeekProgress({ goal, skills, xp, programId }: { goal: WeeklyGoal
         <span className="pf-week-ring-text"><b>{goal ? `${goal.done}/${goal.planned}` : '–'}</b><small>{t('week.sessionsUnit')}</small></span>
       </div>
       <dl>
-        <div><dd>{goal?.minutes ?? 0}</dd><dt>{t('week.minutes')}</dt></div>
-        <div><dd>{skills}</dd><dt>{t('week.skills')}</dt></div>
-        <div><dd className="is-xp">{xp ? `+${xp.toLocaleString('en-US')}` : '0'}</dd><dt>{t('week.xp')}</dt></div>
+        <div><dd>{goal ? goal.minutes : '—'}</dd><dt>{t('week.minutes')}</dt></div>
+        <div><dd>{goal ? goal.skills : '—'}</dd><dt>{t('week.skills')}</dt></div>
+        {/* A failed read is a dash, never a zero (AGENTS.md rule 8). */}
+        <div><dd className="is-xp">{xp === null ? '—' : xp > 0 ? `+${xp.toLocaleString('en-US')}` : '0'}</dd><dt>{t('week.xp')}</dt></div>
       </dl>
     </div>
     <p className="pf-note">{t('week.note')}</p>

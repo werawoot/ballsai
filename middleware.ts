@@ -16,7 +16,8 @@ function isPrefetch(request: NextRequest) {
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
   const pathname = request.nextUrl.pathname
-  const isProtectedRoute = PROTECTED_PREFIXES.some(prefix => pathname.startsWith(prefix))
+  // Segment-aware, so /me never claims a future /media or /members.
+  const isProtectedRoute = PROTECTED_PREFIXES.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`))
   if (!isProtectedRoute && isPrefetch(request)) return withRobots(supabaseResponse, pathname)
 
   const supabase = createServerClient(

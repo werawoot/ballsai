@@ -22,7 +22,8 @@ import { fetchProfileHome } from '@/lib/profile-home'
 import { trainingHasPrimary, trainingHome } from '@/lib/training/home'
 import { homeKind, type HomeKind } from '@/lib/role-home'
 import { loadRoleHome } from '@/lib/role-home-data'
-import { bangkokWeekStart, lastMatchChange, weekSkills, weeklyGoal } from '@/lib/athlete-home'
+import { bangkokWeekStart, lastMatchChange, weekTotals } from '@/lib/athlete-home'
+import { trainingToday } from '@/lib/training/today'
 import { fetchUnreadNotificationCount } from '@/lib/notification-count'
 import { fetchAthleteHomeExtras } from '@/lib/athlete-home-data'
 import type messagesTh from '@/messages/th.json'
@@ -87,11 +88,13 @@ export default async function ProfilePage() {
     // The photo is a private object (T51); the owner may always sign their own.
     signAvatarUrls(supabase, [athleteHome ? (home.athlete?.profile_image_url as string | null | undefined) : null]),
     // The card's skills, the last match's change and this week's XP: small indexed reads.
-    athleteHome && home.athlete ? fetchAthleteHomeExtras(supabase, user.id, homeRank?.id ?? null, bangkokWeekStart(thaiDate(new Date()))) : null,
+    athleteHome && home.athlete ? fetchAthleteHomeExtras(supabase, user.id, homeRank?.id ?? null, bangkokWeekStart(today)) : null,
     // The bell on the athlete's home: a head count, no notification row is read.
     athleteHome ? fetchUnreadNotificationCount(supabase, user.id) : null,
   ])
   const athlete = (athleteHome ? home.athlete : null) as AthleteProfile | null
+  const teamInvites = athleteHome ? home.memberships.filter(membership => membership.status === 'pending').length : 0
+  const inTeam = athleteHome && home.memberships.some(membership => membership.status === 'accepted')
   const rank = (athleteHome ? home.rank : null) as PlayerRank | null
   const athletePrivate = athlete ? home.private : null
   const training = athlete ? home.training : null
@@ -123,8 +126,8 @@ export default async function ProfilePage() {
   // What the training card asks for, and so whether it holds this page's one primary button.
   const trainingCard = trainingHome(training ?? { available: false, enrollments: [], checkins: {} }, today, age)
   const trainingPrimary = trainingHasPrimary(trainingCard)
-  // This week's sessions and minutes, from the athlete's own check-ins (no XP, SQL63).
-  const goal = trainingCard.state === 'enrolled' ? weeklyGoal(trainingCard.progress, trainingCard.program.minutes) : null
+  // This week across every active programme, as /training counts it (the athlete's own check-ins, SQL63).
+  const goal = training?.available && training.enrollments.length > 0 ? weekTotals(trainingToday(training, today)) : null
   const matchChange = lastMatchChange(extras?.rating ?? null)
   const name = athlete?.display_name?.trim() || profile?.full_name?.trim() || (athleteHome ? t('noName') : user.email ?? t('noName'))
   const rt = await getTranslations('roleHome')
@@ -189,7 +192,12 @@ export default async function ProfilePage() {
           />}
           {/* Today's session, or the programme to pick for their age. */}
           <TrainingCard home={trainingCard} age={age} />
-          {trainingCard.state === 'enrolled' && <WeekProgress goal={goal} skills={weekSkills(goal, trainingCard.program)} xp={extras?.weekXp ?? null} programId={trainingCard.program.id} />}
+          {/* The team is one clear next step, not a wall (AGENTS.md product rule): an invitation
+              waiting, or how to get into a team, as one line; the list itself is on /me. */}
+          {athlete && (teamInvites > 0
+            ? <Link href="/team-members" className="pf-card pf-ready-line pf-team-line"><span>{t('teamLine.invites', { count: teamInvites })}</span><ChevronRight size={17} aria-hidden="true" /></Link>
+            : !inTeam && <Link href="/me#pf-team-ask" className="pf-card pf-ready-line pf-team-line"><span>{t('teamLine.none')}</span><ChevronRight size={17} aria-hidden="true" /></Link>)}
+          {trainingCard.state === 'enrolled' && <WeekProgress goal={goal} xp={extras ? extras.weekXp : null} />}
 
           {readiness && (athlete?.is_public && readiness.next ? <Link href={readiness.next.href} className="pf-card pf-ready-line" id="pf-readiness">
             <span>{t('readiness.compact', { done: readiness.done, total: readiness.total, next: t(`readiness.items.${readiness.next.key}.title`) })}</span>

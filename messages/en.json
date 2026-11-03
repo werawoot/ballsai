@@ -1330,7 +1330,8 @@
       "unread": "{count} unread",
       "profile": "My profile",
       "level": "Lv.{level}",
-      "xp": "{xp} / {target} XP"
+      "xp": "{xp} / {target} XP",
+      "tagline": "More Than a Game"
     },
     "today": {
       "title": "Today's programme",
@@ -1345,7 +1346,11 @@
       "minutes": "Minutes",
       "skills": "Skills",
       "xp": "XP from matches",
-      "note": "Sessions, minutes and skills count what you log yourself · XP comes only from results an organizer confirmed"
+      "note": "Sessions and minutes count what you log yourself · skills are those of the programmes you trained this week · XP comes only from results an organizer confirmed"
+    },
+    "teamLine": {
+      "invites": "{count, plural, one {# team invitation} other {# team invitations}} waiting for you",
+      "none": "No team yet · how to get a coach to invite you"
     }
   },
   "profileEdit": {
