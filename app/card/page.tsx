@@ -43,11 +43,11 @@ export default async function PlayerCardPage(props: { searchParams?: Promise<{ t
     supabase.from('player_ratings').select('power_rating, matches_played, goals, assists, mvps').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).maybeSingle(),
     // Level and XP, written only by verified match results (digital-identity-v1).
     supabase.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', user.id).maybeSingle(),
-    // The collection (owner, 3 Nov 2026): badges, written by verified results (index athlete_id,
-    // awarded_at), and the seasons the athlete holds a rank row for (index player_id, sport, season).
-    // Nine badges exist and one rank row per season, so both lists stay short.
-    supabase.from('athlete_badges').select('badge_key, awarded_at').eq('athlete_id', user.id).order('awarded_at', { ascending: false }).limit(50),
-    supabase.from('player_ranks').select('season').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).order('season', { ascending: false }).limit(20),
+    // The collection (owner, 3 Nov 2026): badges (index athlete_id, awarded_at), and the seasons
+    // with a verified match in player_ratings (index player_id, sport, season, SQL93), public or
+    // private profile alike. Nine badges exist and one rating row per season, so both stay short.
+    supabase.from('athlete_badges').select('badge_key, awarded_at').eq('athlete_id', user.id).order('awarded_at', { ascending: false }).limit(20),
+    supabase.from('player_ratings').select('season').eq('player_id', user.id).eq('sport', ACTIVE_SPORT).gt('matches_played', 0).order('season', { ascending: false }).limit(20),
   ])
 
   const p = (profile ?? {}) as Profile
@@ -89,6 +89,7 @@ export default async function PlayerCardPage(props: { searchParams?: Promise<{ t
     { key: 'upgrade', href: '#pc-improve', label: t('actions.upgrade'), icon: <ChevronsUp size={20} aria-hidden="true" /> },
     { key: 'progress', href: '/career', label: t('actions.progress'), icon: <TrendingUp size={20} aria-hidden="true" /> },
   ]
+  // The header of the collection and special views; the card view keeps the builder's own title.
   const tabs = <nav className="cd-tabs" aria-label={t('views.label')}>
     {(['mine', 'collection', 'special'] as const).map(item => <Link key={item} href={tabHref(item)} aria-current={item === tab ? 'page' : undefined} className={item === tab ? 'is-on' : undefined} scroll={false}>{t(`views.${item}`)}</Link>)}
   </nav>
@@ -151,8 +152,8 @@ export default async function PlayerCardPage(props: { searchParams?: Promise<{ t
           actions={actions}
         />
       </> : <section className="cd-page" aria-labelledby="cd-title">
-        <h1 id="cd-title" className="cd-title">{t('pageTitle')}</h1>
-        <p className="cd-lead">{t('pageLead')}</p>
+        <h1 id="cd-title" className="cd-title">{t(`views.${tab}`)}</h1>
+        <p className="cd-lead">{t('collection.lead')}</p>
         {tabs}
         {tab === 'collection' ? <>
           <RarityFilter counts={collection.counts} active={rarity} href={key => tabHref('collection', key)} />

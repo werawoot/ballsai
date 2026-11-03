@@ -217,7 +217,7 @@ body:has(.card-page) { background: #0B1220; }
 .card-page .cd-tabs { background: rgba(255,255,255,.08); border-radius: 999px; display: grid; gap: 4px; grid-auto-flow: column; grid-auto-columns: 1fr; margin: 14px auto 0; max-width: 520px; padding: 4px; width: calc(100% - 32px); }
 .card-page .cd-tabs a { align-items: center; border-radius: 999px; color: rgba(255,255,255,.75); display: flex; font: 700 14px var(--font-sarabun), sans-serif; justify-content: center; min-height: 44px; text-align: center; text-decoration: none; }
 .card-page .cd-tabs a.is-on { background: #16E06E; color: #0B1220; }
-.card-page .pc-actions { display: grid; gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 420px; width: 100%; }
+.card-page .pc-actions { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 420px; width: 100%; }
 .card-page .pc-action { align-items: center; background: rgba(255,255,255,.07); border: 1px solid var(--pc-line); border-radius: 16px; color: #fff; cursor: pointer; display: grid; font: 700 13px var(--font-sarabun), sans-serif; gap: 4px; justify-items: center; min-height: 64px; padding: 8px 4px; text-decoration: none; }
 .card-page .pc-action svg { color: #16E06E; }
 .card-page .pc-action:hover { border-color: rgba(22,224,110,.6); }
@@ -227,7 +227,8 @@ body:has(.card-page) { background: #0B1220; }
 .card-page .cd-strip-head a { align-items: center; color: #16E06E; display: inline-flex; font-size: 13px; font-weight: 700; gap: 2px; text-decoration: none; }
 .card-page .cd-strip p, .card-page .cd-improve p { color: var(--pc-mute); font-size: 13px; margin: 0 0 8px; }
 .card-page .cd-row { display: grid; gap: 8px; grid-auto-columns: 92px; grid-auto-flow: column; list-style: none; margin: 0 0 12px; overflow-x: auto; padding: 0 0 4px; }
-.card-page .cd-row .cd-tile-text { display: none; }
+/* In the strip the words are for screen readers only; the tile face shows the card. */
+.card-page .cd-row .cd-tile-text { clip: rect(0 0 0 0); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
 .card-page .cd-improve ul { color: rgba(255,255,255,.88); display: grid; font-size: 13.5px; gap: 6px; line-height: 1.5; margin: 0; padding-left: 18px; }
 .card-page .cd-rarities { display: grid; gap: 6px; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0 0 14px; }
 .card-page .cd-rarity { align-items: center; background: rgba(255,255,255,.06); border: 1.5px solid transparent; border-radius: 14px; color: #fff; display: grid; font-size: 12.5px; font-weight: 700; justify-items: center; min-height: 52px; padding: 6px 2px; text-decoration: none; }

@@ -13,7 +13,7 @@ const db = vi.hoisted(() => ({ locale: 'th' as 'th' | 'en', tables: {} as Record
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
-    for (const name of ['select', 'eq', 'order', 'limit']) builder[name] = () => builder
+    for (const name of ['select', 'eq', 'gt', 'order', 'limit']) builder[name] = () => builder
     builder.maybeSingle = async () => ({ data: db.tables[table] ?? null, error: null })
     builder.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ data: db.lists[table] ?? [], error: null }).then(resolve)
     return builder
@@ -87,7 +87,7 @@ describe('/card collection (owner, 3 Nov 2026: earned by real results only)', ()
     }
     db.lists = {
       athlete_badges: [{ badge_key: 'match_mvp', awarded_at: '2026-10-12T00:00:00Z' }, { badge_key: 'first_match', awarded_at: '2026-10-05T00:00:00Z' }, { badge_key: 'rookie', awarded_at: '2026-09-01T00:00:00Z' }],
-      player_ranks: [{ season: '2026' }],
+      player_ratings: [{ season: '2026' }],
     }
   }
 
@@ -99,15 +99,31 @@ describe('/card collection (owner, 3 Nov 2026: earned by real results only)', ()
     expect(html).toContain('href="/card?tab=collection"')
     expect(page).toContain('อัปเกรด')
     expect(page).toContain('พัฒนาการ')
-    expect(page).toContain('แชร์การ์ด')
-    expect(page).toContain('การ์ดของฉัน (4)')
+    // Sharing is the sticky share bar, the page's one primary button; it is not repeated beside the card.
+    expect((html.match(/>แชร์การ์ด</g) ?? []).length).toBe(1)
+    expect(page).toContain('การ์ดในคอลเลกชัน (4)')
   })
 
   it('makes upgrade an honest list of how each number improves, with no upgrade by points', async () => {
     set()
     const html = await render()
     expect(html).toContain('href="#pc-improve"')
-    expect(text(html)).toContain('ไม่มีการอัปเกรดด้วยแต้มหรือเงิน')
+    expect(text(html)).toContain('ไม่มีการอัปเกรดด้วยเงินหรือแต้มขยัน')
+  })
+
+  it('gives a season card only for a season with a confirmed match, read from player_ratings', async () => {
+    set()
+    db.lists.player_ratings = []
+    const page = text(await render('th', { tab: 'collection' }))
+    expect(page).not.toContain('การ์ดฤดูกาล 2026')
+    expect(page).toContain('ได้เมื่อมีแมตช์ที่ผู้จัดยืนยันในฤดูกาลนั้น')
+  })
+
+  it('lets a screen reader hear each card in the strip', async () => {
+    set()
+    const html = await render()
+    const strip = html.slice(html.indexOf('class="cd-row"'), html.indexOf('</ul>', html.indexOf('class="cd-row"')))
+    expect(text(strip)).toContain('นักกีฬายอดเยี่ยมครั้งแรก')
   })
 
   it('lists earned cards rarest first, then the ones still to earn, with the rules', async () => {

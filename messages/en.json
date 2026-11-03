@@ -229,7 +229,7 @@
     "photoReady": "Photo added to your card — press “Save” to keep it on your profile",
     "lineNeedsPublic": "LINE needs your public profile link — turn it on in your profile first, or save the image and send it in LINE",
     "pageTitle": "My card",
-    "pageLead": "Your player card collection, updated every time an organizer verifies a result",
+    "pageLead": "Your card updates itself every time an organizer verifies a result",
     "back": "Back",
     "tabs": {
       "label": "Edit your card",
@@ -310,11 +310,10 @@
     "actions": {
       "label": "Card shortcuts",
       "upgrade": "Upgrade",
-      "progress": "Progress",
-      "share": "Share card"
+      "progress": "Progress"
     },
     "collection": {
-      "title": "My cards ({count})",
+      "title": "Cards in your collection ({count})",
       "all": "All",
       "viewAll": "See all",
       "rarities": {
@@ -325,23 +324,25 @@
       },
       "seasonName": "Season {season} card",
       "seasonLocked": "Season card",
-      "seasonHow": "Earned once you have a Power Rating that season, after your first confirmed match",
+      "seasonHow": "Earned once you have a match an organizer confirmed that season",
       "earnedOn": "Earned {date}",
       "earned": "Earned",
       "locked": "Not yet",
-      "rules": "Every card is earned by a recorded result: no random packs, nothing to buy",
+      "rules": "Every card comes from something recorded: your profile, badges from matches an organizer confirmed, and the seasons you played. No random packs, nothing to buy",
       "rulesRarity": "Common: a profile, and a season card · Rare: each first · Special: player of the match, and 10 matches · Legend: Power Rating 1,500",
       "empty": "No card in this group yet",
       "toEarn": "Cards still waiting for you",
       "specialTitle": "Special editions",
-      "specialLead": "Special and legend cards, earned only by standout play in matches an organizer confirmed"
+      "specialLead": "Special and legend cards come from matches an organizer confirmed: player of the match, 10 matches, or a Power Rating of 1,500",
+      "filterLabel": "Filter by rarity",
+      "lead": "Your player card collection"
     },
     "improve": {
       "title": "Make your card better",
-      "lead": "No upgrades with points or money: every number improves only with real play",
+      "lead": "No upgrades with money or effort points: every number improves only with recorded play",
       "power": "Power Rating: play in tournaments whose results an organizer records and confirms; results and your play move it up or down",
       "ovr": "OVR and PAC SHO PAS DRI DEF: a coach of your team assesses your skills, then you accept",
-      "level": "Level: XP from matches an organizer confirmed",
+      "level": "Level: XP from matches an organizer confirmed (plus the starting XP for creating your profile)",
       "versions": "New card editions: earned with each badge; see the collection"
     }
   },

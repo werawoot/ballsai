@@ -20,7 +20,7 @@ export function CollectionTile({ card, name, initials, photo }: { card: Collecti
   return <li className={`cd-tile is-${card.rarity}${earned ? '' : ' is-locked'}`}>
     <span className="cd-tile-face" aria-hidden="true">
       <span className="cd-tile-rarity">{t(`rarities.${card.rarity}`)}</span>
-      <span className="cd-tile-photo" style={earned && photo ? { backgroundImage: `url(${photo})` } : undefined}>{earned ? (!photo && initials) : <Lock size={22} />}</span>
+      <span className="cd-tile-photo" style={earned && photo ? { backgroundImage: `url("${photo}")` } : undefined}>{earned ? (!photo && initials) : <Lock size={22} />}</span>
       <span className="cd-tile-name">{earned ? name : '?'}</span>
     </span>
     <span className="cd-tile-text">
@@ -33,7 +33,7 @@ export function CollectionTile({ card, name, initials, photo }: { card: Collecti
 
 export function RarityFilter({ counts, active, href }: { counts: Record<Rarity | 'all', number>; active: Rarity | 'all'; href: (rarity: Rarity | 'all') => string }) {
   const t = useTranslations('card.collection')
-  return <nav className="cd-rarities" aria-label={t('title', { count: counts.all })}>
+  return <nav className="cd-rarities" aria-label={t('filterLabel')}>
     {(['all', 'common', 'rare', 'special', 'legend'] as const).map(key => <Link key={key} href={href(key)} className={`cd-rarity is-${key}${active === key ? ' is-on' : ''}`} aria-current={active === key ? 'true' : undefined} scroll={false}>
       <span>{key === 'all' ? t('all') : t(`rarities.${key}`)}</span><b>{counts[key]}</b>
     </Link>)}

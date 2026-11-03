@@ -37,7 +37,8 @@ const THEMES: CardTheme[] = ['red', 'gold', 'ice']
 const MAX_PHOTO = 8 * 1024 * 1024
 
 // `summary` sits under the card (second reference, owner 2 Nov 2026): the level and this season's verified numbers.
-// `actions` are the links beside the card (card module reference, owner 3 Nov 2026); sharing is added here.
+// `actions` are the links beside the card (card module reference, owner 3 Nov 2026). Sharing stays the
+// sticky share bar below, the page's one primary button, so it is not repeated here.
 export type CardAction = { key: string; href: string; label: string; icon: ReactNode }
 export default function PlayerCardBuilder({ player, publicProfilePath, userId, seasonLabel = '', summary, actions = [] }: { player: Player; publicProfilePath: string | null; userId: string; seasonLabel?: string; summary?: ReactNode; actions?: CardAction[] }) {
   const router = useRouter()
@@ -339,7 +340,6 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
       <button type="button" className="pc-flip-button" onClick={() => setFlipped(value => !value)} aria-pressed={flipped}><RotateCw size={15} />{flipped ? t('flipBackHint') : t('flipHint')}</button>
       {named && <nav className="pc-actions" aria-label={t('actions.label')}>
         {actions.map(action => <Link key={action.key} href={action.href} className="pc-action">{action.icon}<span>{action.label}</span></Link>)}
-        <button type="button" className="pc-action" onClick={() => setShareOpen(true)}><Share2 size={20} aria-hidden="true" /><span>{t('actions.share')}</span></button>
       </nav>}
       {summary}
       {minimal && <>
