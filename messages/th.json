@@ -1916,7 +1916,31 @@
     },
     "programsTitle": "โปรแกรมของช่วงอายุ {band}",
     "skillDrillsTitle": "ท่าฝึกตามทักษะ",
-    "skillDrillsCount": "{count} ท่า"
+    "skillDrillsCount": "{count} ท่า",
+    "tabs": {
+      "label": "มุมมองการฝึก",
+      "mine": "ตารางของฉัน",
+      "programs": "โปรแกรมแนะนำ",
+      "skills": "ทักษะเฉพาะ"
+    },
+    "my": {
+      "weekLabel": "สัปดาห์นี้",
+      "today": "วันนี้ · {date}",
+      "progress": "{done}/{planned} เสร็จแล้ว",
+      "rest": "วันนี้วันพัก",
+      "restBody": "การพักเป็นส่วนหนึ่งของการซ้อม",
+      "next": "ครั้งต่อไป {date}",
+      "start": "เริ่ม",
+      "done": "ซ้อมแล้ว",
+      "add": "เพิ่มโปรแกรมฝึกซ้อม",
+      "myPrograms": "โปรแกรมของฉัน",
+      "programLine": "ซ้อมแล้ว {done}/{total} ครั้ง · สัปดาห์ {week} จาก {weeks}",
+      "dayDone": "ซ้อมแล้ว",
+      "dayPlanned": "วันซ้อม",
+      "dayRest": "วันพัก",
+      "drillMeta": "{name} · {dose}",
+      "selfNote": "ซ้อมแล้วหรือยัง นับจากที่คุณกด \"ซ้อมเสร็จ\" เอง ต่อโปรแกรมต่อวัน"
+    }
   },
   "guardianSteps": {
     "title": "เชื่อมกับน้องใน 3 ขั้น",

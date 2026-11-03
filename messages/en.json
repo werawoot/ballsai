@@ -1916,7 +1916,31 @@
     },
     "programsTitle": "Programmes for {band}",
     "skillDrillsTitle": "Drills by skill",
-    "skillDrillsCount": "{count} drills"
+    "skillDrillsCount": "{count} drills",
+    "tabs": {
+      "label": "Training views",
+      "mine": "My schedule",
+      "programs": "Programmes",
+      "skills": "By skill"
+    },
+    "my": {
+      "weekLabel": "This week",
+      "today": "Today · {date}",
+      "progress": "{done}/{planned} done",
+      "rest": "Rest day today",
+      "restBody": "Rest is part of training",
+      "next": "Next session {date}",
+      "start": "Start",
+      "done": "Done",
+      "add": "Add a training programme",
+      "myPrograms": "My programmes",
+      "programLine": "{done}/{total} sessions · week {week} of {weeks}",
+      "dayDone": "trained",
+      "dayPlanned": "training day",
+      "dayRest": "rest day",
+      "drillMeta": "{name} · {dose}",
+      "selfNote": "Done counts what you mark as finished yourself, per programme per day"
+    }
   },
   "guardianSteps": {
     "title": "Link with your child in 3 steps",

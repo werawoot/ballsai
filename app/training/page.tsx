@@ -2,13 +2,15 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Kaushan_Script } from 'next/font/google'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { ArrowRightLeft, BookOpenCheck, CalendarDays, ChartColumn, ChevronRight, CircleDot, Dumbbell, Footprints, Goal, Lock, MapPinned, Repeat, Route, Shapes, ShieldPlus, TriangleAlert, type LucideIcon } from 'lucide-react'
+import { ArrowRightLeft, BookOpenCheck, CalendarDays, ChartColumn, Check, ChevronRight, CircleDot, Dumbbell, Footprints, Goal, Lock, MapPinned, Plus, Repeat, Route, Shapes, ShieldPlus, TriangleAlert, type LucideIcon } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { fetchAthleteAge } from '@/lib/athlete-private'
+import { fetchAthleteAge, thaiDate } from '@/lib/athlete-private'
 import { CONTENT_REVIEW, TRAINING_PROGRAMS, bandForAge, drillImage, programsForBand, say, type Band } from '@/lib/training/content'
 import { drillsForBand, isSkill, skillsForBand, type Skill } from '@/lib/training/skills'
 import { fetchMyTraining } from '@/lib/training/data'
+import { trainingTab, trainingToday, type TrainingTab } from '@/lib/training/today'
+import { tournamentDateRange } from '@/lib/tournament-dates'
 import { glassSceneStyle, PAGE_PHOTOS, PROGRAM_PHOTOS } from '@/lib/stock-photos'
 import '../glass.css'
 import './training-glass.css'
@@ -26,7 +28,7 @@ const script = Kaushan_Script({ weight: '400', subsets: ['latin'], display: 'swa
 // The range an athlete can start alone; a coach-guided programme is not counted.
 const sessionMinutes = TRAINING_PROGRAMS.filter(program => program.access === 'solo').map(program => program.minutes)
 
-export default async function TrainingPage(props: { searchParams: Promise<{ band?: string; skill?: string }> }) {
+export default async function TrainingPage(props: { searchParams: Promise<{ band?: string; skill?: string; tab?: string }> }) {
   const searchParams = await props.searchParams
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -42,12 +44,20 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
   const skill: Skill | null = isSkill(searchParams.skill) && skills.includes(searchParams.skill) ? searchParams.skill : null
   const drills = drillsForBand(band, skill ?? undefined)
   const enrolled = new Set(mine?.enrollments.map(item => item.program_id))
-  const href = (next: { band?: Band; skill?: Skill | null }) => {
+  // "My schedule" (second reference, owner 2 Nov 2026): the week and today's programmes.
+  const today = thaiDate(new Date())
+  const view = mine?.available ? trainingToday(mine, today) : null
+  const tab = trainingTab(searchParams.tab, Boolean(view && view.programs.length > 0))
+  const tabs: TrainingTab[] = view && view.programs.length > 0 ? ['mine', 'programs', 'skills'] : ['programs', 'skills']
+  const href = (next: { band?: Band; skill?: Skill | null; tab?: TrainingTab }) => {
     const params = new URLSearchParams({ band: next.band ?? band })
     const nextSkill = next.skill === undefined ? skill : next.skill
     if (nextSkill) params.set('skill', nextSkill)
+    params.set('tab', next.tab ?? tab)
     return `/training?${params}`
   }
+  const dateFormat = (options: Intl.DateTimeFormatOptions, day: string) => new Intl.DateTimeFormat(locale === 'th' ? 'th-TH' : 'en-GB', { ...options, timeZone: 'UTC' }).format(new Date(`${day}T00:00:00Z`))
+  const firstOpen = view?.today.find(item => !item.done)
 
   return (
     <main className="bds-page tg gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.training)}>
@@ -75,7 +85,61 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
 
       <div className="tg-body">
         <div className="tg-panel">
-          <nav className="tg-skills" aria-label={t('skillsLabel')}>
+          <nav className="tg-tabs" aria-label={t('tabs.label')}>
+            {tabs.map(item => <Link key={item} href={href({ tab: item })} aria-current={item === tab ? 'page' : undefined} className={item === tab ? 'is-on' : undefined} scroll={false}>{t(`tabs.${item}`)}</Link>)}
+          </nav>
+
+          {tab === 'mine' && view && <section className="tg-mine" aria-labelledby="tg-today">
+            <div className="tg-month"><b>{dateFormat({ month: 'long', year: 'numeric' }, today)}</b><span>{t('my.weekLabel')}</span></div>
+            <ol className="tg-weekstrip">
+              {view.week.map(day => <li key={day.date} className={[day.planned && 'is-plan', day.done && 'is-done', day.isToday && 'is-today'].filter(Boolean).join(' ')} aria-current={day.isToday ? 'date' : undefined}>
+                <small>{t(`schedule.days.d${day.weekday as 0 | 1 | 2 | 3 | 4 | 5 | 6}`)}</small>
+                <b>{day.dayOfMonth}</b>
+                <span className="tg-sr">{day.done ? t('my.dayDone') : day.planned ? t('my.dayPlanned') : t('my.dayRest')}</span>
+              </li>)}
+            </ol>
+
+            <div className="tg-today-head">
+              <h2 id="tg-today" className="tg-h2">{t('my.today', { date: dateFormat({ weekday: 'long', day: 'numeric', month: 'short' }, today) })}</h2>
+              {view.plannedToday > 0 && <span className="tg-today-count">{t('my.progress', { done: view.doneToday, planned: view.plannedToday })}</span>}
+            </div>
+            {view.plannedToday === 0 ? <div className="tg-rest">
+              <b>{t('my.rest')}</b><small>{t('my.restBody')}</small>
+              {(() => { const next = view.programs.map(item => item.progress.next).filter((day): day is string => Boolean(day)).sort()[0]; return next ? <small>{t('my.next', { date: tournamentDateRange(locale, next) })}</small> : null })()}
+            </div> : view.today.map(item => <article key={item.enrollment.id} className={`tg-session${item.done ? ' is-done' : ''}`}>
+              <header>
+                <Link href={`/training/${item.program.id}`} className="tg-session-title"><b>{say(item.program.title, locale)}</b><small>{t('minutes', { count: item.program.minutes })}</small></Link>
+                {item.done
+                  ? <span className="tg-session-done"><Check size={16} strokeWidth={3} aria-hidden="true" />{t('my.done')}</span>
+                  : <Link href={`/training/${item.program.id}/session`} className={`tg-session-start${item === firstOpen ? ' is-primary' : ''}`}>{t('my.start')}</Link>}
+              </header>
+              <ol className="tg-timeline">
+                {item.program.drills.map(drill => <li key={drill.id}>
+                  <Link href={`/training/drills/${drill.id}`}>
+                    <span className="tg-drill-img"><Image alt="" fill sizes="80px" src={drillImage(drill.id)} unoptimized /></span>
+                    <span className="tg-drill-text"><b>{say(drill.name, locale)}</b><small>{say(drill.dose, locale)}</small></span>
+                    <ChevronRight className="tg-drill-go" size={18} aria-hidden="true" />
+                  </Link>
+                </li>)}
+              </ol>
+            </article>)}
+            <p className="tg-self-note">{t('my.selfNote')}</p>
+
+            <Link href={href({ tab: 'programs' })} className={`tg-add${firstOpen ? '' : ' is-primary'}`}><Plus size={20} aria-hidden="true" />{t('my.add')}</Link>
+
+            <h2 className="tg-h2">{t('my.myPrograms')}</h2>
+            <ul className="tg-myprograms">
+              {view.programs.map(item => <li key={item.enrollment.id}>
+                <Link href={`/training/${item.program.id}`}>
+                  <span className="tg-drill-img"><Image alt="" fill sizes="80px" src={PROGRAM_PHOTOS[item.program.id]?.src ?? drillImage(item.program.cover)} unoptimized /></span>
+                  <span className="tg-drill-text"><b>{say(item.program.title, locale)}</b><small>{t('my.programLine', { done: item.progress.done, total: item.progress.total, week: item.progress.week, weeks: item.program.weeks })}</small></span>
+                  <ChevronRight className="tg-drill-go" size={18} aria-hidden="true" />
+                </Link>
+              </li>)}
+            </ul>
+          </section>}
+
+          {tab === 'skills' && <nav className="tg-skills" aria-label={t('skillsLabel')}>
             {(['all', ...skills] as const).map(item => {
               const Icon = SKILL_ICONS[item]
               const on = (item === 'all' && !skill) || item === skill
@@ -83,11 +147,12 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
                 <Icon size={22} aria-hidden="true" /><span>{t(`skills.${item}`)}</span>
               </Link>
             })}
-          </nav>
+          </nav>}
 
           {CONTENT_REVIEW === 'draft' && <p className="tg-note"><TriangleAlert size={16} aria-hidden="true" /><span>{t('draftNote')}</span></p>}
           {mine && !mine.available && <p className="tg-note" role="status">{t('notReady')}</p>}
 
+          {tab === 'programs' && <>
           <h2 className="tg-h2">{t('programsTitle', { band: t(`bands.${band}`) })}</h2>
           <div className="tg-programs">
             {programsForBand(band).map(program => {
@@ -118,7 +183,9 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
               </Link>
             })}
           </div>
+          </>}
 
+          {tab === 'skills' && <>
           <div className="tg-drills-head">
             <h2 className="tg-h2">{t('skillDrillsTitle')} · {t(`skills.${skill ?? 'all'}`)}</h2>
             <span>{t('skillDrillsCount', { count: drills.length })}</span>
@@ -132,6 +199,7 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
               </Link>
             </li>)}
           </ul>
+          </>}
         </div>
       </div>
     </main>
