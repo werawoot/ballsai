@@ -325,7 +325,7 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
       : <p className="pc-back-private">{t('backPrivate')}</p>}
   </div>
 
-  return <section className="pc">
+  return <section className={`pc${minimal ? ' is-minimal' : ''}`}>
     <div className="pc-intro">
       <h1>{t('pageTitle')}</h1>
       <p>{named ? t('pageLead') : t('pageLeadStart')}</p>
@@ -341,11 +341,12 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
       {named && <nav className="pc-actions" aria-label={t('actions.label')}>
         {actions.map(action => <Link key={action.key} href={action.href} className="pc-action">{action.icon}<span>{action.label}</span></Link>)}
       </nav>}
-      {summary}
+      {/* A card without a name has one thing to do: that step comes right under the card. */}
       {minimal && <>
         <button type="button" className="pc-name-cta" onClick={startNaming}><PencilLine size={18} aria-hidden="true" />{t('enterName')}</button>
         <p className="pc-start-hint">{t('startHint')}</p>
       </>}
+      {summary}
     </div>
 
     {!minimal && <div className="pc-panel">
