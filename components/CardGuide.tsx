@@ -16,7 +16,7 @@ export default function CardGuide({ tone = 'light' }: { tone?: 'light' | 'dark' 
     padding: '0 14px', margin: '14px 0 0',
   }}>
     <summary style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, cursor: 'pointer', fontSize: 14, fontWeight: 800 }}>
-      <HelpCircle size={17} aria-hidden="true" style={{ flex: 'none', color: dark ? '#f5c518' : '#CC0001' }} />{t('summary')}
+      <HelpCircle size={17} aria-hidden="true" style={{ flex: 'none', color: dark ? '#f5c518' : '#0F7A3F' }} />{t('summary')}
     </summary>
     <dl style={{ margin: '0 0 14px', display: 'grid', gap: 12 }}>
       {SECTIONS.map(key => <div key={key}>
