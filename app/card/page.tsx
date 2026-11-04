@@ -13,6 +13,8 @@ import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import { signAvatarUrls } from '@/lib/athlete-avatar'
 import { cardPosition, cardProvenance, playerCardStats, type CardSeason } from '@/lib/player-card'
 import { calculateLevel, levelProgress } from '@/lib/digital-identity'
+import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
+import '../glass.css'
 import './card.css'
 
 type Profile = { full_name?: string | null; province?: string | null; team?: string | null; position?: string | null }
@@ -73,8 +75,9 @@ export default async function PlayerCardPage(props: { searchParams?: Promise<{ t
   const statCells = season && season.matches > 0 ? ([['matches', season.matches], ['goals', season.goals], ['assists', season.assists], ['mvps', season.mvps]] as const) : null
   const m = await getTranslations('mePage.stats')
   const collection = collectionView({
-    badges: (badgeRows ?? []) as { badge_key: string; awarded_at: string | null }[],
-    seasons: ((seasonRows ?? []) as { season: string }[]).map(row => row.season),
+    // A list read is always an array; anything else (a failed read) counts as nothing earned.
+    badges: (Array.isArray(badgeRows) ? badgeRows : []) as { badge_key: string; awarded_at: string | null }[],
+    seasons: (Array.isArray(seasonRows) ? seasonRows : [] as { season: string }[]).map(row => row.season),
   })
   const initials = name.trim().split(/\s+/).slice(0, 2).map(part => [...part][0] ?? '').join('').toUpperCase() || '?'
   const tabHref = (next: CardTab, nextRarity?: Rarity | 'all') => {
@@ -122,7 +125,7 @@ export default async function PlayerCardPage(props: { searchParams?: Promise<{ t
   </div>
 
   return (
-    <main className="card-page">
+    <main className="card-page gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.profile)}>
       <header className="card-page-header">
         <Link href="/" className="card-page-logo"><BrandMark size={22} />DOENSAI.com</Link>
         <div><Link href="/career" className="card-page-profile-link">{t('myHistory')}</Link><Link href="/profile/edit" className="card-page-profile-link">{t('editProfile')}</Link></div>
@@ -167,7 +170,7 @@ export default async function PlayerCardPage(props: { searchParams?: Promise<{ t
         </>}
         <p className="cd-rules"><b>{t('collection.rules')}</b><br />{t('collection.rulesRarity')}</p>
       </section>}
-      <div style={{ maxWidth: 560, margin: '0 auto', padding: '0 16px 32px' }}><CardGuide tone="dark" /></div>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '0 16px 32px' }}><CardGuide /></div>
     </main>
   )
 }

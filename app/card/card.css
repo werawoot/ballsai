@@ -2,9 +2,9 @@
    in three tabs below it (beside it on a wide screen), one primary action shares it.
    Sizes inside the card use cqw of the card itself, so the card scales as one piece. */
 
-/* Navy and green (ADR-014 brand colours, second reference, owner 2 Nov 2026) in place of black and red. */
-.card-page { --pc-bg: #0B1220; --pc-panel: #111B30; --pc-line: rgba(255,255,255,.1); --pc-mute: rgba(255,255,255,.66); --pc-accent: #16E06E; background: var(--pc-bg); }
-body:has(.card-page) { background: #0B1220; }
+/* Light glass (ADR-014; owner, 4 Nov 2026: "ตามที่เราตกลง"): white and pale-green panels, navy
+   text, green actions. Only the card itself keeps its own colours, as a collectible should. */
+.card-page { --pc-bg: transparent; --pc-panel: rgba(255,255,255,.9); --pc-line: rgba(11,18,32,.1); --pc-mute: #475569; --pc-accent: #16E06E; background: transparent; color: #0B1220; }
 .card-page .card-page-header { border-bottom: 1px solid var(--pc-line); min-height: 60px; }
 .card-page .card-page-logo { font-size: 19px; gap: 9px; letter-spacing: 1.2px; }
 .card-page .card-page-header > div { display: flex; gap: 8px; }
@@ -264,3 +264,72 @@ body:has(.card-page) { background: #0B1220; }
 /* The collection row scrolls inside its box; it never widens the page. */
 .card-page .pc-summary { grid-template-columns: minmax(0, 1fr); }
 .card-page .cd-strip, .card-page .cd-improve { min-width: 0; }
+
+/* ---- Light glass for everything around the card (owner, 4 Nov 2026) ------------------------ */
+.card-page .card-page-header { background: rgba(11,18,32,.97); border-bottom: 0; color: #fff; }
+.card-page .card-page-profile-link { border-color: rgba(255,255,255,.3); color: #fff; }
+.card-page .pc-intro h1 { color: #0B1220; }
+.card-page .pc-stage::before { background: radial-gradient(circle, rgba(22,224,110,.28), rgba(22,224,110,0) 66%); }
+.card-page .pc-flip-button { background: rgba(255,255,255,.85); border-color: var(--pc-line); color: #334155; }
+.card-page .pc-flip-button:hover { color: #0B1220; }
+.card-page .pc-panel { -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); background: var(--pc-panel); border-top: 1px solid rgba(255,255,255,.7); box-shadow: 0 -10px 30px rgba(11,18,32,.08); }
+.card-page .pc-tabs { background: #EEF2F6; }
+.card-page .pc-tabs button { color: #475569; }
+.card-page .pc-tabs button.is-on { background: #16E06E; color: #0B1220; }
+.card-page .pc-option, .card-page .pc-positions button, .card-page .pc-theme, .card-page .pc-formats button { background: #fff; border-color: var(--pc-line); color: #0B1220; }
+.card-page .pc-option:hover { border-color: #0F7A3F; }
+.card-page .pc-option em { background: #E8F9EE; color: #0F7A3F; }
+.card-page .pc-positions button.is-on, .card-page .pc-theme.is-on, .card-page .pc-formats button.is-on { border-color: #16E06E; box-shadow: 0 0 0 2px rgba(22,224,110,.25); }
+.card-page .pc-tip { background: #F3F6F9; color: #475569; }
+.card-page .pc-tip b { color: #0B1220; }
+.card-page .pc-field { background: #fff; }
+.card-page .pc-field:focus-within { border-color: #0F7A3F; }
+.card-page .pc-field input { color: #0B1220; }
+.card-page .pc-field input::placeholder { color: #94A3B8; }
+.card-page .pc-savebar.is-dirty { background: #FEF3C7; border-color: #FCD34D; color: #92400E; }
+.card-page .pc-saved { color: #0F7A3F; }
+.card-page .pc-cta { background: rgba(255,255,255,.94); }
+.card-page .pc-secondary { background: #EEF2F6; color: #0B1220; }
+.card-page .pc-secondary:hover { background: #E2E8F0; }
+.card-page .pc-start-hint { color: #475569; }
+.card-page .pc-action { background: rgba(255,255,255,.9); border-color: var(--pc-line); color: #0B1220; }
+.card-page .pc-action svg { color: #0F7A3F; }
+.card-page .pc-action:hover { border-color: #0F7A3F; }
+.card-page .pc-level { background: rgba(255,255,255,.9); }
+.card-page .pc-level-row b { color: #0F7A3F; }
+.card-page .pc-level-bar { background: #E2E8F0; }
+.card-page .pc-season { border: 1px solid var(--pc-line); }
+.card-page .cd-tabs { background: #EEF2F6; }
+.card-page .cd-tabs a { color: #475569; }
+.card-page .cd-tabs a.is-on { color: #0B1220; }
+.card-page .cd-strip, .card-page .cd-improve { background: rgba(255,255,255,.9); }
+.card-page .cd-strip-head a { color: #0F7A3F; }
+.card-page .cd-improve ul { color: #334155; }
+.card-page .cd-rarity { background: #fff; border-color: var(--pc-line); color: #0B1220; }
+.card-page .cd-rarity.is-common:not(.is-on) b { color: #64748B; }
+.card-page .cd-rarity.is-rare:not(.is-on) b { color: #1D4ED8; }
+.card-page .cd-rarity.is-special:not(.is-on) b { color: #6D28D9; }
+.card-page .cd-rarity.is-legend:not(.is-on) b { color: #8A6112; }
+.card-page .cd-rules { background: rgba(255,255,255,.9); color: #334155; }
+.card-page .cd-tabs a:focus-visible, .card-page .cd-rarity:focus-visible, .card-page .pc-action:focus-visible, .card-page .cd-strip-head a:focus-visible, .card-page .pc button:focus-visible, .card-page .pc a:focus-visible, .card-page .pc label:focus-visible { outline-color: #0B1220; }
+/* The share sheet opens over the page: a white sheet, like the rest. */
+.card-page ~ .pc-sheet-layer .pc-sheet, .pc-sheet-layer .pc-sheet { background: #fff; color: #0B1220; }
+.pc-sheet-layer .pc-close { background: #EEF2F6; color: #0B1220; }
+.pc-sheet-layer .pc-apps button { color: #334155; }
+.pc-sheet-layer .pc-link { background: #F3F6F9; }
+.pc-sheet-layer .pc-link span { color: #475569; }
+.pc-sheet-layer .pc-link button, .pc-sheet-layer .pc-link a, .pc-sheet-layer .pc-save-image { background: #0B1220; color: #fff; }
+.pc-sheet-layer .pc-sheet-head p { color: #475569; }
+.pc-sheet-layer .pc-sheet button:focus-visible, .pc-sheet-layer .pc-sheet a:focus-visible { outline-color: #0B1220; }
+
+@media (min-width: 900px) {
+  /* Wide screens: the card on the left; the title and the editing panel on the right as one glass panel. */
+  .card-page .pc-intro { background: var(--pc-panel); border-left: 0; border-radius: 24px 24px 0 0; margin-right: 24px; margin-top: 24px; }
+  .card-page .pc-panel { border-left: 0; border-radius: 0 0 24px 24px; margin-bottom: 24px; margin-right: 24px; }
+}
+/* The screen-reader text of a strip tile is positioned; anchor it inside the scrolling row so it
+   cannot widen the page. On wide screens the right-hand panel keeps its own height. */
+.card-page .cd-row, .card-page .cd-tile { position: relative; }
+@media (min-width: 900px) { .card-page .pc-intro, .card-page .pc-panel { align-self: start; } }
+/* The collection and special views sit on one glass panel, so their words never lie on the photo. */
+.card-page .cd-page { -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); background: rgba(255,255,255,.88); border: 1px solid rgba(255,255,255,.7); border-radius: 24px; box-shadow: 0 18px 50px rgba(11,18,32,.12); margin: 20px auto 24px; width: calc(100% - 24px); }
