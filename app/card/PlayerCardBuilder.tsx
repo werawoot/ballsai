@@ -37,7 +37,10 @@ const THEMES: CardTheme[] = ['red', 'gold', 'ice']
 const MAX_PHOTO = 8 * 1024 * 1024
 
 // `summary` sits under the card (second reference, owner 2 Nov 2026): the level and this season's verified numbers.
-export default function PlayerCardBuilder({ player, publicProfilePath, userId, seasonLabel = '', summary }: { player: Player; publicProfilePath: string | null; userId: string; seasonLabel?: string; summary?: ReactNode }) {
+// `actions` are the links beside the card (card module reference, owner 3 Nov 2026). Sharing stays the
+// sticky share bar below, the page's one primary button, so it is not repeated here.
+export type CardAction = { key: string; href: string; label: string; icon: ReactNode }
+export default function PlayerCardBuilder({ player, publicProfilePath, userId, seasonLabel = '', summary, actions = [] }: { player: Player; publicProfilePath: string | null; userId: string; seasonLabel?: string; summary?: ReactNode; actions?: CardAction[] }) {
   const router = useRouter()
   const t = useTranslations('card')
   const locale = useLocale()
@@ -335,6 +338,9 @@ export default function PlayerCardBuilder({ player, publicProfilePath, userId, s
         <div className="pc-flipper">{front}{back}</div>
       </div>
       <button type="button" className="pc-flip-button" onClick={() => setFlipped(value => !value)} aria-pressed={flipped}><RotateCw size={15} />{flipped ? t('flipBackHint') : t('flipHint')}</button>
+      {named && <nav className="pc-actions" aria-label={t('actions.label')}>
+        {actions.map(action => <Link key={action.key} href={action.href} className="pc-action">{action.icon}<span>{action.label}</span></Link>)}
+      </nav>}
       {summary}
       {minimal && <>
         <button type="button" className="pc-name-cta" onClick={startNaming}><PencilLine size={18} aria-hidden="true" />{t('enterName')}</button>

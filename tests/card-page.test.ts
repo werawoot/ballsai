@@ -9,12 +9,13 @@ import en from '@/messages/en.json'
 // /card in the second reference (owner, 2 Nov 2026): under the card, the level and this
 // season's verified numbers; nothing before a confirmed match.
 
-const db = vi.hoisted(() => ({ locale: 'th' as 'th' | 'en', tables: {} as Record<string, unknown> }))
+const db = vi.hoisted(() => ({ locale: 'th' as 'th' | 'en', tables: {} as Record<string, unknown>, lists: {} as Record<string, unknown[]> }))
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
-    for (const name of ['select', 'eq']) builder[name] = () => builder
+    for (const name of ['select', 'eq', 'gt', 'order', 'limit']) builder[name] = () => builder
     builder.maybeSingle = async () => ({ data: db.tables[table] ?? null, error: null })
+    builder.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ data: db.lists[table] ?? [], error: null }).then(resolve)
     return builder
   }
   return {
@@ -36,9 +37,9 @@ vi.mock('next-intl/server', () => ({
 
 import CardPage from '@/app/card/page'
 
-const render = async (locale: Locale = 'th') => {
+const render = async (locale: Locale = 'th', search: Record<string, string> = {}) => {
   db.locale = locale
-  const page = await (CardPage as () => Promise<ReactElement>)()
+  const page = await (CardPage as (props: { searchParams: Promise<Record<string, string>> }) => Promise<ReactElement>)({ searchParams: Promise.resolve(search) })
   return renderToStaticMarkup(createElement(NextIntlClientProvider as ComponentType<never>, { locale, messages: messagesFor(locale), timeZone: 'Asia/Bangkok' } as never, page))
 }
 const text = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ')
@@ -73,5 +74,91 @@ describe('/card summary under the card', () => {
     const summary = text(html.slice(html.indexOf('pc-summary'), html.indexOf('pc-season-note') + 300))
     expect(summary).toContain('Season')
     expect(summary).not.toMatch(/[ก-ฺเ-๛]/)
+  })
+})
+
+describe('/card collection (owner, 3 Nov 2026: earned by real results only)', () => {
+  const set = () => {
+    db.tables = {
+      athlete_profiles: athlete,
+      player_ranks: { id: 'r1', player_name: 'Niran', position: 'MF', ovr: 64 },
+      player_ratings: { power_rating: 1015, matches_played: 3, goals: 1, assists: 0, mvps: 1 },
+      athlete_progress: { xp_total: 240, current_level: 2 },
+    }
+    db.lists = {
+      athlete_badges: [{ badge_key: 'match_mvp', awarded_at: '2026-10-12T00:00:00Z' }, { badge_key: 'first_match', awarded_at: '2026-10-05T00:00:00Z' }, { badge_key: 'rookie', awarded_at: '2026-09-01T00:00:00Z' }],
+      player_ratings: [{ season: '2026' }],
+    }
+  }
+
+  it('shows the view tabs, shortcuts beside the card, and how many cards were earned', async () => {
+    set()
+    const html = await render()
+    const page = text(html)
+    expect(html).toMatch(/aria-current="page"[^>]*>การ์ดของฉัน</)
+    expect(html).toContain('href="/card?tab=collection"')
+    expect(page).toContain('อัปเกรด')
+    expect(page).toContain('พัฒนาการ')
+    // Sharing is the sticky share bar, the page's one primary button; it is not repeated beside the card.
+    expect((html.match(/>แชร์การ์ด</g) ?? []).length).toBe(1)
+    expect(page).toContain('การ์ดในคอลเลกชัน (4)')
+  })
+
+  it('makes upgrade an honest list of how each number improves, with no upgrade by points', async () => {
+    set()
+    const html = await render()
+    expect(html).toContain('href="#pc-improve"')
+    expect(text(html)).toContain('ไม่มีการอัปเกรดด้วยเงินหรือแต้มขยัน')
+  })
+
+  it('gives a season card only for a season with a confirmed match, read from player_ratings', async () => {
+    set()
+    db.lists.player_ratings = []
+    const page = text(await render('th', { tab: 'collection' }))
+    expect(page).not.toContain('การ์ดฤดูกาล 2026')
+    expect(page).toContain('ได้เมื่อมีแมตช์ที่ผู้จัดยืนยันในฤดูกาลนั้น')
+  })
+
+  it('lets a screen reader hear each card in the strip', async () => {
+    set()
+    const html = await render()
+    const strip = html.slice(html.indexOf('class="cd-row"'), html.indexOf('</ul>', html.indexOf('class="cd-row"')))
+    expect(text(strip)).toContain('นักกีฬายอดเยี่ยมครั้งแรก')
+  })
+
+  it('lists earned cards rarest first, then the ones still to earn, with the rules', async () => {
+    set()
+    const html = await render('th', { tab: 'collection' })
+    const page = text(html)
+    expect(page).toMatch(/พิเศษ .*นักกีฬายอดเยี่ยมครั้งแรก/)
+    expect(page.indexOf('นักกีฬายอดเยี่ยมครั้งแรก')).toBeLessThan(page.indexOf('นัดแรก'))
+    expect(page).toContain('การ์ดที่ยังรอให้คุณทำได้')
+    expect(page).toContain('ดาวรุ่ง')
+    expect(page).toContain('ไม่มีการสุ่ม และซื้อไม่ได้')
+  })
+
+  it('filters by rarity', async () => {
+    set()
+    const page = text(await render('th', { tab: 'collection', rarity: 'rare' }))
+    expect(page).toContain('นัดแรก')
+    expect(page).not.toContain('นักกีฬายอดเยี่ยมครั้งแรก ได้เมื่อ')
+  })
+
+  it('shows only special and legend editions on their tab', async () => {
+    set()
+    const html = await render('th', { tab: 'special' })
+    // The card guide below every tab names every badge; only the tab's own grid counts here.
+    const page = text(html.slice(html.indexOf('cd-page'), html.indexOf('cd-rules')))
+    expect(page).toContain('นักกีฬายอดเยี่ยมครั้งแรก')
+    expect(page).toContain('ดาวรุ่ง')
+    expect(page).not.toContain('ชัยชนะแรก')
+  })
+
+  it('speaks English without Thai on the collection', async () => {
+    set()
+    const html = await render('en', { tab: 'collection' })
+    const body = text(html.slice(html.indexOf('cd-page')))
+    expect(body).toContain('Collection')
+    expect(body).not.toMatch(/[ก-ฺเ-๛]/)
   })
 })
