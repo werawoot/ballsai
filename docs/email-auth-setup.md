@@ -70,6 +70,7 @@ Supabase → Authentication → Emails → **SMTP Settings** → Enable custom S
 | วันที่ | โปรเจกต์ | โดเมนผู้ส่ง | Gmail inbox | Outlook inbox | SPF/DKIM/DMARC | เข้าสู่ระบบ 5 ครั้ง | ผู้ทดสอบ |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 7 พ.ย. 2569 | Staging | `no-reply@auth.doensai.com` (Resend, Verified) | ⚠️ เข้า Inbox 1 วินาที แต่ใช้อีเมลที่**เป็นสมาชิกทีม Supabase** จึงยังไม่พิสูจน์ว่าคนนอกทีมได้รับ | ⬜ ไม่ได้ทดสอบ (ไม่มีอีเมล) | ✅ PASS ทั้งสาม (ใน Gmail header) | ⬜ เข้าสำเร็จ 1 ครั้ง ยังไม่ครบ 5 | เจ้าของ (ผ่าน ChatGPT) |
+| 7 พ.ย. 2569 | Staging | `no-reply@auth.doensai.com` | ✅ Inbox ทุกฉบับ 19–34 วินาที (template DOENSAI) ด้วย Gmail alias `+doensai1` ซึ่ง Supabase นับเป็นที่อยู่นอกทีมและเป็นผู้สมัครใหม่ | ⬜ ยังไม่ได้ทดสอบ | ✅ PASS ทั้งสาม (DKIM โดเมน auth.doensai.com) | ✅ 5/5 (รวมผู้สมัครใหม่ 1 ครั้ง และ "ส่งรหัสใหม่" หลัง 60 วินาที 1 ครั้ง) | เจ้าของ (ผ่าน Claude in Chrome) |
 
 ### บันทึก 7 พ.ย. 2569 (Staging)
 
@@ -86,3 +87,13 @@ Supabase → Authentication → Emails → **SMTP Settings** → Enable custom S
 - ยังค้าง: ทดสอบกับอีเมลที่ไม่ใช่สมาชิกทีม Supabase (Gmail และ Outlook), เข้าสู่ระบบ 5 ครั้ง, แล้วจึงทำ Production
 - โดเมนเก่า `balldoensai.com` ใน Resend สถานะ Failed ยังอยู่ ค่อยลบหลัง T17 เสร็จ และตรวจว่า
   `RESEND_FROM_EMAIL` ใน Vercel (อีเมลแจ้งสถานะทีม `app/api/teams/[teamId]/status/route.ts`) ไม่ได้ใช้โดเมนนั้น
+
+### บันทึก 7 พ.ย. 2569 (Staging รอบที่ 2)
+
+- วาง `docs/email/doensai-otp.html` และหัวเรื่อง `รหัสเข้าสู่ DOENSAI: {{ .Token }}` ใน Magic Link และ
+  Confirm signup ของ Staging แล้ว ตรวจซ้ำหลังโหลดหน้าใหม่ว่าตรงต้นฉบับ
+- ทดสอบด้วย `topkung72+doensai1@gmail.com` (Gmail alias: กล่องเดียวกับเจ้าของ แต่เป็นที่อยู่ที่ไม่ใช่สมาชิกทีม
+  Supabase และไม่เคยสมัคร) ได้รับครบทุกฉบับ จึงยืนยันว่าข้อจำกัด "ส่งได้เฉพาะสมาชิกทีม" หมดไปบน Staging
+- ยังไม่พิสูจน์: ผู้ให้บริการอื่น (Outlook/Hotmail) ไม่คัดลง Spam — ให้คนนอก 1 คนทดสอบก่อนเปิด W1
+- Staging มีบัญชีทดสอบ `topkung72+doensai1@gmail.com` เพิ่ม 1 บัญชี (ยอมรับข้อกำหนดและข้ามการตั้งค่าโปรไฟล์)
+- Production ยังไม่ได้แตะ
