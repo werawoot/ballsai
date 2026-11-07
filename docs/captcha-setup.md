@@ -53,3 +53,24 @@ Supabase จำกัดการขอรหัสต่ออีเมล แ�
 ## ถ้าเพิ่ม Content-Security-Policy ในอนาคต
 
 ต้องอนุญาต `https://challenges.cloudflare.com` ทั้ง `script-src` และ `frame-src` (ตอนนี้ยังไม่มี CSP)
+
+## ผลทดสอบ
+
+### 7 พ.ย. 2569 — Staging (ผ่าน)
+
+- Cloudflare Turnstile widget "DOENSAI login" โหมด Managed, Pre-clearance ปิด
+  hostnames: `doensai.com`, `www.doensai.com`,
+  `ballsai-staging-git-claude-beautiful-6535f5-werawoots-projects.vercel.app`
+  Site key (สาธารณะ): `0x4AAAAAAF3lomq6WKKUFfWo`
+- Vercel `ballsai-staging`: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` ทุก environment แล้ว redeploy
+  (โปรเจกต์ `ballsai` ที่ต่อกับ Production ยังไม่ได้ตั้ง)
+- Supabase Staging (`vorpnkedpscsqhnrssrl`): เปิด CAPTCHA, Turnstile, ใส่ Secret key
+- คนจริง: หน้า `/login` เห็นกล่องยืนยัน ปุ่มส่งรหัสกดได้หลังผ่านเท่านั้น เข้าสู่ระบบ 5/5
+  (รวม "ส่งรหัสใหม่" หลัง 60 วินาที) อีเมลถึง Inbox ไม่เกิน 17 วินาที
+- บอท: POST `/auth/v1/otp` ไม่มี token → `HTTP 400`, `captcha_failed`,
+  "captcha protection: request disallowed (no captcha_token found)" และ Resend ไม่มีอีเมลไป
+  `bot-test@example.com` (ยิงจากเบราว์เซอร์ของเจ้าของ เพราะเครือข่ายของผู้ทดสอบตัด curl)
+- **ต้องทำต่อ:** Secret key เคยแสดงบนหน้าจอที่ผู้ช่วย AI ถ่ายภาพไว้ (ไม่ได้คัดลอกลงแชต)
+  ให้ Rotate Secret Key ใน Cloudflare แล้ววางค่าใหม่ใน Supabase Staging
+  แล้วทดสอบเข้าสู่ระบบอีกครั้ง
+- Production: ยังปิด รอนักกฎหมายตรวจ PDPA ตามหัวข้อข้างบน
