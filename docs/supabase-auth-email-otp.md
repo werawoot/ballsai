@@ -15,15 +15,16 @@ change.
 
 ## Apply manually in Supabase
 
-1. Confirm the target project is **`hivedzrwrrcnjrlirhtv`** before making any change.
+1. Confirm the target project ref before making any change: Staging
+   **`vorpnkedpscsqhnrssrl`** first, Production **`hivedzrwrrcnjrlirhtv`** only after Staging passes.
 2. Go to **Authentication → Email Templates → Magic Link**. Supabase uses this template
    for the email sent by `signInWithOtp()`.
-3. Set the subject to: `รหัสเข้าสู่ BallDoenSai: {{ .Token }}`.
-4. Copy the complete contents of `supabase-auth-email-otp.html` into the HTML body, then
+3. Set the subject to: `รหัสเข้าสู่ DOENSAI: {{ .Token }}`.
+4. Copy the complete contents of `email/doensai-otp.html` into the HTML body, then
    save in the dashboard.
-5. If the dashboard or SMTP provider supports a text part, use the complete contents of
-   `supabase-auth-email-otp.txt` as the plain-text alternative. Do not paste the text
-   version into the HTML field.
+5. The Supabase dashboard takes the HTML body only, so `email/doensai-otp.txt` is a
+   reference copy of the same words; use it only if a text part can ever be set. Do not
+   paste the text version into the HTML field.
 6. Repeat steps 3–5 for **Authentication → Email Templates → Confirm signup**. A
    first-time address gets that template from `signInWithOtp()`, not Magic Link; if it
    still holds the default link-only body, a new athlete receives no code, and a mail
@@ -35,10 +36,12 @@ change.
 
 ## Template behavior and constraints
 
-- `{{ .Token }}` is the Supabase Auth OTP variable. Keep both occurrences unchanged.
-- The visual system mirrors the existing login UI: deep navy `#080f1e`, action red
-  `#ef2028`, and athlete-pride gold `#f5c518`. The email uses system fonts rather than
-  the web fonts used by the site, because email clients do not reliably load them.
+- `{{ .Token }}` is the Supabase Auth OTP variable. It appears once in the HTML body and
+  once in the subject; the hidden preview line does not repeat it.
+- The visual system is the light glass of ADR-014: navy `#0B1220` text, green `#16E06E`
+  only as the code border and the logo letter on navy, dark green `#0F7A3F` for text, grey
+  `#475569` for secondary text (7:1 or better on white and on the page colour). System
+  fonts only, because email clients do not reliably load web fonts.
 - The template intentionally does **not** include `{{ .ConfirmationURL }}`. Login already
   asks the user to enter the code in the app; adding a magic-link CTA would create a
   second, untested path.
