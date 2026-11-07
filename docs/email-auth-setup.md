@@ -41,7 +41,7 @@ Supabase → Authentication → Emails → **SMTP Settings** → Enable custom S
 
 ## ขั้นที่ 3 — template อีเมล (แก้ "6 หลัก" และ Confirm signup ที่ไม่มีรหัส)
 
-ใช้ template แบรนด์ DOENSAI ([`docs/email/doensai-otp.html`](email/doensai-otp.html) และ `.txt`; หัวเรื่อง `รหัสเข้าสู่ DOENSAI: {{ .Token }}`; รายละเอียดใน [`docs/supabase-auth-email-otp.md`](supabase-auth-email-otp.md)):
+ใช้ template แบรนด์ DOENSAI ([`docs/email/doensai-otp.html`](email/doensai-otp.html) และ `.txt`; หัวเรื่อง `รหัสเข้าสู่ DOENSAI ของคุณ` (ไม่ใส่รหัสในหัวเรื่อง: เจ้าของตัดสิน 7 พ.ย. 2569); รายละเอียดใน [`docs/supabase-auth-email-otp.md`](supabase-auth-email-otp.md)):
 ไม่ระบุจำนวนหลัก ไม่มีลิงก์ (ลิงก์อาจถูกระบบสแกนอีเมลเปิดก่อนจนรหัสใช้ไม่ได้) และใช้ `{{ .Token }}`
 
 - ใส่ทั้ง **Magic Link** และ **Confirm signup** ในทั้งสองโปรเจกต์ (Staging ตอนนี้เขียน "6 หลัก";
@@ -97,3 +97,5 @@ Supabase → Authentication → Emails → **SMTP Settings** → Enable custom S
 - ยังไม่พิสูจน์: ผู้ให้บริการอื่น (Outlook/Hotmail) ไม่คัดลง Spam — ให้คนนอก 1 คนทดสอบก่อนเปิด W1
 - Staging มีบัญชีทดสอบ `topkung72+doensai1@gmail.com` เพิ่ม 1 บัญชี (ยอมรับข้อกำหนดและข้ามการตั้งค่าโปรไฟล์)
 - Production ยังไม่ได้แตะ
+- เจ้าของตัดสิน (7 พ.ย. 2569): หัวเรื่องไม่ใส่รหัส เป็น `รหัสเข้าสู่ DOENSAI ของคุณ` เพราะรหัสในหัวเรื่องขึ้นบนหน้าจอล็อก
+  และผู้ใช้จำนวนมากเป็นเด็กที่ใช้มือถือร่วมกับคนในบ้าน Staging ต้องเปลี่ยนหัวเรื่องทั้งสอง template ตาม
