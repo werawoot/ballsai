@@ -21,10 +21,11 @@ Supabase จำกัดการขอรหัสต่ออีเมล แ�
 **ห้ามเปิด CAPTCHA ใน Supabase ก่อนตั้ง site key บน Vercel** — Supabase ไม่มีโหมดเตือนอย่างเดียว
 เปิดแล้วจะปฏิเสธทุกคำขอที่ไม่มี token ทันที คนจะขอรหัสและผู้ดูแลจะล็อกอินไม่ได้
 
-1. Cloudflare Dashboard → Turnstile → Add widget: ใส่โดเมน `ballsai-teal.vercel.app` (และโดเมน Preview
-   ถ้าต้องการทดสอบบน Preview) โหมด **Managed** → ได้ **Site key** (เปิดเผยได้) และ **Secret key** (ห้ามเปิดเผย)
-2. Vercel → Settings → Environment Variables: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` = Site key
-   (Preview ก่อน) → Redeploy
+1. Cloudflare Dashboard → Turnstile → Add widget: hostname `doensai.com`, `www.doensai.com` และโดเมน
+   Preview ของ Staging (`ballsai-staging-git-claude-beautiful-6535f5-werawoots-projects.vercel.app`)
+   (แก้ 7 พ.ย. 2569: เดิมเขียน `ballsai-teal.vercel.app` ซึ่งไม่ใช่โดเมนหลักแล้ว) โหมด **Managed** → ได้ **Site key** (เปิดเผยได้) และ **Secret key** (ห้ามเปิดเผย)
+2. Vercel → โปรเจกต์ **ballsai-staging** (ต่อกับ Supabase Staging) → Settings → Environment Variables:
+   `NEXT_PUBLIC_TURNSTILE_SITE_KEY` = Site key → Redeploy (ยังไม่ตั้งในโปรเจกต์ `ballsai` ที่ต่อกับ Production)
 3. เปิดเว็บ Preview → `/login` → ใช้อีเมล: ต้องเห็นช่องยืนยันของ Cloudflare และปุ่ม "ส่งรหัสให้ฉัน"
    กดได้หลังช่องยืนยันผ่าน — ยังไม่ต้องเปิดอะไรใน Supabase
 4. Supabase **Staging** (`vorpnkedpscsqhnrssrl`) → Authentication → Attack Protection
