@@ -1,5 +1,12 @@
 # Supabase Auth OTP email — Closed Beta
 
+> **Current template (7 Nov 2026): [`email/doensai-otp.html`](email/doensai-otp.html)** with the
+> plain-text part [`email/doensai-otp.txt`](email/doensai-otp.txt). It carries the DOENSAI.com
+> brand and the light glass colours of ADR-014, Thai first with a short English part (Supabase
+> sends one template to every user), no digit count and no link. Subject for both **Magic Link**
+> and **Confirm signup**: `รหัสเข้าสู่ DOENSAI: {{ .Token }}`. The files named below
+> (`supabase-auth-email-otp*`) are the older BallDoenSai version, kept for the record.
+
 The athlete login page calls Supabase `signInWithOtp()` and verifies the entered code
 with `verifyOtp({ type: 'email' })`. Supabase controls this email in its dashboard;
 there is no repository-side template or application email to edit. The files alongside

@@ -1,0 +1,14 @@
+DOENSAI.com
+
+รหัสเข้าสู่ระบบของคุณ
+กรอกรหัสนี้ในหน้าเข้าสู่ระบบของ DOENSAI ไม่ต้องใช้รหัสผ่าน:
+
+{{ .Token }}
+
+หากคุณไม่ได้ขอรหัสนี้ ไม่ต้องทำอะไร และอย่าบอกรหัสนี้กับใคร
+รหัสใช้ได้ภายในเวลาที่ระบบกำหนดเท่านั้น
+
+Your DOENSAI sign-in code: enter the code above on the DOENSAI sign-in page.
+If you did not ask for it, ignore this email and do not share the code.
+
+DOENSAI.com · อีเมลนี้ส่งอัตโนมัติเพื่อยืนยันการเข้าสู่ระบบ
