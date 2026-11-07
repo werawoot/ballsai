@@ -41,7 +41,7 @@ flowchart LR
 | 5 | เลือกกีฬาและเป้าหมาย | นักกีฬา: สร้างแถว `athlete_profiles` ว่างให้ | `/welcome` ขั้น 2–3 |
 | 6 | กด "เริ่ม" (หรือ "ข้ามไปดูก่อน") | พาไปตามเป้าหมาย: Player Card → `/card`, หารายการแข่ง → `/tournaments`, ติดตามนักกีฬา → `/athletes` (ผู้ปกครอง → `/guardian`), ค้นหาดาวรุ่ง → `/athletes`, จัดการสนาม → `/venue`, สนับสนุน → `/sponsor` | — |
 
-⚠️ ผู้ใช้บน Production ยังขอ OTP ไม่ได้เกิน 2 ฉบับ/ชม. และส่งได้เฉพาะอีเมลทีม Supabase จนกว่าจะตั้ง SMTP (T17) — W1 ใช้ Google + Test users แทน (T18)
+ℹ️ ตั้งแต่ 7 พ.ย. 2569 Production ส่ง OTP ผ่าน Resend (`no-reply@auth.doensai.com`) ถึงทุกคน เพดาน 30 ฉบับ/ชม. (T17; `docs/email-auth-setup.md`)
 ⚠️ บทบาท "ผู้จัด" ที่เลือกเองใน `/welcome` ยังไม่ให้สิทธิ์สร้างรายการแข่ง: แอดมินต้องตั้ง `profiles.role = 'organizer'` ด้วยมือ (งานมือต่อผู้จัดหนึ่งคน)
 
 ---

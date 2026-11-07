@@ -4,7 +4,7 @@
 > plain-text part [`email/doensai-otp.txt`](email/doensai-otp.txt). It carries the DOENSAI.com
 > brand and the light glass colours of ADR-014, Thai first with a short English part (Supabase
 > sends one template to every user), no digit count and no link. Subject for both **Magic Link**
-> and **Confirm signup**: `รหัสเข้าสู่ DOENSAI: {{ .Token }}`. The files named below
+> and **Confirm signup**: `รหัสเข้าสู่ DOENSAI ของคุณ`, with no code in it (owner's choice, 7 Nov 2026, on the reason Claude gave: the code would show on a locked phone, and many users are minors who share a phone). The files named below
 > (`supabase-auth-email-otp*`) are the older BallDoenSai version, kept for the record.
 
 The athlete login page calls Supabase `signInWithOtp()` and verifies the entered code
@@ -19,7 +19,7 @@ change.
    **`vorpnkedpscsqhnrssrl`** first, Production **`hivedzrwrrcnjrlirhtv`** only after Staging passes.
 2. Go to **Authentication → Email Templates → Magic Link**. Supabase uses this template
    for the email sent by `signInWithOtp()`.
-3. Set the subject to: `รหัสเข้าสู่ DOENSAI: {{ .Token }}`.
+3. Set the subject to: `รหัสเข้าสู่ DOENSAI ของคุณ` (no code in the subject).
 4. Copy the complete contents of `email/doensai-otp.html` into the HTML body, then
    save in the dashboard.
 5. The Supabase dashboard takes the HTML body only, so `email/doensai-otp.txt` is a
@@ -36,8 +36,8 @@ change.
 
 ## Template behavior and constraints
 
-- `{{ .Token }}` is the Supabase Auth OTP variable. It appears once in the HTML body and
-  once in the subject; the hidden preview line does not repeat it.
+- `{{ .Token }}` is the Supabase Auth OTP variable. It appears once, in the HTML body;
+  neither the subject nor the hidden preview line repeats it, so a locked phone does not show it.
 - The visual system is the light glass of ADR-014: navy `#0B1220` text, green `#16E06E`
   only as the code border and the logo letter on navy, dark green `#0F7A3F` for text, grey
   `#475569` for secondary text (7:1 or better on white and on the page colour). System

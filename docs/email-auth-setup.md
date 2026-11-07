@@ -41,11 +41,11 @@ Supabase → Authentication → Emails → **SMTP Settings** → Enable custom S
 
 ## ขั้นที่ 3 — template อีเมล (แก้ "6 หลัก" และ Confirm signup ที่ไม่มีรหัส)
 
-ใช้ template แบรนด์ DOENSAI ([`docs/email/doensai-otp.html`](email/doensai-otp.html) และ `.txt`; หัวเรื่อง `รหัสเข้าสู่ DOENSAI: {{ .Token }}`; รายละเอียดใน [`docs/supabase-auth-email-otp.md`](supabase-auth-email-otp.md)):
+ใช้ template แบรนด์ DOENSAI ([`docs/email/doensai-otp.html`](email/doensai-otp.html) และ `.txt`; หัวเรื่อง `รหัสเข้าสู่ DOENSAI ของคุณ` (ไม่ใส่รหัสในหัวเรื่อง: เจ้าของตัดสิน 7 พ.ย. 2569); รายละเอียดใน [`docs/supabase-auth-email-otp.md`](supabase-auth-email-otp.md)):
 ไม่ระบุจำนวนหลัก ไม่มีลิงก์ (ลิงก์อาจถูกระบบสแกนอีเมลเปิดก่อนจนรหัสใช้ไม่ได้) และใช้ `{{ .Token }}`
 
-- ใส่ทั้ง **Magic Link** และ **Confirm signup** ในทั้งสองโปรเจกต์ (Staging ตอนนี้เขียน "6 หลัก";
-  Confirm signup ของ Production ไม่มี `{{ .Token }}`)
+- ใส่ทั้ง **Magic Link** และ **Confirm signup** ในทั้งสองโปรเจกต์ (ทำแล้วทั้งสองโปรเจกต์ 7 พ.ย. 2569; ก่อนหน้านั้น
+  Staging เขียน "6 หลัก" และ Confirm signup ของ Production ไม่มี `{{ .Token }}`)
 - ไฟล์เดิม `supabase-auth-email-otp*.html` เป็นแบรนด์เก่า BallDoenSai เก็บไว้เป็นประวัติ ไม่ใช้แล้ว
 
 ## ขั้นที่ 4 — ทดสอบ (ปิด T16/T17)
@@ -70,6 +70,8 @@ Supabase → Authentication → Emails → **SMTP Settings** → Enable custom S
 | วันที่ | โปรเจกต์ | โดเมนผู้ส่ง | Gmail inbox | Outlook inbox | SPF/DKIM/DMARC | เข้าสู่ระบบ 5 ครั้ง | ผู้ทดสอบ |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 7 พ.ย. 2569 | Staging | `no-reply@auth.doensai.com` (Resend, Verified) | ⚠️ เข้า Inbox 1 วินาที แต่ใช้อีเมลที่**เป็นสมาชิกทีม Supabase** จึงยังไม่พิสูจน์ว่าคนนอกทีมได้รับ | ⬜ ไม่ได้ทดสอบ (ไม่มีอีเมล) | ✅ PASS ทั้งสาม (ใน Gmail header) | ⬜ เข้าสำเร็จ 1 ครั้ง ยังไม่ครบ 5 | เจ้าของ (ผ่าน ChatGPT) |
+| 7 พ.ย. 2569 | Staging | `no-reply@auth.doensai.com` | ✅ Inbox ทุกฉบับ ไม่เกิน 34 วินาที (template DOENSAI) ด้วย Gmail alias `+doensai1` ซึ่ง Supabase นับเป็นที่อยู่นอกทีมและเป็นผู้สมัครใหม่ | ⬜ ยังไม่ได้ทดสอบ | ✅ PASS ทั้งสาม (DKIM โดเมน auth.doensai.com) | ✅ 5/5 (รวมผู้สมัครใหม่ 1 ครั้ง และ "ส่งรหัสใหม่" หลัง 60 วินาที 1 ครั้ง) | เจ้าของ (ผ่าน Claude in Chrome) |
+| 7 พ.ย. 2569 | **Production** | `"DOENSAI.com" <no-reply@auth.doensai.com>` | ✅ Inbox (แท็บหลัก) ทุกฉบับ ไม่เกิน 26 วินาที, ฉบับ "ส่งรหัสใหม่" 29–59 วินาที, หัวเรื่องไม่มีรหัส, Gmail alias `+doensai-prod1` (นอกทีม ผู้สมัครใหม่) | ⬜ ยังไม่ได้ทดสอบ | ✅ PASS ทั้งสาม | ✅ 5/5 (รวมผู้สมัครใหม่ 1 และ "ส่งรหัสใหม่" หลัง 60 วินาที 1) | เจ้าของ (ผ่าน Claude in Chrome) |
 
 ### บันทึก 7 พ.ย. 2569 (Staging)
 
@@ -86,3 +88,37 @@ Supabase → Authentication → Emails → **SMTP Settings** → Enable custom S
 - ยังค้าง: ทดสอบกับอีเมลที่ไม่ใช่สมาชิกทีม Supabase (Gmail และ Outlook), เข้าสู่ระบบ 5 ครั้ง, แล้วจึงทำ Production
 - โดเมนเก่า `balldoensai.com` ใน Resend สถานะ Failed ยังอยู่ ค่อยลบหลัง T17 เสร็จ และตรวจว่า
   `RESEND_FROM_EMAIL` ใน Vercel (อีเมลแจ้งสถานะทีม `app/api/teams/[teamId]/status/route.ts`) ไม่ได้ใช้โดเมนนั้น
+
+### บันทึก 7 พ.ย. 2569 (Staging รอบที่ 2)
+
+- วาง `docs/email/doensai-otp.html` และหัวเรื่อง `รหัสเข้าสู่ DOENSAI: {{ .Token }}` ใน Magic Link และ
+  Confirm signup ของ Staging แล้ว ตรวจซ้ำหลังโหลดหน้าใหม่ว่าตรงต้นฉบับ
+- ทดสอบด้วย `topkung72+doensai1@gmail.com` (Gmail alias: กล่องเดียวกับเจ้าของ แต่เป็นที่อยู่ที่ไม่ใช่สมาชิกทีม
+  Supabase และไม่เคยสมัคร) ได้รับครบทุกฉบับ จึงยืนยันว่าข้อจำกัด "ส่งได้เฉพาะสมาชิกทีม" หมดไปบน Staging
+- ยังไม่พิสูจน์: ผู้ให้บริการอื่น (Outlook/Hotmail) ไม่คัดลง Spam — ให้คนนอก 1 คนทดสอบก่อนเปิด W1
+- Staging มีบัญชีทดสอบ `topkung72+doensai1@gmail.com` เพิ่ม 1 บัญชี (ยอมรับข้อกำหนดและข้ามการตั้งค่าโปรไฟล์)
+- Production ยังไม่ได้แตะ
+- เจ้าของตัดสิน (7 พ.ย. 2569): หัวเรื่องไม่ใส่รหัส เป็น `รหัสเข้าสู่ DOENSAI ของคุณ` (เหตุผลที่ Claude เสนอ: รหัสในหัวเรื่องขึ้นบนหน้าจอล็อก
+  และผู้ใช้จำนวนมากเป็นเด็กที่ใช้มือถือร่วมกับคนในบ้าน) Staging ต้องเปลี่ยนหัวเรื่องทั้งสอง template ตาม
+
+### บันทึก 7 พ.ย. 2569 (Production)
+
+- เจ้าของสั่ง "เริ่ม Production" ทำตามขั้นที่ 1–4 แล้ว:
+  - key `supabase-production` (Sending access เฉพาะ `auth.doensai.com`) แยกจากของ Staging
+    หน้า Resend แสดงว่า key นี้ถูกใช้ระหว่างทดสอบ จึงยืนยันว่าวางถูกตัว
+  - SMTP: `smtp.resend.com` port 465 user `resend` ผู้ส่ง `no-reply@auth.doensai.com` ชื่อ `DOENSAI.com`
+    ค่าคงอยู่หลังโหลดหน้าใหม่ emails sent per hour = 30
+  - Magic Link และ Confirm signup: หัวเรื่อง `รหัสเข้าสู่ DOENSAI ของคุณ` Body ตรงกับ Staging ทุกไบต์ (SHA-256)
+  - Staging เปลี่ยนหัวเรื่องเป็นแบบไม่มีรหัสแล้วเช่นกัน (แก้เฉพาะหัวเรื่อง ไม่แตะ Body)
+- ทดสอบที่ `https://doensai.com/login` หัวเรื่องที่ได้รับไม่มีรหัส
+- **ค่าเดิมก่อนแก้ (สำหรับย้อนกลับ):** Production ไม่ได้เปิด custom SMTP; หัวเรื่องเดิม Magic Link
+  `รหัสเข้าสู่ BallDoenSai: {{ .Token }}`, Confirm signup `Confirm Your Signup`
+  ย้อนกลับ = ปิด custom SMTP (และใส่หัวเรื่องเดิมถ้าต้องการ) Body เดิมของ Confirm signup ผู้ทดสอบสำรองไว้นอก repo;
+  Body เดิมของ Magic Link **ไม่ได้สำรอง** (น่าจะเป็น `docs/supabase-auth-email-otp.html` ตามหัวเรื่องเดิม แต่ไม่ได้ตรวจ)
+- บัญชีทดสอบใน Production: `topkung72+doensai-prod1@gmail.com` ไม่มีโปรไฟล์นักกีฬา ไม่มีข้อมูลเด็กหรือผู้ปกครอง
+- เกิดระหว่างทาง: บนเบราว์เซอร์ที่ทดสอบมีบัญชีจริงล็อกอินค้างอยู่ที่ doensai.com ผู้ทดสอบออกจากระบบโดยไม่เปิดดูข้อมูล
+- เกิดระหว่างทาง: Chrome เติมรหัสผ่านอื่นลงช่อง SMTP Password เอง เจ้าของลบแล้ววาง key ใหม่ — ควรระวังทุกครั้งที่แก้หน้านี้
+- งานที่เหลือของ T17:
+  1. คนนอก 1 คนทดสอบด้วย Outlook/Hotmail บน Production (เข้า Inbox ไม่ตก Junk)
+  2. ตรวจ `RESEND_FROM_EMAIL` ใน Vercel ว่าไม่ได้ใช้โดเมน `balldoensai.com` (Failed) แล้วจึงลบโดเมนนั้นใน Resend
+  3. เพดาน 30 ฉบับ/ชม. พอสำหรับ W1 (5 คน); ก่อนยกเพดานต้องเปิด CAPTCHA (T19) ก่อน
