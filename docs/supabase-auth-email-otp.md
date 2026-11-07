@@ -4,7 +4,7 @@
 > plain-text part [`email/doensai-otp.txt`](email/doensai-otp.txt). It carries the DOENSAI.com
 > brand and the light glass colours of ADR-014, Thai first with a short English part (Supabase
 > sends one template to every user), no digit count and no link. Subject for both **Magic Link**
-> and **Confirm signup**: `รหัสเข้าสู่ DOENSAI ของคุณ`, with no code in it (owner, 7 Nov 2026: the code would show on a locked phone, and many users are minors who share a phone). The files named below
+> and **Confirm signup**: `รหัสเข้าสู่ DOENSAI ของคุณ`, with no code in it (owner's choice, 7 Nov 2026, on the reason Claude gave: the code would show on a locked phone, and many users are minors who share a phone). The files named below
 > (`supabase-auth-email-otp*`) are the older BallDoenSai version, kept for the record.
 
 The athlete login page calls Supabase `signInWithOtp()` and verifies the entered code
