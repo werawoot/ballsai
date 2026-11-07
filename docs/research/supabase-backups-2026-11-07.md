@@ -29,14 +29,16 @@ Prices are in USD as published there; the dashboard shows the final amount befor
 ## What this means for DOENSAI
 
 - **Upgrading the Production organization to Pro: ~$25/month** if Production is the only
-  project in that organization. If Staging sits in the same organization, Staging becomes Pro
+  running project in that organization (paused projects use no compute; the confirmation
+  page shows the real total). If Staging sits in the same organization, Staging becomes Pro
   too and adds ~$10/month compute (total ~$35/month). Moving Staging to its own Free
   organization (project transfer) keeps it free.
+- Until the upgrade, the docs advise Free projects to export with `supabase db dump`.
 - **Daily backups (7 days) cover W1.** PITR (~$100/month) is not needed before real traffic;
   revisit at the provincial pilot.
 - **Storage is not backed up** by Supabase backups: `athlete-avatars`, `slips`,
   `venue-photos`. That needs its own plan (a new task, not part of T29).
 - **The T29 drill** can use "Restore to a new project": it does not touch Production, costs
-  a few hours of Micro compute (cents) if the copy is deleted after the check, and this
-  repo's SQL uses no `pg_cron`, `pg_net` or wrappers, so the copy will not call anything
-  outside. The first daily backup appears only after the upgrade, so the drill is a day later.
+  a few hours of Micro compute (cents) if the copy is deleted after the check. This repo's
+  SQL uses no `pg_cron`, `pg_net` or wrappers, but extensions or webhooks turned on in the
+  dashboard are not in `sql/`: check Production's enabled extensions before the drill. The first daily backup appears only after the upgrade, so the drill is a day later.

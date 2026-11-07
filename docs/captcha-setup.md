@@ -22,11 +22,11 @@ Supabase จำกัดการขอรหัสต่ออีเมล แ�
 เปิดแล้วจะปฏิเสธทุกคำขอที่ไม่มี token ทันที คนจะขอรหัสและผู้ดูแลจะล็อกอินไม่ได้
 
 1. Cloudflare Dashboard → Turnstile → Add widget: hostname `doensai.com`, `www.doensai.com` และโดเมน
-   Preview ของ Staging (`ballsai-staging-git-claude-beautiful-6535f5-werawoots-projects.vercel.app`)
+   Preview ของ Staging ที่ใช้ทดสอบ (ผูกกับ branch: ถ้าทดสอบ branch อื่นต้องเพิ่มชื่อนั้นด้วย, สูงสุด 10 ชื่อ)
    (แก้ 7 พ.ย. 2569: เดิมเขียน `ballsai-teal.vercel.app` ซึ่งไม่ใช่โดเมนหลักแล้ว) โหมด **Managed** → ได้ **Site key** (เปิดเผยได้) และ **Secret key** (ห้ามเปิดเผย)
 2. Vercel → โปรเจกต์ **ballsai-staging** (ต่อกับ Supabase Staging) → Settings → Environment Variables:
    `NEXT_PUBLIC_TURNSTILE_SITE_KEY` = Site key → Redeploy (ยังไม่ตั้งในโปรเจกต์ `ballsai` ที่ต่อกับ Production)
-3. เปิดเว็บ Preview → `/login` → ใช้อีเมล: ต้องเห็นช่องยืนยันของ Cloudflare และปุ่ม "ส่งรหัสให้ฉัน"
+3. เปิดเว็บ Staging → `/login` → ใช้อีเมล: ต้องเห็นช่องยืนยันของ Cloudflare และปุ่ม "ส่งรหัสให้ฉัน"
    กดได้หลังช่องยืนยันผ่าน — ยังไม่ต้องเปิดอะไรใน Supabase
 4. Supabase **Staging** (`vorpnkedpscsqhnrssrl`) → Authentication → Attack Protection
    (Bot and Abuse Protection) → Enable CAPTCHA protection → Provider: **Turnstile** → ใส่ **Secret key** → Save
@@ -66,11 +66,12 @@ Supabase จำกัดการขอรหัสต่ออีเมล แ�
   (โปรเจกต์ `ballsai` ที่ต่อกับ Production ยังไม่ได้ตั้ง)
 - Supabase Staging (`vorpnkedpscsqhnrssrl`): เปิด CAPTCHA, Turnstile, ใส่ Secret key
 - คนจริง: หน้า `/login` เห็นกล่องยืนยัน ปุ่มส่งรหัสกดได้หลังผ่านเท่านั้น เข้าสู่ระบบ 5/5
-  (รวม "ส่งรหัสใหม่" หลัง 60 วินาที) อีเมลถึง Inbox ไม่เกิน 17 วินาที
+  (รวม "ส่งรหัสใหม่" หลัง 60 วินาที) อีเมลถึง Inbox ไม่เกิน 15, 15, 15, 17, 16 วินาที
 - บอท: POST `/auth/v1/otp` ไม่มี token → `HTTP 400`, `captcha_failed`,
   "captcha protection: request disallowed (no captcha_token found)" และ Resend ไม่มีอีเมลไป
-  `bot-test@example.com` (ยิงจากเบราว์เซอร์ของเจ้าของ เพราะเครือข่ายของผู้ทดสอบตัด curl)
+  `bot-test@example.com` (ยิงจากเบราว์เซอร์ของเจ้าของ เพราะเครือข่ายของผู้ช่วย AI ที่ทดสอบตัด curl)
 - **ต้องทำต่อ:** Secret key เคยแสดงบนหน้าจอที่ผู้ช่วย AI ถ่ายภาพไว้ (ไม่ได้คัดลอกลงแชต)
   ให้ Rotate Secret Key ใน Cloudflare แล้ววางค่าใหม่ใน Supabase Staging
   แล้วทดสอบเข้าสู่ระบบอีกครั้ง
+- ยังไม่ได้ทดสอบ: ผู้ดูแลเข้า `/login?admin=1` (เกณฑ์ข้อ 5) — ทำพร้อมรอบ Rotate Secret Key
 - Production: ยังปิด รอนักกฎหมายตรวจ PDPA ตามหัวข้อข้างบน
