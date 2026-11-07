@@ -33,7 +33,7 @@ Supabase → Authentication → Emails → **SMTP Settings** → Enable custom S
 | ช่อง | ค่า |
 | --- | --- |
 | Sender email | `no-reply@auth.<โดเมน>` (ต้องเป็นโดเมนที่ verified แล้ว) |
-| Sender name | Production: `BallDoenSai.com` · Staging: `BallDoenSai Staging` |
+| Sender name | Production: `DOENSAI.com` · Staging: `DOENSAI Staging` |
 | Host / Port / Username | **คัดลอกจากหน้า SMTP ในบัญชี Resend ของคุณ** (Resend → Settings → SMTP) |
 | Password | API key จากขั้นที่ 1 ข้อ 5 |
 
@@ -41,12 +41,12 @@ Supabase → Authentication → Emails → **SMTP Settings** → Enable custom S
 
 ## ขั้นที่ 3 — template อีเมล (แก้ "6 หลัก" และ Confirm signup ที่ไม่มีรหัส)
 
-ใช้ template ที่อยู่ใน repo แล้ว ([`docs/supabase-auth-email-otp.md`](supabase-auth-email-otp.md)):
+ใช้ template แบรนด์ DOENSAI ([`docs/email/doensai-otp.html`](email/doensai-otp.html) และ `.txt`; หัวเรื่อง `รหัสเข้าสู่ DOENSAI: {{ .Token }}`; รายละเอียดใน [`docs/supabase-auth-email-otp.md`](supabase-auth-email-otp.md)):
 ไม่ระบุจำนวนหลัก ไม่มีลิงก์ (ลิงก์อาจถูกระบบสแกนอีเมลเปิดก่อนจนรหัสใช้ไม่ได้) และใช้ `{{ .Token }}`
 
 - ใส่ทั้ง **Magic Link** และ **Confirm signup** ในทั้งสองโปรเจกต์ (Staging ตอนนี้เขียน "6 หลัก";
   Confirm signup ของ Production ไม่มี `{{ .Token }}`)
-- ภาษาไทยอย่างเดียว: `supabase-auth-email-otp.html` · สองภาษา: `supabase-auth-email-otp-bilingual.html`
+- ไฟล์เดิม `supabase-auth-email-otp*.html` เป็นแบรนด์เก่า BallDoenSai เก็บไว้เป็นประวัติ ไม่ใช้แล้ว
 
 ## ขั้นที่ 4 — ทดสอบ (ปิด T16/T17)
 
@@ -69,4 +69,20 @@ Supabase → Authentication → Emails → **SMTP Settings** → Enable custom S
 
 | วันที่ | โปรเจกต์ | โดเมนผู้ส่ง | Gmail inbox | Outlook inbox | SPF/DKIM/DMARC | เข้าสู่ระบบ 5 ครั้ง | ผู้ทดสอบ |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| | | | | | | | |
+| 7 พ.ย. 2569 | Staging | `no-reply@auth.doensai.com` (Resend, Verified) | ⚠️ เข้า Inbox 1 วินาที แต่ใช้อีเมลที่**เป็นสมาชิกทีม Supabase** จึงยังไม่พิสูจน์ว่าคนนอกทีมได้รับ | ⬜ ไม่ได้ทดสอบ (ไม่มีอีเมล) | ✅ PASS ทั้งสาม (ใน Gmail header) | ⬜ เข้าสำเร็จ 1 ครั้ง ยังไม่ครบ 5 | เจ้าของ (ผ่าน ChatGPT) |
+
+### บันทึก 7 พ.ย. 2569 (Staging)
+
+- โดเมน `auth.doensai.com` เพิ่มใน Resend (ทีม `topkung72`, region Tokyo) และ Verified แล้ว
+  DNS ที่ Vercel: TXT `resend._domainkey.auth`, CNAME `rsend.auth`, CNAME `send.auth` และ TXT `_dmarc`
+  (`p=none`, รายงานไปอีเมลของเจ้าของ) ไม่มี `_dmarc` เดิม การเพิ่ม record ใต้ `auth`
+  ทำให้ wildcard ของ doensai.com ไม่ครอบคลุม `auth.doensai.com` ซึ่งไม่มีหน้าเว็บ ไม่มีผลกับเว็บหลัก
+- Staging เคยตั้ง SMTP ชี้ไป Mailtrap sandbox (ไม่ส่งถึงผู้รับจริง) เปลี่ยนเป็น Resend แล้ว:
+  `smtp.resend.com` port 465 user `resend`, key `supabase-staging` (Sending access เฉพาะ `auth.doensai.com`)
+  ผู้ส่ง `no-reply@auth.doensai.com` ชื่อ `DOENSAI Staging`, emails sent per hour = 30
+- template ของ Staging ยังเป็นแบบเก่า (เขียน "6 หลัก" แต่รหัสจริง 8 หลัก หัวเรื่องภาษาอังกฤษ ชื่อ BallDoenSai)
+  ต้องวาง `docs/email/doensai-otp.html` แทนทั้ง Magic Link และ Confirm signup
+- Production (`hivedzrwrrcnjrlirhtv`) ยังไม่ได้แตะ ยังใช้ตัวส่งของ Supabase
+- ยังค้าง: ทดสอบกับอีเมลที่ไม่ใช่สมาชิกทีม Supabase (Gmail และ Outlook), เข้าสู่ระบบ 5 ครั้ง, แล้วจึงทำ Production
+- โดเมนเก่า `balldoensai.com` ใน Resend สถานะ Failed ยังอยู่ ค่อยลบหลัง T17 เสร็จ และตรวจว่า
+  `RESEND_FROM_EMAIL` ใน Vercel (อีเมลแจ้งสถานะทีม `app/api/teams/[teamId]/status/route.ts`) ไม่ได้ใช้โดเมนนั้น
