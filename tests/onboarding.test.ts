@@ -37,8 +37,13 @@ describe('what the six choices save', () => {
     for (const choice of CHOICES) expect(allowed('goal')).toContain(goalFor(choice))
   })
 
-  it('takes each role to the same place as before', () => {
-    expect(destinationFor('athlete')).toBe('/card')
+  // ADR-015 (owner, 8 Nov 2026): the athlete MVP is training first, so a new athlete goes
+  // to choosing a programme, not to the card.
+  it('takes a new athlete to choosing a training programme (ADR-015)', () => {
+    expect(destinationFor('athlete')).toBe('/training')
+  })
+
+  it('takes the other roles to the same place as before', () => {
     expect(destinationFor('guardian')).toBe('/profile')
     expect(destinationFor('coach')).toBe('/profile')
     expect(destinationFor('venue_owner')).toBe('/venue')

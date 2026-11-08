@@ -120,7 +120,7 @@
     "back": "Back",
     "starting": "Getting started...",
     "finish": {
-      "athlete": "Make my card",
+      "athlete": "Start training",
       "guardian": "Go to my page",
       "coach": "Go to my page",
       "organizer": "Ask to organize",
@@ -146,7 +146,7 @@
     "personas": {
       "athlete": {
         "title": "Athlete",
-        "description": "Make my card and keep my results"
+        "description": "Train to a plan and see how I improve"
       },
       "guardian": {
         "title": "Guardian",
@@ -176,7 +176,7 @@
       "soon": "Coming soon"
     },
     "nextNote": {
-      "athlete": "Next: add your name and your first card is ready",
+      "athlete": "Next: choose a training programme for your age",
       "guardian": "Next: programmes by age right away, then link your child's account",
       "coach": "Next: coach tools work straight away, no team needed",
       "organizer": "Next: send an organizer request; while you wait you can draft 3 tournaments",

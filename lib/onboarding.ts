@@ -27,7 +27,8 @@ const GOALS: Record<Persona, Goal> = {
 export const goalFor = (choice: Choice): Goal => GOALS[personaOf(choice)]
 
 const DESTINATIONS: Record<Choice, string> = {
-  athlete: '/card',
+  // Training first (ADR-015, owner 8 Nov 2026): choose a programme before the card.
+  athlete: '/training',
   // Their own home first, usable before a child is linked (AGENTS.md product rule).
   guardian: '/profile',
   // Their own home first, where a coach can work at once (AGENTS.md product rule).
