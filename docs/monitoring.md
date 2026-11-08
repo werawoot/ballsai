@@ -33,3 +33,15 @@
 
 | วันที่ | monitor | ทำให้ล่มอย่างไร | ได้รับแจ้งเตือนหลังกี่นาที | ช่องทาง |
 | --- | --- | --- | --- | --- |
+| 8 พ.ย. 2569 | UptimeRobot (ฟรี) monitor ทดสอบชั่วคราว ชนิด HTTP(s) | ชี้ไป `https://doensai.com/api/health-test-missing` (404) แทนการทำให้เว็บจริงล่ม แล้วลบทิ้ง | ~1 นาที 15 วินาที (สร้าง 09:22:41, อีเมล "Monitor is DOWN" 09:23:56) | อีเมลเจ้าของ |
+
+## สถานะการตั้งค่า (8 พ.ย. 2569)
+
+- UptimeRobot แผนฟรี: monitor **DOENSAI Production health** ชนิด Keyword ที่ `https://doensai.com/api/health`
+  ถือว่าล่มเมื่อไม่มี `"status":"ok"` ตรวจทุก 5 นาที (สั้นสุดของแผนฟรี) สถานะ Up
+- แจ้งเตือน: อีเมลเจ้าของช่องทางเดียว — **ยังขาดช่องทางที่สองและคนที่สอง** (แอป UptimeRobot บนมือถือหลังติดตั้ง
+  หรืออีเมลคนที่สอง) ตามเกณฑ์ข้อ 1
+- บัญชีเดียวกันมี monitor เดิม **BallDoenSai Production health** ที่ `https://ballsai-teal.vercel.app/api/health`
+  (Up, ไม่เคย Down ใน 30 วัน, แจ้งอีเมลเดียวกัน) ซ้ำกับตัวใหม่ — แนะนำให้ Pause (ไม่ลบ)
+- ยังไม่ได้ทำ: แจ้งเตือนจาก log (`level":"error"`, `client_error`) — แผน Hobby ของ Vercel ไม่มี log drain/alert
+- 5 นาทีหมายความว่ารู้ช้าสุดราว 5–10 นาทีหลังเว็บล่ม
