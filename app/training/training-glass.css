@@ -111,3 +111,20 @@
   .tg-skills { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); overflow: visible; }
 }
 @media (prefers-reduced-motion: reduce) { .tg-program, .tg-skills a { transition: none; } .tg-program:hover, .tg-skills a:hover { transform: none; } }
+
+/* The goal step (ADR-015): four choices before the programmes, then the goal as a chip. */
+.tg-goal-pick { background: rgba(255, 255, 255, .9); border: 1px solid rgba(11, 18, 32, .1); border-radius: 18px; display: grid; gap: 10px; margin: 0 0 18px; padding: 16px; }
+.tg-goal-pick .tg-h2 { margin: 0; }
+.tg-goal-lead { color: #475569; font-size: 14px; margin: 0; }
+.tg-goal-options { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); list-style: none; margin: 0; padding: 0; }
+.tg-goal-option { align-items: center; background: #fff; border: 1.5px solid rgba(11, 18, 32, .14); border-radius: 14px; color: #0B1220; cursor: pointer; display: flex; font: inherit; gap: 12px; min-height: 64px; padding: 12px 14px; text-align: left; width: 100%; }
+.tg-goal-option svg { color: var(--gl-green-ink); flex: none; }
+.tg-goal-option span { display: grid; gap: 2px; min-width: 0; }
+.tg-goal-option small { color: #475569; font-size: 12.5px; }
+.tg-goal-option:hover:not(:disabled) { border-color: var(--gl-green-ink); }
+.tg-goal-option:focus-visible { outline: 3px solid var(--gl-green); outline-offset: 2px; }
+.tg-goal-option.is-on { background: var(--gl-green-surface); border-color: #0B1220; }
+.tg-goal-option:disabled { cursor: progress; opacity: .7; }
+.tg-goal-now { align-items: center; display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 0 0 14px; }
+.tg-goal-now a { color: var(--gl-green-ink); font-size: 14px; font-weight: 600; }
+.tg-note.is-error { background: #FDE8E8; color: #991B1B; }

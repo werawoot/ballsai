@@ -2038,6 +2038,34 @@
       "dayRest": "rest day",
       "drillMeta": "{name} · {dose}",
       "selfNote": "Done counts what you mark as finished yourself, per programme per day"
+    },
+    "goals": {
+      "title": "What is your goal?",
+      "lead": "Pick one and we suggest the programme that fits your goal and age. You can change it any time.",
+      "current": "Goal: {goal}",
+      "change": "Change goal",
+      "match": "Fits your goal",
+      "saving": "Saving your goal…",
+      "failed": "Your goal was not saved. Try again.",
+      "needAthlete": "Create your athlete profile first, then set a goal.",
+      "options": {
+        "ball_control": {
+          "label": "Better ball control",
+          "hint": "First touch, dribbling, passing and receiving"
+        },
+        "strength": {
+          "label": "Stronger, fewer injuries",
+          "hint": "Warm-up, balance and the muscles that help prevent injuries"
+        },
+        "speed": {
+          "label": "Faster and more agile",
+          "hint": "Starts, changes of direction and quick feet"
+        },
+        "consistency": {
+          "label": "Train regularly",
+          "hint": "Train on every day you set, every week"
+        }
+      }
     }
   },
   "guardianSteps": {
@@ -3167,6 +3195,13 @@
     "eyebrow": "Progress",
     "title": "My progress",
     "lead": "Counted only from the sessions you checked in. Train to plan and the numbers grow.",
+    "goal": {
+      "title": "My goal",
+      "current": "Goal: {goal}",
+      "change": "Change goal",
+      "none": "No goal yet. Pick one and we suggest the programme that fits.",
+      "set": "Set a goal"
+    },
     "selfNote": "Self-recorded: these numbers come from your check-ins, not from a coach or an organizer.",
     "level": {
       "title": "Training level {level}",

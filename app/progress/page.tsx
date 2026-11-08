@@ -6,6 +6,7 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { ChevronRight, Dumbbell } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { fetchTrainingHistory } from '@/lib/training/progress-data'
+import { fetchMyGoal } from '@/lib/training/goal-data'
 import { progressView } from '@/lib/training/progress'
 import { trainingLevel } from '@/lib/training/level'
 import { dayStreak } from '@/lib/athlete-home'
@@ -34,7 +35,7 @@ export default async function ProgressPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/progress')
 
-  const [t, tr, locale, history] = await Promise.all([getTranslations('progressPage'), getTranslations('training'), getLocale(), fetchTrainingHistory(supabase, user.id)])
+  const [t, tr, locale, history, myGoal] = await Promise.all([getTranslations('progressPage'), getTranslations('training'), getLocale(), fetchTrainingHistory(supabase, user.id), fetchMyGoal(supabase, user.id)])
   const today = bangkokToday()
   const view = progressView({ enrollments: history.enrollments, checkins: history.checkins, today })
   const active = history.enrollments.filter(item => item.status === 'active')
@@ -56,6 +57,14 @@ export default async function ProgressPage() {
           <p className="pf-card-desc">{t('lead')}</p>
           {!history.available && <p className="pf-note" role="status">{tr('notReady')}</p>}
         </section>
+
+        {/* The goal (ADR-015): what this progress is for, and the way to change it. */}
+        {myGoal.available && <section className="pf-card" aria-labelledby="pg-goal">
+          <h2 id="pg-goal" className="pf-card-title">{t('goal.title')}</h2>
+          {myGoal.goal
+            ? <p className="pg-goal-now"><span className="pf-chip is-green">{t('goal.current', { goal: tr(`goals.options.${myGoal.goal}.label`) })}</span><Link href="/training?tab=programs&goal=change">{t('goal.change')}</Link></p>
+            : <><p className="pf-card-desc">{t('goal.none')}</p><Link href="/training?tab=programs" className="pf-btn pf-btn-ghost">{t('goal.set')}</Link></>}
+        </section>}
 
         {history.available && !hasHistory && view.programmes.length === 0 && <section className="pf-card" aria-labelledby="pg-empty">
           <h2 id="pg-empty" className="pf-card-title">{t('empty.title')}</h2>

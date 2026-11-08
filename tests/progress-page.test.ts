@@ -9,11 +9,12 @@ import en from '@/messages/en.json'
 
 // /progress, the athlete's Progress tab (ADR-015, owner 8 Nov 2026): only what was recorded.
 
-const db = vi.hoisted(() => ({ locale: 'th' as 'th' | 'en', lists: {} as Record<string, unknown[]>, missing: false, user: 'me' as string | null }))
+const db = vi.hoisted(() => ({ locale: 'th' as 'th' | 'en', lists: {} as Record<string, unknown[]>, missing: false, user: 'me' as string | null, goal: null as string | null }))
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
-    for (const name of ['select', 'eq', 'order', 'gte']) builder[name] = () => builder
+    for (const name of ['select', 'eq', 'order', 'gte', 'is']) builder[name] = () => builder
+    builder.maybeSingle = async () => ({ data: table === 'athlete_training_goals' && db.goal ? { goal_key: db.goal } : null, error: null })
     builder.range = (start: number) => { (builder as { start?: number }).start = start; return builder }
     builder.then = (resolve: (value: unknown) => unknown) => {
       if (db.missing) return Promise.resolve({ data: null, error: { code: 'PGRST205' } }).then(resolve)
@@ -79,6 +80,17 @@ describe('/progress', () => {
     expect(text(html)).toContain('เลือกโปรแกรมฝึก')
     expect(html).toContain('href="/training"')
     expect(html).not.toContain('pg-weeks')
+  })
+
+  it('shows the current goal with a way to change it, or a way to set one (ADR-015)', async () => {
+    db.lists = { training_enrollments: [{ id: 'a', program_id: 'u14-prevention-01', weekdays: [0, 2, 4], start_date: today, status: 'active' }], training_checkins: [] }
+    db.goal = 'speed'
+    let html = await render()
+    expect(text(html)).toContain('เป้าหมาย: เร็วและคล่องตัวขึ้น')
+    expect(html).toContain('href="/training?tab=programs&amp;goal=change"')
+    db.goal = null
+    html = await render()
+    expect(text(html)).toContain('ตั้งเป้าหมาย')
   })
 
   it('says when training is not switched on yet', async () => {

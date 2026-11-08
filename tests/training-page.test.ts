@@ -16,11 +16,16 @@ const db = vi.hoisted(() => ({
   user: { id: 'me' } as { id: string } | null,
   enrollments: [] as Record<string, unknown>[],
   checkins: [] as Record<string, unknown>[],
+  // The current training goal (SQL95); 'missing': the table is not there yet.
+  goal: null as string | null | 'missing',
 }))
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
-    for (const name of ['select', 'eq', 'order', 'gte']) builder[name] = () => builder
+    for (const name of ['select', 'eq', 'order', 'gte', 'is']) builder[name] = () => builder
+    builder.maybeSingle = async () => table === 'athlete_training_goals' && db.goal === 'missing'
+      ? { data: null, error: { code: 'PGRST205' } }
+      : { data: table === 'athlete_training_goals' && db.goal ? { goal_key: db.goal } : null, error: null }
     builder.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ data: table === 'training_enrollments' ? db.enrollments : db.checkins, error: null }).then(resolve)
     return builder
   }
@@ -123,5 +128,40 @@ describe('/training my schedule', () => {
     expect(page).toContain('My schedule')
     const schedule = page.slice(page.indexOf('My schedule'))
     expect(schedule).not.toMatch(/[ก-ฺเ-๛]/)
+  })
+})
+
+describe('/training goal step (ADR-015)', () => {
+  it('asks a signed-in athlete for a goal before the programmes, with the four choices', async () => {
+    db.user = { id: 'me' }; db.enrollments = []; db.checkins = []; db.goal = null
+    const html = await render({ tab: 'programs' })
+    const page = text(html)
+    expect(page).toContain('เป้าหมายของคุณคืออะไร')
+    for (const label of ['คุมบอลดีขึ้น', 'แข็งแรงขึ้น ลดการบาดเจ็บ', 'เร็วและคล่องตัวขึ้น', 'ซ้อมให้สม่ำเสมอ']) expect(page).toContain(label)
+    expect(html.indexOf('tg-goal-pick')).toBeLessThan(html.indexOf('tg-programs'))
+  })
+
+  it('shows the goal, marks the programmes that fit it and lists them first', async () => {
+    db.user = { id: 'me' }; db.enrollments = []; db.checkins = []; db.goal = 'strength'
+    const html = await render({ tab: 'programs', band: 'u14_u17' })
+    const page = text(html)
+    expect(page).toContain('เป้าหมาย: แข็งแรงขึ้น ลดการบาดเจ็บ')
+    expect(html).not.toContain('tg-goal-pick')
+    const programs = html.slice(html.indexOf('tg-programs'))
+    expect(programs.indexOf('/training/u14-prevention-01')).toBeLessThan(programs.indexOf('/training/u14-game-skills-01'))
+    expect(text(programs)).toContain('ตรงกับเป้าหมาย')
+  })
+
+  it('opens the choices again to change the goal', async () => {
+    db.goal = 'strength'
+    expect(await render({ tab: 'programs', goal: 'change' })).toContain('tg-goal-pick')
+  })
+
+  it('skips the step for a visitor, and before SQL95 is applied', async () => {
+    db.goal = null; db.user = null
+    expect(await render({ tab: 'programs' })).not.toContain('tg-goal-pick')
+    db.user = { id: 'me' }; db.goal = 'missing'
+    expect(await render({ tab: 'programs' })).not.toContain('tg-goal-pick')
+    db.goal = null
   })
 })

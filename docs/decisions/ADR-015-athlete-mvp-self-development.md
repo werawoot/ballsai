@@ -71,7 +71,9 @@ checklist, timers), check-ins, streaks, and `/me`.
 
 ## To build
 
-1. A goal step (fixed choices, so progress can be measured).
+1. A goal step (fixed choices, so progress can be measured). **Owner, 8 Nov 2026:** four goals
+   (better ball control · stronger, fewer injuries · faster and more agile · train regularly),
+   asked on `/training` before the programmes and changeable from `/progress`; SQL95.
 2. Self-tests every four weeks, with results compared to the last one.
 3. A Progress page: training history and self-test results.
 4. After `/welcome`, an athlete goes to choosing a programme, not to `/card`.
