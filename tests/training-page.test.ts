@@ -18,12 +18,16 @@ const db = vi.hoisted(() => ({
   checkins: [] as Record<string, unknown>[],
   // The current training goal (SQL95); 'missing': the table is not there yet.
   goal: null as string | null | 'missing',
+  // Whether the signed-in person has an athlete profile (a coach or a guardian has none).
+  athlete: true,
 }))
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
     for (const name of ['select', 'eq', 'order', 'gte', 'is']) builder[name] = () => builder
-    builder.maybeSingle = async () => table === 'athlete_training_goals' && db.goal === 'missing'
+    builder.maybeSingle = async () => table === 'athlete_profiles'
+      ? { data: db.athlete ? { user_id: 'me' } : null, error: null }
+      : table === 'athlete_training_goals' && db.goal === 'missing'
       ? { data: null, error: { code: 'PGRST205' } }
       : { data: table === 'athlete_training_goals' && db.goal ? { goal_key: db.goal } : null, error: null }
     builder.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ data: table === 'training_enrollments' ? db.enrollments : db.checkins, error: null }).then(resolve)
@@ -163,5 +167,17 @@ describe('/training goal step (ADR-015)', () => {
     db.user = { id: 'me' }; db.goal = 'missing'
     expect(await render({ tab: 'programs' })).not.toContain('tg-goal-pick')
     db.goal = null
+  })
+
+  it('skips the step for a coach or a guardian, who has no athlete profile to save it to', async () => {
+    db.user = { id: 'me' }; db.goal = null; db.athlete = false
+    expect(await render({ tab: 'programs' })).not.toContain('tg-goal-pick')
+    db.athlete = true
+  })
+
+  it('keeps the age band after a goal is saved', async () => {
+    db.user = { id: 'me' }; db.goal = null; db.enrollments = []
+    const html = await render({ tab: 'programs', band: 'u14_u17' })
+    expect(html).toContain('data-return="/training?band=u14_u17&amp;tab=programs"')
   })
 })

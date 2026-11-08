@@ -1,14 +1,14 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { ChevronRight, Dumbbell } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { thaiDate } from '@/lib/athlete-private'
 import { fetchTrainingHistory } from '@/lib/training/progress-data'
 import { fetchMyGoal } from '@/lib/training/goal-data'
 import { progressView } from '@/lib/training/progress'
-import { trainingLevel } from '@/lib/training/level'
+import { SESSIONS_PER_LEVEL, trainingLevel } from '@/lib/training/level'
 import { dayStreak } from '@/lib/athlete-home'
 import { say } from '@/lib/training/content'
 import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
@@ -22,23 +22,17 @@ import '../profile/profile.css'
 
 export const dynamic = 'force-dynamic'
 
-const bangkokToday = () => new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10)
-
 export default async function ProgressPage() {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-    cookies: {
-      getAll: () => cookieStore.getAll(),
-      setAll: cookiesToSet => cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)),
-    },
-  })
+  const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/progress')
 
   const [t, tr, locale, history, myGoal] = await Promise.all([getTranslations('progressPage'), getTranslations('training'), getLocale(), fetchTrainingHistory(supabase, user.id), fetchMyGoal(supabase, user.id)])
-  const today = bangkokToday()
+  const today = thaiDate(new Date())
   const view = progressView({ enrollments: history.enrollments, checkins: history.checkins, today })
-  const active = history.enrollments.filter(item => item.status === 'active')
+  // Days in a row across every programme the athlete did not stop: a finished programme keeps
+  // its run; a stopped one would count its unplanned remainder as missed days.
+  const active = history.enrollments.filter(item => item.status !== 'stopped')
   const checkinMap: Record<string, string[]> = {}
   for (const row of history.checkins) (checkinMap[row.enrollment_id] ??= []).push(row.session_date)
   const streak = dayStreak({ available: history.available, enrollments: active, checkins: checkinMap }, today)
@@ -56,6 +50,7 @@ export default async function ProgressPage() {
           <h1 id="pg-title" className="pf-card-title">{t('title')}</h1>
           <p className="pf-card-desc">{t('lead')}</p>
           {!history.available && <p className="pf-note" role="status">{tr('notReady')}</p>}
+          {history.available && !history.complete && <p className="pf-note" role="alert">{t('incomplete')}</p>}
         </section>
 
         {/* The goal (ADR-015): what this progress is for, and the way to change it. */}
@@ -66,17 +61,18 @@ export default async function ProgressPage() {
             : <><p className="pf-card-desc">{t('goal.none')}</p><Link href="/training?tab=programs" className="pf-btn pf-btn-ghost">{t('goal.set')}</Link></>}
         </section>}
 
-        {history.available && !hasHistory && view.programmes.length === 0 && <section className="pf-card" aria-labelledby="pg-empty">
+        {history.available && history.complete && !hasHistory && view.programmes.length === 0 && <section className="pf-card" aria-labelledby="pg-empty">
           <h2 id="pg-empty" className="pf-card-title">{t('empty.title')}</h2>
           <p className="pf-card-desc">{t('empty.body')}</p>
           <Link href="/training" className="pf-btn pf-btn-primary"><Dumbbell size={17} aria-hidden="true" />{t('empty.cta')}</Link>
         </section>}
 
-        {history.available && (hasHistory || view.programmes.length > 0) && <>
+        {history.available && history.complete && (hasHistory || view.programmes.length > 0) && <>
           {hasHistory && <section className="pf-card pf-lv pg-level" aria-labelledby="pg-level">
             <div className="pf-lv-row"><h2 id="pg-level" className="pf-card-title">{t('level.title', { level: level.level })}</h2><span>{t('level.points', { points: number.format(level.points), target: number.format(level.target) })}</span></div>
             <div className="pf-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={level.percent} aria-labelledby="pg-level"><i style={{ width: `${level.percent}%` }} /></div>
-            <p className="pf-note">{t('level.next', { count: level.sessionsToNext, next: level.level + 1 })}</p>
+            <p className="pf-note">{t('level.next', { count: level.sessionsToNext, next: level.level + 1, per: SESSIONS_PER_LEVEL })}</p>
+            <p className="pf-note">{t('selfNote')}</p>
           </section>}
 
           <section className="pf-card" aria-labelledby="pg-totals">
@@ -93,12 +89,14 @@ export default async function ProgressPage() {
           <section className="pf-card" aria-labelledby="pg-weeks-title">
             <h2 id="pg-weeks-title" className="pf-card-title">{t('weeks.title')}</h2>
             <ol className="pg-weeks">
-              {view.weeks.map(week => <li key={week.monday} aria-label={t('weeks.label', { date: shortDate.format(new Date(`${week.monday}T00:00:00Z`)), count: week.sessions })}>
+              {view.weeks.map(week => <li key={week.monday}>
+                <span className="sr-only">{t('weeks.label', { date: shortDate.format(new Date(`${week.monday}T00:00:00Z`)), count: week.sessions })}</span>
                 <span className="pg-bar" aria-hidden="true"><i style={{ height: `${Math.round(week.sessions / most * 100)}%` }} /></span>
                 <b aria-hidden="true">{week.sessions}</b>
                 <small aria-hidden="true">{shortDate.format(new Date(`${week.monday}T00:00:00Z`))}</small>
               </li>)}
             </ol>
+            <p className="pf-note">{t('selfNote')}</p>
           </section>
 
           <section className="pf-card" aria-labelledby="pg-programmes">

@@ -12,7 +12,7 @@ import { TRAINING_GOALS, type TrainingGoal } from '@/lib/training/goals'
 
 const ICONS: Record<TrainingGoal, LucideIcon> = { ball_control: Target, strength: Activity, speed: Zap, consistency: CalendarCheck }
 
-export default function GoalPicker({ current }: { current: TrainingGoal | null }) {
+export default function GoalPicker({ current, returnTo }: { current: TrainingGoal | null; returnTo: string }) {
   const t = useTranslations('training.goals')
   const router = useRouter()
   const [saving, setSaving] = useState<TrainingGoal | null>(null)
@@ -27,11 +27,11 @@ export default function GoalPicker({ current }: { current: TrainingGoal | null }
       setError((rpcError.message ?? '').includes('TRAINING_GOAL_NO_ATHLETE') ? t('needAthlete') : t('failed'))
       return
     }
-    router.replace('/training?tab=programs')
+    router.replace(returnTo)
     router.refresh()
   }
 
-  return <section className="tg-goal-pick" aria-labelledby="tg-goal-title">
+  return <section className="tg-goal-pick" aria-labelledby="tg-goal-title" data-return={returnTo}>
     <h2 id="tg-goal-title" className="tg-h2">{t('title')}</h2>
     <p className="tg-goal-lead">{t('lead')}</p>
     <ul className="tg-goal-options">

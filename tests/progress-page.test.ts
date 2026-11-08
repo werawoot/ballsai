@@ -9,16 +9,17 @@ import en from '@/messages/en.json'
 
 // /progress, the athlete's Progress tab (ADR-015, owner 8 Nov 2026): only what was recorded.
 
-const db = vi.hoisted(() => ({ locale: 'th' as 'th' | 'en', lists: {} as Record<string, unknown[]>, missing: false, user: 'me' as string | null, goal: null as string | null }))
+const db = vi.hoisted(() => ({ locale: 'th' as 'th' | 'en', lists: {} as Record<string, unknown[]>, missing: false, user: 'me' as string | null, goal: null as string | null, failCheckinPage: -1 }))
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
     for (const name of ['select', 'eq', 'order', 'gte', 'is']) builder[name] = () => builder
-    builder.maybeSingle = async () => ({ data: table === 'athlete_training_goals' && db.goal ? { goal_key: db.goal } : null, error: null })
+    builder.maybeSingle = async () => ({ data: table === 'athlete_profiles' ? { user_id: 'me' } : table === 'athlete_training_goals' && db.goal ? { goal_key: db.goal } : null, error: null })
     builder.range = (start: number) => { (builder as { start?: number }).start = start; return builder }
     builder.then = (resolve: (value: unknown) => unknown) => {
       if (db.missing) return Promise.resolve({ data: null, error: { code: 'PGRST205' } }).then(resolve)
       const start = (builder as { start?: number }).start ?? 0
+      if (table === 'training_checkins' && start === db.failCheckinPage) return Promise.resolve({ data: null, error: { code: 'XX000' } }).then(resolve)
       return Promise.resolve({ data: (db.lists[table] ?? []).slice(start, start + 1000), error: null }).then(resolve)
     }
     return builder
@@ -72,6 +73,16 @@ describe('/progress', () => {
     const days = Array.from({ length: 1200 }, (_, index) => ({ enrollment_id: 'a', session_date: new Date(Date.UTC(2020, 0, 1 + index)).toISOString().slice(0, 10) }))
     db.lists = { training_enrollments: [{ id: 'a', program_id: 'u14-prevention-01', weekdays: [0, 2, 4], start_date: '2020-01-01', status: 'completed' }], training_checkins: days }
     expect(text(await render())).toContain('1,200 ครั้ง')
+  })
+
+  it('shows no totals when a page of the history fails, rather than short ones', async () => {
+    const days = Array.from({ length: 1200 }, (_, index) => ({ enrollment_id: 'a', session_date: new Date(Date.UTC(2020, 0, 1 + index)).toISOString().slice(0, 10) }))
+    db.lists = { training_enrollments: [{ id: 'a', program_id: 'u14-prevention-01', weekdays: [0, 2, 4], start_date: '2020-01-01', status: 'completed' }], training_checkins: days }
+    db.failCheckinPage = 1000
+    const page = text(await render())
+    expect(page).toContain('อ่านประวัติการซ้อมได้ไม่ครบ')
+    expect(page).not.toContain('1,000 ครั้ง')
+    db.failCheckinPage = -1
   })
 
   it('invites a new athlete to pick a programme, with no chart of nothing', async () => {

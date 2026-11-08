@@ -3202,17 +3202,17 @@
       "none": "No goal yet. Pick one and we suggest the programme that fits.",
       "set": "Set a goal"
     },
-    "selfNote": "Self-recorded: these numbers come from your check-ins, not from a coach or an organizer.",
+    "selfNote": "Self-recorded: counted from your check-ins, not confirmed by a coach or an organizer · time is each checked-in session at its programme length",
     "level": {
       "title": "Training level {level}",
       "points": "{points} / {target} effort points",
-      "next": "{count} more sessions to level {next} · every 10 sessions is one level"
+      "next": "{count} more sessions to level {next} · every {per} sessions is one level"
     },
     "totals": {
       "title": "Training so far",
       "sessionsLabel": "Sessions",
       "sessions": "{count} sessions",
-      "minutesLabel": "Time trained",
+      "minutesLabel": "Time by programme",
       "minutes": "{count} min",
       "effortLabel": "Effort points",
       "effort": "{count} effort points",
@@ -3234,6 +3234,7 @@
       "title": "No training recorded yet",
       "body": "Choose a programme for your age, train on the days you set, and check in after each session. Your numbers appear here.",
       "cta": "Choose a programme"
-    }
+    },
+    "incomplete": "Your training history did not load in full, so no numbers are shown yet. Reload this page to try again."
   }
 }

@@ -161,7 +161,7 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
           {mine && !mine.available && <p className="tg-note" role="status">{t('notReady')}</p>}
 
           {tab === 'programs' && <>
-          {askGoal && <GoalPicker current={goal} />}
+          {askGoal && <GoalPicker current={goal} returnTo={href({ tab: 'programs' })} />}
           {!askGoal && goal && <p className="tg-goal-now">
             <span className="tg-chip is-on">{t('goals.current', { goal: t(`goals.options.${goal}.label`) })}</span>
             <Link href="/training?tab=programs&goal=change">{t('goals.change')}</Link>
