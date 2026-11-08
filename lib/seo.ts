@@ -12,7 +12,7 @@ export function siteUrl(): string {
 // Signed-in or personal areas: never crawled (robots.txt Disallow) and never indexed.
 export const PRIVATE_PATHS = [
   '/admin', '/api', '/auth', '/bds-wallet', '/card', '/career', '/dashboard', '/guardian', '/login',
-  '/match-plan', '/me', '/notifications', '/onboarding', '/organization', '/parent', '/profile',
+  '/match-plan', '/me', '/notifications', '/onboarding', '/organization', '/parent', '/profile', '/progress',
   '/sponsor', '/team-members', '/venue', '/venues/bookings', '/welcome',
 ]
 

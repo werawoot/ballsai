@@ -36,7 +36,8 @@
       "manage": "Manage",
       "results": "Results",
       "myHome": "Home",
-      "me": "Profile"
+      "me": "Profile",
+      "progress": "Progress"
     }
   },
   "tournaments": {
@@ -120,7 +121,7 @@
     "back": "Back",
     "starting": "Getting started...",
     "finish": {
-      "athlete": "Make my card",
+      "athlete": "Start training",
       "guardian": "Go to my page",
       "coach": "Go to my page",
       "organizer": "Ask to organize",
@@ -146,7 +147,7 @@
     "personas": {
       "athlete": {
         "title": "Athlete",
-        "description": "Make my card and keep my results"
+        "description": "Train to a plan and see how I improve"
       },
       "guardian": {
         "title": "Guardian",
@@ -176,7 +177,7 @@
       "soon": "Coming soon"
     },
     "nextNote": {
-      "athlete": "Next: add your name and your first card is ready",
+      "athlete": "Next: choose a training programme for your age",
       "guardian": "Next: programmes by age right away, then link your child's account",
       "coach": "Next: coach tools work straight away, no team needed",
       "organizer": "Next: send an organizer request; while you wait you can draft 3 tournaments",
@@ -1373,8 +1374,8 @@
       "notifications": "Notifications",
       "unread": "{count} unread",
       "profile": "My profile",
-      "level": "Lv.{level}",
-      "xp": "{xp} / {target} XP",
+      "level": "Training level {level}",
+      "effort": "{points} / {target} effort points",
       "tagline": "More Than a Game",
       "motivate": "Ready to get better today?",
       "sport": "⚽ {sport}",
@@ -1414,7 +1415,7 @@
       "minutes": "{count} min",
       "done": "done",
       "points": "+{points}",
-      "note": "Effort points come when you mark a session as finished yourself. They are not match XP and never change your level, card or rank.",
+      "note": "Effort points come when you mark a session as finished yourself. They are not match XP: they raise your training level only, never your card, rank or Power Rating.",
       "earned": "Earned +{points} effort points",
       "partial": "+{earned} of +{points} effort points",
       "restOnly": "Rest is part of training"
@@ -2037,6 +2038,34 @@
       "dayRest": "rest day",
       "drillMeta": "{name} · {dose}",
       "selfNote": "Done counts what you mark as finished yourself, per programme per day"
+    },
+    "goals": {
+      "title": "What is your goal?",
+      "lead": "Pick one and we suggest the programme that fits your goal and age. You can change it any time.",
+      "current": "Goal: {goal}",
+      "change": "Change goal",
+      "match": "Fits your goal",
+      "saving": "Saving your goal…",
+      "failed": "Your goal was not saved. Try again.",
+      "needAthlete": "Create your athlete profile first, then set a goal.",
+      "options": {
+        "ball_control": {
+          "label": "Better ball control",
+          "hint": "First touch, dribbling, passing and receiving"
+        },
+        "strength": {
+          "label": "Stronger, fewer injuries",
+          "hint": "Warm-up, balance and the muscles that help prevent injuries"
+        },
+        "speed": {
+          "label": "Faster and more agile",
+          "hint": "Starts, changes of direction and quick feet"
+        },
+        "consistency": {
+          "label": "Train regularly",
+          "hint": "Train on every day you set, every week"
+        }
+      }
     }
   },
   "guardianSteps": {
@@ -3155,7 +3184,57 @@
       "training": {
         "label": "Training schedule",
         "hint": "My programme and training days"
+      },
+      "tournaments": {
+        "label": "Tournaments",
+        "hint": "Tournaments open for entries, and results"
       }
     }
+  },
+  "progressPage": {
+    "eyebrow": "Progress",
+    "title": "My progress",
+    "lead": "Counted only from the sessions you checked in. Train to plan and the numbers grow.",
+    "goal": {
+      "title": "My goal",
+      "current": "Goal: {goal}",
+      "change": "Change goal",
+      "none": "No goal yet. Pick one and we suggest the programme that fits.",
+      "set": "Set a goal"
+    },
+    "selfNote": "Self-recorded: counted from your check-ins, not confirmed by a coach or an organizer · time is each checked-in session at its programme length",
+    "level": {
+      "title": "Training level {level}",
+      "points": "{points} / {target} effort points",
+      "next": "{count} more sessions to level {next} · every {per} sessions is one level"
+    },
+    "totals": {
+      "title": "Training so far",
+      "sessionsLabel": "Sessions",
+      "sessions": "{count} sessions",
+      "minutesLabel": "Time by programme",
+      "minutes": "{count} min",
+      "effortLabel": "Effort points",
+      "effort": "{count} effort points",
+      "streakLabel": "In a row",
+      "streak": "{count} days"
+    },
+    "weeks": {
+      "title": "Last 8 weeks",
+      "label": "Week of {date}: {count} sessions"
+    },
+    "programmes": {
+      "title": "Programmes in progress",
+      "none": "No programme in progress right now",
+      "week": "Week {week}/{weeks}",
+      "done": "{done}/{total} sessions done",
+      "finished": "Programme finished"
+    },
+    "empty": {
+      "title": "No training recorded yet",
+      "body": "Choose a programme for your age, train on the days you set, and check in after each session. Your numbers appear here.",
+      "cta": "Choose a programme"
+    },
+    "incomplete": "Your training history did not load in full, so no numbers are shown yet. Reload this page to try again."
   }
 }

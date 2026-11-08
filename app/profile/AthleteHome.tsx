@@ -13,14 +13,14 @@ import { tournamentDateRange } from '@/lib/tournament-dates'
 // lib/athlete-home.ts; these only draw it. One primary button: today's first open mission, or
 // picking a programme. Effort points ("แต้มขยัน") are the athlete's own check-ins and never XP.
 
-/** 1 and 2: greeting, the sport, the bell and the way to /me, then the level from verified matches. */
+/** 1 and 2: greeting, the sport, the bell and the way to /me, then the training level (ADR-015). */
 export function HomeHero({ name, line, avatarUrl, initials, unread, level, sport }: {
   name: string
   line: string
   avatarUrl: string | null
   initials: string
   unread: number | null
-  level: { level: number; xp: number; target: number; percent: number } | null
+  level: { level: number; points: number; target: number; percent: number } | null
   sport: string
 }) {
   const t = useTranslations('profileHome')
@@ -52,10 +52,10 @@ export function HomeHero({ name, line, avatarUrl, initials, unread, level, sport
       </details>
       <p className="pf-tagline" lang="en">{t('home.tagline')}</p>
     </div>
-    {/* Level and points mean nothing before the first point, so they stay out of sight until then. */}
+    {/* The training level from effort points; nothing before the first recorded session. */}
     {level && <div className="pf-lv">
-      <div className="pf-lv-row"><b>{t('home.level', { level: level.level })}</b><span>{t('home.xp', { xp: level.xp.toLocaleString('en-US'), target: level.target.toLocaleString('en-US') })}</span></div>
-      <div className="pf-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(level.percent)} aria-label={t('level', { level: level.level })}><i style={{ width: `${level.percent}%` }} /></div>
+      <div className="pf-lv-row"><b>{t('home.level', { level: level.level })}</b><span>{t('home.effort', { points: level.points.toLocaleString('en-US'), target: level.target.toLocaleString('en-US') })}</span></div>
+      <div className="pf-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(level.percent)} aria-label={t('home.level', { level: level.level })}><i style={{ width: `${level.percent}%` }} /></div>
     </div>}
   </section>
 }

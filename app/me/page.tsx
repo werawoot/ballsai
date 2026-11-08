@@ -47,7 +47,7 @@ type Membership = {
   teams: { id: string; name: string; status: string; tournaments: { name: string | null; location: string | null }[] | { name: string | null; location: string | null } | null } | null
 }
 type MenuKey = 'teamMembers' | 'card' | 'career' | 'venues' | 'sponsorships' | 'admin' | 'dashboard'
-type MenuItem = { href: string; icon: LucideIcon; shortcut?: MenuKey; own?: 'notifications' | 'training'; count?: number }
+type MenuItem = { href: string; icon: LucideIcon; shortcut?: MenuKey; own?: 'notifications' | 'training' | 'tournaments'; count?: number }
 
 const KIND_ICONS: Record<HomeKind, LucideIcon> = { athlete: IdCard, guardian: UsersRound, coach: Compass, organizer: Trophy, venue: Building2, sponsor: Handshake }
 const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map(part => [...part][0] ?? '').join('').toUpperCase() || '?'
@@ -96,6 +96,8 @@ export default async function MePage() {
       { href: '/card', icon: IdCard, shortcut: 'card' as const },
       { href: '/career', icon: Route, shortcut: 'career' as const },
       { href: '/training', icon: Dumbbell, own: 'training' as const },
+      // The athlete bar has no tournaments tab since ADR-015 (training first): it lives here.
+      { href: '/tournaments', icon: Trophy, own: 'tournaments' as const },
     ] : []),
     { href: '/notifications', icon: Bell, own: 'notifications', count: unread ?? 0 },
     { href: '/venues', icon: Building2, shortcut: 'venues' },

@@ -537,3 +537,20 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .pf-opp-cta { align-items: center; background: transparent; border: 1.5px solid #fff; border-radius: 999px; color: #fff; display: inline-flex; font-size: 15px; font-weight: 700; gap: 4px; min-height: 44px; padding: 0 18px; text-decoration: none; }
 .pf.gl .pf-opp-cta:focus-visible { outline: 3px solid var(--gl-green); outline-offset: 2px; }
 .pf.gl .pf-week-stats dd.is-effort { color: #B45309; }
+
+/* /progress (ADR-015): totals reuse .me-stats; eight weekly bars of recorded sessions. */
+.pf.gl .pg-shell { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); max-width: 760px; margin-inline: auto; }
+.pf.gl .pg-weeks { align-items: end; display: grid; gap: 6px; grid-template-columns: repeat(8, minmax(0, 1fr)); list-style: none; margin: 0; padding: 0; text-align: center; }
+.pf.gl .pg-weeks li { display: grid; gap: 4px; justify-items: center; min-width: 0; }
+.pf.gl .pg-bar { align-items: end; background: var(--gl-canvas); border-radius: 8px; display: flex; height: 96px; overflow: hidden; width: 100%; }
+.pf.gl .pg-bar i { background: linear-gradient(180deg, var(--gl-green), #12C961); display: block; min-height: 2px; width: 100%; }
+.pf.gl .pg-weeks b { font-size: 13px; font-variant-numeric: tabular-nums; }
+.pf.gl .pg-weeks small { color: var(--pf-muted); font-size: 11px; white-space: nowrap; }
+.pf.gl .pg-programme { display: grid; gap: 4px; text-decoration: none; color: inherit; min-width: 0; flex: 1; }
+@media (max-width: 520px) { .pf.gl .pg-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.pf.gl .pg-level .pf-lv-row { align-items: baseline; display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; }
+.pf.gl .pg-level .pf-bar { background: var(--gl-canvas); }
+.pf.gl .pg-level .pf-lv-row span { color: var(--pf-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.pf.gl .pg-goal-now { align-items: center; display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 0; }
+.pf.gl .pg-goal-now a { color: var(--gl-green-ink, #0F7A3F); font-weight: 600; }
+.pf.gl .pg-weeks li { position: relative; }

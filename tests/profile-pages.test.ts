@@ -430,13 +430,17 @@ describe('/profile for an athlete: training first, then the card (owner, report 
     expect(anchor(html, '/card')).not.toContain('primary')
   })
 
-  it('hides level and points until the first point', async () => {
+  // ADR-015 (owner, 8 Nov 2026): the home shows the training level, from effort points,
+  // not the match level, and only after the first recorded session.
+  it('hides the training level until the first session, then counts it from effort points', async () => {
     athlete([])
-    expect(await render(ProfilePage as never)).not.toContain('class="pf-lv"')
     ;(db.tables as Record<string, unknown>).athlete_progress = { xp_total: 40, current_level: 1 }
+    expect(await render(ProfilePage as never)).not.toContain('class="pf-lv"')
+    db.counts.training_checkins = 3
     const html = await render(ProfilePage as never)
     expect(html).toContain('class="pf-lv"')
-    expect(text(html)).toContain('ระดับ 1 40 / 100 แต้ม')
+    expect(text(html)).toContain('ระดับฝึกซ้อม 1 150 / 500 แต้มขยัน')
+    delete db.counts.training_checkins
   })
 })
 
@@ -602,7 +606,7 @@ describe('/profile home module of the third reference (owner, 3 Nov 2026)', () =
     expect((html.match(/pf-mission-mark is-primary/g) ?? []).length).toBe(1)
     expect(primaries(html)).toBe(1)
     // Effort points are never XP and say so.
-    expect(page).toContain('ไม่ใช่แต้มจากแมตช์ และไม่มีผลต่อระดับ การ์ด หรืออันดับ')
+    expect(page).toContain('ไม่ใช่แต้มจากแมตช์ ใช้ขึ้นระดับฝึกซ้อมเท่านั้น ไม่มีผลต่อการ์ด อันดับ หรือคะแนนฝีมือ')
     expect(page).not.toMatch(/\+\d+ ?XP/)
   })
 

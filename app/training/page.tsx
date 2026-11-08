@@ -6,6 +6,9 @@ import { ArrowRightLeft, BookOpenCheck, CalendarDays, ChartColumn, Check, Chevro
 import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { fetchAthleteAge, thaiDate } from '@/lib/athlete-private'
+import GoalPicker from './GoalPicker'
+import { fetchMyGoal } from '@/lib/training/goal-data'
+import { goalFits, orderForGoal } from '@/lib/training/goals'
 import { CONTENT_REVIEW, TRAINING_PROGRAMS, bandForAge, drillImage, programsForBand, say, type Band } from '@/lib/training/content'
 import { drillsForBand, isSkill, skillsForBand, type Skill } from '@/lib/training/skills'
 import { fetchMyTraining } from '@/lib/training/data'
@@ -28,16 +31,20 @@ const script = Kaushan_Script({ weight: '400', subsets: ['latin'], display: 'swa
 // The range an athlete can start alone; a coach-guided programme is not counted.
 const sessionMinutes = TRAINING_PROGRAMS.filter(program => program.access === 'solo').map(program => program.minutes)
 
-export default async function TrainingPage(props: { searchParams: Promise<{ band?: string; skill?: string; tab?: string }> }) {
+export default async function TrainingPage(props: { searchParams: Promise<{ band?: string; skill?: string; tab?: string; goal?: string }> }) {
   const searchParams = await props.searchParams
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const [t, locale, age, mine] = await Promise.all([
+  const [t, locale, age, mine, myGoal] = await Promise.all([
     getTranslations('training'),
     getLocale(),
     user ? fetchAthleteAge(supabase, user.id) : null,
     user ? fetchMyTraining(supabase, user.id) : null,
+    // The goal comes before the programme (ADR-015); null before SQL95 or when signed out.
+    user ? fetchMyGoal(supabase, user.id) : null,
   ])
+  const goal = myGoal?.goal ?? null
+  const askGoal = Boolean(myGoal?.available) && (!goal || searchParams.goal === 'change')
   const ownBand = bandForAge(age)
   const band: Band = BANDS.includes(searchParams.band as Band) ? searchParams.band as Band : ownBand ?? 'u10_u13'
   const skills = skillsForBand(band)
@@ -154,9 +161,14 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
           {mine && !mine.available && <p className="tg-note" role="status">{t('notReady')}</p>}
 
           {tab === 'programs' && <>
+          {askGoal && <GoalPicker current={goal} returnTo={href({ tab: 'programs' })} />}
+          {!askGoal && goal && <p className="tg-goal-now">
+            <span className="tg-chip is-on">{t('goals.current', { goal: t(`goals.options.${goal}.label`) })}</span>
+            <Link href="/training?tab=programs&goal=change">{t('goals.change')}</Link>
+          </p>}
           <h2 className="tg-h2">{t('programsTitle', { band: t(`bands.${band}`) })}</h2>
           <div className="tg-programs">
-            {programsForBand(band).map(program => {
+            {orderForGoal(programsForBand(band), goal).map(program => {
               const locked = program.access !== 'solo'
               return <Link className={`tg-program${locked ? ' is-locked' : ''}`} href={`/training/${program.id}`} key={program.id}>
                 <div className="tg-cover">
@@ -168,6 +180,7 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
                   <div className="tg-chips">
                     <span className="tg-chip is-band">{t(`bands.${program.band}`)}</span>
                     {enrolled.has(program.id) && <span className="tg-chip is-on">{t('enrolled')}</span>}
+                    {goal && goal !== 'consistency' && goalFits(program.id, goal) && <span className="tg-chip is-on">{t('goals.match')}</span>}
                     {CONTENT_REVIEW === 'draft' && <span className="tg-chip is-warn">{t('draft')}</span>}
                   </div>
                   <b className="tg-program-title">{say(program.title, locale)}</b>

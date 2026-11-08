@@ -9,9 +9,10 @@ const ids = (kind: Parameters<typeof navItemsFor>[0]) => navItemsFor(kind).map(i
 
 describe('a bottom bar per role', () => {
   it('opens on each role\'s main job', () => {
-    // Owner, 2 Nov 2026 (DOENSAI dashboard design): the athlete's own home, training, card,
-    // tournaments and profile; notifications move to the bell on the home page.
-    expect(ids('athlete')).toEqual(['myHome', 'training', 'card', 'tournaments', 'me'])
+    // ADR-015 (owner, 8 Nov 2026): the athlete MVP is training first, four tabs: home,
+    // training, progress and profile. The card and tournaments live under profile now;
+    // notifications stay the bell on the home page.
+    expect(ids('athlete')).toEqual(['myHome', 'training', 'progress', 'me'])
     expect(ids('guardian')).toEqual(['kids', 'tournaments', 'notifications', 'profile'])
     expect(ids('coach')).toEqual(['team', 'plan', 'tournaments', 'notifications', 'profile'])
     expect(ids('organizer')).toEqual(['manage', 'results', 'tournaments', 'notifications', 'profile'])
@@ -44,9 +45,11 @@ describe('a bottom bar per role', () => {
 
   it('lights the right tab inside a role bar', () => {
     expect(activeNavItem('/training/u14-game-skills-01', navItemsFor('athlete'))).toBe('training')
-    expect(activeNavItem('/career', navItemsFor('athlete'))).toBe('card')
+    expect(activeNavItem('/progress', navItemsFor('athlete'))).toBe('progress')
+    expect(activeNavItem('/card', navItemsFor('athlete'))).toBe('me')
+    expect(activeNavItem('/career', navItemsFor('athlete'))).toBe('me')
     expect(activeNavItem('/profile', navItemsFor('athlete'))).toBe('myHome')
-    expect(activeNavItem('/tournaments/abc', navItemsFor('athlete'))).toBe('tournaments')
+    expect(activeNavItem('/tournaments/abc', navItemsFor('athlete'))).toBe('me')
     expect(activeNavItem('/me', navItemsFor('athlete'))).toBe('me')
     expect(activeNavItem('/team-members', navItemsFor('athlete'))).toBe('me')
     expect(activeNavItem('/notifications', navItemsFor('athlete'))).toBe('me')
