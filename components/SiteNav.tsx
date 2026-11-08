@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Bell, CircleUserRound, ClipboardCheck, ClipboardList, Dumbbell, House, IdCard, LayoutDashboard, Search, Shield, Trophy, User, Users, type LucideIcon } from 'lucide-react'
+import { Bell, ChartColumnIncreasing, CircleUserRound, ClipboardCheck, ClipboardList, Dumbbell, House, IdCard, LayoutDashboard, Search, Shield, Trophy, User, Users, type LucideIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { fetchUnreadNotificationCount } from '@/lib/notification-count'
 import { unreadBadge } from '@/lib/notification-unread'
@@ -41,6 +41,7 @@ const ICONS: Record<NavItemId, LucideIcon> = {
   manage: Trophy,
   results: ClipboardCheck,
   myHome: House,
+  progress: ChartColumnIncreasing,
   me: CircleUserRound,
 }
 

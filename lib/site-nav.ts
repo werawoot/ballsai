@@ -18,6 +18,8 @@ export type NavItemId = 'home' | 'discover' | 'tournaments' | 'notifications' | 
   | 'training' | 'card' | 'team' | 'kids' | 'plan' | 'manage' | 'results'
   // The athlete's own home (/profile) and profile (/me), owner 2 Nov 2026.
   | 'myHome' | 'me'
+  // The athlete's progress tab (ADR-015, owner 8 Nov 2026).
+  | 'progress'
 
 export type NavItem = {
   id: NavItemId
@@ -64,16 +66,16 @@ function roleBar(first: NavItem[], middle: NavItem[] = []): readonly NavItem[] {
   return [...first, ...middle, NOTIFICATIONS, profile]
 }
 
-// The athlete bar (owner, 2 Nov 2026, DOENSAI dashboard design): their own home, training,
-// card, tournaments and profile. Notifications are the bell on the home page and a row of
-// /me; the profile tab owns every page the general profile tab owned that no other tab claims.
-const ATHLETE_CLAIMS = ['/profile', '/training', '/card', '/career', '/tournaments']
+// The athlete bar (ADR-015, owner 8 Nov 2026: training first): their own home, training,
+// progress and profile. The card, history and tournaments are rows of /me, so the profile tab
+// owns them; notifications are the bell on the home page and a row of /me. The profile tab
+// owns every page the general profile tab owned that no other tab claims.
+const ATHLETE_CLAIMS = ['/profile', '/training', '/progress']
 const athleteBar: readonly NavItem[] = [
   { id: 'myHome', href: '/profile', owns: ['/profile'] },
   { id: 'training', href: '/training', owns: ['/training'] },
-  { id: 'card', href: '/card', owns: ['/card', '/career'] },
-  TOURNAMENTS,
-  { id: 'me', href: '/me', owns: ['/me', '/profile/edit', '/notifications', ...GENERAL_PROFILE.owns.filter(prefix => !ATHLETE_CLAIMS.includes(prefix))] },
+  { id: 'progress', href: '/progress', owns: ['/progress'] },
+  { id: 'me', href: '/me', owns: ['/me', '/profile/edit', '/notifications', '/tournaments', ...GENERAL_PROFILE.owns.filter(prefix => !ATHLETE_CLAIMS.includes(prefix))] },
 ]
 
 export const ROLE_NAV: Readonly<Record<'athlete' | 'guardian' | 'coach' | 'organizer', readonly NavItem[]>> = {

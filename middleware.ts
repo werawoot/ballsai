@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { robotsHeader } from '@/lib/seo'
 
-const PROTECTED_PREFIXES = ['/dashboard', '/admin', '/profile', '/me', '/organizer-request']
+const PROTECTED_PREFIXES = ['/dashboard', '/admin', '/profile', '/me', '/progress', '/organizer-request']
 
 // Next prefetches the links on screen. A prefetch of a public page needs no session check
 // here: the page checks the user itself when it renders, and the real visit refreshes the

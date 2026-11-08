@@ -36,7 +36,8 @@
       "manage": "Manage",
       "results": "Results",
       "myHome": "Home",
-      "me": "Profile"
+      "me": "Profile",
+      "progress": "Progress"
     }
   },
   "tournaments": {
@@ -3155,7 +3156,44 @@
       "training": {
         "label": "Training schedule",
         "hint": "My programme and training days"
+      },
+      "tournaments": {
+        "label": "Tournaments",
+        "hint": "Tournaments open for entries, and results"
       }
+    }
+  },
+  "progressPage": {
+    "eyebrow": "Progress",
+    "title": "My progress",
+    "lead": "Counted only from the sessions you checked in. Train to plan and the numbers grow.",
+    "selfNote": "Self-recorded: these numbers come from your check-ins, not from a coach or an organizer.",
+    "totals": {
+      "title": "Training so far",
+      "sessionsLabel": "Sessions",
+      "sessions": "{count} sessions",
+      "minutesLabel": "Time trained",
+      "minutes": "{count} min",
+      "effortLabel": "Effort points",
+      "effort": "{count} effort points",
+      "streakLabel": "In a row",
+      "streak": "{count} days"
+    },
+    "weeks": {
+      "title": "Last 8 weeks",
+      "label": "Week of {date}: {count} sessions"
+    },
+    "programmes": {
+      "title": "Programmes in progress",
+      "none": "No programme in progress right now",
+      "week": "Week {week}/{weeks}",
+      "done": "{done}/{total} sessions done",
+      "finished": "Programme finished"
+    },
+    "empty": {
+      "title": "No training recorded yet",
+      "body": "Choose a programme for your age, train on the days you set, and check in after each session. Your numbers appear here.",
+      "cta": "Choose a programme"
     }
   }
 }
