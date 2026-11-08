@@ -1374,8 +1374,8 @@
       "notifications": "Notifications",
       "unread": "{count} unread",
       "profile": "My profile",
-      "level": "Lv.{level}",
-      "xp": "{xp} / {target} XP",
+      "level": "Training level {level}",
+      "effort": "{points} / {target} effort points",
       "tagline": "More Than a Game",
       "motivate": "Ready to get better today?",
       "sport": "⚽ {sport}",
@@ -1415,7 +1415,7 @@
       "minutes": "{count} min",
       "done": "done",
       "points": "+{points}",
-      "note": "Effort points come when you mark a session as finished yourself. They are not match XP and never change your level, card or rank.",
+      "note": "Effort points come when you mark a session as finished yourself. They are not match XP: they raise your training level only, never your card, rank or Power Rating.",
       "earned": "Earned +{points} effort points",
       "partial": "+{earned} of +{points} effort points",
       "restOnly": "Rest is part of training"
@@ -3168,6 +3168,11 @@
     "title": "My progress",
     "lead": "Counted only from the sessions you checked in. Train to plan and the numbers grow.",
     "selfNote": "Self-recorded: these numbers come from your check-ins, not from a coach or an organizer.",
+    "level": {
+      "title": "Training level {level}",
+      "points": "{points} / {target} effort points",
+      "next": "{count} more sessions to level {next} · every 10 sessions is one level"
+    },
     "totals": {
       "title": "Training so far",
       "sessionsLabel": "Sessions",

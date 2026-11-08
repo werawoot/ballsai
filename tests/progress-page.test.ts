@@ -62,6 +62,9 @@ describe('/progress', () => {
     expect(page).toContain('20 นาที')
     expect(page).toContain('50 แต้มขยัน')
     expect(page).toContain('บันทึกเอง')
+    // The training level from effort points (ADR-015), with how far the next one is.
+    expect(page).toContain('ระดับฝึกซ้อม 1')
+    expect(page).toContain('อีก 9 ครั้งถึงระดับ 2')
   })
 
   it('reads every check-in, past the 1,000-row page', async () => {

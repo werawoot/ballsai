@@ -13,7 +13,8 @@ import TrainingCard from './TrainingCard'
 import { CardOverview, HomeHero, MissionsCard, NextTraining, Opportunity, WeekProgress, type HomeTournament } from './AthleteHome'
 import PageHeader from '@/components/PageHeader'
 import RoleHomeCard, { RoleLoadFailed } from '@/components/RoleHomeCard'
-import { calculateLevel, levelProgress } from '@/lib/digital-identity'
+import { countTrainingCheckins } from '@/lib/training/progress-data'
+import { trainingLevel } from '@/lib/training/level'
 import { PROFILE_MENU } from '@/lib/site-nav'
 import { shownAge, thaiDate } from '@/lib/athlete-private'
 import { profileReadiness, type ReadinessItem } from '@/lib/profile-readiness'
@@ -22,7 +23,7 @@ import { fetchProfileHome } from '@/lib/profile-home'
 import { recommendedProgram } from '@/lib/training/home'
 import { homeKind, type HomeKind } from '@/lib/role-home'
 import { loadRoleHome } from '@/lib/role-home-data'
-import { bangkokWeekStart, dayStreak, effortSummary, lastMatchChange, nextSession, openTournamentsAhead, todayMissionList, totalMinutes, weekTotals } from '@/lib/athlete-home'
+import { EFFORT_PER_SESSION, bangkokWeekStart, dayStreak, effortSummary, lastMatchChange, nextSession, openTournamentsAhead, todayMissionList, totalMinutes, weekTotals } from '@/lib/athlete-home'
 import { getPublicOpenTournaments } from '@/lib/public-data'
 import { ACTIVE_SPORT } from '@/lib/season'
 import { trainingToday } from '@/lib/training/today'
@@ -84,7 +85,7 @@ export default async function ProfilePage() {
   // A guardian, coach, organizer or venue owner is not shown the athlete's own parts; someone
   // who coaches or runs a venue may also play, so their card stays one tap away.
   const hasAthleteProfile = home.athlete ? 1 : 0
-  const [loaded, avatarUrls, extras, unread, openRows] = await Promise.all([
+  const [loaded, avatarUrls, extras, unread, openRows, sessionsEver] = await Promise.all([
     roleKind ? loadRoleHome(supabase, roleKind, user.id) : null,
     // The photo is a private object (T51); the owner may always sign their own.
     signAvatarUrls(supabase, [athleteHome ? (home.athlete?.profile_image_url as string | null | undefined) : null]),
@@ -94,6 +95,8 @@ export default async function ProfilePage() {
     athleteHome ? fetchUnreadNotificationCount(supabase, user.id) : null,
     // The same cached list as the home page (60 s), not a read per visit.
     athleteHome ? getPublicOpenTournaments(today) : null,
+    // The training level (ADR-015): every check-in ever, as a head count.
+    athleteHome && home.athlete ? countTrainingCheckins(supabase, user.id) : 0,
   ])
   const athlete = (athleteHome ? home.athlete : null) as AthleteProfile | null
   const teamInvites = athleteHome ? home.memberships.filter(membership => membership.status === 'pending').length : 0
@@ -101,16 +104,14 @@ export default async function ProfilePage() {
   const rank = (athleteHome ? home.rank : null) as PlayerRank | null
   const athletePrivate = athlete ? home.private : null
   const training = athlete ? home.training : null
-  const progressRow = athleteHome ? home.progress : null
   const highlightCount = athleteHome ? home.highlights : 0
   const videoCount = athleteHome ? home.videos : 0
   const pendingGuardian = athleteHome ? home.pendingGuardian : 0
   const avatarUrl = athlete?.profile_image_url ? avatarUrls.get(athlete.profile_image_url) ?? null : null
 
-  const progress = progressRow as { xp_total: number; current_level: number } | null
-  const xp = progress?.xp_total ?? 0
-  const level = progress?.current_level ?? calculateLevel(xp)
-  const levelInfo = levelProgress(xp, level)
+  // The home shows the training level from effort points (ADR-015, owner 8 Nov 2026); the match
+  // level from XP stays on the card. Nothing before the first recorded session.
+  const level = sessionsEver && sessionsEver > 0 ? trainingLevel(sessionsEver * EFFORT_PER_SESSION) : null
   const readiness = athlete ? profileReadiness({
     displayName: athlete.display_name,
     birthDate: athletePrivate?.birth_date,
@@ -179,7 +180,7 @@ export default async function ProfilePage() {
             avatarUrl={avatarUrl}
             initials={initials(name)}
             unread={unread ?? null}
-            level={athlete && xp > 0 ? { level, xp, target: levelInfo.nextFloor, percent: levelInfo.percentage } : null}
+            level={athlete ? level : null}
             sport={t(`sports.${ACTIVE_SPORT === 'futsal' ? 'futsal' : 'football'}`)}
           />}
         </aside>

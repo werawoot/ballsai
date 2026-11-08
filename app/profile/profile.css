@@ -548,3 +548,6 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .pg-weeks small { color: var(--pf-muted); font-size: 11px; white-space: nowrap; }
 .pf.gl .pg-programme { display: grid; gap: 4px; text-decoration: none; color: inherit; min-width: 0; flex: 1; }
 @media (max-width: 520px) { .pf.gl .pg-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.pf.gl .pg-level .pf-lv-row { align-items: baseline; display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; }
+.pf.gl .pg-level .pf-bar { background: var(--gl-canvas); }
+.pf.gl .pg-level .pf-lv-row span { color: var(--pf-muted); font-size: 13px; font-variant-numeric: tabular-nums; }

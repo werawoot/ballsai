@@ -7,6 +7,7 @@ import { ChevronRight, Dumbbell } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { fetchTrainingHistory } from '@/lib/training/progress-data'
 import { progressView } from '@/lib/training/progress'
+import { trainingLevel } from '@/lib/training/level'
 import { dayStreak } from '@/lib/athlete-home'
 import { say } from '@/lib/training/content'
 import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
@@ -44,6 +45,7 @@ export default async function ProgressPage() {
   const shortDate = new Intl.DateTimeFormat(locale === 'th' ? 'th-TH' : 'en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })
   const most = Math.max(1, ...view.weeks.map(week => week.sessions))
   const hasHistory = view.sessions > 0
+  const level = trainingLevel(view.effort)
 
   return (
     <main className="pf pf-progress gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.training)}>
@@ -62,6 +64,12 @@ export default async function ProgressPage() {
         </section>}
 
         {history.available && (hasHistory || view.programmes.length > 0) && <>
+          {hasHistory && <section className="pf-card pf-lv pg-level" aria-labelledby="pg-level">
+            <div className="pf-lv-row"><h2 id="pg-level" className="pf-card-title">{t('level.title', { level: level.level })}</h2><span>{t('level.points', { points: number.format(level.points), target: number.format(level.target) })}</span></div>
+            <div className="pf-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={level.percent} aria-labelledby="pg-level"><i style={{ width: `${level.percent}%` }} /></div>
+            <p className="pf-note">{t('level.next', { count: level.sessionsToNext, next: level.level + 1 })}</p>
+          </section>}
+
           <section className="pf-card" aria-labelledby="pg-totals">
             <h2 id="pg-totals" className="pf-card-title">{t('totals.title')}</h2>
             <dl className="me-stats pg-stats">

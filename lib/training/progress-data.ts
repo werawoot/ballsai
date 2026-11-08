@@ -38,3 +38,13 @@ export async function fetchTrainingHistory(client: SupabaseClient, userId: strin
   }
   return { available: true, enrollments, checkins }
 }
+
+/** Every session the athlete ever checked in: a head count, no row is read (the home's level). */
+export async function countTrainingCheckins(client: SupabaseClient, userId: string): Promise<number> {
+  const { count, error } = await client.from('training_checkins').select('enrollment_id', { count: 'exact', head: true }).eq('athlete_id', userId)
+  if (error) {
+    if (!isMissingTable(error)) console.error(JSON.stringify({ level: 'error', event: 'training_count_failed', code: error.code ?? null }))
+    return 0
+  }
+  return count ?? 0
+}
