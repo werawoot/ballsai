@@ -76,7 +76,7 @@ checklist, timers), check-ins, streaks, and `/me`.
    asked on `/training` before the programmes and changeable from `/progress`; SQL95.
 2. Self-tests every four weeks, with results compared to the last one. **10 Nov 2026:** research in
    `docs/research/self-tests-2026-11-10.md` proposes preferred-foot juggling, plank hold and
-   standing long jump; awaiting the owner's choice and the coach review
+   standing long jump; **owner chose all three on 10 Nov 2026**; awaiting the coach review
    (`docs/training/coach-review-pack.md`).
 3. A Progress page: training history and self-test results.
 4. After `/welcome`, an athlete goes to choosing a programme, not to `/card`.

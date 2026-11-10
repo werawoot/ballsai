@@ -20,7 +20,7 @@ physiotherapist reviews the tests together with the programmes before children u
 | Flamingo (one-leg) balance | Fewer injuries | Mixed: poor reproducibility in 5–7-year-olds and unsatisfactory in some pre-adolescent samples; a modified version scored well ([PMC7432309](https://pmc.ncbi.nlm.nih.gov/articles/PMC7432309)). | **Not now.** |
 | — | Train regularly | No test needed: the share of planned sessions done is already recorded (SQL63). | Use the existing count. |
 
-## Proposed set (for the owner and then the coach)
+## Chosen set (owner, 10 Nov 2026: "ใช้ 3 แบบนี้เลย"), pending the coach review
 
 1. **Juggling**, preferred foot, best of 3, every 4 weeks.
 2. **Plank hold**, one try, every 4 weeks.
