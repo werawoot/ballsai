@@ -74,7 +74,10 @@ checklist, timers), check-ins, streaks, and `/me`.
 1. A goal step (fixed choices, so progress can be measured). **Owner, 8 Nov 2026:** four goals
    (better ball control · stronger, fewer injuries · faster and more agile · train regularly),
    asked on `/training` before the programmes and changeable from `/progress`; SQL95.
-2. Self-tests every four weeks, with results compared to the last one.
+2. Self-tests every four weeks, with results compared to the last one. **10 Nov 2026:** research in
+   `docs/research/self-tests-2026-11-10.md` proposes preferred-foot juggling, plank hold and
+   standing long jump; **owner chose all three on 10 Nov 2026**; awaiting the coach review
+   (`docs/training/coach-review-pack.md`).
 3. A Progress page: training history and self-test results.
 4. After `/welcome`, an athlete goes to choosing a programme, not to `/card`.
 5. The four-tab bottom bar.

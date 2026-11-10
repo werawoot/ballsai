@@ -43,6 +43,7 @@ jobs:
           node --check scripts/audit-gate.mjs
           node --check scripts/load-test.mjs
           node --check scripts/load-plan.mjs
+          node --check scripts/coach-review-pack.mjs
 
       - name: Run lint
         run: npm run lint
