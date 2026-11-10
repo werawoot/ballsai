@@ -1,26 +1,29 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { TRAINING_PROGRAMS, TRAINING_SOURCES } from '@/lib/training/content'
+import { renderPack, SELF_TESTS } from '../scripts/coach-review-pack.mjs'
+import programs from '@/content/training/programs.json'
+import th from '@/messages/th.json'
 
-// docs/training/coach-review-pack.md is what a coach signs off (ADR-015 gate 1). It is generated
-// from content/training/programs.json; this keeps it from drifting from what the app shows.
+// docs/training/coach-review-pack.md is what a coach signs off (ADR-015 gate 1). The committed file
+// must be exactly what the generator makes from the app's data and Thai labels today, so a change
+// to any drill, dose, timer, access level, source or the review status shows up as a failing test.
 const pack = readFileSync(new URL('../docs/training/coach-review-pack.md', import.meta.url), 'utf8')
 
 describe('the coach review pack', () => {
-  it('lists every programme, every drill as the app words it, and every source', () => {
-    for (const program of TRAINING_PROGRAMS) {
-      expect(pack, program.id).toContain(program.code)
-      for (const drill of program.drills) {
-        expect(pack, drill.id).toContain(drill.name.th)
-        expect(pack, drill.id).toContain(drill.how.th.replace(/\|/g, '\\|'))
-        expect(pack, drill.id).toContain(drill.dose.th)
-      }
-    }
-    for (const source of Object.values(TRAINING_SOURCES)) expect(pack).toContain(source.url)
+  it('is exactly what the generator makes from programs.json and messages/th.json', () => {
+    expect(pack).toBe(renderPack(programs, th))
   })
 
-  it('asks about the three proposed self-tests and leaves room for a signature', () => {
-    for (const test of ['เดาะบอลเท้าข้างถนัด', 'แพลงก์ศอก', 'กระโดดไกลยืนสองขา']) expect(pack).toContain(test)
+  it('uses the access words children see in the app', () => {
+    for (const label of Object.values(th.training.access)) expect(typeof label).toBe('string')
+    expect(pack).toContain(th.training.access.solo)
+    expect(pack).not.toContain('| ทำเองได้ |')
+  })
+
+  it('asks about the three self-tests with their safety rules and leaves room for a signature', () => {
+    for (const test of SELF_TESTS) expect(pack).toContain(test.name)
+    expect(pack).toContain('ไม่นำไปคิดคะแนนฝีมือ')
+    expect(pack).toContain('พื้นนุ่มไม่ลื่น')
     expect(pack).toContain('## การรับรอง')
   })
 })
