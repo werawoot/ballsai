@@ -1,12 +1,13 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { ChevronRight, Dumbbell } from 'lucide-react'
+import { ChevronRight, Dumbbell, Ruler } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { thaiDate } from '@/lib/athlete-private'
 import { fetchTrainingHistory } from '@/lib/training/progress-data'
 import { fetchMyGoal } from '@/lib/training/goal-data'
+import { selfTestsEnabled } from '@/lib/training/self-tests'
 import { progressView } from '@/lib/training/progress'
 import { SESSIONS_PER_LEVEL, trainingLevel } from '@/lib/training/level'
 import { dayStreak } from '@/lib/athlete-home'
@@ -18,7 +19,8 @@ import '../profile/profile.css'
 // /progress, the athlete's Progress tab (ADR-015, owner 8 Nov 2026: training first). Only what
 // the athlete recorded: sessions checked in, their minutes, effort points, days in a row, the
 // last eight weeks and where each active programme stands. Every number is self-recorded
-// (AGENTS.md rule 8) and the page says so. Self-test results join here later (ADR-015 item 5).
+// (AGENTS.md rule 8) and the page says so. The self-tests (sql/96) have their own page,
+// /progress/tests, linked here only while NEXT_PUBLIC_SELF_TESTS is "true".
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +29,7 @@ export default async function ProgressPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/progress')
 
-  const [t, tr, locale, history, myGoal] = await Promise.all([getTranslations('progressPage'), getTranslations('training'), getLocale(), fetchTrainingHistory(supabase, user.id), fetchMyGoal(supabase, user.id)])
+  const [t, tr, ts, locale, history, myGoal] = await Promise.all([getTranslations('progressPage'), getTranslations('training'), getTranslations('selfTests'), getLocale(), fetchTrainingHistory(supabase, user.id), fetchMyGoal(supabase, user.id)])
   const today = thaiDate(new Date())
   const view = progressView({ enrollments: history.enrollments, checkins: history.checkins, today })
   // Days in a row across every programme the athlete did not stop: a finished programme keeps
@@ -59,6 +61,13 @@ export default async function ProgressPage() {
           {myGoal.goal
             ? <p className="pg-goal-now"><span className="pf-chip is-green">{t('goal.current', { goal: tr(`goals.options.${myGoal.goal}.label`) })}</span><Link href="/training?tab=programs&goal=change">{t('goal.change')}</Link></p>
             : <><p className="pf-card-desc">{t('goal.none')}</p><Link href="/training?tab=programs" className="pf-btn pf-btn-ghost">{t('goal.set')}</Link></>}
+        </section>}
+
+        {/* The self-tests (owner, 10 Nov 2026), hidden until the coach sign-off. Only for athletes. */}
+        {selfTestsEnabled() && myGoal.available && <section className="pf-card" aria-labelledby="pg-tests">
+          <h2 id="pg-tests" className="pf-card-title">{ts('card.title')}</h2>
+          <p className="pf-card-desc">{ts('card.body')}</p>
+          <Link href="/progress/tests" className="pf-btn pf-btn-ghost"><Ruler size={17} aria-hidden="true" />{ts('card.open')}</Link>
         </section>}
 
         {history.available && history.complete && !hasHistory && view.programmes.length === 0 && <section className="pf-card" aria-labelledby="pg-empty">
