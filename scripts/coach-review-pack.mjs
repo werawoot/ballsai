@@ -9,12 +9,14 @@ const BAND = { u10_u13: 'U10–U13 (อายุไม่เกิน 13 ปี)
 const cell = text => String(text ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ')
 const formatDuration = seconds => seconds >= 60 ? `${Math.round(seconds / 6) / 10} นาที` : `${seconds} วินาที`
 
-// The three self-tests the owner chose (10 Nov 2026), from docs/research/self-tests-2026-11-10.md.
-export const SELF_TESTS = [
-  { name: 'เดาะบอลเท้าข้างถนัด', how: 'นับจำนวนครั้งก่อนบอลตก ทำ 3 รอบ เอาครั้งที่ดีที่สุด', goal: 'คุมบอลดีขึ้น', ask: 'ให้ใช้ต้นขาด้วยไหม หรือเท้าอย่างเดียว' },
-  { name: 'แพลงก์ศอก (plank)', how: 'จับเวลาที่ลำตัวตรงได้ หยุดทันทีเมื่อท่าเสียหรือเจ็บ ทำ 1 รอบ', goal: 'แข็งแรงขึ้น ลดการบาดเจ็บ', ask: 'ควรตั้งเวลาสูงสุดไหม เช่น 2 นาทีสำหรับเด็กเล็ก' },
-  { name: 'กระโดดไกลยืนสองขา', how: 'วัดจากเส้นเริ่มถึงด้านหลังของส้นเท้าข้างที่ใกล้เส้นที่สุด ทำ 2 รอบ เอาที่ไกลที่สุด ลงบนพื้นนุ่มไม่ลื่นเท่านั้น', goal: 'เร็วและคล่องตัวขึ้น (เรียกว่า "พลังขา" ไม่ใช่ความเร็ว)', ask: 'เด็กต่ำกว่า 12 ปีควรกระโดดที่บ้านไหม และพื้นแบบไหนปลอดภัย' },
-]
+// The three self-tests the owner chose (10 Nov 2026). Their names and how-to come from the app
+// (messages/th.json selfTests), so the coach reviews the words children see; only the open
+// questions for the coach live here.
+export const SELF_TEST_ASKS = {
+  juggling: 'ให้ใช้ต้นขาด้วยไหม หรือเท้าอย่างเดียว ปล่อยบอลจากมือเริ่มได้ไหม',
+  plank: 'ตอนนี้แอปหยุดที่ 2 นาที ควรใช้ค่านี้กับทุกอายุไหม',
+  long_jump: 'ตอนนี้แอปเปิดให้เฉพาะอายุ 12 ปีขึ้นไป เด็กต่ำกว่า 12 ปีควรกระโดดที่บ้านไหม และพื้นแบบไหนปลอดภัย',
+}
 
 export function renderPack(data, th) {
 const ACCESS = th.training.access
@@ -63,15 +65,20 @@ for (const program of data.programs) {
   out.push('')
 }
 
-out.push('## แบบทดสอบตัวเอง (เสนอ ยังไม่ได้สร้างในแอป)')
+out.push('## แบบทดสอบตัวเอง (สร้างแล้วแต่ซ่อนไว้ รอโค้ชรับรองก่อนเปิดให้เด็กใช้)')
 out.push('')
 out.push('ทำทุก 4 สัปดาห์ หลังวอร์มอัพของโปรแกรม และผ่านคำถามเรื่องอาการเจ็บก่อนเสมอ')
 out.push('ผลเป็นตัวเลขที่เด็กบันทึกเอง ติดป้ายว่าข้อมูลกรอกเอง ใช้เทียบกับครั้งก่อนของตัวเองเท่านั้น ไม่จัดอันดับกับเด็กคนอื่น')
 out.push('ไม่แสดงบนการ์ดนักกีฬา และไม่นำไปคิดคะแนนฝีมือ รายละเอียดและแหล่งอ้างอิงอยู่ใน `docs/research/self-tests-2026-11-10.md`')
+out.push('ค่าที่ตั้งไว้แบบระวังก่อนจนกว่าโค้ชจะตอบ: แพลงก์บันทึกได้ไม่เกิน 2 นาที และกระโดดไกลเฉพาะอายุ 12 ปีขึ้นไปที่มีวันเกิดในโปรไฟล์')
 out.push('')
-out.push('| แบบทดสอบ | วิธีวัด | เป้าหมายที่เกี่ยว | คำถามถึงโค้ช | ความเห็นโค้ช |')
+out.push('| แบบทดสอบ | วิธีทำ (ข้อความที่เด็กเห็น) | เป้าหมายที่เกี่ยว | คำถามถึงโค้ช | ความเห็นโค้ช |')
 out.push('| --- | --- | --- | --- | --- |')
-for (const test of SELF_TESTS) out.push(`| ${cell(test.name)} | ${cell(test.how)} | ${cell(test.goal)} | ${cell(test.ask)} | |`)
+for (const [key, ask] of Object.entries(SELF_TEST_ASKS)) {
+  const test = th.selfTests.tests[key]
+  out.push(`| ${cell(test.name)} | ${cell([test.how1, test.how2, test.how3].map((step, index) => `${index + 1}. ${step}`).join(' '))} | ${cell(test.goal)} | ${cell(ask)} | |`)
+}
+out.push(`| (ทุกแบบ) | ${cell(th.selfTests.stopRule)} | | ข้อความเตือนนี้พอไหม | |`)
 out.push('')
 out.push('## แหล่งอ้างอิงทั้งหมด')
 out.push('')

@@ -77,7 +77,11 @@ checklist, timers), check-ins, streaks, and `/me`.
 2. Self-tests every four weeks, with results compared to the last one. **10 Nov 2026:** research in
    `docs/research/self-tests-2026-11-10.md` proposes preferred-foot juggling, plank hold and
    standing long jump; **owner chose all three on 10 Nov 2026**; awaiting the coach review
-   (`docs/training/coach-review-pack.md`).
+   (`docs/training/coach-review-pack.md`). **Owner, 11 Nov 2026:** built but hidden until the
+   coach signs off (`/progress/tests`, shown only where `NEXT_PUBLIC_SELF_TESTS` is `true`);
+   the athlete, an accepted guardian and an admin read results; entering again the same day
+   corrects that day's result; careful defaults until the coach answers (plank stops at
+   2 minutes, long jump from 12 with a birth date). Table and rules: SQL96.
 3. A Progress page: training history and self-test results.
 4. After `/welcome`, an athlete goes to choosing a programme, not to `/card`.
 5. The four-tab bottom bar.

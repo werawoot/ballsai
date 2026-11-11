@@ -3236,5 +3236,73 @@
       "cta": "Choose a programme"
     },
     "incomplete": "Your training history did not load in full, so no numbers are shown yet. Reload this page to try again."
+  },
+  "selfTests": {
+    "eyebrow": "Self-tests",
+    "title": "Measure my progress",
+    "lead": "Do these three tests every 4 weeks and see how your numbers compare with last time.",
+    "rules": "Always do them after the programme warm-up. Results are numbers you enter yourself, compared only with your own last result: never ranked, never on the card, never counted in the skill score.",
+    "draft": "Draft · awaiting coach review",
+    "self": "Entered by me",
+    "notReady": "Self-tests are not available yet.",
+    "needAthlete": "These tests are for athletes. Create an athlete profile first.",
+    "gateTitle": "Any pain right now?",
+    "gateText": "Answer honestly for your safety. This answer is not stored.",
+    "noPain": "No pain, start",
+    "pain": "Pain",
+    "painTitle": "Rest today",
+    "painText": "If you are in pain, do not test. Tell a parent or coach and come back another day.",
+    "painBack": "Back to progress",
+    "stopRule": "Stop at once if anything hurts or you feel dizzy.",
+    "latest": "Last {value} · {date}",
+    "none": "Not tested yet",
+    "better": "{amount} better than last time",
+    "same": "Same as last time",
+    "lower": "{amount} lower than last time. That is fine; every day is different.",
+    "nextDue": "Next test from {date}",
+    "dueNow": "Time to test",
+    "inputLabel": "Result ({unit})",
+    "save": "Save result",
+    "saveAgain": "Correct today's result",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "remove": "Delete today's result",
+    "removeConfirm": "Delete today's result?",
+    "failed": "Could not save. Try again.",
+    "invalid": "Enter a whole number from {min} to {max}",
+    "ageClosed": "This test is for ages {age} and over. Add your birth date to your profile if you have not.",
+    "units": {
+      "touches": "touches",
+      "seconds": "seconds",
+      "cm": "cm"
+    },
+    "tests": {
+      "juggling": {
+        "name": "Juggling",
+        "goal": "Ball control",
+        "how1": "Use your stronger foot only. Drop the ball from your hands and keep it up.",
+        "how2": "Count the touches before the ball hits the ground.",
+        "how3": "Do 3 tries and enter your best."
+      },
+      "plank": {
+        "name": "Forearm plank",
+        "goal": "Strength",
+        "how1": "Elbows under shoulders, body straight from head to heels.",
+        "how2": "Ask someone to time you. Stop as soon as your hips drop or rise, or anything hurts.",
+        "how3": "One try, 2 minutes at most, then stop."
+      },
+      "long_jump": {
+        "name": "Standing long jump",
+        "goal": "Leg power",
+        "how1": "Feet together behind a line, jump forward with both feet, on a soft non-slip surface only.",
+        "how2": "Measure from the line to the back of the nearer heel with a tape.",
+        "how3": "Do 2 tries and enter your longest."
+      }
+    },
+    "card": {
+      "title": "Self-tests",
+      "body": "Juggling, plank and long jump every 4 weeks, against yourself.",
+      "open": "Go to the tests"
+    }
   }
 }

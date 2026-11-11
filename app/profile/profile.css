@@ -553,4 +553,15 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .pg-level .pf-lv-row span { color: var(--pf-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
 .pf.gl .pg-goal-now { align-items: center; display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 0; }
 .pf.gl .pg-goal-now a { color: var(--gl-green-ink, #0F7A3F); font-weight: 600; }
+/* /progress/tests: the three self-tests (sql/96). */
+.pf.gl .st-gate { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.pf.gl .st-how { margin: 8px 0; padding-left: 22px; display: grid; gap: 6px; }
+.pf.gl .st-result { border-top: 1px solid var(--gl-line); margin-top: 12px; padding-top: 10px; }
+.pf.gl .st-result p { margin: 4px 0; }
+.pf.gl .st-form { display: grid; gap: 10px; margin-top: 12px; }
+.pf.gl .st-form .pf-note:empty { display: none; }
+/* Chips and ghost buttons default to white for the dark hero; on the light Progress cards they
+   need navy text to be readable. */
+.pf.gl.pf-progress .pf-card .pf-chip:not(.is-green):not(.is-gold) { background: rgba(11,18,32,.06); border-color: rgba(11,18,32,.14); color: var(--gl-navy); }
+.pf.gl.pf-progress .pf-card .pf-btn-ghost { background: rgba(255,255,255,.7); border-color: rgba(11,18,32,.22); color: var(--gl-navy) !important; }
 .pf.gl .pg-weeks li { position: relative; }
