@@ -25,8 +25,7 @@ export default async function SelfTestsPage() {
   const [t, locale, mine] = await Promise.all([getTranslations('selfTests'), getLocale(), fetchMySelfTests(supabase, user.id)])
   const today = thaiDate(new Date())
   const cards: SelfTestCard[] = testsFor(mine.birthDate, today).map(({ key, open }) => {
-    const summary = selfTestSummary(mine.rows, key, today)
-    return { key, open, min: SELF_TESTS[key].min, max: SELF_TESTS[key].max, minAge: SELF_TESTS[key].minAge, unit: SELF_TESTS[key].unit, ...summary }
+    return { spec: SELF_TESTS[key], open, ...selfTestSummary(mine.rows, key, today) }
   })
 
   return (
@@ -39,9 +38,9 @@ export default async function SelfTestsPage() {
           <p className="pf-card-desc">{t('lead')}</p>
           <p className="pf-note">{t('rules')}</p>
         </section>
-        {mine.available
+        {mine.status === 'ready'
           ? <SelfTestRunner cards={cards} locale={locale} />
-          : <section className="pf-card"><p className="pf-note" role="status">{t('notReady')}</p></section>}
+          : <section className="pf-card"><p className="pf-note" role="status">{t(mine.status === 'notAthlete' ? 'needAthlete' : 'notReady')}</p></section>}
       </div>
     </main>
   )

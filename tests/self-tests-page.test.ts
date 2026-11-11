@@ -45,6 +45,7 @@ vi.mock('next-intl/server', () => ({
 
 import SelfTestsPage from '@/app/progress/tests/page'
 import { TestCard } from '@/app/progress/tests/SelfTestRunner'
+import { SELF_TESTS } from '@/lib/training/self-tests'
 
 const render = async (to: Locale = 'th') => {
   locale = to
@@ -84,18 +85,20 @@ describe('/progress/tests', () => {
     expect(db.reads.sort()).toEqual(['athlete_self_tests:juggling:limit 2', 'athlete_self_tests:long_jump:limit 2', 'athlete_self_tests:plank:limit 2'])
   })
 
-  it('says it is not ready before SQL96, and for someone without an athlete profile', async () => {
+  it('says it is not ready before SQL96, and tells someone without an athlete profile what to do', async () => {
     process.env.NEXT_PUBLIC_SELF_TESTS = 'true'
     db.missing = true
     expect(text(await render())).toContain('ยังเปิดใช้แบบทดสอบไม่ได้ในตอนนี้')
     db.missing = false
     db.athlete = false
-    expect(text(await render())).toContain('ยังเปิดใช้แบบทดสอบไม่ได้ในตอนนี้')
+    const page = text(await render())
+    expect(page).toContain('สร้างโปรไฟล์นักกีฬาก่อน')
+    expect(page).not.toContain('ยังเปิดใช้แบบทดสอบไม่ได้ในตอนนี้')
   })
 })
 
 describe('the self-test cards', () => {
-  const card = (over: Record<string, unknown>) => ({ key: 'juggling', open: true, min: 0, max: 1000, minAge: null, unit: 'touches', latest: null, previous: null, change: null, nextDue: '2026-11-11', due: true, testedToday: false, ...over })
+  const card = (over: Record<string, unknown>) => ({ spec: SELF_TESTS.juggling, open: true, latest: null, previous: null, change: null, nextDue: '2026-11-11', due: true, testedToday: false, ...over })
   const show = (cards: unknown[]) => {
     // The cards behind the pain gate ("no pain" is a client tap), rendered one by one.
     const day = (value: string) => value
@@ -114,8 +117,8 @@ describe('the self-test cards', () => {
 
   it('say a lower number kindly, and close the long jump under 12', () => {
     const page = show([
-      card({ key: 'plank', unit: 'seconds', max: 120, latest: { test_key: 'plank', value: 40, test_date: '2026-11-11' }, previous: { test_key: 'plank', value: 50, test_date: '2026-10-10' }, change: -10, testedToday: true }),
-      card({ key: 'long_jump', unit: 'cm', min: 10, max: 400, minAge: 12, open: false }),
+      card({ spec: SELF_TESTS.plank, latest: { test_key: 'plank', value: 40, test_date: '2026-11-11' }, previous: { test_key: 'plank', value: 50, test_date: '2026-10-10' }, change: -10, testedToday: true }),
+      card({ spec: SELF_TESTS.long_jump, open: false }),
     ])
     expect(page).toContain('น้อยกว่าครั้งก่อน 10 วินาที ไม่เป็นไร')
     expect(page).toContain('แก้ผลของวันนี้')
@@ -132,6 +135,6 @@ describe('the long jump on the page', () => {
     const { fetchMySelfTests } = await import('@/lib/training/self-test-data')
     db.birth = '2016-05-01'
     const mine = await fetchMySelfTests(fakeClient() as never, 'me')
-    expect(mine).toMatchObject({ available: true, birthDate: '2016-05-01' })
+    expect(mine).toMatchObject({ status: 'ready', birthDate: '2016-05-01' })
   })
 })

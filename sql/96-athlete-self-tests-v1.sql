@@ -1,6 +1,7 @@
 -- 96-athlete-self-tests-v1.sql
--- Pending: not applied. Staging (vorpnkedpscsqhnrssrl) first; Production (hivedzrwrrcnjrlirhtv)
--- only with separate owner approval. Depends on athlete-profile-v2 (athlete_profiles with
+-- Pending: not applied. Staging (vorpnkedpscsqhnrssrl) first. Production (hivedzrwrrcnjrlirhtv)
+-- only after the coach or physiotherapist sign-off AND separate owner approval: the functions
+-- work whatever the app's NEXT_PUBLIC_SELF_TESTS flag says. Depends on athlete-profile-v2 (athlete_profiles with
 -- birth_date), SQL21 (is_accepted_guardian_for) and is_admin(). Order-independent otherwise.
 -- Run as postgres. Precheck: sql/96-athlete-self-tests-precheck.sql. Postcheck:
 -- sql/96-athlete-self-tests-postcheck.sql. Rollback: sql/96-athlete-self-tests-down.sql.
@@ -115,6 +116,9 @@ declare
 begin
   if me is null then
     raise exception 'SELF_TEST_AUTH' using errcode = '42501';
+  end if;
+  if p_test is null or p_test not in ('juggling', 'plank', 'long_jump') or p_date is null then
+    raise exception 'SELF_TEST_UNKNOWN' using errcode = '22023';
   end if;
   delete from public.athlete_self_tests
    where athlete_id = me and test_key = p_test and test_date = p_date;

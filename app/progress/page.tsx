@@ -63,8 +63,9 @@ export default async function ProgressPage() {
             : <><p className="pf-card-desc">{t('goal.none')}</p><Link href="/training?tab=programs" className="pf-btn pf-btn-ghost">{t('goal.set')}</Link></>}
         </section>}
 
-        {/* The self-tests (owner, 10 Nov 2026), hidden until the coach sign-off. Only for athletes. */}
-        {selfTestsEnabled() && myGoal.available && <section className="pf-card" aria-labelledby="pg-tests">
+        {/* The self-tests (owner, 10 Nov 2026), hidden until the coach sign-off. Their page says
+            what to do when SQL96 is not applied yet or the person has no athlete profile. */}
+        {selfTestsEnabled() && <section className="pf-card" aria-labelledby="pg-tests">
           <h2 id="pg-tests" className="pf-card-title">{ts('card.title')}</h2>
           <p className="pf-card-desc">{ts('card.body')}</p>
           <Link href="/progress/tests" className="pf-btn pf-btn-ghost"><Ruler size={17} aria-hidden="true" />{ts('card.open')}</Link>

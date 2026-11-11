@@ -3302,8 +3302,7 @@
     "card": {
       "title": "Self-tests",
       "body": "Juggling, plank and long jump every 4 weeks, against yourself.",
-      "open": "Go to the tests",
-      "due": "Time to test"
+      "open": "Go to the tests"
     }
   }
 }

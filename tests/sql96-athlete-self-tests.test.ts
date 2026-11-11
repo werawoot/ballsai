@@ -3,15 +3,15 @@ import { describe, expect, it } from 'vitest'
 import { SELF_TEST_KEYS, SELF_TESTS } from '@/lib/training/self-tests'
 
 // sql/96-athlete-self-tests-v1.sql, read as text. Behaviour was drilled on Postgres 16 (runbook
-// row 96): 24 cases including bounds, the long-jump age rule, same-day correction, private
+// row 96): 26 cases including bounds, the long-jump age rule, same-day correction, private
 // reads, refused direct writes, PDPA cascade and 40 concurrent entries leaving one row.
 const sql = readFileSync(new URL('../sql/96-athlete-self-tests-v1.sql', import.meta.url), 'utf8')
 const code = sql.split('\n').filter(line => !line.trimStart().startsWith('--')).join('\n')
 
 describe('SQL96 athlete self-tests', () => {
-  it('accepts exactly the tests the app offers, in the table and in the function', () => {
+  it('accepts exactly the tests the app offers, in the table and in both functions', () => {
     const lists = [...code.matchAll(/in \(('[a-z_]+'(?:, '[a-z_]+')*)\)/g)].map(match => match[1].split(', ').map(item => item.replace(/'/g, '')))
-    expect(lists).toHaveLength(2)
+    expect(lists).toHaveLength(3)
     for (const list of lists) expect(list).toEqual([...SELF_TEST_KEYS])
   })
 

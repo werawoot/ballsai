@@ -5,11 +5,11 @@ import { isSelfTestKey, SELF_TEST_KEYS, type SelfTestResult } from './self-tests
 
 // The athlete's own self-test results (SQL96), RLS-limited to their rows. Only the latest two
 // per test are read: the page shows the last result against the one before it, so the read is
-// three indexed lookups of two rows whatever the history length. `available` is false before
-// SQL96 is applied, when a read fails, or when the person has no athlete profile. The birth
+// three indexed lookups of two rows whatever the history length. `status` is 'notReady' before
+// SQL96 is applied or when a read fails, and 'notAthlete' for someone with no athlete profile. The birth
 // date (for the long-jump age rule) comes only through my_athlete_private (sql/58, T50).
 
-export type MySelfTests = { available: boolean; birthDate: string | null; rows: SelfTestResult[] }
+export type MySelfTests = { status: 'ready' | 'notReady' | 'notAthlete'; birthDate: string | null; rows: SelfTestResult[] }
 
 export async function fetchMySelfTests(client: SupabaseClient, userId: string): Promise<MySelfTests> {
   const [athleteRead, ...testReads] = await Promise.all([
@@ -20,10 +20,11 @@ export async function fetchMySelfTests(client: SupabaseClient, userId: string): 
   for (const read of testReads) {
     if (read.error) {
       if (!isMissingTable(read.error)) console.error(JSON.stringify({ level: 'error', event: 'self_tests_failed', code: read.error.code ?? null }))
-      return { available: false, birthDate: null, rows: [] }
+      return { status: 'notReady', birthDate: null, rows: [] }
     }
   }
-  if (athleteRead.error || !athleteRead.data) return { available: false, birthDate: null, rows: [] }
+  if (athleteRead.error) return { status: 'notReady', birthDate: null, rows: [] }
+  if (!athleteRead.data) return { status: 'notAthlete', birthDate: null, rows: [] }
   let birthDate: string | null = null
   try {
     birthDate = (await fetchMyAthletePrivate(client)).birth_date
@@ -37,5 +38,5 @@ export async function fetchMySelfTests(client: SupabaseClient, userId: string): 
       if (isSelfTestKey(row.test_key) && typeof row.value === 'number' && typeof row.test_date === 'string') rows.push({ test_key: row.test_key, value: row.value, test_date: row.test_date })
     }
   }
-  return { available: true, birthDate, rows }
+  return { status: 'ready', birthDate, rows }
 }

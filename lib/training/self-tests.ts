@@ -61,13 +61,19 @@ const addDays = (day: string, days: number) => {
   return date.toISOString().slice(0, 10)
 }
 
-// The latest result against the one before it, and when the next test is due. Rows are this
-// athlete's own, newest first; a repeated date counts once (the database keeps one per day).
-export function selfTestSummary(rows: SelfTestResult[], key: SelfTestKey, today: string) {
-  const seen = new Set<string>()
-  const mine = rows
-    .filter(row => row.test_key === key && !seen.has(row.test_date) && seen.add(row.test_date))
-    .sort((a, b) => b.test_date.localeCompare(a.test_date))
+export type SelfTestSummary = {
+  latest: SelfTestResult | null
+  previous: SelfTestResult | null
+  change: number | null
+  nextDue: string
+  due: boolean
+  testedToday: boolean
+}
+
+// The latest result against the one before it, and when the next test is due. The database keeps
+// one row per test per day, so rows need no de-duplication.
+export function selfTestSummary(rows: SelfTestResult[], key: SelfTestKey, today: string): SelfTestSummary {
+  const mine = rows.filter(row => row.test_key === key).sort((a, b) => b.test_date.localeCompare(a.test_date))
   const latest = mine[0] ?? null
   const previous = mine[1] ?? null
   const nextDue = latest ? addDays(latest.test_date, SELF_TEST_EVERY_DAYS) : today

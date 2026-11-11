@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { renderPack, SELF_TESTS } from '../scripts/coach-review-pack.mjs'
+import { renderPack, SELF_TEST_ASKS } from '../scripts/coach-review-pack.mjs'
 import programs from '@/content/training/programs.json'
 import th from '@/messages/th.json'
 
@@ -20,8 +20,12 @@ describe('the coach review pack', () => {
     expect(pack).not.toContain('| ทำเองได้ |')
   })
 
-  it('asks about the three self-tests with their safety rules and leaves room for a signature', () => {
-    for (const test of SELF_TESTS) expect(pack).toContain(test.name)
+  it('asks about the three self-tests in the words the app shows, with their safety rules and leaves room for a signature', () => {
+    for (const key of Object.keys(SELF_TEST_ASKS) as (keyof typeof th.selfTests.tests)[]) {
+      expect(pack).toContain(th.selfTests.tests[key].name)
+      expect(pack).toContain(th.selfTests.tests[key].how2)
+    }
+    expect(Object.keys(SELF_TEST_ASKS)).toEqual(['juggling', 'plank', 'long_jump'])
     expect(pack).toContain('ไม่นำไปคิดคะแนนฝีมือ')
     expect(pack).toContain('พื้นนุ่มไม่ลื่น')
     expect(pack).toContain('## การรับรอง')
