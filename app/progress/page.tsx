@@ -13,6 +13,7 @@ import { SESSIONS_PER_LEVEL, trainingLevel } from '@/lib/training/level'
 import { dayStreak } from '@/lib/athlete-home'
 import { say } from '@/lib/training/content'
 import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
+import WeeksChart from '@/components/WeeksChart'
 import '../glass.css'
 import '../profile/profile.css'
 
@@ -40,7 +41,6 @@ export default async function ProgressPage() {
   const streak = dayStreak({ available: history.available, enrollments: active, checkins: checkinMap }, today)
   const number = new Intl.NumberFormat(locale === 'th' ? 'th-TH' : 'en-GB')
   const shortDate = new Intl.DateTimeFormat(locale === 'th' ? 'th-TH' : 'en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })
-  const most = Math.max(1, ...view.weeks.map(week => week.sessions))
   const hasHistory = view.sessions > 0
   const level = trainingLevel(view.effort)
 
@@ -98,14 +98,7 @@ export default async function ProgressPage() {
 
           <section className="pf-card" aria-labelledby="pg-weeks-title">
             <h2 id="pg-weeks-title" className="pf-card-title">{t('weeks.title')}</h2>
-            <ol className="pg-weeks">
-              {view.weeks.map(week => <li key={week.monday}>
-                <span className="sr-only">{t('weeks.label', { date: shortDate.format(new Date(`${week.monday}T00:00:00Z`)), count: week.sessions })}</span>
-                <span className="pg-bar" aria-hidden="true"><i style={{ height: `${Math.round(week.sessions / most * 100)}%` }} /></span>
-                <b aria-hidden="true">{week.sessions}</b>
-                <small aria-hidden="true">{shortDate.format(new Date(`${week.monday}T00:00:00Z`))}</small>
-              </li>)}
-            </ol>
+            <WeeksChart weeks={view.weeks} shortDate={shortDate} label={(date, count) => t('weeks.label', { date, count })} />
             <p className="pf-note">{t('selfNote')}</p>
           </section>
 

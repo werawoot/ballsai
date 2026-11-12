@@ -82,7 +82,11 @@ checklist, timers), check-ins, streaks, and `/me`.
    the athlete, an accepted guardian and an admin read results; entering again the same day
    corrects that day's result; careful defaults until the coach answers (plank stops at
    2 minutes, long jump from 12 with a birth date). Table and rules: SQL96.
-3. A Progress page: training history and self-test results.
+3. A Progress page: training history and self-test results. **Owner, 12 Nov 2026:** an accepted
+   guardian sees the same for their child, read only, at `/guardian/[athleteId]/progress` (linked
+   from each accepted child on `/guardian`): goal, home sessions, the last eight weeks,
+   programmes and, behind the same `NEXT_PUBLIC_SELF_TESTS` switch, the self-test results.
+   Anyone without an accepted, consented link gets the 404 page.
 4. After `/welcome`, an athlete goes to choosing a programme, not to `/card`.
 5. The four-tab bottom bar.
 6. A training level from effort points.

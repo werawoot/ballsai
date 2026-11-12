@@ -18,6 +18,7 @@ import { CHANGE_ROLE_PATH } from '@/lib/onboarding'
 type Profile = { onboarding_persona: string | null }
 type LinkRow = {
   id: string
+  athlete_id?: string | null
   status: GuardianLink['status']
   requested_at: string
   athlete_profiles: {
@@ -32,6 +33,7 @@ function mapLink(row: LinkRow, fallbackName: string): GuardianLink {
   const athlete = row.athlete_profiles
   return {
     id: row.id,
+    athleteId: row.athlete_id ?? null,
     status: row.status,
     requested_at: row.requested_at,
     athlete: athlete ? {
@@ -59,7 +61,7 @@ export default async function GuardianPage() {
   // (sql/74) and staff (sql/75). A section whose SQL is not applied is empty.
   const [{ data: profile }, { data: guardianRows }, { data: incomingRows }, mine] = await Promise.all([
     supabase.from('profiles').select('onboarding_persona').eq('id', user.id).maybeSingle(),
-    supabase.from('guardian_links').select('id, status, requested_at, athlete_profiles!guardian_links_athlete_id_fkey(display_name, is_public, athlete_progress(xp_total, current_level), athlete_badges(badge_key))').eq('guardian_id', user.id).order('requested_at', { ascending: false }),
+    supabase.from('guardian_links').select('id, athlete_id, status, requested_at, athlete_profiles!guardian_links_athlete_id_fkey(display_name, is_public, athlete_progress(xp_total, current_level), athlete_badges(badge_key))').eq('guardian_id', user.id).order('requested_at', { ascending: false }),
     supabase.from('guardian_links').select('id, status, requested_at').eq('athlete_id', user.id).eq('status', 'pending').order('requested_at', { ascending: false }),
     fetchMyTeamHub(supabase, user.id),
   ])
