@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-// @ts-expect-error -- plain .mjs module shared with the Node script
 import { SIGNED_OUT_CLOSED_TABLES, buildMinorDataChecks } from '../scripts/rls-minor-checks.mjs'
 
 type Check = { label: string; audience: string; expected: string; path: string; method?: string; body?: unknown; needs: string[] }
@@ -69,5 +68,14 @@ describe('RLS checks for minors\' data', () => {
     }
     const labels = all({ PRIVATE_PROFILE_USER_ID: 'p', GUARDIAN_LINK_ID: 'g' }).map(check => check.label)
     expect(new Set(labels).size).toBe(labels.length)
+  })
+
+  it("checks each athlete's training data: owner and guardian see rows, an unrelated user sees none", () => {
+    const checks = all({ TRAINING_ATHLETE_ID: 'a' })
+    for (const table of ['training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests']) {
+      expect(SIGNED_OUT_CLOSED_TABLES).toContain(table)
+      const path = `/${table}?athlete_id=eq.a&select=athlete_id&limit=1`
+      expect(checks.filter(check => check.path === path).map(check => [check.audience, check.expected])).toEqual([['owner', 'visible'], ['guardian', 'visible'], ['unrelated', 'hidden']])
+    }
   })
 })

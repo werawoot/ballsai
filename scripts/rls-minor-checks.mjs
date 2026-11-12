@@ -33,7 +33,15 @@ export const SIGNED_OUT_CLOSED_TABLES = [
   'venue_booking_coordination',
   'data_disputes',
   'scout_shortlists',
+  'training_enrollments',
+  'training_checkins',
+  'athlete_training_goals',
+  'athlete_self_tests',
 ]
+
+// Each athlete's own training data (ADR-015; sql/63, 95, 96): only the athlete, an accepted
+// guardian and an admin may read it, and nobody signed out.
+export const TRAINING_TABLES = ['training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests']
 
 export function buildMinorDataChecks(ids) {
   const checks = []
@@ -89,6 +97,17 @@ export function buildMinorDataChecks(ids) {
   add(['UNPUBLISHED_FIXTURE_TOURNAMENT_ID'], { label: 'signed out gets nothing from an unpublished draw', audience: 'anonymous', expected: 'hidden', method: 'POST', path: '/rpc/public_tournament_fixtures', body: { p_tournament_id: draw } })
 
   add(['FOREIGN_ORGANIZATION_ID'], { label: 'unrelated user cannot read another organization\'s members', audience: 'unrelated', expected: 'hidden', path: `/organization_members?organization_id=eq.${ids.FOREIGN_ORGANIZATION_ID}&select=user_id` })
+
+  // One test athlete (signed in as the owner) with at least one row in each training table and
+  // an accepted guardian (GUARDIAN_JWT). The owner and guardian checks expect rows, so an empty
+  // table fails instead of letting the unrelated check pass on nothing.
+  const athlete = ids.TRAINING_ATHLETE_ID
+  for (const table of TRAINING_TABLES) {
+    const path = `/${table}?athlete_id=eq.${athlete}&select=athlete_id&limit=1`
+    add(['TRAINING_ATHLETE_ID'], { label: `athlete can read own ${table}`, audience: 'owner', expected: 'visible', path })
+    add(['TRAINING_ATHLETE_ID'], { label: `accepted guardian can read their child's ${table}`, audience: 'guardian', expected: 'visible', path })
+    add(['TRAINING_ATHLETE_ID'], { label: `unrelated user cannot read another athlete's ${table}`, audience: 'unrelated', expected: 'hidden', path })
+  }
 
   return checks
 }

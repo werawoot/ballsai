@@ -20,7 +20,8 @@ import { buildMinorDataChecks } from './rls-minor-checks.mjs'
  * Minors' data (T21, scripts/rls-minor-checks.mjs): ATHLETE_JWT (defaults to PLAYER_JWT),
  * GUARDIAN_JWT, and the test ids PRIVATE_PROFILE_USER_ID, GUARDIAN_LINK_ID,
  * FOREIGN_TEAM_ID, FOREIGN_PAYMENT_ID, UNPUBLISHED_FIXTURE_TOURNAMENT_ID,
- * FOREIGN_ORGANIZATION_ID. The signed-out sweep and the birth-date checks need no ids.
+ * FOREIGN_ORGANIZATION_ID, TRAINING_ATHLETE_ID (the ATHLETE_JWT athlete, with training rows and an
+ * accepted guardian). The signed-out sweep and the birth-date checks need no ids.
  *
  * This script defaults to safe checks. It never performs a write that is
  * expected to succeed unless ALLOW_RLS_WRITE_TESTS=true is explicitly set.
@@ -225,7 +226,7 @@ if (missingVenueRlsInputs.length > 0) {
   }
   const minorIds = Object.fromEntries([
     'PRIVATE_PROFILE_USER_ID', 'GUARDIAN_LINK_ID', 'FOREIGN_TEAM_ID', 'FOREIGN_PAYMENT_ID',
-    'UNPUBLISHED_FIXTURE_TOURNAMENT_ID', 'FOREIGN_ORGANIZATION_ID',
+    'UNPUBLISHED_FIXTURE_TOURNAMENT_ID', 'FOREIGN_ORGANIZATION_ID', 'TRAINING_ATHLETE_ID',
   ].map(name => [name, process.env[name]]).filter(([, value]) => value))
   for (const check of buildMinorDataChecks(minorIds)) {
     const jwt = jwtByAudience[check.audience]
