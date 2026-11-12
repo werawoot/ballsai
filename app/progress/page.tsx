@@ -13,7 +13,7 @@ import { SESSIONS_PER_LEVEL, trainingLevel } from '@/lib/training/level'
 import { dayStreak } from '@/lib/athlete-home'
 import { say } from '@/lib/training/content'
 import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
-import WeeksChart from './WeeksChart'
+import WeeksChart from '@/components/WeeksChart'
 import '../glass.css'
 import '../profile/profile.css'
 

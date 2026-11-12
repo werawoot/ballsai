@@ -16,6 +16,8 @@ const db = vi.hoisted(() => ({
   user: 'guardian' as string | null,
   linked: true,
   goal: 'ball_control' as string | null,
+  goalMissing: false,
+  trainingMissing: false,
   lists: {} as Record<string, unknown[]>,
   tests: [] as { test_key: string; value: number; test_date: string }[],
   reads: [] as string[],
@@ -25,17 +27,19 @@ function fakeClient() {
     const filters: Record<string, unknown> = {}
     const builder: Record<string, unknown> = {}
     for (const name of ['select', 'order', 'is', 'limit']) builder[name] = () => builder
+    builder.not = (column: string, op: string, value: unknown) => { filters[`not.${column}`] = `${op}.${String(value)}`; return builder }
     builder.eq = (column: string, value: unknown) => { filters[column] = value; return builder }
     builder.range = () => builder
     builder.maybeSingle = async () => {
       db.reads.push(`${table}:${JSON.stringify(filters)}`)
-      if (table === 'guardian_links') return { data: db.linked && filters.guardian_id === 'guardian' && filters.athlete_id === CHILD && filters.status === 'accepted' ? { athlete_id: CHILD, athlete_profiles: { display_name: 'น้องบอล' } } : null, error: null }
-      if (table === 'athlete_training_goals') return { data: db.goal ? { goal_key: db.goal } : null, error: null }
+      if (table === 'guardian_links') return { data: db.linked && filters.guardian_id === 'guardian' && filters.athlete_id === CHILD && filters.status === 'accepted' && filters['not.consent_at'] === 'is.null' ? { athlete_id: CHILD, athlete_profiles: { display_name: 'น้องบอล' } } : null, error: null }
+      if (table === 'athlete_training_goals') return db.goalMissing ? { data: null, error: { code: 'PGRST205' } } : { data: db.goal ? { goal_key: db.goal } : null, error: null }
       return { data: null, error: null }
     }
     builder.then = (resolve: (value: unknown) => unknown) => {
       db.reads.push(`${table}:${JSON.stringify(filters)}`)
       if (table === 'athlete_self_tests') return Promise.resolve({ data: db.tests.filter(row => row.test_key === filters.test_key), error: null }).then(resolve)
+      if (db.trainingMissing && table.startsWith('training_')) return Promise.resolve({ data: null, error: { code: 'PGRST205' } }).then(resolve)
       return Promise.resolve({ data: db.lists[table] ?? [], error: null }).then(resolve)
     }
     return builder
@@ -68,7 +72,7 @@ const text = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' '
 describe('/guardian/[athleteId]/progress', () => {
   afterEach(() => {
     delete process.env.NEXT_PUBLIC_SELF_TESTS
-    Object.assign(db, { user: 'guardian', linked: true, goal: 'ball_control', lists: {}, tests: [], reads: [] })
+    Object.assign(db, { user: 'guardian', linked: true, goal: 'ball_control', goalMissing: false, trainingMissing: false, lists: {}, tests: [], reads: [] })
   })
 
   it('asks a signed-out visitor to sign in, and is never indexed', async () => {
@@ -113,5 +117,13 @@ describe('/guardian/[athleteId]/progress', () => {
     expect(page).toContain('ครั้งล่าสุด 20 ครั้ง')
     expect(page).toContain('ดีขึ้น 8 ครั้ง')
     expect(page).toContain('ร่าง · รอโค้ชตรวจ')
+  })
+
+  it('tells a parent in plain words when goals or training are not switched on yet', async () => {
+    db.goalMissing = true
+    db.trainingMissing = true
+    const page = text(await render())
+    expect(page).toContain('เป้าหมายที่ลูกตั้งไว้ ส่วนนี้ยังเปิดใช้ไม่ได้ในตอนนี้')
+    expect(page).not.toContain('SQL')
   })
 })

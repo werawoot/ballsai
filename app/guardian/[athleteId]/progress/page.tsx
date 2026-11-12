@@ -12,7 +12,7 @@ import { progressView } from '@/lib/training/progress'
 import { say } from '@/lib/training/content'
 import { selfTestsEnabled, selfTestSummary, SELF_TEST_KEYS, SELF_TESTS } from '@/lib/training/self-tests'
 import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
-import WeeksChart from '@/app/progress/WeeksChart'
+import WeeksChart from '@/components/WeeksChart'
 import '../../../glass.css'
 import '../../../profile/profile.css'
 
@@ -57,18 +57,18 @@ export default async function GuardianChildProgressPage({ params }: { params: Pr
           <h1 id="gp-title" className="pf-card-title">{t('title', { name })}</h1>
           <p className="pf-card-desc">{t('lead')}</p>
           <p className="pf-note">{t('selfNote')}</p>
-          {!history.available && <p className="pf-note" role="status">{tr('notReady')}</p>}
+          {!history.available && <p className="pf-note" role="status">{t('notReady')}</p>}
           {history.available && !history.complete && <p className="pf-note" role="alert">{tp('incomplete')}</p>}
         </section>
 
-        {goal.available && <section className="pf-card" aria-labelledby="gp-goal">
+        <section className="pf-card" aria-labelledby="gp-goal">
           <h2 id="gp-goal" className="pf-card-title">{t('goalTitle')}</h2>
-          <p className="pf-card-desc">{goal.goal ? <span className="pf-chip is-green">{tr(`goals.options.${goal.goal}.label`)}</span> : t('noGoal')}</p>
-        </section>}
+          <p className="pf-card-desc">{!goal.available ? t('notReady') : goal.goal ? <span className="pf-chip is-green">{tr(`goals.options.${goal.goal}.label`)}</span> : t('noGoal')}</p>
+        </section>
 
         {history.available && history.complete && <>
           <section className="pf-card" aria-labelledby="gp-totals">
-            <h2 id="gp-totals" className="pf-card-title">{tp('totals.title')}</h2>
+            <h2 id="gp-totals" className="pf-card-title">{t('totalsTitle')}</h2>
             {view.sessions === 0
               ? <p className="pf-card-desc">{t('noSessions')}</p>
               : <dl className="me-stats pg-stats">
