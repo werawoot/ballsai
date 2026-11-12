@@ -11,19 +11,30 @@ import { isSelfTestKey, SELF_TEST_KEYS, type SelfTestResult } from './self-tests
 
 export type MySelfTests = { status: 'ready' | 'notReady' | 'notAthlete'; birthDate: string | null; rows: SelfTestResult[] }
 
-export async function fetchMySelfTests(client: SupabaseClient, userId: string): Promise<MySelfTests> {
-  const [athleteRead, ...testReads] = await Promise.all([
-    client.from('athlete_profiles').select('user_id').eq('user_id', userId).maybeSingle(),
-    ...SELF_TEST_KEYS.map(key => client.from('athlete_self_tests').select('test_key, value, test_date')
-      .eq('athlete_id', userId).eq('test_key', key).order('test_date', { ascending: false }).limit(2)),
-  ])
-  for (const read of testReads) {
+// One athlete's latest two results per test (SQL96), for the athlete themselves or an accepted
+// guardian (RLS decides who may read). 'notReady' before SQL96 is applied or when a read fails.
+export async function fetchSelfTestResults(client: SupabaseClient, athleteId: string): Promise<{ ready: boolean; rows: SelfTestResult[] }> {
+  const reads = await Promise.all(SELF_TEST_KEYS.map(key => client.from('athlete_self_tests').select('test_key, value, test_date')
+    .eq('athlete_id', athleteId).eq('test_key', key).order('test_date', { ascending: false }).limit(2)))
+  const rows: SelfTestResult[] = []
+  for (const read of reads) {
     if (read.error) {
       if (!isMissingTable(read.error)) console.error(JSON.stringify({ level: 'error', event: 'self_tests_failed', code: read.error.code ?? null }))
-      return { status: 'notReady', birthDate: null, rows: [] }
+      return { ready: false, rows: [] }
+    }
+    for (const row of (read.data ?? []) as { test_key: unknown; value: unknown; test_date: unknown }[]) {
+      if (isSelfTestKey(row.test_key) && typeof row.value === 'number' && typeof row.test_date === 'string') rows.push({ test_key: row.test_key, value: row.value, test_date: row.test_date })
     }
   }
-  if (athleteRead.error) return { status: 'notReady', birthDate: null, rows: [] }
+  return { ready: true, rows }
+}
+
+export async function fetchMySelfTests(client: SupabaseClient, userId: string): Promise<MySelfTests> {
+  const [athleteRead, results] = await Promise.all([
+    client.from('athlete_profiles').select('user_id').eq('user_id', userId).maybeSingle(),
+    fetchSelfTestResults(client, userId),
+  ])
+  if (!results.ready || athleteRead.error) return { status: 'notReady', birthDate: null, rows: [] }
   if (!athleteRead.data) return { status: 'notAthlete', birthDate: null, rows: [] }
   let birthDate: string | null = null
   try {
@@ -32,11 +43,5 @@ export async function fetchMySelfTests(client: SupabaseClient, userId: string): 
     // Without a birth date the long jump stays closed; the other two tests still work.
     console.error(JSON.stringify({ level: 'error', event: 'self_tests_birth_date_failed', code: (error as { code?: string }).code ?? null }))
   }
-  const rows: SelfTestResult[] = []
-  for (const read of testReads) {
-    for (const row of (read.data ?? []) as { test_key: unknown; value: unknown; test_date: unknown }[]) {
-      if (isSelfTestKey(row.test_key) && typeof row.value === 'number' && typeof row.test_date === 'string') rows.push({ test_key: row.test_key, value: row.value, test_date: row.test_date })
-    }
-  }
-  return { status: 'ready', birthDate, rows }
+  return { status: 'ready', birthDate, rows: results.rows }
 }

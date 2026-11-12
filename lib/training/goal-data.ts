@@ -21,3 +21,15 @@ export async function fetchMyGoal(client: SupabaseClient, userId: string): Promi
   const key = (goalRead.data as { goal_key?: string } | null)?.goal_key
   return { available: true, goal: isTrainingGoal(key) ? key : null }
 }
+
+// The current goal of an athlete the viewer may read (an accepted guardian, through SQL95's RLS).
+// `available` is false before SQL95 is applied or when the read fails.
+export async function fetchGoalOf(client: SupabaseClient, athleteId: string): Promise<{ available: boolean; goal: TrainingGoal | null }> {
+  const { data, error } = await client.from('athlete_training_goals').select('goal_key').eq('athlete_id', athleteId).is('ended_at', null).maybeSingle()
+  if (error) {
+    if (!isMissingTable(error)) console.error(JSON.stringify({ level: 'error', event: 'training_goal_failed', code: error.code ?? null }))
+    return { available: false, goal: null }
+  }
+  const key = (data as { goal_key?: string } | null)?.goal_key
+  return { available: true, goal: isTrainingGoal(key) ? key : null }
+}

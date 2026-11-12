@@ -3304,5 +3304,19 @@
       "body": "Juggling, plank and long jump every 4 weeks, against yourself.",
       "open": "Go to the tests"
     }
+  },
+  "guardianProgress": {
+    "eyebrow": "Parent",
+    "back": "Back to parents",
+    "title": "{name}'s progress",
+    "childFallback": "Athlete",
+    "lead": "Home training, the goal and the programmes your child follows. View only.",
+    "selfNote": "Every number is entered by your child, not confirmed by a coach or organiser.",
+    "goalTitle": "Your child's goal",
+    "noGoal": "No goal set yet",
+    "noSessions": "No sessions recorded yet",
+    "lower": "{amount} lower than last time",
+    "testsNote": "Results are compared only with your child's own last result, never ranked against other children. Every day is different; a lower number now and then is normal.",
+    "open": "See progress"
   }
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Check, HeartHandshake, Link2, ShieldCheck, X } from 'lucide-react'
 import GuardianSteps from '@/components/GuardianSteps'
@@ -10,12 +11,14 @@ export type GuardianLink = {
   id: string
   status: 'pending' | 'accepted' | 'declined' | 'revoked'
   requested_at: string
+  athleteId?: string | null
   athlete?: { display_name: string; is_public: boolean; progress?: { xp_total: number; current_level: number } | null; badge_count?: number } | null
 }
 
 export default function GuardianLinksClient({ isGuardian, links, incoming }: { isGuardian: boolean; links: GuardianLink[]; incoming: GuardianLink[] }) {
   const [email, setEmail] = useState('')
   const tp = useTranslations('guardianPage')
+  const tg = useTranslations('guardianProgress')
   const [consent, setConsent] = useState(false)
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
@@ -60,6 +63,7 @@ export default function GuardianLinksClient({ isGuardian, links, incoming }: { i
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><div><b style={{ fontSize: 15 }}>{athlete?.display_name ?? (incomingCard ? 'คำขอจากผู้ปกครอง' : 'นักกีฬา')}</b><p style={{ margin: '4px 0 0', color: 'var(--ui-mute)', fontSize: 12 }}>{statusText}</p></div><span style={{ color: link.status === 'accepted' ? '#15803d' : '#a16207', background: link.status === 'accepted' ? 'var(--ui-sunk)' : '#fef3c7', height: 'fit-content', borderRadius: 20, padding: '4px 9px', fontSize: 10, fontWeight: 800 }}>{statusText}</span></div>
       {link.status === 'accepted' && athlete && <div style={{ display: 'flex', gap: 8, marginTop: 12 }}><div style={{ flex: 1, background: 'var(--ui-sunk)', padding: 9, borderRadius: 9 }}><small style={{ color: 'var(--ui-mute)' }}>{tp('level')}</small><b style={{ display: 'block', fontSize: 18 }}>{athlete.progress?.current_level ?? 1}</b></div><div style={{ flex: 1, background: 'var(--ui-sunk)', padding: 9, borderRadius: 9 }}><small style={{ color: 'var(--ui-mute)' }}>{tp('xp')}</small><b style={{ display: 'block', fontSize: 18 }}>{athlete.progress?.xp_total?.toLocaleString() ?? 0}</b></div><div style={{ flex: 1, background: 'var(--ui-sunk)', padding: 9, borderRadius: 9 }}><small style={{ color: 'var(--ui-mute)' }}>{tp('badges')}</small><b style={{ display: 'block', fontSize: 18 }}>{athlete.badge_count ?? 0}</b></div></div>}
       {incomingCard && link.status === 'pending' && <div style={{ display: 'flex', gap: 8, marginTop: 12 }}><button disabled={busy} onClick={() => respond(link.id, 'accepted')} style={{ flex: 1, border: 0, background: '#15803d', color: 'white', borderRadius: 9, padding: 10, fontWeight: 800 }}><Check size={15} /> รับคำขอ</button><button disabled={busy} onClick={() => respond(link.id, 'declined')} style={{ flex: 1, border: '1px solid #fecaca', background: 'var(--ui-card)', color: '#b91c1c', borderRadius: 9, padding: 10, fontWeight: 800 }}><X size={15} /> ปฏิเสธ</button></div>}
+      {!incomingCard && link.status === 'accepted' && link.athleteId && <Link href={`/guardian/${link.athleteId}/progress`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, marginTop: 12, borderRadius: 9, background: '#101827', color: 'white', fontWeight: 800, fontSize: 14, textDecoration: 'none' }}>{tg('open')}</Link>}
       {!incomingCard && link.status === 'accepted' && <button disabled={busy} onClick={() => revoke(link.id)} style={{ border: 0, background: 'transparent', color: '#b91c1c', fontSize: 12, fontWeight: 800, padding: '12px 0 0' }}>ยกเลิกการเชื่อมบัญชี</button>}
     </article>
   }
