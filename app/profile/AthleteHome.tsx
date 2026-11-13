@@ -7,6 +7,7 @@ import { unreadBadge } from '@/lib/notification-unread'
 import { drillImage, say } from '@/lib/training/content'
 import { coverDetailFor, PROGRAM_PHOTOS } from '@/lib/stock-photos'
 import { tournamentDateRange } from '@/lib/tournament-dates'
+import type { SelfTestReminder } from '@/lib/training/self-tests'
 
 // The athlete's home (/profile) in the DOENSAI home module (owner, 3 Nov 2026, third
 // reference), on the light glass of ADR-014. What each part shows is decided in
@@ -147,10 +148,11 @@ export function NextTraining({ next, today }: { next: NextSession; today: string
 }
 
 // A self-test is due (sql/96, behind NEXT_PUBLIC_SELF_TESTS): one line to /progress/tests.
-export function SelfTestDue({ count, firstTime }: { count: number; firstTime: boolean }) {
+export function SelfTestDue({ reminder }: { reminder: SelfTestReminder }) {
   const t = useTranslations('profileHome.selfTestDue')
+  const count = reminder.due.length
   return <Link href="/progress/tests" className="pf-card pf-ready-line pf-test-due">
-    <span><b>{firstTime ? t('firstTitle') : t('title')}</b><small>{t('body', { count })}</small></span>
+    <span><b>{reminder.firstTime ? t('firstTitle') : t('title')}</b><small>{reminder.firstTime ? t('firstBody', { count }) : t('body', { count })}</small></span>
     <ChevronRight size={17} aria-hidden="true" />
   </Link>
 }

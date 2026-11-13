@@ -11,7 +11,7 @@ import DeleteMyDataSection from './DeleteMyDataSection'
 import GuardianInviteButton from './GuardianInviteButton'
 import TrainingCard from './TrainingCard'
 import { CardOverview, HomeHero, MissionsCard, NextTraining, Opportunity, SelfTestDue, WeekProgress, type HomeTournament } from './AthleteHome'
-import { selfTestsDue, selfTestsEnabled } from '@/lib/training/self-tests'
+import { selfTestReminder, selfTestsEnabled } from '@/lib/training/self-tests'
 import { fetchSelfTestResults } from '@/lib/training/self-test-data'
 import PageHeader from '@/components/PageHeader'
 import RoleHomeCard, { RoleLoadFailed } from '@/components/RoleHomeCard'
@@ -109,7 +109,7 @@ export default async function ProfilePage() {
   const rank = (athleteHome ? home.rank : null) as PlayerRank | null
   const athletePrivate = athlete ? home.private : null
   const training = athlete ? home.training : null
-  const testsDue = selfTests?.ready ? selfTestsDue(selfTests.rows, athletePrivate?.birth_date ?? null, today) : null
+  const reminder = selfTests?.ready ? selfTestReminder(selfTests.rows, athletePrivate?.birth_date ?? null, today) : null
   const highlightCount = athleteHome ? home.highlights : 0
   const videoCount = athleteHome ? home.videos : 0
   const pendingGuardian = athleteHome ? home.pendingGuardian : 0
@@ -219,7 +219,7 @@ export default async function ProfilePage() {
           {pickProgramme && <TrainingCard recommended={recommendedProgram(age)} age={age} finished={finished} />}
           {view && effort && !finished && <MissionsCard missions={missions} effort={effort} firstOpen={firstOpen} hasNext={Boolean(next)} />}
           {next && <NextTraining next={next} today={today} />}
-          {testsDue && testsDue.due.length > 0 && <SelfTestDue count={testsDue.due.length} firstTime={testsDue.firstTime} />}
+          {reminder && <SelfTestDue reminder={reminder} />}
           {/* The team is one clear next step, not a wall (AGENTS.md product rule): an invitation
               waiting, or how to get into a team, as one line; the list itself is on /me. */}
           {athlete && (teamInvites > 0

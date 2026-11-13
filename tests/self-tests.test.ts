@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { isCalendarDay, selfTestHistoryPath, selfTestsDue, parseSelfTestValue, selfTestSummary, selfTestsEnabled, testsFor, SELF_TEST_KEYS, SELF_TESTS } from '@/lib/training/self-tests'
+import { isCalendarDay, selfTestHistoryPath, selfTestReminder, parseSelfTestValue, selfTestSummary, selfTestsEnabled, testsFor, SELF_TEST_KEYS, SELF_TESTS } from '@/lib/training/self-tests'
 
 // The three self-tests (owner, 10 and 11 Nov 2026; docs/research/self-tests-2026-11-10.md).
 
@@ -75,11 +75,15 @@ describe('self-tests', () => {
   it('remind the athlete only of tests that are open to them and due', () => {
     const today = '2026-11-13'
     // Never tested, aged 14: all three, first time.
-    expect(selfTestsDue([], '2012-01-01', today)).toEqual({ due: ['juggling', 'plank', 'long_jump'], firstTime: true })
-    // Under 12: the long jump never counts.
-    expect(selfTestsDue([], '2016-01-01', today).due).toEqual(['juggling', 'plank'])
-    // Tested 10 days ago: nothing due; 28 days ago: due again.
+    expect(selfTestReminder([], '2012-01-01', today)).toEqual({ due: ['juggling', 'plank', 'long_jump'], firstTime: true })
+    // Under 12: the long jump never counts; a long-jump row from before (a birth date changed
+    // since) does not make it a "not first" time either.
+    expect(selfTestReminder([], '2016-01-01', today)?.due).toEqual(['juggling', 'plank'])
+    expect(selfTestReminder([{ test_key: 'long_jump', value: 150, test_date: '2026-11-01' }], '2016-01-01', today)?.firstTime).toBe(true)
+    // Tested 10 days ago: not due; 28 days ago: due again.
     const recent = [{ test_key: 'juggling' as const, value: 20, test_date: '2026-11-03' }, { test_key: 'plank' as const, value: 40, test_date: '2026-10-16' }]
-    expect(selfTestsDue(recent, '2016-01-01', today)).toEqual({ due: ['plank'], firstTime: false })
+    expect(selfTestReminder(recent, '2016-01-01', today)).toEqual({ due: ['plank'], firstTime: false })
+    // Nothing due: no reminder at all.
+    expect(selfTestReminder([...recent, { test_key: 'plank', value: 41, test_date: '2026-11-13' }], '2016-01-01', today)).toBeNull()
   })
 })

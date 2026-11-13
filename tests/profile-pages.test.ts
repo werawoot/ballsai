@@ -453,7 +453,11 @@ describe('/profile for an athlete: training first, then the card (owner, report 
       let html = await render(ProfilePage as never)
       expect(anchor(html, '/progress/tests')).toContain('pf-test-due')
       expect(text(html)).toContain('ลองวัดพัฒนาการครั้งแรก')
-      expect(text(html)).toContain('แบบทดสอบตัวเอง 3 อย่างถึงเวลาแล้ว')
+      expect(text(html)).toContain('แบบทดสอบตัวเอง 3 อย่าง ทำหลังวอร์มอัพ ผลครั้งแรกจะเป็นจุดตั้งต้น')
+      // No birth date: the long jump stays closed, so only two tests are due.
+      db.private = { birth_date: null, guardian_consent_at: null }
+      expect(text(await render(ProfilePage as never))).toContain('แบบทดสอบตัวเอง 2 อย่าง')
+      db.private = { birth_date: '2013-06-01', guardian_consent_at: '2026-01-01T00:00:00Z' }
       expect(anchor(html, '/progress/tests')).not.toContain('primary')
       // Every test taken today: nothing due, no card.
       const todayBkk = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10)
