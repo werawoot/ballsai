@@ -3308,14 +3308,15 @@
     "history": {
       "title": "{name} history",
       "back": "Back to the tests",
-      "note": "Every result you entered, newest first. Delete any you got wrong.",
+      "note": "Every result you entered, newest first. You can delete any of your own results.",
       "open": "See all results",
       "older": "Older results",
       "newest": "Back to the latest",
       "noOlder": "No older results.",
       "delete": "Delete",
       "deleteConfirm": "Delete the result of {date}?",
-      "deleteFailed": "Could not delete. Try again."
+      "deleteFailed": "Could not delete. Try again.",
+      "deleteLabel": "Delete the result of {date}"
     }
   },
   "guardianProgress": {

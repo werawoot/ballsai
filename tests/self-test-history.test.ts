@@ -7,7 +7,7 @@ import th from '@/messages/th.json'
 // /progress/tests/history (owner, 13 Nov 2026): every result of one self-test, a page at a time,
 // each deletable by the athlete. Hidden with the tests until the coach sign-off.
 
-const db = vi.hoisted(() => ({ user: 'me' as string | null, rows: [] as { test_key: string; value: number; test_date: string }[], reads: [] as Record<string, unknown>[], missing: false }))
+const db = vi.hoisted(() => ({ athlete: true, user: 'me' as string | null, rows: [] as { test_key: string; value: number; test_date: string }[], reads: [] as Record<string, unknown>[], missing: false }))
 function fakeClient() {
   const from = (table: string) => {
     const read: Record<string, unknown> = { table }
@@ -17,6 +17,7 @@ function fakeClient() {
     builder.lt = (column: string, value: unknown) => { read[`${column}<`] = value; return builder }
     builder.order = () => builder
     builder.limit = (n: number) => { read.limit = n; return builder }
+    builder.maybeSingle = async () => ({ data: table === 'athlete_profiles' && db.athlete ? { user_id: 'me' } : null, error: null })
     builder.then = (resolve: (value: unknown) => unknown) => {
       db.reads.push(read)
       if (db.missing) return Promise.resolve({ data: null, error: { code: 'PGRST205' } }).then(resolve)
@@ -51,7 +52,7 @@ const text = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' '
 const days = (count: number) => Array.from({ length: count }, (_, index) => ({ test_key: 'plank', value: 30 + index, test_date: new Date(Date.UTC(2026, 0, 1 + index * 7)).toISOString().slice(0, 10) }))
 
 describe('/progress/tests/history', () => {
-  afterEach(() => { delete process.env.NEXT_PUBLIC_SELF_TESTS; Object.assign(db, { user: 'me', rows: [], reads: [], missing: false }) })
+  afterEach(() => { delete process.env.NEXT_PUBLIC_SELF_TESTS; Object.assign(db, { athlete: true, user: 'me', rows: [], reads: [], missing: false }) })
 
   it('does not exist while the tests are hidden, or for an unknown test', async () => {
     await expect(render({ test: 'plank' })).rejects.toThrow('not found')
@@ -75,6 +76,9 @@ describe('/progress/tests/history', () => {
     expect(page.indexOf('32 วินาที')).toBeLessThan(page.indexOf('30 วินาที'))
     expect(page.match(/ฉันกรอกเอง/g)).toHaveLength(1)
     expect(html.match(/<button[^>]*>ลบ<\/button>/g)).toHaveLength(3)
+    // Each delete button names its day for screen readers.
+    expect(html).toMatch(/aria-label="ลบผลวันที่ [^"]+"/)
+    expect(page).toContain('ไม่นับเป็นคะแนนฝีมือ')
     expect(db.reads[0]).toMatchObject({ table: 'athlete_self_tests', athlete_id: 'me', test_key: 'plank', limit: 21 })
     expect(page).not.toContain('ดูผลที่เก่ากว่านี้')
   })
@@ -98,8 +102,15 @@ describe('/progress/tests/history', () => {
   it('ignores a malformed cursor, and says when SQL96 is missing', async () => {
     process.env.NEXT_PUBLIC_SELF_TESTS = 'true'
     await render({ test: 'plank', before: "2026-01-01' or 1=1" })
-    expect(db.reads[0]['test_date<']).toBeUndefined()
+    await render({ test: 'plank', before: '2026-13-45' })
+    expect(db.reads.filter(read => read.table === 'athlete_self_tests').every(read => read['test_date<'] === undefined)).toBe(true)
     db.missing = true
     expect(text(await render({ test: 'plank' }))).toContain('ยังเปิดใช้แบบทดสอบไม่ได้ในตอนนี้')
+  })
+
+  it('tells someone without an athlete profile to create one', async () => {
+    process.env.NEXT_PUBLIC_SELF_TESTS = 'true'
+    db.athlete = false
+    expect(text(await render({ test: 'plank' }))).toContain('สร้างโปรไฟล์นักกีฬาก่อน')
   })
 })

@@ -11,6 +11,15 @@ import { isSelfTestKey, SELF_TEST_KEYS, type SelfTestKey, type SelfTestResult } 
 
 export type MySelfTests = { status: 'ready' | 'notReady' | 'notAthlete'; birthDate: string | null; rows: SelfTestResult[] }
 
+// Rows as the API returns them, keeping only well-formed ones.
+function parseRows(data: unknown): SelfTestResult[] {
+  const rows: SelfTestResult[] = []
+  for (const row of (Array.isArray(data) ? data : []) as { test_key: unknown; value: unknown; test_date: unknown }[]) {
+    if (isSelfTestKey(row.test_key) && typeof row.value === 'number' && typeof row.test_date === 'string') rows.push({ test_key: row.test_key, value: row.value, test_date: row.test_date })
+  }
+  return rows
+}
+
 // One athlete's latest two results per test (SQL96), for the athlete themselves or an accepted
 // guardian (RLS decides who may read). 'notReady' before SQL96 is applied or when a read fails.
 export async function fetchSelfTestResults(client: SupabaseClient, athleteId: string): Promise<{ ready: boolean; rows: SelfTestResult[] }> {
@@ -22,9 +31,7 @@ export async function fetchSelfTestResults(client: SupabaseClient, athleteId: st
       if (!isMissingTable(read.error)) console.error(JSON.stringify({ level: 'error', event: 'self_tests_failed', code: read.error.code ?? null }))
       return { ready: false, rows: [] }
     }
-    for (const row of (read.data ?? []) as { test_key: unknown; value: unknown; test_date: unknown }[]) {
-      if (isSelfTestKey(row.test_key) && typeof row.value === 'number' && typeof row.test_date === 'string') rows.push({ test_key: row.test_key, value: row.value, test_date: row.test_date })
-    }
+    rows.push(...parseRows(read.data))
   }
   return { ready: true, rows }
 }
@@ -59,9 +66,6 @@ export async function fetchSelfTestHistory(client: SupabaseClient, athleteId: st
     if (!isMissingTable(error)) console.error(JSON.stringify({ level: 'error', event: 'self_test_history_failed', code: error.code ?? null }))
     return { ready: false, rows: [], hasMore: false }
   }
-  const rows: SelfTestResult[] = []
-  for (const row of (data ?? []) as { test_key: unknown; value: unknown; test_date: unknown }[]) {
-    if (isSelfTestKey(row.test_key) && typeof row.value === 'number' && typeof row.test_date === 'string') rows.push({ test_key: row.test_key, value: row.value, test_date: row.test_date })
-  }
+  const rows = parseRows(data)
   return { ready: true, rows: rows.slice(0, SELF_TEST_HISTORY_PAGE), hasMore: rows.length > SELF_TEST_HISTORY_PAGE }
 }

@@ -81,7 +81,10 @@ checklist, timers), check-ins, streaks, and `/me`.
    coach signs off (`/progress/tests`, shown only where `NEXT_PUBLIC_SELF_TESTS` is `true`);
    the athlete, an accepted guardian and an admin read results; entering again the same day
    corrects that day's result; careful defaults until the coach answers (plank stops at
-   2 minutes, long jump from 12 with a birth date). Table and rules: SQL96.
+   2 minutes, long jump from 12 with a birth date); the athlete may delete their own result. Table
+   and rules: SQL96. **Owner, 13 Nov 2026:** `/progress` shows the latest result of each test
+   with the change from the one before, and `/progress/tests/history?test=…` lists every result
+   of one test, newest first, 20 a page, each deletable; both behind the same switch.
 3. A Progress page: training history and self-test results. **Owner, 12 Nov 2026:** an accepted
    guardian sees the same for their child, read only, at `/guardian/[athleteId]/progress` (linked
    from each accepted child on `/guardian`): goal, home sessions, the last eight weeks,

@@ -86,3 +86,14 @@ export function selfTestSummary(rows: SelfTestResult[], key: SelfTestKey, today:
     testedToday: latest?.test_date === today,
   }
 }
+
+// The history page of one test, optionally from a date backwards.
+export const selfTestHistoryPath = (key: SelfTestKey, before?: string) =>
+  `/progress/tests/history?test=${key}${before ? `&before=${before}` : ''}`
+
+// A real calendar day as YYYY-MM-DD (rejects 2026-13-45, which the pattern alone would let through).
+export function isCalendarDay(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const date = new Date(`${value}T00:00:00Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+}

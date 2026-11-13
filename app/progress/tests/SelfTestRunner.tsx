@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase'
-import { parseSelfTestValue, type SelfTestSpec, type SelfTestSummary } from '@/lib/training/self-tests'
+import { parseSelfTestValue, selfTestHistoryPath, type SelfTestSpec, type SelfTestSummary } from '@/lib/training/self-tests'
 
 // The pain question first, as before a session (SQL63 rule): its answer is never sent anywhere,
 // and on "pain" no test opens. Then one card per test: how to do it, the last result against the
@@ -107,7 +107,7 @@ export function TestCard({ card, day }: { card: SelfTestCard; day: (value: strin
         : <p>{t('none')}</p>}
       {changeText && <p>{changeText}</p>}
       {card.latest && <p className="pf-note">{card.due ? t('dueNow') : t('nextDue', { date: day(card.nextDue) })}</p>}
-      {card.latest && <p><Link href={`/progress/tests/history?test=${spec.key}`}>{t('history.open')}</Link></p>}
+      {card.latest && <p><Link href={selfTestHistoryPath(spec.key)}>{t('history.open')}</Link></p>}
     </div>
 
     {!card.open

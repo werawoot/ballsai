@@ -10,7 +10,8 @@ import { fetchGoalOf } from '@/lib/training/goal-data'
 import { fetchSelfTestResults } from '@/lib/training/self-test-data'
 import { progressView } from '@/lib/training/progress'
 import { say } from '@/lib/training/content'
-import { selfTestsEnabled, selfTestSummary, SELF_TEST_KEYS, SELF_TESTS } from '@/lib/training/self-tests'
+import { selfTestsEnabled } from '@/lib/training/self-tests'
+import SelfTestSummaryList from '@/components/SelfTestSummaryList'
 import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
 import WeeksChart from '@/components/WeeksChart'
 import '../../../glass.css'
@@ -104,18 +105,7 @@ export default async function GuardianChildProgressPage({ params }: { params: Pr
           <p><span className="pf-chip">{ts('draft')}</span></p>
           {!tests.ready
             ? <p className="pf-note" role="status">{ts('notReady')}</p>
-            : <ul className="pf-list gp-tests">
-              {SELF_TEST_KEYS.map(key => {
-                const summary = selfTestSummary(tests.rows, key, today)
-                const unit = ts(`units.${SELF_TESTS[key].unit}`)
-                const change = summary.change
-                return <li key={key}><div className="pf-list-main">
-                  <b>{ts(`tests.${key}.name`)}</b>
-                  <span>{summary.latest ? ts('latest', { value: `${summary.latest.value} ${unit}`, date: day(summary.latest.test_date) }) : ts('none')}</span>
-                  {change !== null && <span>{change > 0 ? ts('better', { amount: `${change} ${unit}` }) : change < 0 ? t('lower', { amount: `${-change} ${unit}` }) : ts('same')}</span>}
-                </div></li>
-              })}
-            </ul>}
+            : <SelfTestSummaryList rows={tests.rows} today={today} t={ts} day={day} lower={amount => t('lower', { amount })} />}
           <p className="pf-note">{t('testsNote')}</p>
         </section>}
       </div>
