@@ -95,8 +95,8 @@ body:has(.bds-nav) .tr-dock { bottom: calc(70px + env(safe-area-inset-bottom)); 
 .tr-tick:focus-visible, .tr-timer:focus-visible { outline: 3px solid var(--ui-gold); outline-offset: 2px; }
 .tr-timer { background: none; border: 0; color: var(--ui-red); cursor: pointer; display: block; font: 800 13px var(--font-oswald), sans-serif; margin-top: 2px; min-height: 30px; padding: 0; }
 /* On the Matchday ground the Paper red is 2.95:1; red text there takes the Matchday text red
-   (as .ui-eyebrow does in app/ui.css), 5.5:1 or more. Found by scripts/e2e/athlete-flow.mjs (axe). */
-.ui-matchday .tr-timer, .ui-matchday .tr-source a { color: #ff5a5a; }
+   (--ui-red-text, app/ui.css), 5.5:1 or more. Found by scripts/e2e/athlete-flow.mjs (axe). */
+.ui-matchday .tr-timer, .ui-matchday .tr-source a { color: var(--ui-red-text); }
 .tr-gate { align-items: flex-end; background: rgba(11,15,22,.55); display: flex; inset: 0; position: fixed; z-index: 120; }
 .tr-gate-sheet { background: var(--ui-card); border-radius: 24px 24px 0 0; margin: 0 auto; max-width: 560px; padding: 24px 18px calc(24px + env(safe-area-inset-bottom)); width: 100%; }
 .tr-gate-sheet:focus { outline: none; }
