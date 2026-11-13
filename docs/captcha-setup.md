@@ -21,9 +21,11 @@ Supabase จำกัดการขอรหัสต่ออีเมล แ�
 **ห้ามเปิด CAPTCHA ใน Supabase ก่อนตั้ง site key บน Vercel** — Supabase ไม่มีโหมดเตือนอย่างเดียว
 เปิดแล้วจะปฏิเสธทุกคำขอที่ไม่มี token ทันที คนจะขอรหัสและผู้ดูแลจะล็อกอินไม่ได้
 
-1. Cloudflare Dashboard → Turnstile → Add widget: hostname `doensai.com`, `www.doensai.com` และโดเมน
-   Preview ของ Staging ที่ใช้ทดสอบ (ผูกกับ branch: ถ้าทดสอบ branch อื่นต้องเพิ่มชื่อนั้นด้วย, สูงสุด 10 ชื่อ)
+1. Cloudflare Dashboard → Turnstile → Add widget: hostname `doensai.com`, `www.doensai.com`,
+   **`ballsai-staging.vercel.app` (โดเมนหลักของ Staging)** และโดเมน Preview ของ Staging ที่ใช้ทดสอบ
+   (ผูกกับ branch: ถ้าทดสอบ branch อื่นต้องเพิ่มชื่อนั้นด้วย, สูงสุด 10 ชื่อ)
    (แก้ 7 พ.ย. 2569: เดิมเขียน `ballsai-teal.vercel.app` ซึ่งไม่ใช่โดเมนหลักแล้ว) โหมด **Managed** → ได้ **Site key** (เปิดเผยได้) และ **Secret key** (ห้ามเปิดเผย)
+   โดเมนที่ไม่อยู่ในรายการ: กล่อง Cloudflare ขึ้นแถบดำ "ยืนยันไม่ได้" และปุ่มส่งรหัสกดไม่ได้ ล็อกอินไม่ได้เลย
 2. Vercel → โปรเจกต์ **ballsai-staging** (ต่อกับ Supabase Staging) → Settings → Environment Variables:
    `NEXT_PUBLIC_TURNSTILE_SITE_KEY` = Site key → Redeploy (ยังไม่ตั้งในโปรเจกต์ `ballsai` ที่ต่อกับ Production)
 3. เปิดเว็บ Staging → `/login` → ใช้อีเมล: ต้องเห็นช่องยืนยันของ Cloudflare และปุ่ม "ส่งรหัสให้ฉัน"
@@ -61,6 +63,8 @@ Supabase จำกัดการขอรหัสต่ออีเมล แ�
 - Cloudflare Turnstile widget "DOENSAI login" โหมด Managed, Pre-clearance ปิด
   hostnames: `doensai.com`, `www.doensai.com`,
   `ballsai-staging-git-claude-beautiful-6535f5-werawoots-projects.vercel.app`
+  ขาด `ballsai-staging.vercel.app`: พบ 13 พ.ย. 2569 ตอนรัน T21 (หน้า login ของ Staging ขึ้น
+  "ยืนยันไม่ได้" ล็อกอินไม่ได้) เจ้าของต้องเพิ่มเองใน Cloudflare (agent ไม่แก้การตั้งค่าความปลอดภัย)
   Site key (สาธารณะ): `0x4AAAAAAF3lomq6WKKUFfWo`
 - Vercel `ballsai-staging`: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` ทุก environment แล้ว redeploy
   (โปรเจกต์ `ballsai` ที่ต่อกับ Production ยังไม่ได้ตั้ง)

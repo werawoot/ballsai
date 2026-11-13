@@ -33,7 +33,15 @@ export const SIGNED_OUT_CLOSED_TABLES = [
   'venue_booking_coordination',
   'data_disputes',
   'scout_shortlists',
+  'training_enrollments',
+  'training_checkins',
+  'athlete_training_goals',
+  'athlete_self_tests',
 ]
+
+// Each athlete's own training data (ADR-015; sql/63, 95, 96): only the athlete, an accepted
+// guardian and an admin may read it, and nobody signed out.
+export const TRAINING_TABLES = ['training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests']
 
 export function buildMinorDataChecks(ids) {
   const checks = []
@@ -89,6 +97,41 @@ export function buildMinorDataChecks(ids) {
   add(['UNPUBLISHED_FIXTURE_TOURNAMENT_ID'], { label: 'signed out gets nothing from an unpublished draw', audience: 'anonymous', expected: 'hidden', method: 'POST', path: '/rpc/public_tournament_fixtures', body: { p_tournament_id: draw } })
 
   add(['FOREIGN_ORGANIZATION_ID'], { label: 'unrelated user cannot read another organization\'s members', audience: 'unrelated', expected: 'hidden', path: `/organization_members?organization_id=eq.${ids.FOREIGN_ORGANIZATION_ID}&select=user_id` })
+
+  // One test athlete (signed in as the owner) with at least one row in each training table and
+  // an accepted guardian (GUARDIAN_JWT). The owner, guardian and admin checks expect rows, so an
+  // empty table fails instead of letting the unrelated check pass on nothing.
+  const athlete = ids.TRAINING_ATHLETE_ID
+  for (const table of TRAINING_TABLES) {
+    const path = `/${table}?athlete_id=eq.${athlete}&select=athlete_id&limit=1`
+    add(['TRAINING_ATHLETE_ID'], { label: `athlete can read own ${table}`, audience: 'owner', expected: 'visible', path })
+    add(['TRAINING_ATHLETE_ID'], { label: `accepted guardian can read their child's ${table}`, audience: 'guardian', expected: 'visible', path })
+    add(['TRAINING_ATHLETE_ID'], { label: `admin can read an athlete's ${table}`, audience: 'admin', expected: 'visible', path })
+    add(['TRAINING_ATHLETE_ID'], { label: `unrelated user cannot read another athlete's ${table}`, audience: 'unrelated', expected: 'hidden', path })
+  }
+
+  // Writing someone else's training data must be refused (401/403). Each attempt is shaped so a
+  // broken rule still stores nothing where it can: the check-in names an enrollment that does
+  // not exist (a foreign-key error, not a row), goals and self-tests have no table grant at all.
+  // The enrollment insert is the one that would store a row if its policy were broken; it is
+  // still refused today by the policy's athlete_id = auth.uid() (sql/63).
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date())
+  const missingEnrollment = '00000000-0000-4000-8000-000000000000'
+  const foreignWrites = [
+    ['training_enrollments', { athlete_id: athlete, program_id: 'u10-foundation-01', weekdays: [1], start_date: today }],
+    ['training_checkins', { enrollment_id: missingEnrollment, athlete_id: athlete, session_date: today, drills_done: 1 }],
+    ['athlete_training_goals', { athlete_id: athlete, goal_key: 'speed' }],
+    ['athlete_self_tests', { athlete_id: athlete, test_key: 'plank', value: 30, test_date: today }],
+  ]
+  for (const [table, body] of foreignWrites) {
+    for (const [audience, who] of [['unrelated', 'unrelated user'], ['guardian', 'guardian']]) {
+      add(['TRAINING_ATHLETE_ID'], { label: `${who} cannot write ${table} for another athlete`, audience, expected: 'denied', method: 'POST', path: `/${table}`, body })
+    }
+  }
+  // Goals and self-tests change only through their functions (sql/95, 96), even for the athlete.
+  for (const [table, body] of foreignWrites.slice(2)) {
+    add(['TRAINING_ATHLETE_ID'], { label: `athlete cannot write ${table} directly, only through its function`, audience: 'owner', expected: 'denied', method: 'POST', path: `/${table}`, body })
+  }
 
   return checks
 }

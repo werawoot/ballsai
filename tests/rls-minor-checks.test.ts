@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-// @ts-expect-error -- plain .mjs module shared with the Node script
 import { SIGNED_OUT_CLOSED_TABLES, buildMinorDataChecks } from '../scripts/rls-minor-checks.mjs'
 
 type Check = { label: string; audience: string; expected: string; path: string; method?: string; body?: unknown; needs: string[] }
@@ -69,5 +68,25 @@ describe('RLS checks for minors\' data', () => {
     }
     const labels = all({ PRIVATE_PROFILE_USER_ID: 'p', GUARDIAN_LINK_ID: 'g' }).map(check => check.label)
     expect(new Set(labels).size).toBe(labels.length)
+  })
+
+  it("checks each athlete's training data: owner, guardian and admin see rows, an unrelated user sees none", () => {
+    const checks = all({ TRAINING_ATHLETE_ID: 'a' })
+    for (const table of ['training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests']) {
+      expect(SIGNED_OUT_CLOSED_TABLES).toContain(table)
+      const path = `/${table}?athlete_id=eq.a&select=athlete_id&limit=1`
+      expect(checks.filter(check => check.path === path).map(check => [check.audience, check.expected])).toEqual([['owner', 'visible'], ['guardian', 'visible'], ['admin', 'visible'], ['unrelated', 'hidden']])
+    }
+  })
+
+  it("checks that writing another athlete's training data is refused, and goals and self-tests only change through their functions", () => {
+    const writes = all({ TRAINING_ATHLETE_ID: 'a' }).filter(check => check.method === 'POST' && check.expected === 'denied')
+    const by = (audience: string) => writes.filter(check => check.audience === audience).map(check => check.path).sort()
+    expect(by('unrelated')).toEqual(['/athlete_self_tests', '/athlete_training_goals', '/training_checkins', '/training_enrollments'])
+    expect(by('guardian')).toEqual(['/athlete_self_tests', '/athlete_training_goals', '/training_checkins', '/training_enrollments'])
+    expect(by('owner')).toEqual(['/athlete_self_tests', '/athlete_training_goals'])
+    for (const check of writes) expect((check.body as { athlete_id: string }).athlete_id).toBe('a')
+    // The check-in names an enrollment that does not exist, so a broken rule still stores no row.
+    expect((writes.find(check => check.path === '/training_checkins')?.body as { enrollment_id: string }).enrollment_id).toBe('00000000-0000-4000-8000-000000000000')
   })
 })
