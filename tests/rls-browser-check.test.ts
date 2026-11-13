@@ -14,17 +14,19 @@ const b64url = (value: string) => Buffer.from(value).toString('base64url')
 const jwtFor = (sub: string) => `${b64url('{"alg":"HS256"}')}.${b64url(JSON.stringify({ sub }))}.secret-signature`
 
 type Call = { url: string; auth: string | null }
-async function run({ role, sub, athleteId = '', chunked = false, rows = 1, link = true }: { role: string; sub?: string; athleteId?: string; chunked?: boolean; rows?: number; link?: boolean }) {
+async function run({ role, sub, athleteId = '', chunked = false, rows = 1, link = true, keyStatus = 200, writeStatus = 403 }: { role: string; sub?: string; athleteId?: string; chunked?: boolean; rows?: number; link?: boolean; keyStatus?: number; writeStatus?: number }) {
   const token = sub ? jwtFor(sub) : ''
   const session = 'base64-' + b64url(JSON.stringify({ access_token: token }))
   const name = `sb-${STAGING_REF}-auth-token`
   const cookie = !sub ? '' : chunked
     ? `${name}.0=${encodeURIComponent(session.slice(0, 20))}; other=1; ${name}.1=${encodeURIComponent(session.slice(20))}`
     : `${name}=${encodeURIComponent(session)}`
-  const calls: Call[] = []
+  const calls: (Call & { method: string })[] = []
   const logs: string[] = []
-  const fetch = async (url: string, options: { headers: Record<string, string> }) => {
-    calls.push({ url, auth: options.headers.authorization ?? null })
+  const fetch = async (url: string, options: { method?: string; headers: Record<string, string> }) => {
+    calls.push({ url, auth: options.headers.authorization ?? null, method: options.method ?? 'GET' })
+    if (keyStatus !== 200) return { status: keyStatus, text: async () => '{"message":"Invalid API key"}' }
+    if (options.method === 'POST') return { status: writeStatus, text: async () => '{"code":"42501"}' }
     const publicName = url.includes('select=user_id,display_name&is_public=eq.true')
     const body = url.includes('/guardian_links?select=athlete_id') ? (link ? [{ athlete_id: ATHLETE }] : []) : publicName ? [{ user_id: OTHER }] : Array.from({ length: rows }, () => ({ athlete_id: ATHLETE }))
     return { status: 200, text: async () => JSON.stringify(body) }
@@ -64,18 +66,36 @@ describe('the browser RLS check (T21)', () => {
     expect(logs).not.toContain(token)
     expect(logs).not.toContain('secret-signature')
     expect(logs).toContain(`ATHLETE_ID for the unrelated run: ${ATHLETE}`)
-    expect(logs).toMatch(/ROLE owner: PASS 4, FAIL 0, SKIP 0 of 4/)
+    expect(logs).toMatch(/ROLE owner: PASS 6, FAIL 0, SKIP 0 of 6/)
   })
 
   it('owner with no rows fails rather than passing on nothing', async () => {
-    expect((await run({ role: 'owner', sub: ATHLETE, rows: 0 })).logs).toMatch(/FAIL 4/)
+    expect((await run({ role: 'owner', sub: ATHLETE, rows: 0 })).logs).toMatch(/PASS 2, FAIL 4/)
   })
 
   it("guardian: finds the accepted child and checks the child's rows", async () => {
-    const { calls, logs } = await run({ role: 'guardian', sub: GUARDIAN })
-    expect(calls[0].url).toContain(`/guardian_links?select=athlete_id&status=eq.accepted&guardian_id=eq.${GUARDIAN}`)
+    const { calls, logs } = await run({ role: 'guardian', sub: GUARDIAN, athleteId: ATHLETE })
+    expect(calls.find(call => call.url.includes('/guardian_links?'))?.url).toContain(`/guardian_links?select=athlete_id&status=eq.accepted&guardian_id=eq.${GUARDIAN}&athlete_id=eq.${ATHLETE}`)
     for (const table of TRAINING_TABLES) expect(calls.some(call => call.url.includes(`/${table}?athlete_id=eq.${ATHLETE}`))).toBe(true)
-    expect(logs).toMatch(/ROLE guardian: PASS 4, FAIL 0/)
+    expect(logs).toMatch(/ROLE guardian: PASS 8, FAIL 0/)
+  })
+
+  it('guardian with no accepted link to the athlete: a FAIL, never an empty clean run', async () => {
+    expect((await run({ role: 'guardian', sub: GUARDIAN, athleteId: ATHLETE, link: false })).logs).toMatch(/ROLE guardian: PASS 0, FAIL 1, SKIP 0 of 1/)
+  })
+
+  it('admin: reads every training table of the athlete', async () => {
+    expect((await run({ role: 'admin', sub: OTHER, athleteId: ATHLETE })).logs).toMatch(/ROLE admin: PASS 4, FAIL 0, SKIP 0 of 4/)
+  })
+
+  it('a write that is not refused is a FAIL', async () => {
+    expect((await run({ role: 'unrelated', sub: OTHER, athleteId: ATHLETE, rows: 0, writeStatus: 201 })).logs).toMatch(/FAIL 4/)
+  })
+
+  it('stops when the anon key is not the Staging key, instead of passing every refused check', async () => {
+    const { calls, logs } = await run({ role: 'anonymous', keyStatus: 401 })
+    expect(logs).toContain('ANON_KEY is not the Staging key')
+    expect(calls).toHaveLength(1)
   })
 
   it("unrelated: a row of someone else's data is a FAIL; none is a PASS", async () => {

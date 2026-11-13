@@ -24,8 +24,8 @@ Supabase จำกัดการขอรหัสต่ออีเมล แ�
 1. Cloudflare Dashboard → Turnstile → Add widget: hostname `doensai.com`, `www.doensai.com`,
    **`ballsai-staging.vercel.app` (โดเมนหลักของ Staging)** และโดเมน Preview ของ Staging ที่ใช้ทดสอบ
    (ผูกกับ branch: ถ้าทดสอบ branch อื่นต้องเพิ่มชื่อนั้นด้วย, สูงสุด 10 ชื่อ)
-   โดเมนที่ไม่อยู่ในรายการ: กล่อง Cloudflare ขึ้นแถบดำ "ยืนยันไม่ได้" และปุ่มส่งรหัสกดไม่ได้ ล็อกอินไม่ได้เลย
    (แก้ 7 พ.ย. 2569: เดิมเขียน `ballsai-teal.vercel.app` ซึ่งไม่ใช่โดเมนหลักแล้ว) โหมด **Managed** → ได้ **Site key** (เปิดเผยได้) และ **Secret key** (ห้ามเปิดเผย)
+   โดเมนที่ไม่อยู่ในรายการ: กล่อง Cloudflare ขึ้นแถบดำ "ยืนยันไม่ได้" และปุ่มส่งรหัสกดไม่ได้ ล็อกอินไม่ได้เลย
 2. Vercel → โปรเจกต์ **ballsai-staging** (ต่อกับ Supabase Staging) → Settings → Environment Variables:
    `NEXT_PUBLIC_TURNSTILE_SITE_KEY` = Site key → Redeploy (ยังไม่ตั้งในโปรเจกต์ `ballsai` ที่ต่อกับ Production)
 3. เปิดเว็บ Staging → `/login` → ใช้อีเมล: ต้องเห็นช่องยืนยันของ Cloudflare และปุ่ม "ส่งรหัสให้ฉัน"

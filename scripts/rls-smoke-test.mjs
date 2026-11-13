@@ -223,6 +223,7 @@ if (missingVenueRlsInputs.length > 0) {
     owner: process.env.ATHLETE_JWT ?? playerJwt,
     guardian: process.env.GUARDIAN_JWT,
     unrelated: unrelatedJwt,
+    admin: process.env.ADMIN_JWT,
   }
   const minorIds = Object.fromEntries([
     'PRIVATE_PROFILE_USER_ID', 'GUARDIAN_LINK_ID', 'FOREIGN_TEAM_ID', 'FOREIGN_PAYMENT_ID',
@@ -243,6 +244,7 @@ if (missingVenueRlsInputs.length > 0) {
     if (check.expected === 'visible') expectVisible(check.label, result)
     if (check.expected === 'hidden') expectHidden(check.label, result)
     if (check.expected === 'blocked') expectBlocked(check.label, result)
+    if (check.expected === 'denied') expectDenied(check.label, result)
   }
 }
 
