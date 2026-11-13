@@ -9,15 +9,15 @@ import { IDENTITY_BADGES } from '@/lib/digital-identity'
 
 describe('the collection rules', () => {
   it('has one version for every badge, plus the season card', () => {
-    for (const badge of IDENTITY_BADGES) expect(COLLECTION.some(item => item.badge === badge.key), badge.key).toBe(true)
+    for (const badge of IDENTITY_BADGES) expect(COLLECTION.some(item => item.kind === 'badge' && item.badge === badge.key), badge.key).toBe(true)
     expect(COLLECTION.some(item => item.kind === 'season')).toBe(true)
   })
 
   it('gives every version one of the four rarities, rarest last', () => {
     expect(RARITIES).toEqual(['common', 'rare', 'special', 'legend'])
     for (const item of COLLECTION) expect(RARITIES).toContain(item.rarity)
-    expect(COLLECTION.find(item => item.badge === 'rising_star')?.rarity).toBe('legend')
-    expect(COLLECTION.find(item => item.badge === 'rookie')?.rarity).toBe('common')
+    expect(COLLECTION.find(item => item.kind === 'badge' && item.badge === 'rising_star')?.rarity).toBe('legend')
+    expect(COLLECTION.find(item => item.kind === 'badge' && item.badge === 'rookie')?.rarity).toBe('common')
   })
 })
 

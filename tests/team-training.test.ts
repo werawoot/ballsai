@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { DAY_LIMITS, addDays, addWeeks, cleanPlanDays, libraryDrills, planSummary, weekStartOf } from '@/lib/team-training'
+import { DAY_LIMITS, addDays, addWeeks, cleanPlanDays, libraryDrills, planSummary, weekStartOf, type PlanBlock } from '@/lib/team-training'
 
 // A team's weekly training plan (sql/72). The page and the API check a plan the way the
 // database does, so a coach hears about a mistake before saving.
-const block = (over: Record<string, unknown> = {}) => ({ drill: null, name: 'เกมเล็ก 5 ต่อ 5', minutes: 25, load: 2, ...over })
+// Loose on purpose: some cases feed values cleanPlanDays must refuse (load 4, a bad drill id).
+const block = (over: Record<string, unknown> = {}) => ({ drill: null, name: 'เกมเล็ก 5 ต่อ 5', minutes: 25, load: 2, ...over }) as PlanBlock
 
 describe('the week a plan belongs to', () => {
   it('is the Monday of the Bangkok week, whatever the device zone', () => {

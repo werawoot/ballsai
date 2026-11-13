@@ -4,6 +4,7 @@ import {
   activeVenuePhoto,
   venueImageView,
   venuePhotoAlt,
+  type VenueImageView,
   type VenuePhoto,
 } from '@/lib/venue-images'
 
@@ -99,7 +100,9 @@ describe('venuePhotoAlt', () => {
 })
 
 describe('activeVenuePhoto', () => {
-  const view = venueImageView([photo('a'), photo('b'), photo('c')])
+  // activeVenuePhoto takes a view that has photos; these views always do.
+  const photosOf = (value: VenueImageView) => { if (value.kind !== 'photos') throw new Error('expected photos'); return value }
+  const view = photosOf(venueImageView([photo('a'), photo('b'), photo('c')]))
 
   it('defaults to the cover at index 0 when nothing has been picked', () => {
     const active = activeVenuePhoto(view, null)
@@ -131,7 +134,7 @@ describe('activeVenuePhoto', () => {
   })
 
   it('renumbers after a broken photo is dropped instead of leaving a gap', () => {
-    const afterFailure = venueImageView([photo('a'), photo('b'), photo('c')], ['a'])
+    const afterFailure = photosOf(venueImageView([photo('a'), photo('b'), photo('c')], ['a']))
     const active = activeVenuePhoto(afterFailure, 'c')
 
     expect(active.photo.id).toBe('c')

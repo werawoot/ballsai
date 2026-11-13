@@ -13,8 +13,8 @@ import { PATCH } from '@/app/api/admin/rankings/[rankId]/route'
 
 const RANK = '8c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f'
 const base = { player_name: 'Fresh', team: 'A', province: 'Bangkok', position: 'FW', ovr: 60, pts: 1016, rank_change: 16 }
-const save = (skills: Record<string, unknown>) =>
-  PATCH(new Request(`http://localhost/api/admin/rankings/${RANK}`, { method: 'PATCH', body: JSON.stringify({ ...base, ...skills }) }), { params: Promise.resolve({ rankId: RANK }) })
+const save = async (skills: Record<string, unknown>): Promise<Response> =>
+  (await PATCH(new Request(`http://localhost/api/admin/rankings/${RANK}`, { method: 'PATCH', body: JSON.stringify({ ...base, ...skills }) }), { params: Promise.resolve({ rankId: RANK }) }))!
 
 beforeEach(() => { rpc.mockReset(); rpc.mockResolvedValue({ error: null }) })
 

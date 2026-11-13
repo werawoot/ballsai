@@ -49,6 +49,10 @@ jobs:
       - name: Run lint
         run: npm run lint
 
+      - name: Run typecheck (app and tests)
+        # next build checks the app only; tests had drifted to 54 type errors unseen (13 Nov 2026).
+        run: npm run typecheck
+
       - name: Run unit tests (Vitest)
         run: npm test
 

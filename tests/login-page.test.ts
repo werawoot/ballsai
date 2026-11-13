@@ -33,11 +33,11 @@ describe('/login stats bar', () => {
   it('opens with the facts and the provinces when the counts fail or hang', async () => {
     auth.user = null
     counts.mode = 'fail'
-    const element = await open({}) as { props: { stats: unknown[] } }
+    const element = await open({}) as { props: { stats: { key: string }[] } }
     expect(element.props.stats.map((stat: { key: string }) => stat.key)).toEqual(['sports', 'roles', 'fee', 'provinces'])
     counts.mode = 'hang'
     const started = Date.now()
-    const slow = await open({}) as { props: { stats: unknown[] } }
+    const slow = await open({}) as { props: { stats: { key: string }[] } }
     expect(Date.now() - started).toBeLessThan(2000)
     expect(slow.props.stats.map((stat: { key: string }) => stat.key)).toEqual(['sports', 'roles', 'fee', 'provinces'])
   })

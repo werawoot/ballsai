@@ -11,6 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit -p .",
     "test": "vitest run",
     "security:rls": "node scripts/rls-smoke-test.mjs",
     "verify:production": "node scripts/verify-production-config.mjs",
