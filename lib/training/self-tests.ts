@@ -97,3 +97,15 @@ export function isCalendarDay(value: unknown): value is string {
   const date = new Date(`${value}T00:00:00Z`)
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
 }
+
+// The home's reminder: the tests this athlete may take now, or null when none is due. A test is
+// due when it was never taken or four weeks have passed since its last result; a test closed by
+// age never counts. `firstTime`: no open test has a result yet, so there is nothing to compare.
+export type SelfTestReminder = { due: SelfTestKey[]; firstTime: boolean }
+
+export function selfTestReminder(rows: SelfTestResult[], birthDate: string | null, today: string): SelfTestReminder | null {
+  const open = testsFor(birthDate, today).filter(item => item.open).map(item => item.key)
+  const due = open.filter(key => selfTestSummary(rows, key, today).due)
+  if (due.length === 0) return null
+  return { due, firstTime: !rows.some(row => open.includes(row.test_key)) }
+}

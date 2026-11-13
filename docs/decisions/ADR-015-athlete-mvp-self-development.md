@@ -84,7 +84,9 @@ checklist, timers), check-ins, streaks, and `/me`.
    2 minutes, long jump from 12 with a birth date); the athlete may delete their own result. Table
    and rules: SQL96. **Owner, 13 Nov 2026:** `/progress` shows the latest result of each test
    with the change from the one before, and `/progress/tests/history?test=…` lists every result
-   of one test, newest first, 20 a page, each deletable; both behind the same switch.
+   of one test, newest first, 20 a page, each deletable; both behind the same switch. The same
+   day, the athlete's home shows one line when a test is due (never taken, or four weeks since
+   its last result; a test closed by age never counts), also behind the switch.
 3. A Progress page: training history and self-test results. **Owner, 12 Nov 2026:** an accepted
    guardian sees the same for their child, read only, at `/guardian/[athleteId]/progress` (linked
    from each accepted child on `/guardian`): goal, home sessions, the last eight weeks,
