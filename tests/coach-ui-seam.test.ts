@@ -54,6 +54,13 @@ describe('CoachTeamOverview rendering', () => {
     expect(html(CoachTeamOverview, { teams: [view()] })).toContain('บันทึกผลการแข่งขัน')
   })
 
+  it('shows a club team (own team, no tournament) as a club, without the organizer fold', () => {
+    const markup = html(CoachTeamOverview, { teams: [view({ isClub: true, tournamentName: null })], canKeep: true })
+    expect(markup).toContain('is-club')
+    expect(markup).not.toContain('บันทึกผลการแข่งขัน')
+    expect(markup).not.toContain('tm-keep')
+  })
+
   it('reports a failed roster query instead of rendering an empty roster', () => {
     // A query error and a genuinely empty team must not look the same.
     const markup = html(CoachTeamOverview, { teams: [view({ members: [] })], rosterError: true })

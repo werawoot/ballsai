@@ -338,6 +338,8 @@ npm run dev
 
 ```bash
 npm run lint
+npm run typecheck
+npm test
 npm run build
 npm run smoke:public
 npm run verify:production
@@ -369,7 +371,7 @@ BASE_URL=https://your-deployment-url npm run smoke:public
    - self-reported
    - coach verified
    - performance verified
-6. ทดสอบ `npm run lint && npm run build` ทุกครั้งเมื่อมีการเปลี่ยน TypeScript/Next.js สำคัญ
+6. ทดสอบ `npm run lint && npm run typecheck && npm test && npm run build` ทุกครั้งเมื่อมีการเปลี่ยน TypeScript/Next.js สำคัญ
 7. อย่าเรียกทุกอย่างว่า 100% จนกว่าจะผ่าน closed-beta flow ด้วยข้อมูลจริง
 
 ### ความสำเร็จที่ควรวัดใน Closed Beta

@@ -3,8 +3,9 @@ import { DAY_LIMITS, addDays, addWeeks, cleanPlanDays, libraryDrills, planSummar
 
 // A team's weekly training plan (sql/72). The page and the API check a plan the way the
 // database does, so a coach hears about a mistake before saving.
-// Loose on purpose: some cases feed values cleanPlanDays must refuse (load 4, a bad drill id).
-const block = (over: Record<string, unknown> = {}) => ({ drill: null, name: 'เกมเล็ก 5 ต่อ 5', minutes: 25, load: 2, ...over }) as PlanBlock
+const block = (over: Partial<PlanBlock> = {}): PlanBlock => ({ drill: null, name: 'เกมเล็ก 5 ต่อ 5', minutes: 25, load: 2, ...over })
+// A block with a value its type cannot hold, for the cases cleanPlanDays must refuse.
+const badBlock = (over: Record<string, unknown>): unknown => ({ ...block(), ...over })
 
 describe('the week a plan belongs to', () => {
   it('is the Monday of the Bangkok week, whatever the device zone', () => {
@@ -38,7 +39,7 @@ describe('a plan the database will accept', () => {
       [{ day: 1, title: 'ก'.repeat(61), blocks: [block()] }],
       [{ day: 1, blocks: [block({ minutes: 0 })] }],
       [{ day: 1, blocks: [block({ minutes: 2.5 })] }],
-      [{ day: 1, blocks: [block({ load: 4 })] }],
+      [{ day: 1, blocks: [badBlock({ load: 4 })] }],
       [{ day: 1, blocks: [block({ drill: 'Bad Id!' })] }],
       [{ day: 1, blocks: [block({ minutes: 120 }), block({ minutes: 121 })] }],
       'not a list',
