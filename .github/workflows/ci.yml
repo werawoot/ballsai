@@ -44,6 +44,8 @@ jobs:
           node --check scripts/load-test.mjs
           node --check scripts/load-plan.mjs
           node --check scripts/coach-review-pack.mjs
+          node --check scripts/e2e/mock-supabase.mjs
+          node --check scripts/e2e/athlete-flow.mjs
           node --check scripts/rls-browser-check.mjs
 
       - name: Run lint
