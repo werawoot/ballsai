@@ -107,6 +107,7 @@ export function TestCard({ card, day }: { card: SelfTestCard; day: (value: strin
         : <p>{t('none')}</p>}
       {changeText && <p>{changeText}</p>}
       {card.latest && <p className="pf-note">{card.due ? t('dueNow') : t('nextDue', { date: day(card.nextDue) })}</p>}
+      {card.latest && <p><Link href={`/progress/tests/history?test=${spec.key}`}>{t('history.open')}</Link></p>}
     </div>
 
     {!card.open

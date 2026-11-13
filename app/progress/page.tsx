@@ -7,7 +7,8 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { thaiDate } from '@/lib/athlete-private'
 import { fetchTrainingHistory } from '@/lib/training/progress-data'
 import { fetchMyGoal } from '@/lib/training/goal-data'
-import { selfTestsEnabled } from '@/lib/training/self-tests'
+import { selfTestsEnabled, selfTestSummary, SELF_TEST_KEYS, SELF_TESTS } from '@/lib/training/self-tests'
+import { fetchSelfTestResults } from '@/lib/training/self-test-data'
 import { progressView } from '@/lib/training/progress'
 import { SESSIONS_PER_LEVEL, trainingLevel } from '@/lib/training/level'
 import { dayStreak } from '@/lib/athlete-home'
@@ -30,7 +31,9 @@ export default async function ProgressPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/progress')
 
-  const [t, tr, ts, locale, history, myGoal] = await Promise.all([getTranslations('progressPage'), getTranslations('training'), getTranslations('selfTests'), getLocale(), fetchTrainingHistory(supabase, user.id), fetchMyGoal(supabase, user.id)])
+  const showTests = selfTestsEnabled()
+  const [t, tr, ts, locale, history, myGoal, tests] = await Promise.all([getTranslations('progressPage'), getTranslations('training'), getTranslations('selfTests'), getLocale(), fetchTrainingHistory(supabase, user.id), fetchMyGoal(supabase, user.id),
+    showTests ? fetchSelfTestResults(supabase, user.id) : Promise.resolve({ ready: false, rows: [] })])
   const today = thaiDate(new Date())
   const view = progressView({ enrollments: history.enrollments, checkins: history.checkins, today })
   // Days in a row across every programme the athlete did not stop: a finished programme keeps
@@ -65,9 +68,25 @@ export default async function ProgressPage() {
 
         {/* The self-tests (owner, 10 Nov 2026), hidden until the coach sign-off. Their page says
             what to do when SQL96 is not applied yet or the person has no athlete profile. */}
-        {selfTestsEnabled() && <section className="pf-card" aria-labelledby="pg-tests">
+        {showTests && <section className="pf-card" aria-labelledby="pg-tests">
           <h2 id="pg-tests" className="pf-card-title">{ts('card.title')}</h2>
           <p className="pf-card-desc">{ts('card.body')}</p>
+          {tests.ready && tests.rows.length > 0 && <>
+            <h3 className="pg-tests-sub">{ts('card.latestTitle')}</h3>
+            <ul className="pf-list">
+              {SELF_TEST_KEYS.map(key => {
+                const summary = selfTestSummary(tests.rows, key, today)
+                const unit = ts(`units.${SELF_TESTS[key].unit}`)
+                const change = summary.change
+                return <li key={key}><div className="pf-list-main">
+                  <b>{ts(`tests.${key}.name`)}</b>
+                  <span>{summary.latest ? ts('latest', { value: `${summary.latest.value} ${unit}`, date: shortDate.format(new Date(`${summary.latest.test_date}T00:00:00Z`)) }) : ts('none')}</span>
+                  {change !== null && <span>{change > 0 ? ts('better', { amount: `${change} ${unit}` }) : change < 0 ? ts('lower', { amount: `${-change} ${unit}` }) : ts('same')}</span>}
+                </div></li>
+              })}
+            </ul>
+            <p className="pf-note">{ts('self')} · {ts('rules')}</p>
+          </>}
           <Link href="/progress/tests" className="pf-btn pf-btn-ghost"><Ruler size={17} aria-hidden="true" />{ts('card.open')}</Link>
         </section>}
 

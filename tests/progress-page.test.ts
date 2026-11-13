@@ -13,7 +13,7 @@ const db = vi.hoisted(() => ({ locale: 'th' as 'th' | 'en', lists: {} as Record<
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
-    for (const name of ['select', 'eq', 'order', 'gte', 'is']) builder[name] = () => builder
+    for (const name of ['select', 'eq', 'order', 'gte', 'is', 'limit']) builder[name] = () => builder
     builder.maybeSingle = async () => ({ data: table === 'athlete_profiles' ? { user_id: 'me' } : table === 'athlete_training_goals' && db.goal ? { goal_key: db.goal } : null, error: null })
     builder.range = (start: number) => { (builder as { start?: number }).start = start; return builder }
     builder.then = (resolve: (value: unknown) => unknown) => {
@@ -115,5 +115,18 @@ describe('/progress', () => {
     const html = await render('en')
     // The header's language switch says ไทย on purpose; the page body is checked.
     expect(text(html.slice(html.indexOf('pg-title')))).not.toMatch(/[ก-ฺเ-๛]/)
+  })
+
+  it('shows the latest self-test results on the progress card only while the tests are switched on', async () => {
+    db.missing = false
+    db.lists = { training_enrollments: [], training_checkins: [], athlete_self_tests: [{ test_key: 'juggling', value: 20, test_date: '2026-11-01' }] }
+    expect(text(await render())).not.toContain('ผลล่าสุด')
+    process.env.NEXT_PUBLIC_SELF_TESTS = 'true'
+    try {
+      const page = text(await render())
+      expect(page).toContain('ผลล่าสุด')
+      expect(page).toContain('ครั้งล่าสุด 20 ครั้ง')
+      expect(page).toContain('ฉันกรอกเอง')
+    } finally { delete process.env.NEXT_PUBLIC_SELF_TESTS }
   })
 })
