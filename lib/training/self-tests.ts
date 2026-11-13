@@ -97,3 +97,10 @@ export function isCalendarDay(value: unknown): value is string {
   const date = new Date(`${value}T00:00:00Z`)
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
 }
+
+// Which tests this athlete may take now (the home's reminder): a test is due when it was never
+// taken or four weeks have passed since the last result; a test closed by age never counts.
+export function selfTestsDue(rows: SelfTestResult[], birthDate: string | null, today: string): { due: SelfTestKey[]; firstTime: boolean } {
+  const due = testsFor(birthDate, today).filter(item => item.open && selfTestSummary(rows, item.key, today).due).map(item => item.key)
+  return { due, firstTime: rows.length === 0 }
+}

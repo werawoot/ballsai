@@ -146,6 +146,15 @@ export function NextTraining({ next, today }: { next: NextSession; today: string
   </section>
 }
 
+// A self-test is due (sql/96, behind NEXT_PUBLIC_SELF_TESTS): one line to /progress/tests.
+export function SelfTestDue({ count, firstTime }: { count: number; firstTime: boolean }) {
+  const t = useTranslations('profileHome.selfTestDue')
+  return <Link href="/progress/tests" className="pf-card pf-ready-line pf-test-due">
+    <span><b>{firstTime ? t('firstTitle') : t('title')}</b><small>{t('body', { count })}</small></span>
+    <ChevronRight size={17} aria-hidden="true" />
+  </Link>
+}
+
 export type HomeTournament = { id: string; name: string; location: string | null; start_date: string; end_date?: string | null; status: string | null }
 
 /**

@@ -442,6 +442,29 @@ describe('/profile for an athlete: training first, then the card (owner, report 
     expect(text(html)).toContain('ระดับฝึกซ้อม 1 150 / 500 แต้มขยัน')
     delete db.counts.training_checkins
   })
+
+  // Self-tests (owner, 13 Nov 2026), behind NEXT_PUBLIC_SELF_TESTS: a reminder when one is due.
+  it('reminds the athlete when a self-test is due, only while the tests are switched on', async () => {
+    athlete([])
+    expect(await render(ProfilePage as never)).not.toContain('pf-test-due')
+    process.env.NEXT_PUBLIC_SELF_TESTS = 'true'
+    try {
+      // Never tested, 13 years old: all three, as a first time.
+      let html = await render(ProfilePage as never)
+      expect(anchor(html, '/progress/tests')).toContain('pf-test-due')
+      expect(text(html)).toContain('ลองวัดพัฒนาการครั้งแรก')
+      expect(text(html)).toContain('แบบทดสอบตัวเอง 3 อย่างถึงเวลาแล้ว')
+      expect(anchor(html, '/progress/tests')).not.toContain('primary')
+      // Every test taken today: nothing due, no card.
+      const todayBkk = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10)
+      ;(db.tables as Record<string, unknown>).athlete_self_tests = ['juggling', 'plank', 'long_jump'].map(key => ({ test_key: key, value: 20, test_date: todayBkk }))
+      html = await render(ProfilePage as never)
+      expect(html).not.toContain('pf-test-due')
+    } finally {
+      delete process.env.NEXT_PUBLIC_SELF_TESTS
+      delete (db.tables as Record<string, unknown>).athlete_self_tests
+    }
+  })
 })
 
 describe('/profile/edit', () => {

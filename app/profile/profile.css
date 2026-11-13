@@ -565,6 +565,8 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .st-delete .pf-btn { min-height: 40px; padding: 0 14px; }
 .pf.gl .st-history-nav { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 0; }
 .pf.gl .pg-tests-sub { font-size: 15px; margin: 12px 0 4px; }
+.pf.gl .pf-test-due span { display: grid; gap: 2px; }
+.pf.gl .pf-test-due small { color: var(--gl-muted, #4A5568); font-size: 13px; font-weight: 500; }
 /* Chips and ghost buttons default to white for the dark hero; on the light Progress cards they
    need navy text to be readable. */
 .pf.gl.pf-progress .pf-card .pf-chip:not(.is-green):not(.is-gold) { background: rgba(11,18,32,.06); border-color: rgba(11,18,32,.14); color: var(--gl-navy); }

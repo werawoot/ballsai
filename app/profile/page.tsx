@@ -10,7 +10,9 @@ import {
 import DeleteMyDataSection from './DeleteMyDataSection'
 import GuardianInviteButton from './GuardianInviteButton'
 import TrainingCard from './TrainingCard'
-import { CardOverview, HomeHero, MissionsCard, NextTraining, Opportunity, WeekProgress, type HomeTournament } from './AthleteHome'
+import { CardOverview, HomeHero, MissionsCard, NextTraining, Opportunity, SelfTestDue, WeekProgress, type HomeTournament } from './AthleteHome'
+import { selfTestsDue, selfTestsEnabled } from '@/lib/training/self-tests'
+import { fetchSelfTestResults } from '@/lib/training/self-test-data'
 import PageHeader from '@/components/PageHeader'
 import RoleHomeCard, { RoleLoadFailed } from '@/components/RoleHomeCard'
 import { countTrainingCheckins } from '@/lib/training/progress-data'
@@ -85,7 +87,7 @@ export default async function ProfilePage() {
   // A guardian, coach, organizer or venue owner is not shown the athlete's own parts; someone
   // who coaches or runs a venue may also play, so their card stays one tap away.
   const hasAthleteProfile = home.athlete ? 1 : 0
-  const [loaded, avatarUrls, extras, unread, openRows, sessionsEver] = await Promise.all([
+  const [loaded, avatarUrls, extras, unread, openRows, sessionsEver, selfTests] = await Promise.all([
     roleKind ? loadRoleHome(supabase, roleKind, user.id) : null,
     // The photo is a private object (T51); the owner may always sign their own.
     signAvatarUrls(supabase, [athleteHome ? (home.athlete?.profile_image_url as string | null | undefined) : null]),
@@ -97,6 +99,9 @@ export default async function ProfilePage() {
     athleteHome ? getPublicOpenTournaments(today) : null,
     // The training level (ADR-015): every check-in ever, as a head count.
     athleteHome && home.athlete ? countTrainingCheckins(supabase, user.id) : 0,
+    // Self-tests (behind NEXT_PUBLIC_SELF_TESTS): the latest two results per test, to remind the
+    // athlete when one is due again. Three indexed reads of two rows, only while switched on.
+    athleteHome && home.athlete && selfTestsEnabled() ? fetchSelfTestResults(supabase, user.id) : null,
   ])
   const athlete = (athleteHome ? home.athlete : null) as AthleteProfile | null
   const teamInvites = athleteHome ? home.memberships.filter(membership => membership.status === 'pending').length : 0
@@ -104,6 +109,7 @@ export default async function ProfilePage() {
   const rank = (athleteHome ? home.rank : null) as PlayerRank | null
   const athletePrivate = athlete ? home.private : null
   const training = athlete ? home.training : null
+  const testsDue = selfTests?.ready ? selfTestsDue(selfTests.rows, athletePrivate?.birth_date ?? null, today) : null
   const highlightCount = athleteHome ? home.highlights : 0
   const videoCount = athleteHome ? home.videos : 0
   const pendingGuardian = athleteHome ? home.pendingGuardian : 0
@@ -213,6 +219,7 @@ export default async function ProfilePage() {
           {pickProgramme && <TrainingCard recommended={recommendedProgram(age)} age={age} finished={finished} />}
           {view && effort && !finished && <MissionsCard missions={missions} effort={effort} firstOpen={firstOpen} hasNext={Boolean(next)} />}
           {next && <NextTraining next={next} today={today} />}
+          {testsDue && testsDue.due.length > 0 && <SelfTestDue count={testsDue.due.length} firstTime={testsDue.firstTime} />}
           {/* The team is one clear next step, not a wall (AGENTS.md product rule): an invitation
               waiting, or how to get into a team, as one line; the list itself is on /me. */}
           {athlete && (teamInvites > 0

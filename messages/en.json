@@ -1435,6 +1435,11 @@
     "pickAgain": {
       "title": "Your programme is finished",
       "body": "Pick a new programme to keep training; we plan the sessions"
+    },
+    "selfTestDue": {
+      "title": "Time to measure your progress",
+      "firstTitle": "Measure your progress for the first time",
+      "body": "{count, plural, one {# self-test is} other {# self-tests are}} due. Do them after a warm-up and compare with your own last results."
     }
   },
   "profileEdit": {
