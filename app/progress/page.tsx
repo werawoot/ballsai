@@ -8,6 +8,8 @@ import { thaiDate } from '@/lib/athlete-private'
 import { fetchTrainingHistory } from '@/lib/training/progress-data'
 import { fetchMyGoal } from '@/lib/training/goal-data'
 import { selfTestsEnabled } from '@/lib/training/self-tests'
+import SelfTestSummaryList from '@/components/SelfTestSummaryList'
+import { fetchSelfTestResults } from '@/lib/training/self-test-data'
 import { progressView } from '@/lib/training/progress'
 import { SESSIONS_PER_LEVEL, trainingLevel } from '@/lib/training/level'
 import { dayStreak } from '@/lib/athlete-home'
@@ -30,7 +32,9 @@ export default async function ProgressPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/progress')
 
-  const [t, tr, ts, locale, history, myGoal] = await Promise.all([getTranslations('progressPage'), getTranslations('training'), getTranslations('selfTests'), getLocale(), fetchTrainingHistory(supabase, user.id), fetchMyGoal(supabase, user.id)])
+  const showTests = selfTestsEnabled()
+  const [t, tr, ts, locale, history, myGoal, tests] = await Promise.all([getTranslations('progressPage'), getTranslations('training'), getTranslations('selfTests'), getLocale(), fetchTrainingHistory(supabase, user.id), fetchMyGoal(supabase, user.id),
+    showTests ? fetchSelfTestResults(supabase, user.id) : Promise.resolve({ ready: false, rows: [] })])
   const today = thaiDate(new Date())
   const view = progressView({ enrollments: history.enrollments, checkins: history.checkins, today })
   // Days in a row across every programme the athlete did not stop: a finished programme keeps
@@ -65,9 +69,15 @@ export default async function ProgressPage() {
 
         {/* The self-tests (owner, 10 Nov 2026), hidden until the coach sign-off. Their page says
             what to do when SQL96 is not applied yet or the person has no athlete profile. */}
-        {selfTestsEnabled() && <section className="pf-card" aria-labelledby="pg-tests">
+        {showTests && <section className="pf-card" aria-labelledby="pg-tests">
           <h2 id="pg-tests" className="pf-card-title">{ts('card.title')}</h2>
           <p className="pf-card-desc">{ts('card.body')}</p>
+          {tests.ready && tests.rows.length > 0 && <>
+            <h3 className="pg-tests-sub">{ts('card.latestTitle')}</h3>
+            <SelfTestSummaryList rows={tests.rows} today={today} t={ts} day={value => shortDate.format(new Date(`${value}T00:00:00Z`))} lower={amount => ts('lower', { amount })} historyLinks />
+            <p className="pf-note">{ts('self')} · {ts('rules')}</p>
+          </>}
+          {!tests.ready && <p className="pf-note" role="status">{ts('notReady')}</p>}
           <Link href="/progress/tests" className="pf-btn pf-btn-ghost"><Ruler size={17} aria-hidden="true" />{ts('card.open')}</Link>
         </section>}
 

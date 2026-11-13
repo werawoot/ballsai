@@ -40,7 +40,8 @@ Notes:
 - Demo data appears **only** when `NEXT_PUBLIC_SHOW_DEMO_DATA` is exactly `true`
   (`lib/sample-data.ts`). Leaving it unset behaves like `false`. Setting it
   explicitly to `false` is still recommended so the intent is visible in Vercel.
-- The self-tests (`/progress/tests`, SQL96) appear **only** when `NEXT_PUBLIC_SELF_TESTS` is
+- The self-tests (`/progress/tests`, the history at `/progress/tests/history`, the latest
+  results on `/progress` and on a guardian's view of their child; SQL96) appear **only** when `NEXT_PUBLIC_SELF_TESTS` is
   exactly `true`. Set it on Staging to try them; keep it off in Production until a licensed
   coach or physiotherapist signs off the protocols (`npm run verify:production` fails if it is on).
 - Without `RESEND_API_KEY` / `RESEND_FROM_EMAIL`, team confirm/reject email is

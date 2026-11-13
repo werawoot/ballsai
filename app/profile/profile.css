@@ -560,6 +560,11 @@ textarea.pf-input { min-height:110px; resize:vertical; }
 .pf.gl .st-result p { margin: 4px 0; }
 .pf.gl .st-form { display: grid; gap: 10px; margin-top: 12px; }
 .pf.gl .st-form .pf-note:empty { display: none; }
+.pf.gl .st-history li { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
+.pf.gl .st-delete { align-items: flex-end; display: grid; gap: 4px; justify-items: end; }
+.pf.gl .st-delete .pf-btn { min-height: 40px; padding: 0 14px; }
+.pf.gl .st-history-nav { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 0; }
+.pf.gl .pg-tests-sub { font-size: 15px; margin: 12px 0 4px; }
 /* Chips and ghost buttons default to white for the dark hero; on the light Progress cards they
    need navy text to be readable. */
 .pf.gl.pf-progress .pf-card .pf-chip:not(.is-green):not(.is-gold) { background: rgba(11,18,32,.06); border-color: rgba(11,18,32,.14); color: var(--gl-navy); }

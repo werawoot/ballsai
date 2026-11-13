@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { parseSelfTestValue, selfTestSummary, selfTestsEnabled, testsFor, SELF_TEST_KEYS, SELF_TESTS } from '@/lib/training/self-tests'
+import { isCalendarDay, selfTestHistoryPath, parseSelfTestValue, selfTestSummary, selfTestsEnabled, testsFor, SELF_TEST_KEYS, SELF_TESTS } from '@/lib/training/self-tests'
 
 // The three self-tests (owner, 10 and 11 Nov 2026; docs/research/self-tests-2026-11-10.md).
 
@@ -59,5 +59,16 @@ describe('self-tests', () => {
     expect(jump.change).toBeNull()
     expect(jump.due).toBe(true)
     expect(selfTestSummary(rows, 'plank', '2026-10-29').testedToday).toBe(true)
+  })
+
+  it('accept only real calendar days as a history cursor, and build the history path', () => {
+    expect(isCalendarDay('2026-11-13')).toBe(true)
+    expect(isCalendarDay('2024-02-29')).toBe(true)
+    expect(isCalendarDay('2026-02-29')).toBe(false)
+    expect(isCalendarDay('2026-13-45')).toBe(false)
+    expect(isCalendarDay("2026-01-01' or 1=1")).toBe(false)
+    expect(isCalendarDay(['2026-11-13'])).toBe(false)
+    expect(selfTestHistoryPath('plank')).toBe('/progress/tests/history?test=plank')
+    expect(selfTestHistoryPath('plank', '2026-10-01')).toBe('/progress/tests/history?test=plank&before=2026-10-01')
   })
 })
