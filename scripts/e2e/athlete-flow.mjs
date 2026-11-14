@@ -37,6 +37,11 @@ async function signedIn(userId) {
 function watch(tab) {
   tab.on('pageerror', error => pageErrors.push(error.message))
   tab.on('dialog', dialog => dialog.accept())
+  // Page data the browser asks the app for (React Server Component requests), for the failure report.
+  tab.on('request', request => { if (request.headers().rsc) state.trace.push([Date.now(), 'browser', request.headers()['next-router-prefetch'] ? 'prefetch' : 'rsc', new URL(request.url()).pathname]) })
+  tab.on('requestfinished', request => { if (request.headers().rsc) state.trace.push([Date.now(), 'browser', 'done', new URL(request.url()).pathname]) })
+  tab.on('requestfailed', request => { if (request.headers().rsc) state.trace.push([Date.now(), 'browser', 'aborted', new URL(request.url()).pathname]) })
+  tab.on('response', response => { if (response.request().headers().rsc) state.trace.push([Date.now(), 'browser', 'headers', new URL(response.url()).pathname]) })
   return tab
 }
 
@@ -45,6 +50,7 @@ let current = page
 
 const results = []
 async function step(name, run) {
+  const startedAt = Date.now()
   try {
     await run()
     results.push({ name, ok: true })
@@ -54,6 +60,8 @@ async function step(name, run) {
     const shot = `${OUT}${results.length}-${name.replace(/[^a-z0-9]+/gi, '-').slice(0, 40)}.png`
     await current.screenshot({ path: shot, fullPage: true }).catch(() => {})
     console.log(`FAIL ${name}: ${String(error.message).split('\n')[0]}\n     screenshot: ${shot}`)
+    // What happened during the step, in order, so a failure can be told apart from a slow page.
+    for (const [at, source, kind, path] of state.trace.filter(entry => entry[0] >= startedAt).slice(-60)) console.log(`     ${String(at - startedAt).padStart(6)}ms ${source.padEnd(7)} ${kind.padEnd(8)} ${path}`)
   }
 }
 const expect = (ok, message) => { if (!ok) throw new Error(message) }

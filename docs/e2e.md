@@ -65,7 +65,14 @@ another host. The mock listens on port 54399.
 - Not in CI: CI only checks the two scripts' syntax. Running it needs a build plus a browser.
 - Coach and organizer pages are not walked.
 
-## Findings (13 Nov 2026)
+## Reading a failure
+
+A failed step prints a screenshot path and every request during the step, in order, with its
+time from the step's start: `mock` lines are reads and writes the app made, `browser` lines are
+the page-data requests (`rsc`, `prefetch`) and what became of them (`headers`, `done`,
+`aborted`).
+
+## Findings (13 and 14 Nov 2026)
 
 Fixed:
 
@@ -79,12 +86,22 @@ Open, not fixed:
   the test waited for hydration). It applies to every client button, and lasts longer on a slow
   phone. Ways to close it need the owner's choice (a form that works without JavaScript, or
   buttons shown as not ready until hydrated).
-- **A page sometimes does not update after a write.** In 5 of 20 full runs one step failed the
-  same way: the write reached the data, but the page did not show it (the self-test card still
-  "ยังไม่เคยทดสอบ" after "บันทึกแล้ว"; the history row still listed after its delete; the
-  schedule not moving on to the session). Each write is followed by `router.refresh()`
-  (and `router.replace()` for the schedule). Run alone, the self-test save did it 0 times in 15.
-  Not yet known whether it is the app or the load of this test container; to be diagnosed before
-  the test can gate CI.
+- **A page sometimes does not update after a write** (diagnosed 14 Nov 2026, not fixed). The
+  write always reaches the data; what fails is the page's fresh-data request (React Server
+  Component request), which Next cancels (`net::ERR_ABORTED`), so the screen keeps the old data
+  until the next reload. Evidence from the step traces (a failed step prints every request in
+  order; see "Reading a failure" below):
+  - **`router.replace()` then `router.refresh()` at once** (GoalPicker, ScheduleForm, and two
+    more places): both requests go out together and both are cancelled. Reproduced alone: the
+    goal tap, 1.5 s after load, stuck 2 of 30 and 1 of 40; 0 of 30 when tapped at once.
+  - **`router.refresh()` alone** (self-test save and delete, history delete): the request gets
+    its headers and is then cancelled with no other request started. Seen in the full flow only
+    (1 of 12 runs on 14 Nov); 0 of 40 and 0 of 20 when the step runs alone. Matches a reported
+    Next 15 behaviour ([vercel/next.js#77504](https://github.com/vercel/next.js/issues/77504))
+    but not proven to be it.
+  - Rate in the full flow: 5 of 20 runs (13 Nov) and 4 of 10 then 1 of 12 (14 Nov).
+  - Fix options are in the owner's hands (see the session report): call one router method, not
+    two; show the saved value from the form itself so it never depends on the refresh; or check
+    after the write and reload if the page still shows old data.
 - On the not-found check: `notFound()` under the root `loading.tsx` answers 200 with a noindex
   meta, not 404 (known, low priority).
