@@ -79,29 +79,34 @@ Fixed:
 - Red text on the dark Matchday training pages (the drill timer, the source link) was 2.95:1. It
   now uses the Matchday text red `--ui-red-text` `#ff5a5a` (5.5:1 or more).
 
-Open, not fixed:
+Open:
 
 - **A tap before hydration does nothing.** Right after `/training` loads, a tap on a goal comes
   before React has attached its handlers and is lost, with no sign (seen in 1 of 5 runs before
   the test waited for hydration). It applies to every client button, and lasts longer on a slow
   phone. Ways to close it need the owner's choice (a form that works without JavaScript, or
   buttons shown as not ready until hydrated).
-- **A page sometimes does not update after a write** (diagnosed 14 Nov 2026, not fixed). The
+- **A page sometimes does not update after a write** (diagnosed 14 Nov 2026, partly fixed). The
   write always reaches the data; what fails is the page's fresh-data request (React Server
   Component request), which Next cancels (`net::ERR_ABORTED`), so the screen keeps the old data
   until the next reload. Evidence from the step traces (a failed step prints every request in
-  order; see "Reading a failure" below):
-  - **`router.replace()` then `router.refresh()` at once** (GoalPicker, ScheduleForm, and two
-    more places): both requests go out together and both are cancelled. Reproduced alone: the
-    goal tap, 1.5 s after load, stuck 2 of 30 and 1 of 40; 0 of 30 when tapped at once.
-  - **`router.refresh()` alone** (self-test save and delete, history delete): the request gets
-    its headers and is then cancelled with no other request started. Seen in the full flow only
-    (1 of 12 runs on 14 Nov); 0 of 40 and 0 of 20 when the step runs alone. Matches a reported
-    Next 15 behaviour ([vercel/next.js#77504](https://github.com/vercel/next.js/issues/77504))
-    but not proven to be it.
-  - Rate in the full flow: 5 of 20 runs (13 Nov) and 4 of 10 then 1 of 12 (14 Nov).
-  - Fix options are in the owner's hands (see the session report): call one router method, not
-    two; show the saved value from the form itself so it never depends on the refresh; or check
-    after the write and reload if the page still shows old data.
+  order; see "Reading a failure" above):
+  - **`router.replace()` then `router.refresh()` at once** (GoalPicker, ScheduleForm,
+    DeleteTeamPanel, OnboardingFlow): both requests went out together and both were cancelled.
+    Reproduced alone on the goal tap: 2 of 30 and 1 of 40. Fixed on 14 Nov: one call through
+    `goFresh()` (`lib/fresh-navigation.ts`), and `tests/fresh-navigation.test.ts` fails if the
+    pair comes back.
+  - **`router.refresh()` alone** (self-test save and delete, history delete): cancelled once its
+    headers arrive, seen in the full flow only. Fixed on 14 Nov by not depending on it: the
+    self-test card shows what was just saved or deleted (`savedSelfTestSummary`,
+    `removedSelfTestSummary`) until the page's own data arrives, and a history row hides itself
+    once its delete succeeds.
+  - **Still open: the goal step.** With one call, the navigation to `/training?band=…` is still
+    cancelled, always together with a prefetch of a programme card that starts in the same
+    instant. Not yet known why Next cancels it.
+  - Rates in the full flow. Before the fix: 5 of 20 runs (13 Nov), 4 of 10 and 1 of 12 (14 Nov),
+    across the goal, schedule, session, self-test and history steps. After the fix (20 runs, 14
+    Nov): 14 passed every step; the other 6 failed only the goal step; schedule, session,
+    self-test and history did not fail once.
 - On the not-found check: `notFound()` under the root `loading.tsx` answers 200 with a noindex
   meta, not 404 (known, low priority).
