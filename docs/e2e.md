@@ -86,7 +86,7 @@ Open:
   the test waited for hydration). It applies to every client button, and lasts longer on a slow
   phone. Ways to close it need the owner's choice (a form that works without JavaScript, or
   buttons shown as not ready until hydrated).
-- **A page sometimes does not update after a write** (diagnosed 14 Nov 2026, partly fixed). The
+- **A page sometimes does not update after a write** (diagnosed and fixed 14 Nov 2026; the goal step's cause is still unknown). The
   write always reaches the data; what fails is the page's fresh-data request (React Server
   Component request), which Next cancels (`net::ERR_ABORTED`), so the screen keeps the old data
   until the next reload. Evidence from the step traces (a failed step prints every request in
@@ -101,12 +101,15 @@ Open:
     self-test card shows what was just saved or deleted (`savedSelfTestSummary`,
     `removedSelfTestSummary`) until the page's own data arrives, and a history row hides itself
     once its delete succeeds.
-  - **Still open: the goal step.** With one call, the navigation to `/training?band=…` is still
-    cancelled, always together with a prefetch of a programme card that starts in the same
-    instant. Not yet known why Next cancels it.
+  - **The goal step: covered by a fallback, cause not known.** With one call, the navigation to
+    `/training?band=…` is still cancelled now and then, always together with a prefetch of a
+    programme card that starts in the same instant. GoalPicker now loads the page again in full
+    if the new goal is not on screen 3 seconds after the save (owner, 14 Nov 2026); the run
+    prints a `NOTE goal:` line each time that happens.
   - Rates in the full flow. Before the fix: 5 of 20 runs (13 Nov), 4 of 10 and 1 of 12 (14 Nov),
     across the goal, schedule, session, self-test and history steps. After the fix (20 runs, 14
     Nov): 14 passed every step; the other 6 failed only the goal step; schedule, session,
-    self-test and history did not fail once.
+    self-test and history did not fail once. With the goal fallback (20 runs, 14 Nov): 20 of 20
+    passed every step; the fallback reload was needed in 4.
 - On the not-found check: `notFound()` under the root `loading.tsx` answers 200 with a noindex
   meta, not 404 (known, low priority).
