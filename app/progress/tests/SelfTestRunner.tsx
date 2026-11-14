@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase'
+import { thaiDate } from '@/lib/athlete-private'
 import { parseSelfTestValue, removedSelfTestSummary, savedSelfTestSummary, selfTestHistoryPath, type SelfTestSpec, type SelfTestSummary } from '@/lib/training/self-tests'
 
 // The pain question first, as before a session (SQL63 rule): its answer is never sent anywhere,
@@ -82,9 +83,9 @@ export function TestCard({ card: serverCard, day }: { card: SelfTestCard; day: (
     setState('saving')
     const { error } = await createClient().rpc('delete_my_self_test', { p_test: spec.key, p_date: card.latest.test_date })
     if (error) { setState('failed'); return }
-    // Only today's result can be deleted here, so its day is today.
-    const removed = card.latest.test_date
-    setLocal({ basis: serverCard, summary: removedSelfTestSummary(card, spec.key, removed, removed) })
+    // The deleted row's own day, and today in Bangkok for when the next test is due (the two
+    // differ if the result was saved before midnight and deleted after it).
+    setLocal({ basis: serverCard, summary: removedSelfTestSummary(card, spec.key, card.latest.test_date, thaiDate(new Date())) })
     setValue('')
     setState('idle')
     router.refresh()

@@ -267,6 +267,33 @@ await step('another child\'s id is a not-found page for the guardian', async () 
   expect(response.status() === 404 || noindex > 0, `status ${response.status()} without noindex`)
 })
 
+await step('on a slow connection the goal change waits for the page, with no early full load', async () => {
+  // The page data for /training takes 5 seconds, longer than GoalPicker's grace: the picker must
+  // wait for the navigation still on its way instead of reloading over it (review, 14 Nov 2026).
+  // A full load is allowed only at the ceiling (12 s), when a navigation still pending is stuck.
+  const slow = async route => { if (route.request().headers().rsc && !route.request().headers()['next-router-prefetch']) await new Promise(resolve => setTimeout(resolve, 5000)); await route.continue() }
+  await go('/training?tab=programs&goal=change')
+  await page.route('**/training?*', slow)
+  const loads = []
+  let clickedAt = 0
+  const countLoad = request => { if (request.resourceType() === 'document') loads.push(Date.now() - clickedAt) }
+  page.on('request', countLoad)
+  try {
+    clickedAt = Date.now()
+    await tap(page.getByRole('button', { name: /แข็งแรงขึ้น/ }))
+    await page.getByText('เป้าหมาย: แข็งแรงขึ้น ลดการบาดเจ็บ').first().waitFor({ timeout: 20000 }).catch(async () => {
+      const busy = await page.locator('.tg-goal-pick').getAttribute('aria-busy').catch(() => 'no picker')
+      throw new Error(`no new goal after 20 s; url ${new URL(page.url()).search}, picker aria-busy ${busy}, full loads at ${loads.join(', ') || 'none'} ms`)
+    })
+  } finally {
+    page.off('request', countLoad)
+    await page.unroute('**/training?*', slow)
+  }
+  const early = loads.filter(at => at < 11500)
+  expect(early.length === 0, `the picker loaded the page again in full at ${early.join(', ')} ms, while the navigation was on its way`)
+  if (loads.length) console.log(`NOTE slow goal: the navigation was still pending at the ceiling; the picker loaded the page again in full at ${loads.join(', ')} ms`)
+})
+
 await step('no script error in the browser', async () => {
   expect(pageErrors.length === 0, pageErrors.join(' | '))
 })

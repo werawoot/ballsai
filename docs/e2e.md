@@ -23,7 +23,9 @@ What it walks, in order:
 10. Signed in as the child's accepted guardian, `/guardian/[athleteId]/progress` shows the child's
     name, "1 ครั้ง" and the goal, with no form, input or button (the language switch aside).
 11. The same guardian on another child's id gets a not-found page that names no child.
-12. No script error in any tab, and the app asked the mock for nothing it does not know.
+12. On a slow connection (page data held 5 s), changing the goal waits for the page with no
+    extra full load.
+13. No script error in any tab, and the app asked the mock for nothing it does not know.
 
 Clicks wait until React has attached its handlers to the element, then click once; a click that
 does nothing fails. On every page axe-core runs the WCAG 2.1 A/AA rules once animations that end
@@ -86,8 +88,8 @@ Open:
   the test waited for hydration). It applies to every client button, and lasts longer on a slow
   phone. Ways to close it need the owner's choice (a form that works without JavaScript, or
   buttons shown as not ready until hydrated).
-- **A page sometimes does not update after a write** (diagnosed and fixed 14 Nov 2026; the goal step's cause is still unknown). The
-  write always reaches the data; what fails is the page's fresh-data request (React Server
+- **A page sometimes did not update after a write** (diagnosed 14 Nov 2026; fixed on every
+  step, with a fallback on the goal step, whose cause is still unknown). The write always reaches the data; what fails is the page's fresh-data request (React Server
   Component request), which Next cancels (`net::ERR_ABORTED`), so the screen keeps the old data
   until the next reload. Evidence from the step traces (a failed step prints every request in
   order; see "Reading a failure" above):
@@ -99,17 +101,19 @@ Open:
   - **`router.refresh()` alone** (self-test save and delete, history delete): cancelled once its
     headers arrive, seen in the full flow only. Fixed on 14 Nov by not depending on it: the
     self-test card shows what was just saved or deleted (`savedSelfTestSummary`,
-    `removedSelfTestSummary`) until the page's own data arrives, and a history row hides itself
-    once its delete succeeds.
+    `removedSelfTestSummary`) until the page's own data arrives, and the history list drops a row
+    once its delete succeeds (with the empty message when none is left).
   - **The goal step: covered by a fallback, cause not known.** With one call, the navigation to
     `/training?band=…` is still cancelled now and then, always together with a prefetch of a
-    programme card that starts in the same instant. GoalPicker now loads the page again in full
-    if the new goal is not on screen 3 seconds after the save (owner, 14 Nov 2026); the run
-    prints a `NOTE goal:` line each time that happens.
+    programme card that starts in the same instant. GoalPicker runs the navigation in a React
+    transition; once it has ended and the new goal is still not on screen after 1.5 s, the page
+    is loaded again in full (owner, 14 Nov 2026). While the navigation is on its way, however
+    slow, nothing reloads: the run's slow-connection step holds `/training` data for 5 s and
+    fails on any full load. The run prints a `NOTE goal:` line each time the fallback fires.
   - Rates in the full flow. Before the fix: 5 of 20 runs (13 Nov), 4 of 10 and 1 of 12 (14 Nov),
     across the goal, schedule, session, self-test and history steps. After the fix (20 runs, 14
     Nov): 14 passed every step; the other 6 failed only the goal step; schedule, session,
-    self-test and history did not fail once. With the goal fallback (20 runs, 14 Nov): 20 of 20
-    passed every step; the fallback reload was needed in 4.
+    self-test and history did not fail once. With a first, timer-only goal fallback (20 runs,
+    14 Nov): 20 of 20 passed every step; the reload was needed in 4.
 - On the not-found check: `notFound()` under the root `loading.tsx` answers 200 with a noindex
   meta, not 404 (known, low priority).

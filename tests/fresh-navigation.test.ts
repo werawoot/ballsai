@@ -35,8 +35,21 @@ function sources(dir: string): string[] {
 
 describe('client code', () => {
   it('never calls router.refresh() right after router.replace() or router.push()', () => {
-    const offenders = [...sources('app'), ...sources('components')].filter(file =>
-      /router\.(replace|push)\([^\n]*\)[;\s]*\n\s*router\.refresh\(\)/.test(readFileSync(file, 'utf8')))
+    // Same line or next lines, with await/void, blank lines or comments between: a refresh within
+    // the same statement block as the navigation (no closing brace in between).
+    const pair = /router\.(replace|push)\((?:[^{}]|\{[^{}]*\})*?router\.refresh\(\)/
+    const offenders = [...sources('app'), ...sources('components'), ...sources('lib')]
+      .filter(file => !file.endsWith('fresh-navigation.ts')) // the helper's own comment names the pair
+      .filter(file => pair.test(readFileSync(file, 'utf8')))
     expect(offenders).toEqual([])
+  })
+
+  it('the scan catches the pair however it is written', () => {
+    const pair = /router\.(replace|push)\((?:[^{}]|\{[^{}]*\})*?router\.refresh\(\)/
+    expect(pair.test("router.replace(x); router.refresh()")).toBe(true)
+    expect(pair.test("router.push(`/a/${id}`)\n  // fresh data\n\n  await router.refresh()")).toBe(true)
+    expect(pair.test("router.replace(\n  next,\n)\nvoid router.refresh()")).toBe(true)
+    // A refresh in another branch, after the block closes, is not the pair.
+    expect(pair.test("if (a) { router.push('/x'); return }\n}\nfunction b() { router.refresh() }")).toBe(false)
   })
 })
