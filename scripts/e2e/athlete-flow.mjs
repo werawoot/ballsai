@@ -116,8 +116,15 @@ let secondTab = null
 await step('choose a goal on /training', async () => {
   await go('/training?tab=programs')
   await audit('/training (goal step)')
+  // GoalPicker loads the page again in full when Next cancels the navigation after the save
+  // (docs/e2e.md); count it, so the run says how often that happened, not just that it passed.
+  let fullLoads = 0
+  const countLoad = request => { if (request.resourceType() === 'document') fullLoads += 1 }
+  page.on('request', countLoad)
   await tap(page.getByRole('button', { name: /คุมบอลดีขึ้น/ }))
   await visible('เป้าหมาย: คุมบอลดีขึ้น')
+  page.off('request', countLoad)
+  if (fullLoads) console.log('NOTE goal: the navigation after the save was cancelled; the picker loaded the page again in full')
   const goals = state.tables.athlete_training_goals.filter(row => row.athlete_id === E2E_ATHLETE && row.ended_at == null)
   expect(goals.length === 1 && goals[0].goal_key === 'ball_control', `current goals: ${JSON.stringify(goals)}`)
   await audit('/training (programmes)')
