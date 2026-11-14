@@ -22,12 +22,12 @@ import { COACH_VERIFIED_FIELD_LABEL, POSITION_LABELS, attestationKey, type Coach
 //     tests/coach-attestation-state.test.ts and tests/pending-action.test.ts.
 //   * Real interaction remains a manual Closed Beta gate until a DOM/browser test is
 //     added. Do not read a passing suite here as proof that a button works.
-const html = (component: Parameters<typeof createElement>[0], props: Record<string, unknown>) =>
+const html = (component: unknown, props: Record<string, unknown>) =>
   renderToStaticMarkup(createElement(NextIntlClientProvider as never, { locale: 'th', messages: th, timeZone: 'Asia/Bangkok' } as never,
     createElement(component as never, props as never)))
 
 const view = (over: Partial<CoachTeamView> = {}): CoachTeamView => ({
-  id: 'team-1', name: 'ทีมลุงหมี', status: 'draft', tournamentName: 'BDS Cup',
+  id: 'team-1', name: 'ทีมลุงหมี', status: 'draft', tournamentName: 'BDS Cup', isClub: false,
   members: [
     { id: 'm1', athleteId: 'a1', name: 'น้องเอ', status: 'accepted', invitedAt: '2026-09-01T00:00:00Z' },
     { id: 'm2', athleteId: 'a2', name: 'น้องบี', status: 'pending', invitedAt: '2026-09-02T00:00:00Z' },
@@ -52,6 +52,13 @@ describe('CoachTeamOverview rendering', () => {
 
   it('says plainly what the organizer does, not the coach', () => {
     expect(html(CoachTeamOverview, { teams: [view()] })).toContain('บันทึกผลการแข่งขัน')
+  })
+
+  it('shows a club team (own team, no tournament) as a club, without the organizer fold', () => {
+    const markup = html(CoachTeamOverview, { teams: [view({ isClub: true, tournamentName: null })], canKeep: true })
+    expect(markup).toContain('is-club')
+    expect(markup).not.toContain('บันทึกผลการแข่งขัน')
+    expect(markup).not.toContain('tm-keep')
   })
 
   it('reports a failed roster query instead of rendering an empty roster', () => {

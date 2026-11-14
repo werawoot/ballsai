@@ -11,12 +11,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit -p .",
     "test": "vitest run",
     "security:rls": "node scripts/rls-smoke-test.mjs",
     "verify:production": "node scripts/verify-production-config.mjs",
     "smoke:public": "node scripts/smoke-public-pages.mjs",
     "test:concurrency": "node scripts/concurrency-checks.mjs",
-    "test:load": "node scripts/load-test.mjs"
+    "test:load": "node scripts/load-test.mjs",
+    "test:e2e": "node scripts/e2e/athlete-flow.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -36,6 +38,7 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "axe-core": "4.11.1",
     "eslint": "^9",
     "eslint-config-next": "^16.3.6",
     "tailwindcss": "^4.3.3",

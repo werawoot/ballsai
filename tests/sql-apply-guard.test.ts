@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-// @ts-expect-error plain ESM script without types
 import { planSqlApply } from '../scripts/sql-apply-guard.mjs'
 
 // The guard of the "Apply SQL" workflow: which file may run where, with which checks.

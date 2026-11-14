@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-// @ts-expect-error -- plain .mjs module shared with the Node script
 import { assertMayRun, judgeAtMostOne, judgeOneWinner, judgeSameAnswer, tally, unchangedDrawPayload } from '../scripts/concurrency-plan.mjs'
 
 const win = (body: unknown = 'id-1') => ({ status: 200, body })

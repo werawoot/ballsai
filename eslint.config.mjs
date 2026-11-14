@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     // Local development uses its own Next build directory so production builds
     // cannot overwrite a running dev server. Like `.next`, it is generated.
     ".next-dev/**",
+    ".next-e2e/**",
+    ".e2e-out/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

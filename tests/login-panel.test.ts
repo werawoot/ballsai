@@ -17,7 +17,7 @@ import { readFileSync } from 'node:fs'
 // no number that is not a real result. The consent row keeps its place and its exact words
 // (AGENTS.md rule 9 and the owner's rule: consent wording is never edited).
 const render = (locale: 'th' | 'en' = 'th', adminEntry = false) => renderToStaticMarkup(createElement(NextIntlClientProvider as ComponentType<never>, { locale, messages: locale === 'th' ? th : en, timeZone: 'Asia/Bangkok' } as never,
-  createElement(LoginPanel as ComponentType<never>, { adminEntry, nextPath: '/profile' })))
+  createElement(LoginPanel, { adminEntry, nextPath: '/profile' })))
 const text = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ')
 
 describe('/login in Thai', () => {
@@ -166,7 +166,7 @@ describe('/login consent row on each screen that signs in', () => {
     expect(html).toContain('href="/privacy"')
   })
   it('names the missing tick for screen readers', () => {
-    const html = renderToStaticMarkup(createElement(LoginConsent, { accepted: false, missing: true, missingText: 'x', onChange: () => {} }, 'terms'))
+    const html = renderToStaticMarkup(createElement(LoginConsent as ComponentType<never>, { accepted: false, missing: true, missingText: 'x', onChange: () => {} } as never, 'terms'))
     expect(html).toContain('id="login-consent"')
     expect(html).toContain('role="alert"')
     expect(html).toContain('aria-invalid="true"')
@@ -199,7 +199,7 @@ describe('/login photo half: the journey and the sports', () => {
 // (real counts from lib/home-stats loginStats), and the picture is the owner's own.
 describe('/login stats bar and picture', () => {
   const withStats = (stats: unknown[]) => text(renderToStaticMarkup(createElement(NextIntlClientProvider as ComponentType<never>, { locale: 'th', messages: th, timeZone: 'Asia/Bangkok' } as never,
-    createElement(LoginPanel as ComponentType<never>, { adminEntry: false, nextPath: '/profile', stats }))))
+    createElement(LoginPanel, { adminEntry: false, nextPath: '/profile', stats: stats as never }))))
   it('shows the provinces alone when that is all it was given, and no invented totals', () => {
     const page = withStats([{ key: 'provinces', value: 77 }])
     expect(page).toContain('เปิดให้ทุกจังหวัด 77')

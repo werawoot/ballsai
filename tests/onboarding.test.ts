@@ -67,7 +67,7 @@ describe('what the six choices save', () => {
 
 describe('the first /welcome screen', () => {
   const render = (locale: 'th' | 'en') => renderToStaticMarkup(createElement(NextIntlClientProvider as ComponentType<never>, { locale, messages: locale === 'th' ? th : en, timeZone: 'Asia/Bangkok' } as never,
-    createElement(OnboardingFlow as ComponentType<never>, { email: 'nong.new@example.com', nextPath: '/profile', userId: 'u1' })))
+    createElement(OnboardingFlow, { email: 'nong.new@example.com', nextPath: '/profile', userId: 'u1' })))
   const text = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ')
 
   it('asks "คุณเป็นใคร?" with one tap per role and no next button', () => {

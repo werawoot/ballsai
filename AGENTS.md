@@ -137,10 +137,13 @@ deployments, emails, or commits without the required user approval.
 
 ```bash
 npm run lint
+npm run typecheck
+npm test
 npm run build
 ```
 
-CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs both on every push, plus
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs all four on every push (typecheck
+covers the tests too, which `next build` does not), plus
 `node --check` on the scripts in `scripts/`, a gitleaks scan of the whole git history and
 a production dependency audit that fails on any high/critical advisory without a dated
 entry in `security/audit-exceptions.json` ([docs/security-checks.md](docs/security-checks.md)).
