@@ -109,3 +109,21 @@ export function selfTestReminder(rows: SelfTestResult[], birthDate: string | nul
   if (due.length === 0) return null
   return { due, firstTime: !rows.some(row => open.includes(row.test_key)) }
 }
+
+// What a card shows straight after the athlete saves or deletes a result, built from the card's
+// own two rows and what was just done. The page's refresh brings the full data, but Next sometimes
+// cancels it (docs/e2e.md, 14 Nov 2026), and the athlete must still see their result. `today` is
+// the day record_my_self_test returned (Bangkok).
+const cardRows = (card: SelfTestSummary) => [card.previous, card.latest].filter((row): row is SelfTestResult => row !== null)
+
+export function savedSelfTestSummary(card: SelfTestSummary, key: SelfTestKey, value: number, today: string): SelfTestSummary {
+  const rows = cardRows(card).filter(row => row.test_date !== today)
+  return selfTestSummary([...rows, { test_key: key, value, test_date: today }], key, today)
+}
+
+// After a delete the card knows only its two rows; the one before the remaining row (and so the
+// change) waits for the page's own data.
+export function removedSelfTestSummary(card: SelfTestSummary, key: SelfTestKey, removed: string, today: string): SelfTestSummary {
+  const rest = cardRows(card).filter(row => row.test_date !== removed)
+  return { ...selfTestSummary(rest, key, today), previous: null, change: null }
+}

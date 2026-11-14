@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Activity, CalendarCheck, Target, Zap, type LucideIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import { goFresh } from '@/lib/fresh-navigation'
 import { TRAINING_GOALS, type TrainingGoal } from '@/lib/training/goals'
 
 // The goal step before choosing a programme (ADR-015, owner 8 Nov 2026). One tap saves it
@@ -27,8 +28,7 @@ export default function GoalPicker({ current, returnTo }: { current: TrainingGoa
       setError((rpcError.message ?? '').includes('TRAINING_GOAL_NO_ATHLETE') ? t('needAthlete') : t('failed'))
       return
     }
-    router.replace(returnTo)
-    router.refresh()
+    goFresh(router, returnTo)
   }
 
   return <section className="tg-goal-pick" aria-labelledby="tg-goal-title" data-return={returnTo}>

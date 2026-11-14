@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { isCalendarDay, selfTestHistoryPath, selfTestReminder, parseSelfTestValue, selfTestSummary, selfTestsEnabled, testsFor, SELF_TEST_KEYS, SELF_TESTS } from '@/lib/training/self-tests'
+import { isCalendarDay, removedSelfTestSummary, savedSelfTestSummary, selfTestHistoryPath, selfTestReminder, parseSelfTestValue, selfTestSummary, selfTestsEnabled, testsFor, SELF_TEST_KEYS, SELF_TESTS } from '@/lib/training/self-tests'
 
 // The three self-tests (owner, 10 and 11 Nov 2026; docs/research/self-tests-2026-11-10.md).
 
@@ -85,5 +85,27 @@ describe('self-tests', () => {
     expect(selfTestReminder(recent, '2016-01-01', today)).toEqual({ due: ['plank'], firstTime: false })
     // Nothing due: no reminder at all.
     expect(selfTestReminder([...recent, { test_key: 'plank', value: 41, test_date: '2026-11-13' }], '2016-01-01', today)).toBeNull()
+  })
+
+  // What the card shows right after a save or a delete, from what the athlete just did, so it never
+  // waits on the page's refresh, which Next sometimes cancels (docs/e2e.md, 14 Nov 2026).
+  it('show a saved result at once: a first result, a new one, and a correction the same day', () => {
+    const first = savedSelfTestSummary(selfTestSummary([], 'juggling', '2026-11-14'), 'juggling', 12, '2026-11-14')
+    expect(first).toMatchObject({ latest: { value: 12, test_date: '2026-11-14' }, previous: null, change: null, testedToday: true, due: false, nextDue: '2026-12-12' })
+    const before = selfTestSummary([{ test_key: 'juggling', value: 20, test_date: '2026-10-01' }], 'juggling', '2026-11-14')
+    const next = savedSelfTestSummary(before, 'juggling', 25, '2026-11-14')
+    expect(next).toMatchObject({ latest: { value: 25 }, previous: { value: 20 }, change: 5, testedToday: true })
+    const corrected = savedSelfTestSummary(next, 'juggling', 18, '2026-11-14')
+    expect(corrected).toMatchObject({ latest: { value: 18, test_date: '2026-11-14' }, previous: { value: 20 }, change: -2 })
+  })
+
+  it("show a deleted result gone at once: today's row goes, the one before becomes the latest", () => {
+    const rows = [{ test_key: 'plank' as const, value: 40, test_date: '2026-10-01' }, { test_key: 'plank' as const, value: 55, test_date: '2026-11-14' }]
+    const after = removedSelfTestSummary(selfTestSummary(rows, 'plank', '2026-11-14'), 'plank', '2026-11-14', '2026-11-14')
+    expect(after).toMatchObject({ latest: { value: 40, test_date: '2026-10-01' }, testedToday: false, due: true })
+    // Older results are not on the card, so the change waits for the page's own data.
+    expect(after.change).toBeNull()
+    const none = removedSelfTestSummary(selfTestSummary([rows[1]], 'plank', '2026-11-14'), 'plank', '2026-11-14', '2026-11-14')
+    expect(none).toMatchObject({ latest: null, testedToday: false, due: true })
   })
 })

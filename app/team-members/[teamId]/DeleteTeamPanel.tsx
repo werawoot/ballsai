@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { goFresh } from '@/lib/fresh-navigation'
 import { useTranslations } from 'next-intl'
 import { Trash2 } from 'lucide-react'
 import { useApiErrorText } from '@/lib/use-api-error-text'
@@ -28,8 +29,7 @@ export default function DeleteTeamPanel({ teamId, teamName }: { teamId: string; 
     }).catch(() => null)
     const body = response ? await response.json().catch(() => null) : null
     if (!response?.ok) { setBusy(false); setError(errorText(body, t('deleteFailed'))); return }
-    router.push('/team-members')
-    router.refresh()
+    goFresh(router, '/team-members', 'push')
   }
 
   return <details className="tp-danger">

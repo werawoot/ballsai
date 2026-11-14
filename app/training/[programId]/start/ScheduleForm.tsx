@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { Bed } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import { goFresh } from '@/lib/fresh-navigation'
 import { MIN_REST_DAYS, checkWeekdays, sessionDates } from '@/lib/training/schedule'
 import { tournamentDateRange } from '@/lib/tournament-dates'
 import type { Band } from '@/lib/training/content'
@@ -36,8 +37,7 @@ export default function ScheduleForm({ programId, band, perWeek, weeks, minutes,
       setSaving(false)
       if (insertError.code !== '23505') return
     }
-    router.replace(`/training/${programId}/session`)
-    router.refresh()
+    goFresh(router, `/training/${programId}/session`)
   }
 
   return <>
