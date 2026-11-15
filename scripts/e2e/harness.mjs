@@ -15,6 +15,10 @@ export async function createHarness() {
   mkdirSync(OUT, { recursive: true })
 
   const state = createState()
+  // One made-up client address per run, shared by every browser of the run. The app's rate limit
+  // counts per address (lib/rate-limit.ts), so runs back to back in one server no longer add up
+  // to its limit, while the requests of one run still count together.
+  const clientAddress = `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${1 + Math.floor(Math.random() * 250)}`
   const mock = await startMock(state)
   const browser = await chromium.launch()
   const pageErrors = []
@@ -51,7 +55,7 @@ export async function createHarness() {
       const expiresAt = Math.floor(Date.now() / 1000) + 3600
       const accessToken = `${base64url({ alg: 'HS256', typ: 'JWT' })}.${base64url({ sub: userId, exp: expiresAt, role: 'authenticated', aud: 'authenticated' })}.e2e`
       const session = { access_token: accessToken, refresh_token: 'e2e', token_type: 'bearer', expires_in: 3600, expires_at: expiresAt, user: state.users[userId] }
-      const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'th-TH' })
+      const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'th-TH', extraHTTPHeaders: { 'x-real-ip': clientAddress } })
       await context.addCookies([{ name: 'sb-localhost-auth-token', value: 'base64-' + Buffer.from(JSON.stringify(session)).toString('base64url'), domain: 'localhost', path: '/' }])
       const tab = h.watch(await context.newPage())
       if (!h.main) { h.main = tab; h.current = tab }

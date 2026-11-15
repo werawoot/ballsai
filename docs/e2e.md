@@ -55,6 +55,12 @@ length, draft roster, the typed name, one pending request per athlete) and raise
 notifications are not modelled. The team pages' lists that are empty in this flow (events, news,
 plans, notes, minutes, staff, entries) answer an empty list.
 
+Each run uses its own made-up client address (`x-real-ip`), because the app's rate limit counts
+per address: ten runs back to back from one address tripped the join limit on the tenth ("ทำรายการ
+บ่อยเกินไป"), which is the limit working. It also showed that every API limit is per IP only, so
+people sharing one address (a venue's Wi-Fi, carrier NAT) share one allowance: task T65 in
+docs/national-readiness.md.
+
 First runs (15 Nov 2026) found and fixed two accessibility errors on the team page:
 - The LINE share button had white text on LINE green at 2.26:1. It now has navy text on the
   same green, at 8.3:1.
