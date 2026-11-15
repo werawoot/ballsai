@@ -37,11 +37,12 @@ async function signedIn(userId) {
 // Full page loads the test did not ask for: a navigation fallback in the app loaded the page
 // (lib/use-fresh-navigation.ts, GoalPicker). Each step reports how many, so a run says how often
 // a fallback fired, not only that it passed.
-let fallbackLoads = 0
+let documentLoads = 0
 let expectedLoads = 0
 function watch(tab) {
   tab.on('pageerror', error => pageErrors.push(error.message))
-  tab.on('request', request => { if (request.resourceType() === 'document' && request.frame() === tab.mainFrame()) fallbackLoads += 1 })
+  // A server redirect's later hops are the same load, not a new one.
+  tab.on('request', request => { if (request.resourceType() === 'document' && request.frame() === tab.mainFrame() && !request.redirectedFrom()) documentLoads += 1 })
   tab.on('dialog', dialog => dialog.accept())
   // Page data the browser asks the app for (React Server Component requests), for the failure report.
   tab.on('request', request => { if (request.headers().rsc) state.trace.push([Date.now(), 'browser', request.headers()['next-router-prefetch'] ? 'prefetch' : 'rsc', new URL(request.url()).pathname]) })
@@ -57,12 +58,12 @@ let current = page
 const results = []
 async function step(name, run) {
   const startedAt = Date.now()
-  const loadsBefore = fallbackLoads - expectedLoads
+  const loadsBefore = documentLoads - expectedLoads
   try {
     await run()
     results.push({ name, ok: true })
     console.log(`PASS ${name}`)
-    const fired = fallbackLoads - expectedLoads - loadsBefore
+    const fired = documentLoads - expectedLoads - loadsBefore
     if (fired > 0) console.log(`NOTE ${name}: a navigation fallback loaded the page in full (${fired})`)
   } catch (error) {
     results.push({ name, ok: false })
@@ -280,7 +281,7 @@ await step('on a slow connection the goal change waits for the page, with no ear
   await page.route('**/training?*', slow)
   const loads = []
   let clickedAt = 0
-  const countLoad = request => { if (request.resourceType() === 'document') loads.push(Date.now() - clickedAt) }
+  const countLoad = request => { if (request.resourceType() === 'document' && !request.redirectedFrom()) loads.push(Date.now() - clickedAt) }
   page.on('request', countLoad)
   try {
     clickedAt = Date.now()
@@ -295,7 +296,6 @@ await step('on a slow connection the goal change waits for the page, with no ear
   }
   const early = loads.filter(at => at < 5500)
   expect(early.length === 0, `the picker loaded the page again in full at ${early.join(', ')} ms, while the navigation was on its way`)
-  if (loads.length) console.log(`NOTE slow goal: the navigation was still pending at the ceiling; the picker loaded the page again in full at ${loads.join(', ')} ms`)
 })
 
 await step('no script error in the browser', async () => {

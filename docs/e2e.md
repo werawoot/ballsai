@@ -89,7 +89,7 @@ Open:
   phone. Ways to close it need the owner's choice (a form that works without JavaScript, or
   buttons shown as not ready until hydrated).
 - **A page sometimes did not update after a write** (diagnosed 14 Nov 2026; fixed on every
-  step, with a fallback on the goal step, whose cause is still unknown). The write always reaches the data; what fails is the page's fresh-data request (React Server
+  step, with a fallback on the four navigations after a write, whose cause is still unknown). The write always reaches the data; what fails is the page's fresh-data request (React Server
   Component request), which Next cancels (`net::ERR_ABORTED`), so the screen keeps the old data
   until the next reload. Evidence from the step traces (a failed step prints every request in
   order; see "Reading a failure" above):
@@ -108,12 +108,21 @@ Open:
     has arrived: seen on the goal step (always beside a programme-card prefetch) and on the
     schedule step (3 of 20 runs on 15 Nov, the session page's data in, no move). Every
     navigate-after-write now has a fallback (owner, 14 and 15 Nov 2026): it runs in a React
-    transition, and if the browser is still not there 1.5 s after the navigation ended, or 6 s
-    after it started, the destination is loaded in full (`lib/use-fresh-navigation.ts` for the
-    schedule, team delete and onboarding; GoalPicker checks the goal on screen with the same
-    timings). A navigation still on its way under 6 s never reloads: the run's slow-connection
-    step holds `/training` data for 4 s and fails on a full load before the ceiling. The run
-    prints a `NOTE <step>:` line each time a fallback fires.
+    transition, and if the browser is still on the page it left 1.5 s after the navigation ended,
+    or 6 s after it started, the destination is loaded in full, once
+    (`lib/use-fresh-navigation.ts` for the schedule, team delete and onboarding; GoalPicker checks
+    the goal on screen with the same timings). "Left the page" rather than "reached the
+    destination", so a server redirect elsewhere (an organizer sent on from `/organizer-request`
+    to `/dashboard`) is not reloaded. A navigation still on its way under 6 s never reloads: the
+    run's slow-connection step holds `/training` data for 4 s and fails on a full load before the
+    ceiling. The run prints a `NOTE <step>:` line each time a fallback fires (a full load the test
+    did not ask for; a server redirect's hops are not counted).
+  - **What the slow step's ceiling loads are.** When the fallback fires on the slow step, the
+    page's data had arrived at 4 s and Next had still not moved by 6 s: a stuck navigation, the
+    same as on the other steps, not a slow one cut short. With a 12 s ceiling (data at 5 s) the
+    same step was still stuck at 12 s in 8 of 20 runs.
+  - **Not walked by the e2e run:** the team delete (coach pages) and onboarding fallbacks; they
+    share the hook the schedule step proves.
   - Rates in the full flow (20 runs each unless said):
     - Before any fix: 5 of 20 runs (13 Nov), 4 of 10 and 1 of 12 (14 Nov) failed a step (goal,
       schedule, session, self-test or history).

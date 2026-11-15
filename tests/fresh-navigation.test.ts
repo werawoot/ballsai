@@ -1,7 +1,7 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs'
-import { join } from 'node:path'
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { freshNavigation } from '@/lib/fresh-navigation'
+import { sourceFiles } from './source-files'
 
 // After a write, one router call, never router.replace()/push() followed by router.refresh():
 // Next cancels both requests now and then and the page keeps old data (docs/e2e.md, 14 Nov 2026,
@@ -26,29 +26,26 @@ describe('freshNavigation', () => {
   })
 })
 
-function sources(dir: string): string[] {
-  return readdirSync(dir).flatMap(name => {
-    const path = join(dir, name)
-    return statSync(path).isDirectory() ? sources(path) : /\.tsx?$/.test(name) ? [path] : []
-  })
-}
+// The pair on one router object, whatever it is called: its navigation, then its refresh in the
+// same statement block (no closing brace between), on the same line or later, comments allowed.
+const PAIR = /\b(\w+)\.(replace|push)\((?:[^{}]|\{[^{}]*\})*?\b\1\.refresh\(\)/
 
 describe('client code', () => {
   it('never calls router.refresh() right after router.replace() or router.push()', () => {
-    // Same line or next lines, with await/void, blank lines or comments between: a refresh within
-    // the same statement block as the navigation (no closing brace in between).
-    const pair = /router\.(replace|push)\((?:[^{}]|\{[^{}]*\})*?router\.refresh\(\)/
-    const offenders = [...sources('app'), ...sources('components'), ...sources('lib')]
+    const offenders = sourceFiles(['app', 'components', 'lib'])
       .filter(file => !file.endsWith('fresh-navigation.ts')) // the helper's own comment names the pair
-      .filter(file => pair.test(readFileSync(file, 'utf8')))
+      .filter(file => PAIR.test(readFileSync(file, 'utf8')))
     expect(offenders).toEqual([])
   })
 
   it('the scan catches the pair however it is written', () => {
-    const pair = /router\.(replace|push)\((?:[^{}]|\{[^{}]*\})*?router\.refresh\(\)/
+    const pair = PAIR
     expect(pair.test("router.replace(x); router.refresh()")).toBe(true)
     expect(pair.test("router.push(`/a/${id}`)\n  // fresh data\n\n  await router.refresh()")).toBe(true)
     expect(pair.test("router.replace(\n  next,\n)\nvoid router.refresh()")).toBe(true)
+    expect(pair.test("r.push('/x'); r.refresh()")).toBe(true)
+    // Two different routers are not the pair.
+    expect(pair.test("a.push('/x'); b.refresh()")).toBe(false)
     // A refresh in another branch, after the block closes, is not the pair.
     expect(pair.test("if (a) { router.push('/x'); return }\n}\nfunction b() { router.refresh() }")).toBe(false)
   })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Activity, CalendarCheck, Target, Zap, type LucideIcon } from 'lucide-react'
@@ -12,7 +12,12 @@ import { TRAINING_GOALS, type TrainingGoal } from '@/lib/training/goals'
 // The goal step before choosing a programme (ADR-015, owner 8 Nov 2026). One tap saves it
 // through set_my_training_goal (SQL95), which ends the old goal and starts the new one at once.
 
-const reloadPage = (href: string) => window.location.replace(new URL(href, window.location.href).href)
+// Once only: both timers may come due, and a second load would restart the first.
+const reloadPage = (href: string, done: { current: boolean }) => {
+  if (done.current) return
+  done.current = true
+  window.location.replace(new URL(href, window.location.href).href)
+}
 
 const ICONS: Record<TrainingGoal, LucideIcon> = { ball_control: Target, strength: Activity, speed: Zap, consistency: CalendarCheck }
 
@@ -33,14 +38,15 @@ export default function GoalPicker({ current, returnTo }: { current: TrainingGoa
   // (useFreshNavigation), since the destination can be the page already open.
   const [pending, setPending] = useState<TrainingGoal | null>(null)
   const [navigating, startNavigation] = useTransition()
+  const reloaded = useRef(false)
   useEffect(() => {
     if (!pending || pending === current || navigating) return
-    const timer = window.setTimeout(() => reloadPage(returnTo), FRESH_NAVIGATION_GRACE_MS)
+    const timer = window.setTimeout(() => reloadPage(returnTo, reloaded), FRESH_NAVIGATION_GRACE_MS)
     return () => window.clearTimeout(timer)
   }, [pending, current, navigating, returnTo])
   useEffect(() => {
     if (!pending || pending === current) return
-    const timer = window.setTimeout(() => reloadPage(returnTo), FRESH_NAVIGATION_CEILING_MS)
+    const timer = window.setTimeout(() => reloadPage(returnTo, reloaded), FRESH_NAVIGATION_CEILING_MS)
     return () => window.clearTimeout(timer)
   }, [pending, current, returnTo])
 
