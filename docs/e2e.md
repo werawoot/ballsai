@@ -55,6 +55,8 @@ length, draft roster, the typed name, one pending request per athlete) and raise
 notifications are not modelled. The team pages' lists that are empty in this flow (events, news,
 plans, notes, minutes, staff, entries) answer an empty list.
 
+Ten runs back to back on 15 Nov 2026, after the fixes below: 10 of 10 passed every step.
+
 Each run uses its own made-up client address (`x-real-ip`), because the app's rate limit counts
 per address: ten runs back to back from one address tripped the join limit on the tenth ("ทำรายการ
 บ่อยเกินไป"), which is the limit working. It also showed that every API limit is per IP only, so
