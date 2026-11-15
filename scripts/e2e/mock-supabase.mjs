@@ -46,6 +46,8 @@ export function createState({ athleteBirthDate = '2012-03-04' } = {}) {
     },
     writes: [],
     unknown: [],
+    // Every request, in order, for the failure report of a step: [ms, 'mock', method, path].
+    trace: [],
   }
 }
 
@@ -188,6 +190,7 @@ export function startMock(state, port = 54399) {
     for await (const chunk of req) raw += chunk
     const body = raw ? JSON.parse(raw) : {}
     const me = caller(state, req)
+    state.trace.push([Date.now(), 'mock', req.method, url.pathname.replace('/rest/v1/', '') + (url.search ? '?' + decodeURIComponent(url.search.slice(1)).slice(0, 80) : '')])
     if (url.pathname === '/auth/v1/user') return me ? send(res, 200, state.users[me]) : send(res, 401, { message: 'invalid token' })
     if (url.pathname.startsWith('/rest/v1/rpc/')) {
       const result = rpc(state, me, url.pathname.slice('/rest/v1/rpc/'.length), body)

@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase'
-import { parseSelfTestValue, selfTestHistoryPath, type SelfTestSpec, type SelfTestSummary } from '@/lib/training/self-tests'
+import { thaiDate } from '@/lib/athlete-private'
+import { parseSelfTestValue, removedSelfTestSummary, savedSelfTestSummary, selfTestHistoryPath, type SelfTestSpec, type SelfTestSummary } from '@/lib/training/self-tests'
 
 // The pain question first, as before a session (SQL63 rule): its answer is never sent anywhere,
 // and on "pain" no test opens. Then one card per test: how to do it, the last result against the
@@ -50,9 +51,14 @@ export default function SelfTestRunner({ cards, locale }: { cards: SelfTestCard[
 }
 
 // Exported for its rendering test (the page reaches it only past the pain question).
-export function TestCard({ card, day }: { card: SelfTestCard; day: (value: string) => string }) {
+export function TestCard({ card: serverCard, day }: { card: SelfTestCard; day: (value: string) => string }) {
   const t = useTranslations('selfTests')
   const router = useRouter()
+  // What the athlete just saved or deleted, shown at once and kept until the page's own data
+  // arrives (a new card object from the server). The refresh after a write is sometimes
+  // cancelled by Next (docs/e2e.md, 14 Nov 2026); the athlete still sees their result.
+  const [local, setLocal] = useState<{ basis: SelfTestCard; summary: SelfTestSummary } | null>(null)
+  const card: SelfTestCard = local && local.basis === serverCard ? { ...serverCard, ...local.summary } : serverCard
   const { spec } = card
   const [value, setValue] = useState(card.testedToday && card.latest ? String(card.latest.value) : '')
   const [state, setState] = useState<SaveState>('idle')
@@ -64,8 +70,10 @@ export function TestCard({ card, day }: { card: SelfTestCard; day: (value: strin
     const number = parseSelfTestValue(spec.key, value)
     if (number === null) { setState('invalid'); return }
     setState('saving')
-    const { error } = await createClient().rpc('record_my_self_test', { p_test: spec.key, p_value: number })
+    const { data, error } = await createClient().rpc('record_my_self_test', { p_test: spec.key, p_value: number })
     if (error) { setState('failed'); return }
+    // record_my_self_test returns the day it saved under (Bangkok).
+    if (typeof data === 'string') setLocal({ basis: serverCard, summary: savedSelfTestSummary(card, spec.key, number, data) })
     setState('saved')
     router.refresh()
   }
@@ -75,6 +83,9 @@ export function TestCard({ card, day }: { card: SelfTestCard; day: (value: strin
     setState('saving')
     const { error } = await createClient().rpc('delete_my_self_test', { p_test: spec.key, p_date: card.latest.test_date })
     if (error) { setState('failed'); return }
+    // The deleted row's own day, and today in Bangkok for when the next test is due (the two
+    // differ if the result was saved before midnight and deleted after it).
+    setLocal({ basis: serverCard, summary: removedSelfTestSummary(card, spec.key, card.latest.test_date, thaiDate(new Date())) })
     setValue('')
     setState('idle')
     router.refresh()

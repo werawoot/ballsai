@@ -34,9 +34,21 @@ async function signedIn(userId) {
   await context.addCookies([{ name: 'sb-localhost-auth-token', value: 'base64-' + Buffer.from(JSON.stringify(session)).toString('base64url'), domain: 'localhost', path: '/' }])
   return watch(await context.newPage())
 }
+// Full page loads the test did not ask for: a navigation fallback in the app loaded the page
+// (lib/use-fresh-navigation.ts, GoalPicker). Each step reports how many, so a run says how often
+// a fallback fired, not only that it passed.
+let documentLoads = 0
+let expectedLoads = 0
 function watch(tab) {
   tab.on('pageerror', error => pageErrors.push(error.message))
+  // A server redirect's later hops are the same load, not a new one.
+  tab.on('request', request => { if (request.resourceType() === 'document' && request.frame() === tab.mainFrame() && !request.redirectedFrom()) documentLoads += 1 })
   tab.on('dialog', dialog => dialog.accept())
+  // Page data the browser asks the app for (React Server Component requests), for the failure report.
+  tab.on('request', request => { if (request.headers().rsc) state.trace.push([Date.now(), 'browser', request.headers()['next-router-prefetch'] ? 'prefetch' : 'rsc', new URL(request.url()).pathname]) })
+  tab.on('requestfinished', request => { if (request.headers().rsc) state.trace.push([Date.now(), 'browser', 'done', new URL(request.url()).pathname]) })
+  tab.on('requestfailed', request => { if (request.headers().rsc) state.trace.push([Date.now(), 'browser', 'aborted', new URL(request.url()).pathname]) })
+  tab.on('response', response => { if (response.request().headers().rsc) state.trace.push([Date.now(), 'browser', 'headers', new URL(response.url()).pathname]) })
   return tab
 }
 
@@ -45,19 +57,25 @@ let current = page
 
 const results = []
 async function step(name, run) {
+  const startedAt = Date.now()
+  const loadsBefore = documentLoads - expectedLoads
   try {
     await run()
     results.push({ name, ok: true })
     console.log(`PASS ${name}`)
+    const fired = documentLoads - expectedLoads - loadsBefore
+    if (fired > 0) console.log(`NOTE ${name}: a navigation fallback loaded the page in full (${fired})`)
   } catch (error) {
     results.push({ name, ok: false })
     const shot = `${OUT}${results.length}-${name.replace(/[^a-z0-9]+/gi, '-').slice(0, 40)}.png`
     await current.screenshot({ path: shot, fullPage: true }).catch(() => {})
     console.log(`FAIL ${name}: ${String(error.message).split('\n')[0]}\n     screenshot: ${shot}`)
+    // What happened during the step, in order, so a failure can be told apart from a slow page.
+    for (const [at, source, kind, path] of state.trace.filter(entry => entry[0] >= startedAt).slice(-60)) console.log(`     ${String(at - startedAt).padStart(6)}ms ${source.padEnd(7)} ${kind.padEnd(8)} ${path}`)
   }
 }
 const expect = (ok, message) => { if (!ok) throw new Error(message) }
-const go = async (path, tab = page) => { current = tab; await tab.goto(BASE + path, { waitUntil: 'networkidle' }) }
+const go = async (path, tab = page) => { current = tab; expectedLoads += 1; await tab.goto(BASE + path, { waitUntil: 'networkidle' }) }
 const visible = (text, tab = page) => tab.getByText(text).first().waitFor({ timeout: 10000 })
 const mainText = async (tab = page) => (await tab.locator('main').innerText()).replace(/\s+/g, ' ')
 const onceCount = /(?<![\d,])1 ครั้ง/ // "1 ครั้ง", not "11 ครั้ง"
@@ -143,6 +161,7 @@ await step('set the schedule with today in it', async () => {
 await step('answer the pain question, tick every drill, and finish', async () => {
   // The same session open in a second tab before the first finishes it (finished in the next step).
   secondTab = watch(await page.context().newPage())
+  expectedLoads += 1
   await secondTab.goto(BASE + `${programPath}/session`, { waitUntil: 'networkidle' })
   current = page
   await audit(`${programPath}/session (pain question)`)
@@ -244,12 +263,39 @@ await step('the guardian sees the child\'s progress, read only', async () => {
 })
 
 await step('another child\'s id is a not-found page for the guardian', async () => {
+  expectedLoads += 1
   const response = await guardian.goto(`${BASE}/guardian/33333333-3333-4333-8333-333333333333/progress`, { waitUntil: 'networkidle' })
   const text = await guardian.locator('body').innerText()
   expect(!text.includes('ทดสอบ อัตโนมัติ'), 'the page named a child')
   // notFound() under the root loading.tsx streams a 200 with a noindex meta (known, low priority).
   const noindex = await guardian.locator('meta[name="robots"][content*="noindex"]').count()
   expect(response.status() === 404 || noindex > 0, `status ${response.status()} without noindex`)
+})
+
+await step('on a slow connection the goal change waits for the page, with no early full load', async () => {
+  // The page data for /training takes 4 seconds, longer than GoalPicker's grace: the picker must
+  // wait for the navigation still on its way instead of reloading over it (review, 14 Nov 2026).
+  // A full load is allowed only at the ceiling (6 s), when a navigation still pending is stuck.
+  const slow = async route => { if (route.request().headers().rsc && !route.request().headers()['next-router-prefetch']) await new Promise(resolve => setTimeout(resolve, 4000)); await route.continue() }
+  await go('/training?tab=programs&goal=change')
+  await page.route('**/training?*', slow)
+  const loads = []
+  let clickedAt = 0
+  const countLoad = request => { if (request.resourceType() === 'document' && !request.redirectedFrom()) loads.push(Date.now() - clickedAt) }
+  page.on('request', countLoad)
+  try {
+    clickedAt = Date.now()
+    await tap(page.getByRole('button', { name: /แข็งแรงขึ้น/ }))
+    await page.getByText('เป้าหมาย: แข็งแรงขึ้น ลดการบาดเจ็บ').first().waitFor({ timeout: 20000 }).catch(async () => {
+      const busy = await page.locator('.tg-goal-pick').getAttribute('aria-busy').catch(() => 'no picker')
+      throw new Error(`no new goal after 20 s; url ${new URL(page.url()).search}, picker aria-busy ${busy}, full loads at ${loads.join(', ') || 'none'} ms`)
+    })
+  } finally {
+    page.off('request', countLoad)
+    await page.unroute('**/training?*', slow)
+  }
+  const early = loads.filter(at => at < 5500)
+  expect(early.length === 0, `the picker loaded the page again in full at ${early.join(', ')} ms, while the navigation was on its way`)
 })
 
 await step('no script error in the browser', async () => {

@@ -23,7 +23,9 @@ What it walks, in order:
 10. Signed in as the child's accepted guardian, `/guardian/[athleteId]/progress` shows the child's
     name, "1 ครั้ง" and the goal, with no form, input or button (the language switch aside).
 11. The same guardian on another child's id gets a not-found page that names no child.
-12. No script error in any tab, and the app asked the mock for nothing it does not know.
+12. On a slow connection (page data held 4 s), changing the goal waits for the page with no
+    full load before the 6 s ceiling.
+13. No script error in any tab, and the app asked the mock for nothing it does not know.
 
 Clicks wait until React has attached its handlers to the element, then click once; a click that
 does nothing fails. On every page axe-core runs the WCAG 2.1 A/AA rules once animations that end
@@ -65,26 +67,76 @@ another host. The mock listens on port 54399.
 - Not in CI: CI only checks the two scripts' syntax. Running it needs a build plus a browser.
 - Coach and organizer pages are not walked.
 
-## Findings (13 Nov 2026)
+## Reading a failure
+
+A failed step prints a screenshot path and every request during the step, in order, with its
+time from the step's start: `mock` lines are reads and writes the app made, `browser` lines are
+the page-data requests (`rsc`, `prefetch`) and what became of them (`headers`, `done`,
+`aborted`).
+
+## Findings (13 and 14 Nov 2026)
 
 Fixed:
 
 - Red text on the dark Matchday training pages (the drill timer, the source link) was 2.95:1. It
   now uses the Matchday text red `--ui-red-text` `#ff5a5a` (5.5:1 or more).
 
-Open, not fixed:
+Open:
 
 - **A tap before hydration does nothing.** Right after `/training` loads, a tap on a goal comes
   before React has attached its handlers and is lost, with no sign (seen in 1 of 5 runs before
   the test waited for hydration). It applies to every client button, and lasts longer on a slow
   phone. Ways to close it need the owner's choice (a form that works without JavaScript, or
   buttons shown as not ready until hydrated).
-- **A page sometimes does not update after a write.** In 5 of 20 full runs one step failed the
-  same way: the write reached the data, but the page did not show it (the self-test card still
-  "ยังไม่เคยทดสอบ" after "บันทึกแล้ว"; the history row still listed after its delete; the
-  schedule not moving on to the session). Each write is followed by `router.refresh()`
-  (and `router.replace()` for the schedule). Run alone, the self-test save did it 0 times in 15.
-  Not yet known whether it is the app or the load of this test container; to be diagnosed before
-  the test can gate CI.
+- **A page sometimes did not update after a write** (diagnosed 14 Nov 2026; fixed on every
+  step, with a fallback on the four navigations after a write, whose cause is still unknown). The write always reaches the data; what fails is the page's fresh-data request (React Server
+  Component request), which Next cancels (`net::ERR_ABORTED`), so the screen keeps the old data
+  until the next reload. Evidence from the step traces (a failed step prints every request in
+  order; see "Reading a failure" above):
+  - **`router.replace()` then `router.refresh()` at once** (GoalPicker, ScheduleForm,
+    DeleteTeamPanel, OnboardingFlow): both requests went out together and both were cancelled.
+    Reproduced alone on the goal tap: 2 of 30 and 1 of 40. Fixed on 14 Nov: one call through
+    `goFresh()` (`lib/fresh-navigation.ts`), and `tests/fresh-navigation.test.ts` fails if the
+    pair comes back.
+  - **`router.refresh()` alone** (self-test save and delete, history delete): cancelled once its
+    headers arrive, seen in the full flow only. Fixed on 14 Nov by not depending on it: the
+    self-test card shows what was just saved or deleted (`savedSelfTestSummary`,
+    `removedSelfTestSummary`) until the page's own data arrives, and the history list drops a row
+    once its delete succeeds (with the empty message when none is left).
+  - **A navigation after a write can still stick: covered by a fallback, cause not known.** With
+    one call, Next still cancels the navigation now and then, or leaves it pending after its data
+    has arrived: seen on the goal step (always beside a programme-card prefetch) and on the
+    schedule step (3 of 20 runs on 15 Nov, the session page's data in, no move). Every
+    navigate-after-write now has a fallback (owner, 14 and 15 Nov 2026): it runs in a React
+    transition, and if the browser is still on the page it left 1.5 s after the navigation ended,
+    or 6 s after it started, the destination is loaded in full, once
+    (`lib/use-fresh-navigation.ts` for the schedule, team delete and onboarding; GoalPicker checks
+    the goal on screen with the same timings). "Left the page" rather than "reached the
+    destination", so a server redirect elsewhere (an organizer sent on from `/organizer-request`
+    to `/dashboard`) is not reloaded. A navigation still on its way under 6 s never reloads: the
+    run's slow-connection step holds `/training` data for 4 s and fails on a full load before the
+    ceiling. The run prints a `NOTE <step>:` line each time a fallback fires (a full load the test
+    did not ask for; a server redirect's hops are not counted).
+  - **What the slow step's ceiling loads are.** When the fallback fires on the slow step, the
+    page's data had arrived at 4 s and Next had still not moved by 6 s: a stuck navigation, the
+    same as on the other steps, not a slow one cut short. With a 12 s ceiling (data at 5 s) the
+    same step was still stuck at 12 s in 8 of 20 runs.
+  - **Not walked by the e2e run:** the team delete (coach pages) and onboarding fallbacks; they
+    share the hook the schedule step proves.
+  - Rates in the full flow (20 runs each unless said):
+    - Before any fix: 5 of 20 runs (13 Nov), 4 of 10 and 1 of 12 (14 Nov) failed a step (goal,
+      schedule, session, self-test or history).
+    - One router call and local display (14 Nov): 14 of 20 passed every step; the other 6 failed
+      only the goal step.
+    - Goal fallback on a 3 s timer (14 Nov): 20 of 20; reload in 4.
+    - Goal fallback with a 12 s ceiling (14 Nov): 11 of 20; the stuck navigation outlasted the
+      test's 10 s wait. Dropped.
+    - Goal fallback with a 6 s ceiling (15 Nov): 17 of 20; the 3 failures were the schedule step.
+    - Fallback on every navigate-after-write, 6 s ceiling (15 Nov): **20 of 20 passed every
+      step**. The fallback fired on the goal step in 6 runs, the schedule step in 5, and at the
+      ceiling of the slow-connection step in 9 (never before it).
+    - The same after the review fixes (arrival on leaving the page, once-only load, redirect
+      hops not counted; 15 Nov): **20 of 20 passed every step**. The fallback fired on the goal
+      step in 7 runs, the schedule step in none, and at the slow step's ceiling in 5.
 - On the not-found check: `notFound()` under the root `loading.tsx` answers 200 with a noindex
   meta, not 404 (known, low priority).

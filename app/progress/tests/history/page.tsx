@@ -7,7 +7,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { fetchSelfTestHistory } from '@/lib/training/self-test-data'
 import { isCalendarDay, isSelfTestKey, selfTestHistoryPath, selfTestsEnabled, SELF_TESTS } from '@/lib/training/self-tests'
 import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
-import DeleteResultButton from './DeleteResultButton'
+import HistoryList from './HistoryList'
 import '../../../glass.css'
 import '../../../profile/profile.css'
 
@@ -48,17 +48,8 @@ export default async function SelfTestHistoryPage(props: { searchParams: Promise
             ? <p className="pf-card-desc" role="status">{t('needAthlete')}</p>
             : !history.ready
             ? <p className="pf-note" role="status">{t('notReady')}</p>
-            : history.rows.length === 0
-              ? <p className="pf-card-desc">{cursor ? t('history.noOlder') : t('none')}</p>
-              : <ul className="pf-list st-history">
-                {history.rows.map(row => <li key={row.test_date}>
-                  <div className="pf-list-main">
-                    <b>{row.value} {unit}</b>
-                    <span>{day(row.test_date)}</span>
-                  </div>
-                  <DeleteResultButton test={test} date={row.test_date} dateLabel={day(row.test_date)} />
-                </li>)}
-              </ul>}
+            : <HistoryList test={test} emptyText={cursor ? t('history.noOlder') : t('none')}
+              items={history.rows.map(row => ({ date: row.test_date, dateLabel: day(row.test_date), valueLabel: `${row.value} ${unit}` }))} />}
           <p className="st-history-nav">
             {cursor && <Link href={selfTestHistoryPath(test)} className="pf-btn pf-btn-ghost"><ChevronLeft size={16} aria-hidden="true" />{t('history.newest')}</Link>}
             {history.hasMore && last && <Link href={selfTestHistoryPath(test, last.test_date)} className="pf-btn pf-btn-ghost">{t('history.older')}</Link>}
