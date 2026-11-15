@@ -135,6 +135,9 @@ Open:
     - Fallback on every navigate-after-write, 6 s ceiling (15 Nov): **20 of 20 passed every
       step**. The fallback fired on the goal step in 6 runs, the schedule step in 5, and at the
       ceiling of the slow-connection step in 9 (never before it).
+    - The same after the review fixes (arrival on leaving the page, once-only load, redirect
+      hops not counted; 15 Nov): **20 of 20 passed every step**. The fallback fired on the goal
+      step in 7 runs, the schedule step in none, and at the slow step's ceiling in 5.
 - **A form sent before hydration put its fields in the URL** (found and fixed 15 Nov 2026). A
   form handled by `onSubmit` with no method is sent by the browser as a GET to the same page when tapped before React has hydrated, so every named field lands in the
   URL (history, server logs, Referer): an organization invite's email, a venue's phone number
