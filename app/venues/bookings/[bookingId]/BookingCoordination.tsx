@@ -27,11 +27,11 @@ export default function BookingCoordination({ bookingId, status, userId, rows, s
         {row.target_snapshot&&<p>เวลาใหม่ {formatVenueBookingDateTime(row.target_snapshot.starts_at)} · ราคาใหม่ ฿{row.target_snapshot.price_baht}</p>}
         {status==='confirmed'&&row.status==='pending'&&row.actor_id!==userId&&<div><button disabled={busy} onClick={()=>void send('accept',{proposalId:row.id})}>{busy?'กำลังบันทึก…':'ตกลงตามข้อเสนอ'}</button> <button disabled={busy} onClick={()=>void send('reject',{proposalId:row.id})}>ไม่ตกลง</button></div>}</>}
     </article>)}
-    {['pending','confirmed'].includes(status)&&<form method="post" onSubmit={e=>submit(e,'message')}><label>ข้อความ<textarea required minLength={3} maxLength={600} name="text" /></label><button disabled={busy} aria-busy={busy}>{busy?'กำลังส่ง…':'ส่งข้อความ'}</button></form>}
+    {['pending','confirmed'].includes(status)&&<form onSubmit={e=>submit(e,'message')}><label>ข้อความ<textarea required minLength={3} maxLength={600} name="text" /></label><button disabled={busy} aria-busy={busy}>{busy?'กำลังส่ง…':'ส่งข้อความ'}</button></form>}
     {status==='confirmed'&&!rows.some(r=>r.kind!=='message'&&r.status==='pending')&&<>
       <p>การจองเดิมยังคงอยู่จนกว่าอีกฝ่ายจะตอบรับ เวลาใหม่ยังไม่ถูกกันไว้ หากมีผู้อื่นจองก่อน ต้องเลือกใหม่ การคืนเงินต้องตกลงกันนอกระบบ</p>
-      <form method="post" onSubmit={e=>submit(e,'propose_move')}><label>เวลาใหม่<select required name="slotId"><option value="">เลือกช่วงเวลา</option>{slots.map(s=><option key={s.id} value={s.id}>{s.name} · {formatVenueBookingDateTime(s.starts_at)} · ฿{s.price_baht}</option>)}</select></label><label>เหตุผล<textarea required minLength={3} maxLength={600} name="reason" /></label><button disabled={busy||!slots.length}>เสนอเลื่อน</button></form>
-      <form method="post" onSubmit={e=>submit(e,'propose_cancel')}><label>เหตุผลขอยกเลิก<textarea required minLength={3} maxLength={600} name="reason" /></label><button disabled={busy}>เสนอขอยกเลิก</button></form>
+      <form onSubmit={e=>submit(e,'propose_move')}><label>เวลาใหม่<select required name="slotId"><option value="">เลือกช่วงเวลา</option>{slots.map(s=><option key={s.id} value={s.id}>{s.name} · {formatVenueBookingDateTime(s.starts_at)} · ฿{s.price_baht}</option>)}</select></label><label>เหตุผล<textarea required minLength={3} maxLength={600} name="reason" /></label><button disabled={busy||!slots.length}>เสนอเลื่อน</button></form>
+      <form onSubmit={e=>submit(e,'propose_cancel')}><label>เหตุผลขอยกเลิก<textarea required minLength={3} maxLength={600} name="reason" /></label><button disabled={busy}>เสนอขอยกเลิก</button></form>
     </>}
   </section>
 }

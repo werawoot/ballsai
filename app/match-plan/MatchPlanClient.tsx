@@ -250,7 +250,7 @@ export default function MatchPlanClient({ teams, head, toolbar, pagination, empt
     { label: t('checkSaved'), done: upToDate },
   ]
 
-  const addForm = (idSuffix: string) => <form method="post" className="mp-add" onSubmit={event => { event.preventDefault(); addDraftPlayer() }}>
+  const addForm = (idSuffix: string) => <form className="mp-add" onSubmit={event => { event.preventDefault(); addDraftPlayer() }}>
     <label className="mp-sr" htmlFor={`mp-add-${idSuffix}`}>{t('addName')}</label>
     <input id={`mp-add-${idSuffix}`} value={newName} maxLength={DRAFT_NAME_MAX} onChange={event => setNewName(event.target.value)} placeholder={t('addNamePlaceholder')} autoComplete="off" />
     <button type="submit" className="mp-btn mp-btn-green" disabled={!newName.trim() || draftPlayers.length >= DRAFT_PLAYERS_MAX}><Plus size={16} aria-hidden="true" />{t('add')}</button>

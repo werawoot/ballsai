@@ -53,7 +53,7 @@ export default function VenueOperations({ venues, bookings }: { venues: OwnerVen
         <strong>{s.label}</strong><p>{formatVenueBookingTime(s.starts_at)}–{formatVenueBookingTime(s.ends_at)}</p>
         <p>฿{s.price_baht} · {s.status === 'open' ? 'ว่าง' : s.status === 'reserved' ? 'มีคำขอ/จองแล้ว' : 'ปิด'}</p>
         {s.status === 'open' && <details><summary>แก้ไขเวลา/ราคา (เฉพาะเวลาอนาคต)</summary>
-          <form method="post" onSubmit={e => void submit(e,'slot',s.id)}>
+          <form onSubmit={e => void submit(e,'slot',s.id)}>
             <label>เริ่ม<input required type="datetime-local" name="startsAt" defaultValue={local(s.starts_at)} /></label>
             <label>สิ้นสุด<input required type="datetime-local" name="endsAt" defaultValue={local(s.ends_at)} /></label>
             <label>ราคา<input required type="number" name="priceBaht" min="0" max="100000" defaultValue={s.price_baht} /></label>{save}
@@ -64,7 +64,7 @@ export default function VenueOperations({ venues, bookings }: { venues: OwnerVen
       {day && day >= oldestDay && !slots.some(s => local(s.starts_at).startsWith(day)) && <p>ไม่มีช่วงเวลาในวันนี้</p>}
     </div>
     {venues.map(v => <details key={v.id}><summary>แก้ข้อมูลสนาม · {v.name}</summary>
-      <form method="post" onSubmit={e => void submit(e,'venue',v.id)}>
+      <form onSubmit={e => void submit(e,'venue',v.id)}>
         <label>ชื่อสนาม<input required name="name" minLength={2} maxLength={120} defaultValue={v.name} /></label>
         <label>จังหวัด<input required name="province" minLength={2} maxLength={100} defaultValue={v.province} /></label>
         <label>ที่อยู่<input required name="address" minLength={5} maxLength={500} defaultValue={v.address} /></label>
@@ -72,14 +72,14 @@ export default function VenueOperations({ venues, bookings }: { venues: OwnerVen
         <label>รายละเอียด<textarea name="description" maxLength={1200} defaultValue={v.description} /></label>{save}
       </form></details>)}
     {courts.map(c => <details key={c.id}><summary>{c.venueName} · {c.name} — จัดการคอร์ท/เปิดเวลารายสัปดาห์</summary>
-      <form method="post" onSubmit={e => void submit(e,'court',c.id)}>
+      <form onSubmit={e => void submit(e,'court',c.id)}>
         <label>ชื่อคอร์ท<input required name="name" maxLength={100} defaultValue={c.name} /></label>
         <label>กีฬา<select name="sport" defaultValue={c.sport}><option value="football">ฟุตบอล</option><option value="futsal">ฟุตซอล</option></select></label>
         <label>พื้นสนาม<input name="surface" maxLength={80} defaultValue={c.surface} /></label>
         <label>จำนวนผู้เล่น<input type="number" min="1" max="200" name="capacity" defaultValue={c.capacity ?? ''} /></label>{save}
       </form>
       <h3>เปิดช่วงเวลาเดิมทุกสัปดาห์</h3><p>สร้างล่วงหน้าได้ 1–12 สัปดาห์ ถ้ามีเวลาทับซ้อนจะไม่บันทึกทั้งชุด</p>
-      <form method="post" onSubmit={e => void submit(e,'bulk_slots',c.id)}>
+      <form onSubmit={e => void submit(e,'bulk_slots',c.id)}>
         <label>เริ่มครั้งแรก<input required type="datetime-local" name="startsAt" /></label>
         <label>สิ้นสุดครั้งแรก<input required type="datetime-local" name="endsAt" /></label>
         <label>ราคา/ครั้ง<input required type="number" name="priceBaht" min="0" max="100000" /></label>

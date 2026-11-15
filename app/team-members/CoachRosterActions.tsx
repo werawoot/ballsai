@@ -79,7 +79,7 @@ export default function CoachRosterActions({
         {/* Removing someone always names a reason from a short list (ADR-011); the athlete
             and their guardians see it. Only "other" takes a short note. */}
         {askingConfirm
-          ? <form method="post"
+          ? <form
               onSubmit={event => {
                 event.preventDefault()
                 const form = new FormData(event.currentTarget)
@@ -128,7 +128,7 @@ export default function CoachRosterActions({
 
         {/* Offered only when the gate allows it: an accepted member with no pending or
             accepted attestation. A declined one may be attested again. */}
-        {gate.canSubmit && <form method="post"
+        {gate.canSubmit && <form
           onSubmit={event => {
             event.preventDefault()
             const position = new FormData(event.currentTarget).get('position')
