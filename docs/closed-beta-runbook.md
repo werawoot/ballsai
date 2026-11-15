@@ -96,7 +96,7 @@ the base RLS file leaves permissive.
 | 17 | `sql/17-notifications-v1.sql` | In-app notifications for confirmed match results, newly earned badges, and team status changes; owner-only RLS | 8, 9, 12 |
 | 18 | `sql/18-team-members-v1.sql` | Team membership invites for existing accounts, response flow, and `team_invite` notifications | 17, 3 |
 | 19 | `sql/19-notification-team-member-privilege-hardening-v1.sql` | Restricts notification creation and acknowledgement; routes roster changes only through guarded RPCs | 17, 18 |
-| 20 | `sql/20-tournament-roster-flow-v1.sql` | Tournament-only draft roster: invite/accept before registration, payment guard, and accepted-roster-only match performances | 18, 19, 12 |
+| 20 | `sql/20-tournament-roster-flow-v1.sql` | **Found 15 Nov 2026 (read-only audit through the Supabase connector): on Production, missing on Staging.** Staging lacks `create_tournament_team_safely`, `submit_tournament_team_safely`, `assert_payment_team_is_pending` and `assert_match_performance_roster_member`; the app calls the first two (`app/api/tournaments/[tournamentId]/teams/route.ts`, `app/api/teams/[teamId]/submit/route.ts`), so tournament registration cannot work on Staging until it is applied there (owner approval). No apply date recorded for Production. Tournament-only draft roster: invite/accept before registration, payment guard, and accepted-roster-only match performances | 18, 19, 12 |
 | 21 | `sql/21-guardian-links-v1.sql` | Guardian↔athlete consented account links, private progress access, and database-enforced minor publishing rule | 14, 17, 8 |
 | 22 | `sql/22-guardian-consent-trigger-v1.sql` | Ensures the guardian-link publishing function is invoked on public-profile changes | 21, 14 |
 | 23 | `sql/23-venues-and-bookings-v1.sql` | Venue-owner profiles, one-off court slots, guarded booking requests and owner decisions | 22, 3 |
@@ -342,6 +342,18 @@ to apply them in one paste, or the individual files if you want to go step by st
 four numbered files stay the record of what production looks like.
 
 ---
+
+### Audit: the runbook against the databases
+
+`node scripts/sql-presence-query.mjs` prints one read-only query that lists every table, view,
+function and index created by a file in `sql/` that the database does not have. Run it on both
+projects after any apply and compare with this table.
+
+Run on 15 Nov 2026 (372 objects):
+- **Production:** 11 missing, all expected. SQL30 and SQL32 are pending review. SQL96 waits for
+  the coach. `sql50_default_privilege_probe` is dropped by SQL50 itself.
+- **Staging:** 12 missing. The same 8 for SQL30, SQL32 and SQL50, plus 4 functions of SQL20,
+  which Production has (see row 20).
 
 ## 4. Storage Buckets
 
