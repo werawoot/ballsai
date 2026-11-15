@@ -18,7 +18,7 @@
     "smoke:public": "node scripts/smoke-public-pages.mjs",
     "test:concurrency": "node scripts/concurrency-checks.mjs",
     "test:load": "node scripts/load-test.mjs",
-    "test:e2e": "node scripts/e2e/athlete-flow.mjs"
+    "test:e2e": "node scripts/e2e/athlete-flow.mjs && node scripts/e2e/coach-flow.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

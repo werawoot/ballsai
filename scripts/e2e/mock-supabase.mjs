@@ -16,18 +16,20 @@ import http from 'node:http'
 
 export const E2E_ATHLETE = '11111111-1111-4111-8111-111111111111'
 export const E2E_GUARDIAN = '22222222-2222-4222-8222-222222222222'
+export const E2E_COACH = '44444444-4444-4444-8444-444444444444'
 
 export const bangkokToday = () => new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10)
 
-const TABLES = ['profiles', 'athlete_profiles', 'guardian_links', 'training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests']
+const TABLES = ['profiles', 'athlete_profiles', 'guardian_links', 'training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests', 'teams', 'team_members', 'team_join_links', 'team_join_requests', 'team_staff']
 // Read by the bottom bar (notifications), the training pages (team_members) and the athlete
 // home's fallback reads (app/profile/page.tsx); this athlete has no rows in any of them.
-const EMPTY_BY_DESIGN = new Set(['notifications', 'team_members', 'player_ranks', 'tournaments', 'match_results', 'athlete_highlights', 'athlete_videos', 'athlete_progress', 'player_ratings', 'athlete_xp_events'])
+const EMPTY_BY_DESIGN = new Set(['coach_attestations', 'coach_skill_assessments', 'coach_athlete_notes', 'team_training_plans', 'team_announcements', 'team_events', 'team_match_minutes', 'team_match_minute_entries', 'notifications', 'player_ranks', 'tournaments', 'match_results', 'athlete_highlights', 'athlete_videos', 'athlete_progress', 'player_ratings', 'athlete_xp_events'])
 
 export function createState({ athleteBirthDate = '2012-03-04' } = {}) {
   const users = {
     [E2E_ATHLETE]: { id: E2E_ATHLETE, email: 'e2e-athlete@example.com', aud: 'authenticated', role: 'authenticated' },
     [E2E_GUARDIAN]: { id: E2E_GUARDIAN, email: 'e2e-guardian@example.com', aud: 'authenticated', role: 'authenticated' },
+    [E2E_COACH]: { id: E2E_COACH, email: 'e2e-coach@example.com', aud: 'authenticated', role: 'authenticated' },
   }
   return {
     users,
@@ -35,6 +37,7 @@ export function createState({ athleteBirthDate = '2012-03-04' } = {}) {
       profiles: [
         { id: E2E_ATHLETE, full_name: 'ทดสอบ อัตโนมัติ', role: 'player', onboarding_persona: 'athlete' },
         { id: E2E_GUARDIAN, full_name: 'ผู้ปกครอง ทดสอบ', role: 'player', onboarding_persona: 'guardian' },
+        { id: E2E_COACH, full_name: 'โค้ช ทดสอบ', role: 'player', onboarding_persona: 'coach_organizer', province: 'เชียงใหม่' },
       ],
       athlete_profiles: [{ user_id: E2E_ATHLETE, display_name: 'ทดสอบ อัตโนมัติ', position: 'MF', province: 'กรุงเทพมหานคร', is_public: false, verification_level: 'self', birth_date: athleteBirthDate, guardian_consent_at: '2026-01-01T00:00:00Z' }],
       // The embedded athlete_profiles object stands in for PostgREST's resource embedding.
@@ -43,6 +46,11 @@ export function createState({ athleteBirthDate = '2012-03-04' } = {}) {
       training_checkins: [],
       athlete_training_goals: [],
       athlete_self_tests: [],
+      teams: [],
+      team_members: [],
+      team_join_links: [],
+      team_join_requests: [],
+      team_staff: [],
     },
     writes: [],
     unknown: [],
@@ -158,6 +166,123 @@ function rpc(state, me, name, body) {
       state.writes.push(`delete_self_test:${body.p_test}`)
       return { status: 200, body: before - t.athlete_self_tests.length }
     }
+    // The coach's own team (sql/78 create_my_team, sql/79 delete_my_team, sql/83 join links and
+    // requests, sql/75-76 staff and roster reads). Notifications are not modelled.
+    case 'create_my_team': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const name = String(body.p_name ?? '').trim().replace(/\s+/g, ' ')
+      if (!body.p_team_id) return raise(400, '22023', 'INVALID_TEAM')
+      if (name.length < 2 || name.length > 80) return raise(400, '22023', 'INVALID_TEAM_NAME')
+      const existing = t.teams.find(row => row.id === body.p_team_id)
+      if (existing) return existing.created_by === me ? { status: 200, body: existing.id } : raise(403, '42501', 'NOT_ALLOWED')
+      const profile = t.profiles.find(row => row.id === me)
+      if (!['organizer', 'admin'].includes(profile?.role) && profile?.onboarding_persona !== 'coach_organizer') return raise(403, '42501', 'COACH_ORGANIZER_REQUIRED')
+      if (t.teams.filter(row => row.created_by === me && row.kind === 'club').length >= 20) return raise(400, '22023', 'TOO_MANY_TEAMS')
+      t.teams.push({ id: body.p_team_id, name, members: '', tournament_id: null, created_by: me, status: 'draft', kind: 'club', created_at: new Date().toISOString(), tournaments: null })
+      state.writes.push('team:create')
+      return { status: 200, body: body.p_team_id }
+    }
+    case 'my_team_join_link': case 'update_team_join_link': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const team = t.teams.find(row => row.id === body.p_team_id)
+      if (!team || team.created_by !== me) return raise(403, '42501', 'NOT_ALLOWED')
+      if (team.kind !== 'club') return raise(400, '22023', 'NOT_CLUB_TEAM')
+      const newToken = () => crypto.randomUUID().replace(/-/g, '')
+      let link = t.team_join_links.find(row => row.team_id === team.id)
+      if (!link) { link = { team_id: team.id, token: newToken(), open: true }; t.team_join_links.push(link) }
+      if (name === 'update_team_join_link') {
+        if (body.p_rotate) link.token = newToken()
+        if (typeof body.p_open === 'boolean') link.open = body.p_open
+      }
+      return { status: 200, body: [{ token: link.token, open: link.open }] }
+    }
+    case 'team_join_preview': {
+      const link = /^[0-9a-f]{32}$/.test(String(body.p_token ?? '')) ? t.team_join_links.find(row => row.token === body.p_token) : null
+      const team = link && t.teams.find(row => row.id === link.team_id)
+      if (!team) return { status: 200, body: [] }
+      const coach = t.profiles.find(row => row.id === team.created_by)
+      return { status: 200, body: [{ team_name: team.name, coach_name: coach?.full_name ?? null, province: coach?.province ?? null, open: link.open }] }
+    }
+    case 'request_to_join_team': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const link = /^[0-9a-f]{32}$/.test(String(body.p_token ?? '')) ? t.team_join_links.find(row => row.token === body.p_token) : null
+      if (!link) return raise(400, '22023', 'LINK_NOT_FOUND')
+      const team = t.teams.find(row => row.id === link.team_id)
+      if (!link.open) return raise(409, '55000', 'LINK_CLOSED')
+      if (team.created_by === me) return raise(400, '22023', 'OWN_TEAM')
+      if (team.status !== 'draft') return raise(409, '55000', 'ROSTER_LOCKED')
+      if (!athlete) return raise(400, '22023', 'ATHLETE_PROFILE_REQUIRED')
+      if (!String(athlete.display_name ?? '').trim()) return raise(400, '22023', 'ATHLETE_NAME_REQUIRED')
+      const member = t.team_members.find(row => row.team_id === team.id && row.athlete_id === me)
+      if (member?.status === 'accepted') return { status: 200, body: 'already_member' }
+      if (t.team_join_requests.some(row => row.team_id === team.id && row.athlete_id === me && row.status === 'pending')) return { status: 200, body: 'already_requested' }
+      t.team_join_requests.push({ id: crypto.randomUUID(), team_id: team.id, athlete_id: me, status: 'pending', created_at: new Date().toISOString() })
+      state.writes.push('join:request')
+      return { status: 200, body: 'requested' }
+    }
+    case 'team_join_requests_for': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      if (!t.teams.some(row => row.id === body.p_team_id && row.created_by === me)) return raise(403, '42501', 'NOT_ALLOWED')
+      return { status: 200, body: t.team_join_requests.filter(row => row.team_id === body.p_team_id && row.status === 'pending').map(row => {
+        const profile = t.athlete_profiles.find(item => item.user_id === row.athlete_id)
+        return { request_id: row.id, display_name: profile?.display_name ?? null, athlete_position: profile?.position ?? null, birth_year: profile?.birth_date ? Number(profile.birth_date.slice(0, 4)) : null, created_at: row.created_at }
+      }) }
+    }
+    case 'decide_join_request': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      if (typeof body.p_accept !== 'boolean') return raise(400, '22023', 'INVALID_DECISION')
+      const request = t.team_join_requests.find(row => row.id === body.p_request_id)
+      if (!request) return raise(400, '22023', 'REQUEST_NOT_FOUND')
+      const team = t.teams.find(row => row.id === request.team_id)
+      if (team?.created_by !== me) return raise(403, '42501', 'NOT_ALLOWED')
+      if (request.status !== 'pending') return { status: 200, body: request.status }
+      if (body.p_accept) {
+        if (team.status !== 'draft') return raise(409, '55000', 'ROSTER_LOCKED')
+        const member = t.team_members.find(row => row.team_id === team.id && row.athlete_id === request.athlete_id)
+        if (member) member.status = 'accepted'
+        else t.team_members.push({ id: crypto.randomUUID(), team_id: team.id, athlete_id: request.athlete_id, invited_by: me, status: 'accepted', invited_at: new Date().toISOString(), responded_at: new Date().toISOString() })
+      }
+      request.status = body.p_accept ? 'accepted' : 'declined'
+      state.writes.push(`join:${request.status}`)
+      return { status: 200, body: request.status }
+    }
+    case 'delete_my_team': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const team = t.teams.find(row => row.id === body.p_team_id)
+      if (!team) return { status: 200, body: 'already_gone' }
+      if (team.created_by !== me) return raise(403, '42501', 'NOT_ALLOWED')
+      if (team.status !== 'draft') return raise(409, '55000', 'TEAM_SUBMITTED')
+      const clean = value => String(value ?? '').trim().replace(/\s+/g, ' ')
+      if (clean(body.p_confirm_name) !== clean(team.name)) return raise(400, '22023', 'TEAM_NAME_MISMATCH')
+      for (const table of ['team_members', 'team_join_links', 'team_join_requests', 'team_staff']) t[table] = t[table].filter(row => row.team_id !== team.id)
+      t.teams = t.teams.filter(row => row.id !== team.id)
+      state.writes.push('team:delete')
+      return { status: 200, body: 'deleted' }
+    }
+    case 'team_for_staff': {
+      const team = t.teams.find(row => row.id === body.p_team_id)
+      const staff = team && (team.created_by === me || t.team_staff.some(row => row.team_id === team.id && row.user_id === me && row.status === 'accepted'))
+      return { status: 200, body: staff ? [{ id: team.id, name: team.name, tournament_id: team.tournament_id, tournament_name: null, start_date: null, is_head: team.created_by === me }] : [] }
+    }
+    case 'team_staff_list': {
+      const team = t.teams.find(row => row.id === body.p_team_id)
+      if (!team || team.created_by !== me) return { status: 200, body: [] }
+      const head = t.profiles.find(row => row.id === team.created_by)
+      return { status: 200, body: [{ id: null, user_id: team.created_by, name: head?.full_name ?? '', email: null, status: 'accepted', is_head: true, is_me: true }] }
+    }
+    case 'team_roster_names': {
+      const ids = Array.isArray(body.p_team_ids) ? body.p_team_ids : []
+      return { status: 200, body: t.team_members.filter(row => ids.includes(row.team_id) && ['pending', 'accepted'].includes(row.status) && t.teams.find(team => team.id === row.team_id)?.created_by === me).map(row => {
+        const profile = t.athlete_profiles.find(item => item.user_id === row.athlete_id)
+        return { team_id: row.team_id, athlete_id: row.athlete_id, display_name: profile?.display_name ?? null, position: profile?.position ?? null }
+      }) }
+    }
+    // Lists the team pages read that are empty in these flows (no events, news, plans, notes,
+    // minutes, staff or tournament entries). Each one's own rules are not modelled.
+    case 'my_entry_rosters': case 'my_upcoming_team_events': case 'my_children_team_memberships':
+    case 'my_team_announcements': case 'my_team_training_plans': case 'my_coach_notes':
+    case 'my_match_minutes': case 'my_staff_teams': case 'my_team_staff':
+      return { status: 200, body: [] }
     default:
       state.unknown.push(`rpc ${name}`)
       return raise(501, 'E2E_UNKNOWN', `the test double has no function ${name}`)

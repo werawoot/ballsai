@@ -34,6 +34,33 @@ minor findings are printed, not failed. Text over a photo or a gradient cannot b
 ("incomplete"); the run prints how many such elements it saw (60 on 13 Nov 2026), and those need a
 person's eye.
 
+## The coach flow
+
+`scripts/e2e/coach-flow.mjs` (owner, 15 Nov 2026) walks a coach's own team, on the same harness
+(`scripts/e2e/harness.mjs`) and mock:
+
+1. A coach makes a team with no tournament (`create_my_team`); one club team row, and the page
+   moves to it.
+2. The team page shows the team, "no requests yet" and a join link (`my_team_join_link`).
+3. Signed in as the athlete, the link's page shows the team; "ขอเข้าทีม" writes one pending
+   request. Asking again writes nothing.
+4. The coach sees the request and accepts it; the athlete is an accepted member and the request
+   is closed.
+5. The coach deletes the team: the confirm button stays off until the team's name is typed,
+   then the team and its members, link and requests are gone and the page moves to
+   `/team-members`.
+
+The mock's team functions check what sql/78, sql/79 and sql/83 check (owner, persona, name
+length, draft roster, the typed name, one pending request per athlete) and raise the same codes;
+notifications are not modelled. The team pages' lists that are empty in this flow (events, news,
+plans, notes, minutes, staff, entries) answer an empty list.
+
+First runs (15 Nov 2026) found and fixed two accessibility errors on the team page:
+- The LINE share button had white text on LINE green at 2.26:1. It now has navy text on the
+  same green, at 8.3:1.
+- The roster table scrolls sideways and could not be reached by keyboard. It is now a focusable,
+  named region.
+
 ## How faithful the mock is
 
 - `set_my_training_goal`, `record_my_self_test` and `delete_my_self_test` check what sql/95 and
@@ -65,7 +92,7 @@ another host. The mock listens on port 54399.
 ## Limits
 
 - Not in CI: CI only checks the two scripts' syntax. Running it needs a build plus a browser.
-- Coach and organizer pages are not walked.
+- Organizer and admin pages are not walked.
 
 ## Reading a failure
 

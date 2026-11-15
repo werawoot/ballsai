@@ -8,115 +8,14 @@
 //   again → the guardian's view of the child, and a not-found for a child who is not theirs.
 // On every page it also runs axe-core (WCAG 2.1 A/AA rules) and fails on serious or critical
 // findings. It writes nothing outside the mock's memory. See docs/e2e.md.
-import { readFileSync, mkdirSync } from 'node:fs'
-import { createRequire } from 'node:module'
-import { createState, startMock, bangkokToday, E2E_ATHLETE, E2E_GUARDIAN } from './mock-supabase.mjs'
+import { bangkokToday, E2E_ATHLETE, E2E_GUARDIAN } from './mock-supabase.mjs'
+import { createHarness } from './harness.mjs'
 
-const BASE = process.env.E2E_BASE_URL || 'http://localhost:3100'
-const OUT = process.env.E2E_OUT || new URL('../../.e2e-out/', import.meta.url).pathname
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
-const require = createRequire(import.meta.url)
-const AXE = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8')
-mkdirSync(OUT, { recursive: true })
-
-const state = createState()
-const mock = await startMock(state)
-const browser = await chromium.launch()
-const pageErrors = []
-
-const base64url = value => Buffer.from(JSON.stringify(value)).toString('base64url')
-// A browser signed in as one of the mock's users: the @supabase/ssr session cookie, unsigned.
-async function signedIn(userId) {
-  const expiresAt = Math.floor(Date.now() / 1000) + 3600
-  const accessToken = `${base64url({ alg: 'HS256', typ: 'JWT' })}.${base64url({ sub: userId, exp: expiresAt, role: 'authenticated', aud: 'authenticated' })}.e2e`
-  const session = { access_token: accessToken, refresh_token: 'e2e', token_type: 'bearer', expires_in: 3600, expires_at: expiresAt, user: state.users[userId] }
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'th-TH' })
-  await context.addCookies([{ name: 'sb-localhost-auth-token', value: 'base64-' + Buffer.from(JSON.stringify(session)).toString('base64url'), domain: 'localhost', path: '/' }])
-  return watch(await context.newPage())
-}
-// Full page loads the test did not ask for: a navigation fallback in the app loaded the page
-// (lib/use-fresh-navigation.ts, GoalPicker). Each step reports how many, so a run says how often
-// a fallback fired, not only that it passed.
-let documentLoads = 0
-let expectedLoads = 0
-function watch(tab) {
-  tab.on('pageerror', error => pageErrors.push(`${new URL(tab.url()).pathname}: ${error.message.slice(0, 160)}`))
-  // A server redirect's later hops are the same load, not a new one.
-  tab.on('request', request => { if (request.resourceType() === 'document' && request.frame() === tab.mainFrame() && !request.redirectedFrom()) documentLoads += 1 })
-  tab.on('dialog', dialog => dialog.accept())
-  // Page data the browser asks the app for (React Server Component requests), for the failure report.
-  tab.on('request', request => { if (request.headers().rsc) state.trace.push([Date.now(), 'browser', request.headers()['next-router-prefetch'] ? 'prefetch' : 'rsc', new URL(request.url()).pathname]) })
-  tab.on('requestfinished', request => { if (request.headers().rsc) state.trace.push([Date.now(), 'browser', 'done', new URL(request.url()).pathname]) })
-  tab.on('requestfailed', request => { if (request.headers().rsc) state.trace.push([Date.now(), 'browser', 'aborted', new URL(request.url()).pathname]) })
-  tab.on('response', response => { if (response.request().headers().rsc) state.trace.push([Date.now(), 'browser', 'headers', new URL(response.url()).pathname]) })
-  return tab
-}
-
-const page = await signedIn(E2E_ATHLETE)
-let current = page
-
-const results = []
-async function step(name, run) {
-  const startedAt = Date.now()
-  const loadsBefore = documentLoads - expectedLoads
-  try {
-    await run()
-    results.push({ name, ok: true })
-    console.log(`PASS ${name}`)
-    const fired = documentLoads - expectedLoads - loadsBefore
-    if (fired > 0) console.log(`NOTE ${name}: a navigation fallback loaded the page in full (${fired})`)
-  } catch (error) {
-    results.push({ name, ok: false })
-    const shot = `${OUT}${results.length}-${name.replace(/[^a-z0-9]+/gi, '-').slice(0, 40)}.png`
-    await current.screenshot({ path: shot, fullPage: true }).catch(() => {})
-    console.log(`FAIL ${name}: ${String(error.message).split('\n')[0]}\n     screenshot: ${shot}`)
-    // What happened during the step, in order, so a failure can be told apart from a slow page.
-    for (const [at, source, kind, path] of state.trace.filter(entry => entry[0] >= startedAt).slice(-60)) console.log(`     ${String(at - startedAt).padStart(6)}ms ${source.padEnd(7)} ${kind.padEnd(8)} ${path}`)
-  }
-}
-const expect = (ok, message) => { if (!ok) throw new Error(message) }
-const go = async (path, tab = page) => { current = tab; expectedLoads += 1; await tab.goto(BASE + path, { waitUntil: 'networkidle' }) }
-const visible = (text, tab = page) => tab.getByText(text).first().waitFor({ timeout: 10000 })
-const mainText = async (tab = page) => (await tab.locator('main').innerText()).replace(/\s+/g, ' ')
+const h = await createHarness()
+const { state, step, expect, go, visible, mainText, tap, audit, BASE } = h
+const page = await h.signedIn(E2E_ATHLETE)
 const onceCount = /(?<![\d,])1 ครั้ง/ // "1 ครั้ง", not "11 ครั้ง"
 
-// Click only once React has attached its handlers to the element. A tap before that does nothing
-// (an open finding, docs/e2e.md); the test waits for hydration rather than clicking twice, so a
-// click that still does nothing fails.
-async function tap(locator) {
-  await locator.waitFor({ timeout: 10000 })
-  await locator.evaluate(element => new Promise((resolve, reject) => {
-    const started = Date.now()
-    const check = () => Object.keys(element).some(key => key.startsWith('__reactProps')) ? resolve() : Date.now() - started > 10000 ? reject(new Error('never hydrated')) : setTimeout(check, 50)
-    check()
-  }))
-  await locator.click()
-}
-
-const a11y = []
-let contrastUnmeasured = 0
-async function audit(label, tab = page) {
-  // Judge the settled page, not a frame of a fade: after a client-side move between a glass page
-  // and a Matchday page the bottom bar's colours ease over .18s (globals.css), and a frame caught
-  // mid-way reads as low contrast (measured: it settles by itself). Endless animations are left
-  // out of the wait, and the wait is capped at 2 seconds.
-  await tab.waitForTimeout(400)
-  await tab.evaluate(() => Promise.race([
-    Promise.all(document.getAnimations().filter(item => item.effect?.getComputedTiming().endTime !== Infinity).map(item => item.finished.catch(() => {}))),
-    new Promise(resolve => setTimeout(resolve, 2000)),
-  ]))
-  await tab.addScriptTag({ content: AXE })
-  const found = await tab.evaluate(async () => {
-    const report = await window.axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] } })
-    return {
-      violations: report.violations.map(item => ({ id: item.id, impact: item.impact, help: item.help, nodes: item.nodes.length, target: item.nodes[0]?.target?.join(' '), detail: item.nodes[0]?.any?.[0]?.message ?? '' })),
-      // Text over a photo or a gradient: axe cannot measure it and lists it as "incomplete".
-      unmeasured: report.incomplete.filter(item => item.id === 'color-contrast').reduce((sum, item) => sum + item.nodes.length, 0),
-    }
-  })
-  contrastUnmeasured += found.unmeasured
-  for (const item of found.violations) a11y.push({ page: label, ...item })
-}
 
 const todayWeekday = (new Date(Date.parse(`${bangkokToday()}T00:00:00Z`)).getUTCDay() + 6) % 7
 const daysAgo = days => new Date(Date.parse(`${bangkokToday()}T00:00:00Z`) - days * 864e5).toISOString().slice(0, 10)
@@ -160,10 +59,10 @@ await step('set the schedule with today in it', async () => {
 
 await step('answer the pain question, tick every drill, and finish', async () => {
   // The same session open in a second tab before the first finishes it (finished in the next step).
-  secondTab = watch(await page.context().newPage())
-  expectedLoads += 1
+  secondTab = h.watch(await page.context().newPage())
+  h.expectLoad()
   await secondTab.goto(BASE + `${programPath}/session`, { waitUntil: 'networkidle' })
-  current = page
+  h.focus(page)
   await audit(`${programPath}/session (pain question)`)
   await tap(page.getByRole('button', { name: 'ไม่เจ็บ เริ่มซ้อม' }))
   await audit(`${programPath}/session (drills)`)
@@ -178,7 +77,7 @@ await step('answer the pain question, tick every drill, and finish', async () =>
 })
 
 await step('finishing the same session in the other tab keeps one check-in', async () => {
-  current = secondTab
+  h.focus(secondTab)
   await tap(secondTab.getByRole('button', { name: 'ไม่เจ็บ เริ่มซ้อม' }))
   const ticks = secondTab.locator('button.tr-tick')
   for (let index = 0, count = await ticks.count(); index < count; index++) await tap(ticks.nth(index))
@@ -249,7 +148,7 @@ await step('the home asks again only for the test four weeks old', async () => {
   expect(text.includes('ถึงเวลาทดสอบแล้ว') && text.includes('แบบทดสอบตัวเอง 1 อย่าง'), `reminder says: ${text}`)
 })
 
-const guardian = await signedIn(E2E_GUARDIAN)
+const guardian = await h.signedIn(E2E_GUARDIAN)
 
 await step('the guardian sees the child\'s progress, read only', async () => {
   await go(`/guardian/${E2E_ATHLETE}/progress`, guardian)
@@ -263,7 +162,7 @@ await step('the guardian sees the child\'s progress, read only', async () => {
 })
 
 await step('another child\'s id is a not-found page for the guardian', async () => {
-  expectedLoads += 1
+  h.expectLoad()
   const response = await guardian.goto(`${BASE}/guardian/33333333-3333-4333-8333-333333333333/progress`, { waitUntil: 'networkidle' })
   const text = await guardian.locator('body').innerText()
   expect(!text.includes('ทดสอบ อัตโนมัติ'), 'the page named a child')
@@ -297,21 +196,4 @@ await step('on a slow connection the goal change waits for the page, with no ear
   expect(early.length === 0, `the picker loaded the page again in full at ${early.join(', ')} ms, while the navigation was on its way`)
 })
 
-await step('no script error in the browser', async () => {
-  expect(pageErrors.length === 0, pageErrors.join(' | '))
-})
-
-await step('the app asked the mock for nothing it does not know', async () => {
-  expect(state.unknown.length === 0, [...new Set(state.unknown)].join(' | '))
-})
-
-const serious = a11y.filter(item => item.impact === 'serious' || item.impact === 'critical')
-console.log(`\naccessibility (axe-core, WCAG 2.1 A/AA): ${a11y.length} finding(s), ${serious.length} serious or critical; ${contrastUnmeasured} text element(s) over a photo or gradient that axe could not measure`)
-for (const item of a11y) console.log(`  ${item.impact.padEnd(8)} ${item.id} ×${item.nodes} on ${item.page}: ${item.help} [${item.target}]${item.detail ? `\n           ${item.detail}` : ''}`)
-results.push({ name: 'no serious or critical accessibility finding', ok: serious.length === 0 })
-
-await browser.close()
-mock.close()
-const failed = results.filter(item => !item.ok)
-console.log(`\n${results.length - failed.length}/${results.length} passed`)
-process.exit(failed.length ? 1 : 0)
+await h.finish()
