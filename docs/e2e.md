@@ -157,7 +157,9 @@ Open:
   (20 probe runs, then 20 runs of this script). The skeleton is removed (owner, 15 Nov 2026);
   `glass.css` moved to `app/layout.tsx`; 13 pages screenshot before and after differ in 0.00% of
   pixels (screenshots in the session, not in the repo). The fallbacks stay as a guard, and a
-  navigation started by code now shows the bar's progress line (`announceNavigation`).
+  navigation started by code now shows the bar's progress line (`announceNavigation`). Final
+  20 full runs on the reviewed code (15 Nov 2026): 20 of 20 passed every step, no fallback fired,
+  no browser error.
   **Open:** in the 40 runs one React hydration error (#418) showed once, in a probe run that did
   not record the page; the script now records it, and it has not shown again. Cause unknown.
   **Not measured:** without the skeleton a server page sends nothing until its data is ready, so
