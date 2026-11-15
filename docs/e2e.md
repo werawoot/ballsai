@@ -23,8 +23,8 @@ What it walks, in order:
 10. Signed in as the child's accepted guardian, `/guardian/[athleteId]/progress` shows the child's
     name, "1 ครั้ง" and the goal, with no form, input or button (the language switch aside).
 11. The same guardian on another child's id gets a not-found page that names no child.
-12. On a slow connection (page data held 5 s), changing the goal waits for the page with no
-    extra full load.
+12. On a slow connection (page data held 4 s), changing the goal waits for the page with no
+    full load before the 6 s ceiling.
 13. No script error in any tab, and the app asked the mock for nothing it does not know.
 
 Clicks wait until React has attached its handlers to the element, then click once; a click that
@@ -103,20 +103,31 @@ Open:
     self-test card shows what was just saved or deleted (`savedSelfTestSummary`,
     `removedSelfTestSummary`) until the page's own data arrives, and the history list drops a row
     once its delete succeeds (with the empty message when none is left).
-  - **The goal step: covered by a fallback, cause not known.** With one call, the navigation to
-    `/training?band=…` is still cancelled now and then, always together with a prefetch of a
-    programme card that starts in the same instant. GoalPicker runs the navigation in a React
-    transition; once it has ended and the new goal is still not on screen after 1.5 s, the page
-    is loaded again in full (owner, 14 Nov 2026). While the navigation is on its way, however
-    slow, nothing reloads: the run's slow-connection step holds `/training` data for 5 s and
-    fails on any full load. The run prints a `NOTE goal:` line each time the fallback fires.
-  - Rates in the full flow. Before the fix: 5 of 20 runs (13 Nov), 4 of 10 and 1 of 12 (14 Nov),
-    across the goal, schedule, session, self-test and history steps. After the fix (20 runs, 14
-    Nov): 14 passed every step; the other 6 failed only the goal step; schedule, session,
-    self-test and history did not fail once. With a first, timer-only goal fallback (20 runs,
-    14 Nov): 20 of 20 passed every step; the reload was needed in 4.
-- **A form sent before hydration put its fields in the URL** (found and fixed 15 Nov 2026). A form handled by `onSubmit` with no method is sent by the browser as a
-  GET to the same page when tapped before React has hydrated, so every named field lands in the
+  - **A navigation after a write can still stick: covered by a fallback, cause not known.** With
+    one call, Next still cancels the navigation now and then, or leaves it pending after its data
+    has arrived: seen on the goal step (always beside a programme-card prefetch) and on the
+    schedule step (3 of 20 runs on 15 Nov, the session page's data in, no move). Every
+    navigate-after-write now has a fallback (owner, 14 and 15 Nov 2026): it runs in a React
+    transition, and if the browser is still not there 1.5 s after the navigation ended, or 6 s
+    after it started, the destination is loaded in full (`lib/use-fresh-navigation.ts` for the
+    schedule, team delete and onboarding; GoalPicker checks the goal on screen with the same
+    timings). A navigation still on its way under 6 s never reloads: the run's slow-connection
+    step holds `/training` data for 4 s and fails on a full load before the ceiling. The run
+    prints a `NOTE <step>:` line each time a fallback fires.
+  - Rates in the full flow (20 runs each unless said):
+    - Before any fix: 5 of 20 runs (13 Nov), 4 of 10 and 1 of 12 (14 Nov) failed a step (goal,
+      schedule, session, self-test or history).
+    - One router call and local display (14 Nov): 14 of 20 passed every step; the other 6 failed
+      only the goal step.
+    - Goal fallback on a 3 s timer (14 Nov): 20 of 20; reload in 4.
+    - Goal fallback with a 12 s ceiling (14 Nov): 11 of 20; the stuck navigation outlasted the
+      test's 10 s wait. Dropped.
+    - Goal fallback with a 6 s ceiling (15 Nov): 17 of 20; the 3 failures were the schedule step.
+    - Fallback on every navigate-after-write, 6 s ceiling (15 Nov): **20 of 20 passed every
+      step**. The fallback fired on the goal step in 6 runs, the schedule step in 5, and at the
+      ceiling of the slow-connection step in 9 (never before it).
+- **A form sent before hydration put its fields in the URL** (found and fixed 15 Nov 2026). A
+  form handled by `onSubmit` with no method is sent by the browser as a GET to the same page when tapped before React has hydrated, so every named field lands in the
   URL (history, server logs, Referer): an organization invite's email, a venue's phone number
   and address, a coach's note and reason about an athlete, booking messages. All 20 such forms
   now say `method="post"`; their handlers already call `preventDefault()` first, so nothing
