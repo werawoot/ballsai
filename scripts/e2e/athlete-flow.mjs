@@ -40,7 +40,7 @@ async function signedIn(userId) {
 let documentLoads = 0
 let expectedLoads = 0
 function watch(tab) {
-  tab.on('pageerror', error => pageErrors.push(error.message))
+  tab.on('pageerror', error => pageErrors.push(`${new URL(tab.url()).pathname}: ${error.message.slice(0, 160)}`))
   // A server redirect's later hops are the same load, not a new one.
   tab.on('request', request => { if (request.resourceType() === 'document' && request.frame() === tab.mainFrame() && !request.redirectedFrom()) documentLoads += 1 })
   tab.on('dialog', dialog => dialog.accept())

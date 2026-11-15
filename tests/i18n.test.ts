@@ -212,7 +212,6 @@ describe('no new hard-coded Thai', () => {
 
   it.each([
     'app/layout.tsx',
-    'app/loading.tsx',
     'app/tournaments/page.tsx',
     'components/LanguageSwitch.tsx',
     'components/PageHeader.tsx',

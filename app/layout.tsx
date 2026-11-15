@@ -7,6 +7,9 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import SiteNav from '@/components/SiteNav'
 import './globals.css'
 import './ui.css'
+// Every rule is scoped to .gl (ADR-014). Loaded here for every route, as the root route skeleton
+// did until it was removed (owner, 15 Nov 2026; docs/e2e.md).
+import './glass.css'
 
 const sarabun = Sarabun({
   subsets: ['thai', 'latin'],
