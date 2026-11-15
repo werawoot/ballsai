@@ -6,15 +6,11 @@ import { useTranslations } from 'next-intl'
 import { Activity, CalendarCheck, Target, Zap, type LucideIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { goFresh } from '@/lib/fresh-navigation'
+import { FRESH_NAVIGATION_CEILING_MS, FRESH_NAVIGATION_GRACE_MS } from '@/lib/use-fresh-navigation'
 import { TRAINING_GOALS, type TrainingGoal } from '@/lib/training/goals'
 
 // The goal step before choosing a programme (ADR-015, owner 8 Nov 2026). One tap saves it
 // through set_my_training_goal (SQL95), which ends the old goal and starts the new one at once.
-
-// How long after the navigation has ended the picker waits for the new goal before reloading,
-// and how long after the save it waits at most, navigation or not.
-export const GOAL_RELOAD_GRACE_MS = 1500
-export const GOAL_RELOAD_CEILING_MS = 6000
 
 const reloadPage = (href: string) => window.location.replace(new URL(href, window.location.href).href)
 
@@ -33,17 +29,18 @@ export default function GoalPicker({ current, returnTo }: { current: TrainingGoa
   // reloads (a slow phone), unless the new goal is still not on screen at the ceiling, when a
   // pending navigation is taken as stuck (owner, 14 and 15 Nov 2026: 6 s, so a slow phone under
   // 6 s is never loaded twice and a stuck one waits at most about 6 s). On success the page drops the
-  // picker, which clears both timers.
+  // picker, which clears both timers. It watches the goal on screen rather than the URL
+  // (useFreshNavigation), since the destination can be the page already open.
   const [pending, setPending] = useState<TrainingGoal | null>(null)
   const [navigating, startNavigation] = useTransition()
   useEffect(() => {
     if (!pending || pending === current || navigating) return
-    const timer = window.setTimeout(() => reloadPage(returnTo), GOAL_RELOAD_GRACE_MS)
+    const timer = window.setTimeout(() => reloadPage(returnTo), FRESH_NAVIGATION_GRACE_MS)
     return () => window.clearTimeout(timer)
   }, [pending, current, navigating, returnTo])
   useEffect(() => {
     if (!pending || pending === current) return
-    const timer = window.setTimeout(() => reloadPage(returnTo), GOAL_RELOAD_CEILING_MS)
+    const timer = window.setTimeout(() => reloadPage(returnTo), FRESH_NAVIGATION_CEILING_MS)
     return () => window.clearTimeout(timer)
   }, [pending, current, returnTo])
 

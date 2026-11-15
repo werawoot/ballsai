@@ -34,8 +34,14 @@ async function signedIn(userId) {
   await context.addCookies([{ name: 'sb-localhost-auth-token', value: 'base64-' + Buffer.from(JSON.stringify(session)).toString('base64url'), domain: 'localhost', path: '/' }])
   return watch(await context.newPage())
 }
+// Full page loads the test did not ask for: a navigation fallback in the app loaded the page
+// (lib/use-fresh-navigation.ts, GoalPicker). Each step reports how many, so a run says how often
+// a fallback fired, not only that it passed.
+let fallbackLoads = 0
+let expectedLoads = 0
 function watch(tab) {
   tab.on('pageerror', error => pageErrors.push(error.message))
+  tab.on('request', request => { if (request.resourceType() === 'document' && request.frame() === tab.mainFrame()) fallbackLoads += 1 })
   tab.on('dialog', dialog => dialog.accept())
   // Page data the browser asks the app for (React Server Component requests), for the failure report.
   tab.on('request', request => { if (request.headers().rsc) state.trace.push([Date.now(), 'browser', request.headers()['next-router-prefetch'] ? 'prefetch' : 'rsc', new URL(request.url()).pathname]) })
@@ -51,10 +57,13 @@ let current = page
 const results = []
 async function step(name, run) {
   const startedAt = Date.now()
+  const loadsBefore = fallbackLoads - expectedLoads
   try {
     await run()
     results.push({ name, ok: true })
     console.log(`PASS ${name}`)
+    const fired = fallbackLoads - expectedLoads - loadsBefore
+    if (fired > 0) console.log(`NOTE ${name}: a navigation fallback loaded the page in full (${fired})`)
   } catch (error) {
     results.push({ name, ok: false })
     const shot = `${OUT}${results.length}-${name.replace(/[^a-z0-9]+/gi, '-').slice(0, 40)}.png`
@@ -65,7 +74,7 @@ async function step(name, run) {
   }
 }
 const expect = (ok, message) => { if (!ok) throw new Error(message) }
-const go = async (path, tab = page) => { current = tab; await tab.goto(BASE + path, { waitUntil: 'networkidle' }) }
+const go = async (path, tab = page) => { current = tab; expectedLoads += 1; await tab.goto(BASE + path, { waitUntil: 'networkidle' }) }
 const visible = (text, tab = page) => tab.getByText(text).first().waitFor({ timeout: 10000 })
 const mainText = async (tab = page) => (await tab.locator('main').innerText()).replace(/\s+/g, ' ')
 const onceCount = /(?<![\d,])1 ครั้ง/ // "1 ครั้ง", not "11 ครั้ง"
@@ -116,15 +125,8 @@ let secondTab = null
 await step('choose a goal on /training', async () => {
   await go('/training?tab=programs')
   await audit('/training (goal step)')
-  // GoalPicker loads the page again in full when Next cancels the navigation after the save
-  // (docs/e2e.md); count it, so the run says how often that happened, not just that it passed.
-  let fullLoads = 0
-  const countLoad = request => { if (request.resourceType() === 'document') fullLoads += 1 }
-  page.on('request', countLoad)
   await tap(page.getByRole('button', { name: /คุมบอลดีขึ้น/ }))
   await visible('เป้าหมาย: คุมบอลดีขึ้น')
-  page.off('request', countLoad)
-  if (fullLoads) console.log('NOTE goal: the navigation after the save was cancelled; the picker loaded the page again in full')
   const goals = state.tables.athlete_training_goals.filter(row => row.athlete_id === E2E_ATHLETE && row.ended_at == null)
   expect(goals.length === 1 && goals[0].goal_key === 'ball_control', `current goals: ${JSON.stringify(goals)}`)
   await audit('/training (programmes)')
@@ -158,6 +160,7 @@ await step('set the schedule with today in it', async () => {
 await step('answer the pain question, tick every drill, and finish', async () => {
   // The same session open in a second tab before the first finishes it (finished in the next step).
   secondTab = watch(await page.context().newPage())
+  expectedLoads += 1
   await secondTab.goto(BASE + `${programPath}/session`, { waitUntil: 'networkidle' })
   current = page
   await audit(`${programPath}/session (pain question)`)
@@ -259,6 +262,7 @@ await step('the guardian sees the child\'s progress, read only', async () => {
 })
 
 await step('another child\'s id is a not-found page for the guardian', async () => {
+  expectedLoads += 1
   const response = await guardian.goto(`${BASE}/guardian/33333333-3333-4333-8333-333333333333/progress`, { waitUntil: 'networkidle' })
   const text = await guardian.locator('body').innerText()
   expect(!text.includes('ทดสอบ อัตโนมัติ'), 'the page named a child')

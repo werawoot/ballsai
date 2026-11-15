@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { goFresh } from "@/lib/fresh-navigation";
+import { useFreshNavigation } from "@/lib/use-fresh-navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, Building2, Check, ChevronLeft, ClipboardList, Compass, Handshake, Trophy, UsersRound, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase";
@@ -34,6 +34,7 @@ const TOTAL = 2;
 
 export default function OnboardingFlow({ nextPath, userId }: { email: string; nextPath: string; userId: string }) {
   const router = useRouter();
+  const { go } = useFreshNavigation(router);
   const t = useTranslations("onboarding");
   const locale = useLocale();
   const [step, setStep] = useState(0);
@@ -78,7 +79,7 @@ export default function OnboardingFlow({ nextPath, userId }: { email: string; ne
     }
 
     // A team join link (ADR-011) brings the person back to send their request.
-    goFresh(router, skip || !choice || nextPath.startsWith("/join/") ? nextPath : destinationFor(choice));
+    go(skip || !choice || nextPath.startsWith("/join/") ? nextPath : destinationFor(choice));
   };
 
   const pick = (next: Choice) => {

@@ -14,7 +14,7 @@ export function freshNavigation(href: string, here: string): FreshNavigation {
   return target.origin === current.origin && target.pathname === current.pathname && target.search === current.search ? 'refresh' : 'navigate'
 }
 
-type Router = Pick<AppRouterInstance, 'refresh' | 'replace' | 'push'>
+export type Router = Pick<AppRouterInstance, 'refresh' | 'replace' | 'push'>
 
 // Show `href` with fresh data: refresh when it is the page already open, else replace (or push).
 export function goFresh(router: Router, href: string, how: 'replace' | 'push' = 'replace') {
