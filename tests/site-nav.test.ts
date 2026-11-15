@@ -12,6 +12,8 @@ import {
   isPlainPrimaryClick,
   isWithin,
   linkNavigationTarget,
+  navigationTarget,
+  NAVIGATION_START_EVENT,
   navigationPhase,
   showsSiteNav,
   startNavigation,
@@ -380,9 +382,39 @@ describe('the styles that make it fit', () => {
   })
 })
 
+// A navigation started by code after a write (goFresh, router.push) starts the same progress
+// line and live region as a tapped link (review, 15 Nov 2026): the route skeleton that used to
+// show for it is gone.
+describe('programmatic navigation feedback', () => {
+  const here = 'http://localhost:3108/training?tab=programs'
+
+  it('targets another page of this site by its path, never this page or another site', () => {
+    expect(navigationTarget('/training/u10-foundation-01/session', here)).toBe('/training/u10-foundation-01/session')
+    expect(navigationTarget('/team-members?x=1', here)).toBe('/team-members')
+    expect(navigationTarget('/training?band=u10_u13', here)).toBeNull()
+    expect(navigationTarget('https://example.com/x', here)).toBeNull()
+    expect(navigationTarget('http://[bad', here)).toBeNull()
+  })
+
+  it('is announced on one named event that the bar listens for', () => {
+    expect(NAVIGATION_START_EVENT).toBe('doensai:navigation-start')
+    expect(read('components/SiteNav.tsx')).toContain('NAVIGATION_START_EVENT')
+    expect(read('lib/fresh-navigation.ts')).toContain('announceNavigation(')
+  })
+
+  it('is announced before a navigation that runs in a transition, never inside it', () => {
+    // Inside startTransition the bar's update would wait for the new page, so the line never showed.
+    for (const file of ['lib/use-fresh-navigation.ts', 'app/training/GoalPicker.tsx']) {
+      const source = read(file)
+      expect(source).toMatch(/announceNavigation\([^)]*\)\s*\n\s*startNavigation\(\(\) => navigateFresh\(/)
+      expect(source).not.toMatch(/startNavigation\(\(\) => goFresh\(/)
+    }
+  })
+})
+
 // Owner, 15 Nov 2026 (docs/e2e.md): the root route skeleton is gone. With app/loading.tsx a
-// navigation after a write stuck now and then (the fallback reloaded 7 to 12 times in 20 full
-// e2e runs); without it, 0 in 20. Feedback while a page loads is the bar's top progress line
+// navigation after a write stuck now and then (the fallback reloaded 12 times in 20 full e2e
+// runs); without it, 0 in 40. Feedback while a page loads is the bar's top progress line
 // and the tapped tab's pending ring, which every in-app link starts.
 describe('loading feedback without a root skeleton', () => {
   it('has no loading boundary around every route', () => {

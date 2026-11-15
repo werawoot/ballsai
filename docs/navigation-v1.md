@@ -40,9 +40,15 @@ No new table, column, RPC or API route.
 2. A top progress bar runs while the route has not changed (`navigationPhase`), finishes
    when it does, and is abandoned by a 12s watchdog so it can never hang.
 3. No route skeleton (owner, 15 Nov 2026). The root `app/loading.tsx` made a navigation after
-   a write stick now and then: in 20 full e2e runs a fallback had to reload 7 to 12 times; with
-   it removed, 0 in 20 (docs/e2e.md). The old page stays on screen, with the progress line,
-   until the new one is ready. `glass.css` is imported by `app/layout.tsx`, as the skeleton did.
+   a write stick now and then: in 20 full e2e runs the fallback reloaded 12 times (7 on the goal
+   step, 5 at the slow step's ceiling); with it removed, 0 in 40 runs (docs/e2e.md). The old page
+   stays on screen, with the progress line, until the new one is ready. `glass.css` is imported
+   by `app/layout.tsx`, as the skeleton did.
+4. A navigation started by code after a write (`goFresh` in `lib/fresh-navigation.ts`) calls
+   `announceNavigation()`, which starts the same progress line and live region as a tapped
+   link. A change of query on the same page (filters) shows no line, as for links.
+5. `/admin` keeps its own `app/admin/loading.tsx` (the bar is hidden there); `/login` and
+   `/welcome` have no bar.
 
 `prefers-reduced-motion` turns the animations off; a polite live region announces
 "กำลังโหลดหน้า…".

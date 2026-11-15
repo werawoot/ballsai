@@ -272,15 +272,33 @@ export function linkNavigationTarget(
   if (!isPlainPrimaryClick(click)) return null
   if (link.href === null || link.download || link.noProgress) return null
   if (link.target && link.target.toLowerCase() !== '_self') return null
+  return navigationTarget(link.href, current)
+}
+
+/**
+ * The path a navigation to `href` lands on, or null when it stays on this page (only the query
+ * changes) or leaves the site. Shared by tapped links and navigations started by code.
+ */
+export function navigationTarget(href: string, current: string): string | null {
   let from: URL
   let to: URL
   try {
     from = new URL(current)
-    to = new URL(link.href, from)
+    to = new URL(href, from)
   } catch {
     return null
   }
   if (to.origin !== from.origin) return null
   if (to.pathname === from.pathname) return null
   return to.pathname
+}
+
+// A navigation started by code (after a write) asks the bar for the same progress line and live
+// region as a tapped link. The bar listens on window; nothing else does.
+export const NAVIGATION_START_EVENT = 'doensai:navigation-start'
+
+// Call it outside any React transition: the bar's state update would otherwise wait for the
+// navigation to commit.
+export function announceNavigation(href: string) {
+  window.dispatchEvent(new CustomEvent(NAVIGATION_START_EVENT, { detail: href }))
 }

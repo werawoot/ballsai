@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { goFresh } from '@/lib/fresh-navigation'
 import { useTranslations } from 'next-intl'
 import { Plus } from 'lucide-react'
 import { cleanTeamName } from '@/lib/own-team'
@@ -26,7 +27,7 @@ export default function CreateTeamForm() {
     }).catch(() => null)
     const body = response ? await response.json().catch(() => null) : null
     if (!response?.ok) { setBusy(false); setError(errorText(body, t('createFailed'))); return }
-    router.push(`/team-members/${id}`)
+    goFresh(router, `/team-members/${id}`, 'push')
   }
 
   return <div id="create" className="ui-card tm-create">

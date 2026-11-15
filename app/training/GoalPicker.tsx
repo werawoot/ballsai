@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Activity, CalendarCheck, Target, Zap, type LucideIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
-import { goFresh } from '@/lib/fresh-navigation'
+import { navigateFresh } from '@/lib/fresh-navigation'
+import { announceNavigation } from '@/lib/site-nav'
 import { FRESH_NAVIGATION_CEILING_MS, FRESH_NAVIGATION_GRACE_MS } from '@/lib/use-fresh-navigation'
 import { TRAINING_GOALS, type TrainingGoal } from '@/lib/training/goals'
 
@@ -60,7 +61,8 @@ export default function GoalPicker({ current, returnTo }: { current: TrainingGoa
       return
     }
     setPending(goal)
-    startNavigation(() => goFresh(router, returnTo))
+    announceNavigation(returnTo)
+    startNavigation(() => navigateFresh(router, returnTo))
   }
 
   return <section className="tg-goal-pick" aria-labelledby="tg-goal-title" aria-busy={navigating} data-return={returnTo}>

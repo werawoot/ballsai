@@ -156,8 +156,13 @@ Open:
   goal step 7 times and at the slow step's ceiling 5 times in 20 runs; without it, 0 in 40 runs
   (20 probe runs, then 20 runs of this script). The skeleton is removed (owner, 15 Nov 2026);
   `glass.css` moved to `app/layout.tsx`; 13 pages screenshot before and after differ in 0.00% of
-  pixels. The fallbacks stay as a guard. In the 40 runs one React hydration error (#418) showed
-  once (page not recorded; the script now records it); not seen in the 20 runs since.
+  pixels (screenshots in the session, not in the repo). The fallbacks stay as a guard, and a
+  navigation started by code now shows the bar's progress line (`announceNavigation`).
+  **Open:** in the 40 runs one React hydration error (#418) showed once, in a probe run that did
+  not record the page; the script now records it, and it has not shown again. Cause unknown.
+  **Not measured:** without the skeleton a server page sends nothing until its data is ready, so
+  a URL typed on a slow page shows a blank wait instead of the skeleton; the mock answers at
+  once, so the e2e run cannot measure it.
 - **Not-found pages are real 404s now.** Under the root skeleton `notFound()` streamed a 200 with
   a noindex meta; without it, a guardian on another child's id and an unknown self-test get 404.
   The e2e check now requires 404.
