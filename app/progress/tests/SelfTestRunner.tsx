@@ -123,7 +123,7 @@ export function TestCard({ card: serverCard, day }: { card: SelfTestCard; day: (
 
     {!card.open
       ? <p className="pf-note" role="note">{t('ageClosed', { age: spec.minAge ?? 0 })}</p>
-      : <form className="st-form" onSubmit={save} noValidate>
+      : <form method="post" className="st-form" onSubmit={save} noValidate>
         <label htmlFor={`${id}-value`} className="pf-field">
           <span>{t('inputLabel', { unit })}</span>
           <input id={`${id}-value`} className="pf-input" inputMode="numeric" pattern="[0-9]*" autoComplete="off" value={value}

@@ -49,7 +49,7 @@ export default function OrganizerRequestForm() {
   const hint = (key: OrganizerRequestField) => issue === key ? <p className="or-field-error" id={`or-${key}-error`}>{t(`issue.${key}`)}</p> : null
 
   return (
-    <form className="or-card gl-card or-form" onSubmit={submit} noValidate>
+    <form method="post" className="or-card gl-card or-form" onSubmit={submit} noValidate>
       <h2>{t('title')}</h2>
       <p>{t('text')}</p>
       <label htmlFor="or-orgName">{t('orgName')}</label>

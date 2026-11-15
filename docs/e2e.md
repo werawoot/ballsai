@@ -115,5 +115,12 @@ Open:
     Nov): 14 passed every step; the other 6 failed only the goal step; schedule, session,
     self-test and history did not fail once. With a first, timer-only goal fallback (20 runs,
     14 Nov): 20 of 20 passed every step; the reload was needed in 4.
+- **A form sent before hydration put its fields in the URL** (found 15 Nov 2026, fixed in code,
+  browser check pending). A form handled by `onSubmit` with no method is sent by the browser as a
+  GET to the same page when tapped before React has hydrated, so every named field lands in the
+  URL (history, server logs, Referer): an organization invite's email, a venue's phone number
+  and address, a coach's note and reason about an athlete, booking messages. All 20 such forms
+  now say `method="post"`; their handlers already call `preventDefault()` first, so nothing
+  changes once hydrated. `tests/form-submit-before-hydration.test.ts` fails on a new one.
 - On the not-found check: `notFound()` under the root `loading.tsx` answers 200 with a noindex
   meta, not 404 (known, low priority).

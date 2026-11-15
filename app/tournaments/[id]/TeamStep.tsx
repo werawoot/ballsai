@@ -39,7 +39,7 @@ export default function TeamStep({ tournamentId, summary, free = false }: { tour
     router.push(`/team-members?team=${encodeURIComponent(result.teamId)}`)
   }
 
-  return <form className="tn-detail-body" onSubmit={submit}>
+  return <form method="post" className="tn-detail-body" onSubmit={submit}>
     <RegisterSteps current={1} free={free} />
     <TournamentSummary {...summary} />
     <h1 className="ui-h1 tn-form-title">{t('teamTitle')}</h1>
