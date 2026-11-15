@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { goFresh } from '@/lib/fresh-navigation'
 import { useTranslations } from 'next-intl'
 import { LogOut, Pencil, UserMinus, UserPlus } from 'lucide-react'
 import ConfirmButton from '@/components/ConfirmButton'
@@ -61,7 +62,7 @@ export default function TeamStaffPanel({ teamId, rows, isHead, ready }: { teamId
     const result = await post('remove', { id: row.id })
     setBusy(null)
     if (!result.ok) { setMessage({ tone: 'error', text: errorText(result.body, t('actionFailed')) }); return }
-    if (leaving) { router.push('/team-members'); return }
+    if (leaving) { goFresh(router, '/team-members', 'push'); return }
     setMessage({ tone: 'ok', text: t('removed') })
     router.refresh()
   }

@@ -73,7 +73,7 @@ placeholders, no empty strings, and formats every message with next-intl's own r
 
 | Phase | Scope | Status |
 | --- | --- | --- |
-| 1 | Mechanism, switch, bottom nav, `PageHeader`, route skeleton, `/tournaments` and its card cover, metadata | Done (this ADR) |
+| 1 | Mechanism, switch, bottom nav, `PageHeader`, route skeleton (removed 15 Nov 2026, docs/navigation-v1.md), `/tournaments` and its card cover, metadata | Done (this ADR) |
 | 2a | `/welcome` (with the switch in its header), `/card` builder, profile share panel | Done |
 | 2b | `/login`, `/profile` page and form, `/career`, tournament detail and team registration | Waiting: these files differ on `codex/player-card-beta` or are being edited by another agent, so translating them here would conflict. Do after the branches meet. |
 | 3a | 404 and error pages, notifications (list, page, bell; `unreadBadge` now returns a count, not Thai words), the `/ranking` and `/athletes` filters, `LoadingModal` | Done |

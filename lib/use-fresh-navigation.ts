@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { freshNavigation, goFresh, type Router } from '@/lib/fresh-navigation'
+import { freshNavigation, navigateFresh, type Router } from '@/lib/fresh-navigation'
+import { announceNavigation } from '@/lib/site-nav'
 
 // The navigation after a write, with a fallback (owner, 14 and 15 Nov 2026). Next sometimes
 // cancels it, or leaves it pending after its data has arrived, and the screen stays on the old
@@ -45,7 +46,9 @@ export function useFreshNavigation(router: Router) {
   const go = (href: string, how: 'replace' | 'push' = 'replace') => {
     const here = window.location.href
     if (freshNavigation(href, here) === 'navigate') setPending({ href: new URL(href, here).href, how, from: here })
-    startNavigation(() => goFresh(router, href, how))
+    // Announced outside the transition, so the progress line shows now (lib/fresh-navigation.ts).
+    announceNavigation(href)
+    startNavigation(() => navigateFresh(router, href, how))
   }
   return { go, navigating }
 }

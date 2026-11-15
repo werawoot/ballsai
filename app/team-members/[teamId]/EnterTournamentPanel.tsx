@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { goFresh } from '@/lib/fresh-navigation'
 import { useTranslations } from 'next-intl'
 import { Trophy } from 'lucide-react'
 import { ENTRY_ROSTER_MAX } from '@/lib/own-team'
@@ -35,7 +36,7 @@ export default function EnterTournamentPanel({ teamId, members, tournaments }: {
     }).catch(() => null)
     const body = response ? await response.json().catch(() => null) : null
     if (!response?.ok) { setBusy(false); setError(errorText(body, t('enterFailed'))); return }
-    router.push(`/tournaments/${tournamentId}?teamId=${encodeURIComponent(String(body?.data ?? ''))}`)
+    goFresh(router, `/tournaments/${tournamentId}?teamId=${encodeURIComponent(String(body?.data ?? ''))}`, 'push')
   }
 
   return <div className="ui-card te-form">

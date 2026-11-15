@@ -14,6 +14,8 @@ import {
   abandonNavigation,
   activeNavItem,
   linkNavigationTarget,
+  navigationTarget,
+  NAVIGATION_START_EVENT,
   navItemsFor,
   navigationPhase,
   rolePlan,
@@ -102,6 +104,20 @@ export default function SiteNav() {
     }
     document.addEventListener('click', onClick, true)
     return () => document.removeEventListener('click', onClick, true)
+  }, [pathname, visible])
+
+  // A navigation started by code after a write (announceNavigation) gets the same feedback.
+  useEffect(() => {
+    if (!visible) return
+    const onStart = (event: Event) => {
+      const href = (event as CustomEvent<unknown>).detail
+      const destination = typeof href === 'string' ? navigationTarget(href, window.location.href) : null
+      if (destination === null) return
+      const next = startNavigation(pathname, destination)
+      if (next !== null) setPending(next)
+    }
+    window.addEventListener(NAVIGATION_START_EVENT, onStart)
+    return () => window.removeEventListener(NAVIGATION_START_EVENT, onStart)
   }, [pathname, visible])
 
   // The unread badge is read in the browser. Fetching it in the root layout would make

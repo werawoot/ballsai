@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
@@ -12,6 +12,8 @@ import {
   isPlainPrimaryClick,
   isWithin,
   linkNavigationTarget,
+  navigationTarget,
+  NAVIGATION_START_EVENT,
   navigationPhase,
   showsSiteNav,
   startNavigation,
@@ -377,31 +379,56 @@ describe('the styles that make it fit', () => {
     const reduced = css.slice(css.lastIndexOf('@media (prefers-reduced-motion: reduce) {\n  .bds-route-progress'))
     expect(reduced).toContain('.bds-route-progress.is-loading { animation:none')
     expect(reduced).toContain('.bds-nav-item.is-pending .bds-nav-icon::after { animation:none')
-    expect(reduced).toContain('.bds-skel-line, .bds-skel-avatar, .bds-skel-stat, .bds-skel-card { animation:none')
   })
 })
 
-describe('the route skeleton', () => {
-  const loading = read('app/loading.tsx')
+// A navigation started by code after a write (goFresh, router.push) starts the same progress
+// line and live region as a tapped link (review, 15 Nov 2026): the route skeleton that used to
+// show for it is gone.
+describe('programmatic navigation feedback', () => {
+  const here = 'http://localhost:3108/training?tab=programs'
 
-  it('announces itself to screen readers rather than showing silent grey boxes', () => {
-    expect(loading).toContain('role="status"')
-    expect(loading).toContain("{t('loading')}")
+  it('targets another page of this site by its path, never this page or another site', () => {
+    expect(navigationTarget('/training/u10-foundation-01/session', here)).toBe('/training/u10-foundation-01/session')
+    expect(navigationTarget('/team-members?x=1', here)).toBe('/team-members')
+    expect(navigationTarget('/training?band=u10_u13', here)).toBeNull()
+    expect(navigationTarget('https://example.com/x', here)).toBeNull()
+    expect(navigationTarget('http://[bad', here)).toBeNull()
+  })
+
+  it('is announced on one named event that the bar listens for', () => {
+    expect(NAVIGATION_START_EVENT).toBe('doensai:navigation-start')
+    expect(read('components/SiteNav.tsx')).toContain('NAVIGATION_START_EVENT')
+    expect(read('lib/fresh-navigation.ts')).toContain('announceNavigation(')
+  })
+
+  it('is announced before a navigation that runs in a transition, never inside it', () => {
+    // Inside startTransition the bar's update would wait for the new page, so the line never showed.
+    for (const file of ['lib/use-fresh-navigation.ts', 'app/training/GoalPicker.tsx']) {
+      const source = read(file)
+      expect(source).toMatch(/announceNavigation\([^)]*\)\s*\n\s*startNavigation\(\(\) => navigateFresh\(/)
+      expect(source).not.toMatch(/startNavigation\(\(\) => goFresh\(/)
+    }
+  })
+})
+
+// Owner, 15 Nov 2026 (docs/e2e.md): the root route skeleton is gone. With app/loading.tsx a
+// navigation after a write stuck now and then (the fallback reloaded 12 times in 20 full e2e
+// runs); without it, 0 in 40. Feedback while a page loads is the bar's top progress line
+// and the tapped tab's pending ring, which every in-app link starts.
+describe('loading feedback without a root skeleton', () => {
+  it('has no loading boundary around every route', () => {
+    expect(existsSync(`${root}app/loading.tsx`)).toBe(false)
+  })
+
+  it('still loads the glass styles on every route, which the skeleton used to bring in', () => {
+    expect(read('app/layout.tsx')).toContain("import './glass.css'")
+  })
+
+  it('keeps the progress line and the live region the skeleton no longer gives', () => {
+    const nav = read('components/SiteNav.tsx')
+    expect(nav).toContain('bds-route-progress')
+    expect(nav).toContain('role="status" aria-live="polite"')
     expect(JSON.parse(read('messages/th.json')).nav.loading).toBe('กำลังโหลดหน้า…')
-  })
-
-  it('hides its decorative shapes from assistive technology', () => {
-    expect(loading.match(/aria-hidden="true"/g)?.length).toBeGreaterThanOrEqual(3)
-  })
-  // Owner, 23 Oct 2026: the skeleton still flashed the old dark header, red bar and gold
-  // wordmark between pages that had moved to the light glass design (ADR-014).
-  it('stands on the light glass design, with the brand mark the site uses', () => {
-    expect(loading).toMatch(/className="bds-route-skeleton gl gl-scene"/)
-    expect(loading).toContain("import './glass.css'")
-    expect(loading).toContain('<BrandMark')
-    expect(loading).not.toContain('BALLDOENSAI<em>')
-    const css = read('app/globals.css')
-    expect(css).not.toMatch(/\.bds-skel-hero \.bds-skel-line\.is-eyebrow \{[^}]*--nav-red/)
-    expect(css).not.toContain('.bds-skel-wordmark')
   })
 })

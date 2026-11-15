@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { goFresh } from '@/lib/fresh-navigation'
 import { useTranslations } from 'next-intl'
 import { ArrowRight } from 'lucide-react'
 import { RegisterSteps, TournamentSummary, type TournamentSummaryProps } from './RegisterSteps'
@@ -36,7 +37,7 @@ export default function TeamStep({ tournamentId, summary, free = false }: { tour
       setSaving(false)
       return
     }
-    router.push(`/team-members?team=${encodeURIComponent(result.teamId)}`)
+    goFresh(router, `/team-members?team=${encodeURIComponent(result.teamId)}`, 'push')
   }
 
   return <form method="post" className="tn-detail-body" onSubmit={submit}>

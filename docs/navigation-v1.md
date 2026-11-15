@@ -9,8 +9,7 @@ One bottom navigation bar for the whole app. Status: **EXISTING** (this branch).
 | Rules (tabs, ownership, visibility, loading phase) | `lib/site-nav.ts` | Pure functions, no React. Covered by `tests/site-nav.test.ts`. |
 | Bar | `components/SiteNav.tsx` | Client component, mounted **once** in `app/layout.tsx`. Pages must not render their own bottom bar; a test sweeps `app/` for it. |
 | Discover switch | `components/DiscoverTabs.tsx` | Server component on `/athletes`, `/ranking`, `/hall-of-fame`. |
-| Route skeleton | `app/loading.tsx` | Suspense fallback for server-rendered routes; the bar stays on screen. |
-| Styles | `app/globals.css` (`.bds-nav*`, `.bds-route-*`, `.bds-discover-*`, `.bds-skel-*`) | `--nav-height` is shared by the bar and its spacer. |
+| Styles | `app/globals.css` (`.bds-nav*`, `.bds-route-*`, `.bds-discover-*`) | `--nav-height` is shared by the bar and its spacer. |
 
 ## Tabs
 
@@ -40,7 +39,16 @@ No new table, column, RPC or API route.
 1. The tapped tab shows a pending ring in the first frame.
 2. A top progress bar runs while the route has not changed (`navigationPhase`), finishes
    when it does, and is abandoned by a 12s watchdog so it can never hang.
-3. `app/loading.tsx` shows a skeleton for server-rendered routes.
+3. No route skeleton (owner, 15 Nov 2026). The root `app/loading.tsx` made a navigation after
+   a write stick now and then: in 20 full e2e runs the fallback reloaded 12 times (7 on the goal
+   step, 5 at the slow step's ceiling); with it removed, 0 in 40 runs (docs/e2e.md). The old page
+   stays on screen, with the progress line, until the new one is ready. `glass.css` is imported
+   by `app/layout.tsx`, as the skeleton did.
+4. A navigation started by code after a write (`goFresh` in `lib/fresh-navigation.ts`) calls
+   `announceNavigation()`, which starts the same progress line and live region as a tapped
+   link. A change of query on the same page (filters) shows no line, as for links.
+5. `/admin` keeps its own `app/admin/loading.tsx` (the bar is hidden there); `/login` and
+   `/welcome` have no bar.
 
 `prefers-reduced-motion` turns the animations off; a polite live region announces
 "กำลังโหลดหน้า…".

@@ -40,7 +40,7 @@ async function signedIn(userId) {
 let documentLoads = 0
 let expectedLoads = 0
 function watch(tab) {
-  tab.on('pageerror', error => pageErrors.push(error.message))
+  tab.on('pageerror', error => pageErrors.push(`${new URL(tab.url()).pathname}: ${error.message.slice(0, 160)}`))
   // A server redirect's later hops are the same load, not a new one.
   tab.on('request', request => { if (request.resourceType() === 'document' && request.frame() === tab.mainFrame() && !request.redirectedFrom()) documentLoads += 1 })
   tab.on('dialog', dialog => dialog.accept())
@@ -267,9 +267,8 @@ await step('another child\'s id is a not-found page for the guardian', async () 
   const response = await guardian.goto(`${BASE}/guardian/33333333-3333-4333-8333-333333333333/progress`, { waitUntil: 'networkidle' })
   const text = await guardian.locator('body').innerText()
   expect(!text.includes('ทดสอบ อัตโนมัติ'), 'the page named a child')
-  // notFound() under the root loading.tsx streams a 200 with a noindex meta (known, low priority).
-  const noindex = await guardian.locator('meta[name="robots"][content*="noindex"]').count()
-  expect(response.status() === 404 || noindex > 0, `status ${response.status()} without noindex`)
+  // A real 404 since the root route skeleton went (15 Nov 2026); under it, notFound() streamed a 200.
+  expect(response.status() === 404, `status ${response.status()}, not 404`)
 })
 
 await step('on a slow connection the goal change waits for the page, with no early full load', async () => {

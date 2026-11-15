@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
+import { goFresh } from '@/lib/fresh-navigation'
 import { Trophy, MapPin, Calendar, Banknote, FileText, Phone, CheckCircle, Users } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { useTranslations } from 'next-intl'
@@ -96,7 +97,7 @@ export default function CreateTournamentPage() {
       const data = (await response.json().catch(() => null)) as { status?: string } | null
       const saved = data?.status === 'draft' ? 'draft' : 'open'
       setSuccess(saved)
-      setTimeout(() => router.push(saved === 'draft' ? '/organizer-request' : '/dashboard'), 2000)
+      setTimeout(() => goFresh(router, saved === 'draft' ? '/organizer-request' : '/dashboard', 'push'), 2000)
     }
 
     setLoading(false)

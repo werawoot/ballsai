@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { goFresh } from '@/lib/fresh-navigation'
 import { useTranslations } from 'next-intl'
 import { useApiErrorText } from '@/lib/use-api-error-text'
 
@@ -20,7 +21,7 @@ export default function KeepTeamButton({ teamId }: { teamId: string }) {
     }).catch(() => null)
     const body = response ? await response.json().catch(() => null) : null
     if (!response?.ok) { setBusy(false); setError(errorText(body, t('keepFailed'))); return }
-    router.push(`/team-members/${String(body?.data ?? '')}`)
+    goFresh(router, `/team-members/${String(body?.data ?? '')}`, 'push')
   }
   return <>
     <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" disabled={busy} onClick={keep}>{busy ? t('keeping') : t('keep')}</button>

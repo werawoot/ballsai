@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { goFresh } from '@/lib/fresh-navigation'
 import { MailPlus, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -63,7 +64,7 @@ export default function TeamMembersClient({ teams, invites, counts, myName, firs
       setBusy(false)
       return
     }
-    router.push(`/tournaments/${team.tournament_id}?teamId=${encodeURIComponent(team.id)}`)
+    goFresh(router, `/tournaments/${team.tournament_id}?teamId=${encodeURIComponent(team.id)}`, 'push')
   }
 
   const selected = teams.find(team => team.id === selectedTeam)
