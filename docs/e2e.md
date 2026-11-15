@@ -47,12 +47,18 @@ person's eye.
 4. The coach sees the request and accepts it; the athlete is an accepted member and the request
    is closed.
 5. The coach deletes the team: the confirm button stays off until the team's name is typed,
-   then the team and its members, link and requests are gone and the page moves to
+   then the team and its members, link, requests and staff rows are gone and the page moves to
    `/team-members`.
 
-The mock's team functions check what sql/78, sql/79 and sql/83 check (owner, persona, name
-length, draft roster, the typed name, one pending request per athlete) and raise the same codes;
-notifications are not modelled. The team pages' lists that are empty in this flow (events, news,
+Asking again (step 3) waits for the app's own answer and requires `already_requested`. Not
+walked: the coach's direct invitation by email (`/api/teams/[id]/members`, `invite_team_member`),
+assistant coaches, tournament entry.
+
+The mock's team functions check a subset of what sql/78, sql/79 and sql/83 check (owner,
+persona, name length, draft roster, the typed name, one pending request per athlete) and raise
+the same codes for those. Not modelled: control characters in a name, a team with a payment,
+results or verified fields, a pending invitation turned into a join, the 30-day expiry and the
+request caps, the tournament-roster clash, and notifications. The flow reaches none of them. The team pages' lists that are empty in this flow (events, news,
 plans, notes, minutes, staff, entries) answer an empty list.
 
 Ten runs back to back on 15 Nov 2026, after the fixes below: 10 of 10 passed every step.
@@ -64,8 +70,8 @@ people sharing one address (a venue's Wi-Fi, carrier NAT) share one allowance: t
 docs/national-readiness.md.
 
 First runs (15 Nov 2026) found and fixed two accessibility errors on the team page:
-- The LINE share button had white text on LINE green at 2.26:1. It now has navy text on the
-  same green, at 8.3:1.
+- The LINE share button had white text on LINE green at 2.26:1. It now has the page's dark ink
+  (`--ui-ink`) on the same green, at 8.5:1.
 - The roster table scrolls sideways and could not be reached by keyboard. It is now a focusable,
   named region.
 
@@ -99,7 +105,8 @@ another host. The mock listens on port 54399.
 
 ## Limits
 
-- Not in CI: CI only checks the two scripts' syntax. Running it needs a build plus a browser.
+- Not in CI: CI only checks the syntax of the four scripts (the two flows, the harness and the
+  mock). Running them needs a build plus a browser.
 - Organizer and admin pages are not walked.
 
 ## Reading a failure

@@ -49,8 +49,11 @@ await step('an athlete opens the link and asks to join', async () => {
 
 await step('asking again changes nothing', async () => {
   await go(`/join/${joinToken}`, athlete)
+  // Wait for the app's own answer, so a click that errors or does nothing fails here.
+  const answer = athlete.waitForResponse(response => new URL(response.url()).pathname === '/api/team-join' && response.request().method() === 'POST', { timeout: 10000 })
   await tap(athlete.getByRole('button', { name: 'ขอเข้าทีม', exact: true }))
-  await athlete.waitForTimeout(1500)
+  const body = await (await answer).json().catch(() => null)
+  expect(body?.data === 'already_requested', `the app answered ${JSON.stringify(body)}`)
   expect(state.tables.team_join_requests.filter(row => row.athlete_id === E2E_ATHLETE).length === 1, 'a second request was written')
 })
 
@@ -61,7 +64,7 @@ await step('the coach accepts, and the athlete is on the roster', async () => {
   await visible('รับ ทดสอบ อัตโนมัติ เข้าทีมแล้ว', coach)
   const members = state.tables.team_members.filter(row => row.athlete_id === E2E_ATHLETE && row.status === 'accepted')
   expect(members.length === 1, `members: ${JSON.stringify(state.tables.team_members)}`)
-  expect(state.tables.team_join_requests[0].status === 'accepted', 'the request is still pending')
+  expect(state.tables.team_join_requests[0].status === 'accepted', `the request is ${state.tables.team_join_requests[0].status}`)
   await go(teamPath, coach)
   await visible('ยังไม่มีคำขอ ส่งลิงก์ด้านล่างให้นักกีฬาเพื่อเริ่ม', coach)
   await audit(`${teamPath} (coach, one member)`, coach)
@@ -75,7 +78,8 @@ await step('the coach deletes the team by typing its name', async () => {
   await tap(confirm)
   await coach.waitForURL(url => new URL(url).pathname === '/team-members', { timeout: 15000 })
   expect(state.tables.teams.length === 0, `teams left: ${state.tables.teams.length}`)
-  expect(state.tables.team_members.length === 0 && state.tables.team_join_links.length === 0, 'rows of the team were left')
+  const left = ['team_members', 'team_join_links', 'team_join_requests', 'team_staff'].filter(table => state.tables[table].length)
+  expect(left.length === 0, `rows of the team were left in ${left.join(', ')}`)
 })
 
 await h.finish()

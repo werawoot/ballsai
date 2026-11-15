@@ -187,8 +187,8 @@
 .tj-url { background: var(--ui-sunk); border: 1px solid var(--ui-line); border-radius: 10px; color: var(--ui-text); font: 600 13px/1.4 ui-monospace, monospace; min-height: 44px; padding: 10px 12px; width: 100%; }
 .tj-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .tj-actions .ui-btn { min-height: 44px; }
-/* LINE's own green; navy text on it is 8.3:1 (white was 2.26:1, found by scripts/e2e/coach-flow.mjs). */
-.tj-line { background: #06c755; border-color: #06c755; color: #0B1220; }
+/* LINE's own green; dark ink on it is 8.5:1 (white was 2.26:1, found by scripts/e2e/coach-flow.mjs). */
+.tj-line { background: #06c755; border-color: #06c755; color: var(--ui-ink); }
 .tj-manage { border-top: 1px solid var(--ui-line); padding-top: 10px; }
 .tj-qr { background: #fff; border-radius: 12px; justify-self: start; margin: 0; padding: 10px; }
 .tj-qr img { display: block; height: auto; max-width: 100%; }
