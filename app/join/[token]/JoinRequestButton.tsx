@@ -51,7 +51,7 @@ export default function JoinRequestButton({ token, auto, welcomePath, userId }: 
     <p className="tp-note">{t('askHint')}</p>
     {error && <p className="tp-alert" role="alert">{error.text}</p>}
     {error?.needsProfile && <Link className="ui-btn ui-btn-ghost ui-btn-sm" href={welcomePath}>{t('makeProfile')}</Link>}
-    {error?.needsName && <form className="ui-card tj-card" onSubmit={event => { event.preventDefault(); void saveName() }}>
+    {error?.needsName && <form method="post" className="ui-card tj-card" onSubmit={event => { event.preventDefault(); void saveName() }}>
       <label className="ui-field"><span>{t('nameLabel')}</span>
         <input autoComplete="name" minLength={2} maxLength={60} required value={name} onChange={event => setName(event.target.value)} /></label>
       <button type="submit" className="ui-btn ui-btn-primary ui-btn-sm" disabled={busy || name.trim().length < 2}>{t('nameSave')}</button>
