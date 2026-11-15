@@ -14,7 +14,7 @@ import { TRAINING_GOALS, type TrainingGoal } from '@/lib/training/goals'
 // How long after the navigation has ended the picker waits for the new goal before reloading,
 // and how long after the save it waits at most, navigation or not.
 export const GOAL_RELOAD_GRACE_MS = 1500
-export const GOAL_RELOAD_CEILING_MS = 12000
+export const GOAL_RELOAD_CEILING_MS = 6000
 
 const reloadPage = (href: string) => window.location.replace(new URL(href, window.location.href).href)
 
@@ -31,7 +31,8 @@ export default function GoalPicker({ current, returnTo }: { current: TrainingGoa
   // navigation runs in a transition: once it has ended and this picker still shows the old goal,
   // the page is loaded again in full after a short grace. While it is still on its way nothing
   // reloads (a slow phone), unless the new goal is still not on screen at the ceiling, when a
-  // pending navigation is taken as stuck (owner, 14 Nov 2026). On success the page drops the
+  // pending navigation is taken as stuck (owner, 14 and 15 Nov 2026: 6 s, so a slow phone under
+  // 6 s is never loaded twice and a stuck one waits at most about 6 s). On success the page drops the
   // picker, which clears both timers.
   const [pending, setPending] = useState<TrainingGoal | null>(null)
   const [navigating, startNavigation] = useTransition()

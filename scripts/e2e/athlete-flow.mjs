@@ -268,10 +268,10 @@ await step('another child\'s id is a not-found page for the guardian', async () 
 })
 
 await step('on a slow connection the goal change waits for the page, with no early full load', async () => {
-  // The page data for /training takes 5 seconds, longer than GoalPicker's grace: the picker must
+  // The page data for /training takes 4 seconds, longer than GoalPicker's grace: the picker must
   // wait for the navigation still on its way instead of reloading over it (review, 14 Nov 2026).
-  // A full load is allowed only at the ceiling (12 s), when a navigation still pending is stuck.
-  const slow = async route => { if (route.request().headers().rsc && !route.request().headers()['next-router-prefetch']) await new Promise(resolve => setTimeout(resolve, 5000)); await route.continue() }
+  // A full load is allowed only at the ceiling (6 s), when a navigation still pending is stuck.
+  const slow = async route => { if (route.request().headers().rsc && !route.request().headers()['next-router-prefetch']) await new Promise(resolve => setTimeout(resolve, 4000)); await route.continue() }
   await go('/training?tab=programs&goal=change')
   await page.route('**/training?*', slow)
   const loads = []
@@ -289,7 +289,7 @@ await step('on a slow connection the goal change waits for the page, with no ear
     page.off('request', countLoad)
     await page.unroute('**/training?*', slow)
   }
-  const early = loads.filter(at => at < 11500)
+  const early = loads.filter(at => at < 5500)
   expect(early.length === 0, `the picker loaded the page again in full at ${early.join(', ')} ms, while the navigation was on its way`)
   if (loads.length) console.log(`NOTE slow goal: the navigation was still pending at the ceiling; the picker loaded the page again in full at ${loads.join(', ')} ms`)
 })
