@@ -147,5 +147,17 @@ Open:
   `/organizer-request`, `/training`) answers 200 with the page itself, so an early tap reloads the
   page with nothing in the URL (the typed values are lost, as with a reload).
   `tests/form-submit-before-hydration.test.ts` fails on a new form without it.
-- On the not-found check: `notFound()` under the root `loading.tsx` answers 200 with a noindex
-  meta, not 404 (known, low priority).
+- **Root cause found: the root route skeleton** (15 Nov 2026). With `app/loading.tsx` around every
+  route, a navigation after a write stuck now and then: its data arrived and React never
+  committed. Ruled out first: no stylesheet, script or font left loading; no
+  `AbortController.abort()` from the page (the `aborted` the trace shows is Playwright's word for
+  a stream the page stopped reading, and successful navigations show it too); no router call
+  outside a user action. A/B on the same build: with the skeleton, the fallback reloaded on the
+  goal step 7 times and at the slow step's ceiling 5 times in 20 runs; without it, 0 in 40 runs
+  (20 probe runs, then 20 runs of this script). The skeleton is removed (owner, 15 Nov 2026);
+  `glass.css` moved to `app/layout.tsx`; 13 pages screenshot before and after differ in 0.00% of
+  pixels. The fallbacks stay as a guard. In the 40 runs one React hydration error (#418) showed
+  once (page not recorded; the script now records it); not seen in the 20 runs since.
+- **Not-found pages are real 404s now.** Under the root skeleton `notFound()` streamed a 200 with
+  a noindex meta; without it, a guardian on another child's id and an unknown self-test get 404.
+  The e2e check now requires 404.
