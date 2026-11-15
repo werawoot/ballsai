@@ -275,7 +275,7 @@ export function FormSubmissionExample() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form method="post" onSubmit={handleSubmit}>
       <div style={{ marginBottom: 15 }}>
         <label style={{ display: "block", marginBottom: 5 }}>ชื่อ:</label>
         <input
