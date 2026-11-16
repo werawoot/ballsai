@@ -4,8 +4,9 @@ import en from '@/messages/en.json'
 
 // POST /api/teams/[teamId]/submit turns each refusal of submit_tournament_team_safely
 // (sql/20, sql/99) into a message. The four it always mapped keep their Thai sentence word for
-// word; the three that fell through to "ส่งสมัครทีมไม่สำเร็จ" (a team with no tournament since
-// sql/99, a team already submitted, a team id that does not exist) now say what happened.
+// word; the ones that fell through to "ส่งสมัครทีมไม่สำเร็จ" (a team with no tournament since
+// sql/99, a team already submitted, a team id that does not exist, a session that ended) now say
+// what happened, with a code the page words in the reader's language.
 
 const boundary = vi.hoisted(() => ({ getUser: vi.fn(), rpc: vi.fn() }))
 vi.mock('@/lib/supabase-server', () => ({
@@ -13,6 +14,14 @@ vi.mock('@/lib/supabase-server', () => ({
 }))
 
 import { POST } from '@/app/api/teams/[teamId]/submit/route'
+
+// The English wording, so a missing or emptied translation fails here.
+const EN = {
+  teamNoTournament: 'This team is not entered in a tournament; only an entry can be submitted',
+  teamAlreadySubmitted: 'This team has already been submitted',
+  teamNotFound: 'Team not found',
+  signInAgain: 'Please sign in again.',
+} as const
 
 const TEAM = '4f9c1d3a-7b2e-4c5f-9a10-2d6e8b4f0c31'
 const submit = () => POST(new Request(`http://localhost/api/teams/${TEAM}/submit`, { method: 'POST' }), { params: Promise.resolve({ teamId: TEAM }) })
@@ -51,15 +60,16 @@ describe('POST /api/teams/[teamId]/submit', () => {
   })
 
   it.each([
-    ['TOURNAMENT_NOT_FOUND', 404, 'teamTournamentNotFound'],
+    ['TOURNAMENT_NOT_FOUND', 409, 'teamNoTournament'],
     ['TEAM_NOT_DRAFT', 409, 'teamAlreadySubmitted'],
     ['TEAM_NOT_FOUND', 404, 'teamNotFound'],
+    ['AUTH_REQUIRED', 401, 'signInAgain'],
   ] as const)('says what happened for %s, in both languages', async (refusal, status, code) => {
     refuse(refusal)
     const response = await submit()
     expect(response.status).toBe(status)
     expect(await response.json()).toEqual({ code, error: th.apiErrors[code] })
-    expect(en.apiErrors[code]).toBeTruthy()
+    expect(en.apiErrors[code]).toBe(EN[code])
   })
 
   it('falls back to the general sentence for anything else', async () => {

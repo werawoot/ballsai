@@ -14,9 +14,11 @@ export async function POST(_request: Request, props: { params: Promise<{ teamId:
   if (error.message.includes('TOURNAMENT_FULL')) return NextResponse.json({ error: 'รายการแข่งขันเต็มแล้ว' }, { status: 409 })
   if (error.message.includes('TOURNAMENT_CLOSED')) return NextResponse.json({ error: 'รายการนี้ปิดรับสมัครแล้ว' }, { status: 400 })
   if (error.message.includes('NOT_ALLOWED')) return NextResponse.json({ error: 'คุณไม่มีสิทธิ์ส่งสมัครทีมนี้' }, { status: 403 })
-  // Since sql/99 a team with no tournament is refused by name; the other two were always possible.
-  if (error.message.includes('TOURNAMENT_NOT_FOUND')) return apiError('teamTournamentNotFound', 404)
+  // Since sql/99 a team with no tournament (an own team, sql/78) is refused by name; the team exists.
+  if (error.message.includes('TOURNAMENT_NOT_FOUND')) return apiError('teamNoTournament', 409)
   if (error.message.includes('TEAM_NOT_DRAFT')) return apiError('teamAlreadySubmitted', 409)
   if (error.message.includes('TEAM_NOT_FOUND')) return apiError('teamNotFound', 404)
+  // The session ended between the check above and the call.
+  if (error.message.includes('AUTH_REQUIRED')) return apiError('signInAgain', 401)
   return NextResponse.json({ error: 'ส่งสมัครทีมไม่สำเร็จ' }, { status: 400 })
 }

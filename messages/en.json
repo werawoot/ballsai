@@ -707,6 +707,7 @@
     "teamRosterLocked": "The coach has submitted the entry; contact the coach or the organizer to withdraw",
     "teamRosterInvalid": "Choose 1–60 athletes",
     "teamTournamentNotFound": "Tournament not found",
+    "teamNoTournament": "This team is not entered in a tournament; only an entry can be submitted",
     "teamAlreadySubmitted": "This team has already been submitted",
     "teamNotFound": "Team not found",
     "teamDeleteNameMismatch": "The name you typed does not match. Type the team name exactly before deleting.",

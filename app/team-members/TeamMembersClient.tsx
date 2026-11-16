@@ -9,6 +9,7 @@ import { useTranslations } from 'next-intl'
 import { RegisterSteps } from '@/app/tournaments/[id]/RegisterSteps'
 import '@/app/tournaments/tournaments.css'
 import { NameFirst } from './NameFirst'
+import { useApiErrorText, type ApiErrorBody } from '@/lib/use-api-error-text'
 
 type TournamentRelation = { name: string | null; fee?: number | null } | { name: string | null; fee?: number | null }[] | null
 type Team = { id: string; name: string; tournament_id: string; status: string; tournaments?: TournamentRelation }
@@ -20,6 +21,7 @@ export default function TeamMembersClient({ teams, invites, counts, myName, firs
   const tl = useTranslations('labels')
   const tInvite = useTranslations('teamInvite')
   const t = useTranslations('teamRoster')
+  const errorText = useApiErrorText()
   const [selectedTeam, setSelectedTeam] = useState(teams.some(team => team.id === firstTeam) ? firstTeam! : teams[0]?.id ?? '')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
@@ -57,10 +59,10 @@ export default function TeamMembersClient({ teams, invites, counts, myName, firs
     if (!team) return
     setBusy(true); setMessage('')
     const response = await fetch(`/api/teams/${team.id}/submit`, { method: 'POST' })
-    const result = await response.json().catch(() => null) as { error?: string } | null
+    const result = await response.json().catch(() => null) as ApiErrorBody
     if (!response.ok) {
       setInviteOk(false)
-      setMessage(result?.error ?? t('submitFailed'))
+      setMessage(errorText(result, t('submitFailed')))
       setBusy(false)
       return
     }
