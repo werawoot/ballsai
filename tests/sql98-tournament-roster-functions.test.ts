@@ -20,21 +20,22 @@ const PRODUCTION_MD5: Record<string, string> = {
   assert_payment_team_is_pending: '112c4dd54e79b40114f6f330918ab06a',
 }
 
-function bodies(text: string) {
-  const found: Record<string, string> = {}
-  for (const match of text.matchAll(/create or replace function public\.(\w+)\([\s\S]*?\$\$([\s\S]*?)\$\$;/g)) found[match[1]] = match[2]
+// Each function's whole statement (header, options and body) and its body alone.
+function functions(text: string) {
+  const found: Record<string, { statement: string, body: string }> = {}
+  for (const match of text.matchAll(/create or replace function public\.(\w+)\([\s\S]*?\$\$([\s\S]*?)\$\$;/g)) found[match[1]] = { statement: match[0], body: match[2] }
   return found
 }
 const md5 = (text: string) => createHash('md5').update(text).digest('hex')
 
 describe('SQL98: the missing parts of sql/20 on Staging', () => {
   it('creates exactly the four functions, with the bodies of sql/20 and Production', () => {
-    const mine = bodies(sql)
-    const original = bodies(sql20)
+    const mine = functions(sql)
+    const original = functions(sql20)
     expect(Object.keys(mine).sort()).toEqual([...NAMES].sort())
     for (const name of NAMES) {
-      expect(mine[name]).toBe(original[name])
-      expect(md5(mine[name])).toBe(PRODUCTION_MD5[name])
+      expect(mine[name].statement).toBe(original[name].statement)
+      expect(md5(mine[name].body)).toBe(PRODUCTION_MD5[name])
       expect(sql).toContain(`'${name}', '${PRODUCTION_MD5[name]}'`)
     }
   })
@@ -52,12 +53,17 @@ describe('SQL98: the missing parts of sql/20 on Staging', () => {
   })
 
   it('adds both triggers, before insert', () => {
-    expect(sql).toContain('create trigger match_performance_roster_guard\nbefore insert on public.match_player_performances')
-    expect(sql).toContain('create trigger payment_team_pending_guard\nbefore insert on public.payments')
+    for (const trigger of [
+      'create trigger match_performance_roster_guard\nbefore insert on public.match_player_performances\nfor each row execute function public.assert_match_performance_roster_member();',
+      'create trigger payment_team_pending_guard\nbefore insert on public.payments\nfor each row execute function public.assert_payment_team_is_pending();',
+    ]) {
+      expect(sql).toContain(trigger)
+      expect(sql20).toContain(trigger)
+    }
   })
 
   it('stops on a missing prerequisite, a wrong status check or a different body, in one transaction', () => {
-    expect(sql).toMatch(/^begin;[\s\S]*commit;\s*$/m)
+    expect(sql).toMatch(/\nbegin;\n[\s\S]*\ncommit;\n$/)
     expect(sql).toContain("raise exception 'SQL98 needs")
     expect(sql).toContain("raise exception 'SQL98: teams_status_check does not allow draft and pending'")
     expect(sql).toContain('exists with another body')
