@@ -8,6 +8,7 @@
 .tp-empty { color: var(--ui-mute); font-size: 14px; }
 .tp-empty a { color: #ff6b6b; font-weight: 700; }
 .tp-table-card { overflow-x: auto; padding: 6px 12px !important; }
+.tp-table-card:focus-visible { outline: 3px solid var(--ui-gold); outline-offset: 2px; }
 .tp-table { border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; width: 100%; }
 .tp-table th, .tp-table td { padding: 10px 6px; text-align: right; white-space: nowrap; }
 .tp-table thead th { color: var(--ui-mute); font-size: 12px; font-weight: 700; }
@@ -186,7 +187,8 @@
 .tj-url { background: var(--ui-sunk); border: 1px solid var(--ui-line); border-radius: 10px; color: var(--ui-text); font: 600 13px/1.4 ui-monospace, monospace; min-height: 44px; padding: 10px 12px; width: 100%; }
 .tj-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .tj-actions .ui-btn { min-height: 44px; }
-.tj-line { background: #06c755; border-color: #06c755; color: #fff; }
+/* LINE's own green; dark ink on it is 8.5:1 (white was 2.26:1, found by scripts/e2e/coach-flow.mjs). */
+.tj-line { background: #06c755; border-color: #06c755; color: var(--ui-ink); }
 .tj-manage { border-top: 1px solid var(--ui-line); padding-top: 10px; }
 .tj-qr { background: #fff; border-radius: 12px; justify-self: start; margin: 0; padding: 10px; }
 .tj-qr img { display: block; height: auto; max-width: 100%; }

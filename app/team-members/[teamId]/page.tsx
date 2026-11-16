@@ -234,7 +234,8 @@ export default async function TeamPage(props: { params: Promise<{ teamId: string
           <div className="tp-head"><h2 id="tp-stats"><BarChart3 size={18} aria-hidden="true" />{t('statsTitle')}</h2><span className="ui-chip is-performance">{t('statsSource')}</span></div>
           {roster.length === 0
             ? <p className="tp-empty">{t('noMembers')} {isHead && <Link href="/team-members">{t('inviteLink')}</Link>}</p>
-            : <div className="ui-card tp-table-card">
+            // Scrolls sideways on a phone: focusable and named, so a keyboard can scroll it too (axe, e2e).
+            : <div className="ui-card tp-table-card" tabIndex={0} role="region" aria-labelledby="tp-stats">
                 <table className="tp-table">
                   <thead><tr><th scope="col">{t('colName')}</th><th scope="col">{t('colMatches')}</th><th scope="col">{t('colGoals')}</th><th scope="col">{t('colAssists')}</th><th scope="col">{t('colMvps')}</th><th scope="col">{te('colAttendance')}</th><th scope="col">{tm('colMinutes')}</th></tr></thead>
                   <tbody>{stats.map(row => <tr key={row.athleteId}>

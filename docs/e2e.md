@@ -34,6 +34,47 @@ minor findings are printed, not failed. Text over a photo or a gradient cannot b
 ("incomplete"); the run prints how many such elements it saw (60 on 13 Nov 2026), and those need a
 person's eye.
 
+## The coach flow
+
+`scripts/e2e/coach-flow.mjs` (owner, 15 Nov 2026) walks a coach's own team, on the same harness
+(`scripts/e2e/harness.mjs`) and mock:
+
+1. A coach makes a team with no tournament (`create_my_team`); one club team row, and the page
+   moves to it.
+2. The team page shows the team, "no requests yet" and a join link (`my_team_join_link`).
+3. Signed in as the athlete, the link's page shows the team; "ขอเข้าทีม" writes one pending
+   request. Asking again writes nothing.
+4. The coach sees the request and accepts it; the athlete is an accepted member and the request
+   is closed.
+5. The coach deletes the team: the confirm button stays off until the team's name is typed,
+   then the team and its members, link, requests and staff rows are gone and the page moves to
+   `/team-members`.
+
+Asking again (step 3) waits for the app's own answer and requires `already_requested`. Not
+walked: the coach's direct invitation by email (`/api/teams/[id]/members`, `invite_team_member`),
+assistant coaches, tournament entry.
+
+The mock's team functions check a subset of what sql/78, sql/79 and sql/83 check (owner,
+persona, name length, draft roster, the typed name, one pending request per athlete) and raise
+the same codes for those. Not modelled: control characters in a name, a team with a payment,
+results or verified fields, a pending invitation turned into a join, the 30-day expiry and the
+request caps, the tournament-roster clash, and notifications. The flow reaches none of them. The team pages' lists that are empty in this flow (events, news,
+plans, notes, minutes, staff, entries) answer an empty list.
+
+Ten runs back to back on 15 Nov 2026, after the fixes below: 10 of 10 passed every step.
+
+Each run uses its own made-up client address (`x-real-ip`), because the app's rate limit counts
+per address: ten runs back to back from one address tripped the join limit on the tenth ("ทำรายการ
+บ่อยเกินไป"), which is the limit working. It also showed that every API limit is per IP only, so
+people sharing one address (a venue's Wi-Fi, carrier NAT) share one allowance: task T65 in
+docs/national-readiness.md.
+
+First runs (15 Nov 2026) found and fixed two accessibility errors on the team page:
+- The LINE share button had white text on LINE green at 2.26:1. It now has the page's dark ink
+  (`--ui-ink`) on the same green, at 8.5:1.
+- The roster table scrolls sideways and could not be reached by keyboard. It is now a focusable,
+  named region.
+
 ## How faithful the mock is
 
 - `set_my_training_goal`, `record_my_self_test` and `delete_my_self_test` check what sql/95 and
@@ -64,8 +105,9 @@ another host. The mock listens on port 54399.
 
 ## Limits
 
-- Not in CI: CI only checks the two scripts' syntax. Running it needs a build plus a browser.
-- Coach and organizer pages are not walked.
+- Not in CI: CI only checks the syntax of the four scripts (the two flows, the harness and the
+  mock). Running them needs a build plus a browser.
+- Organizer and admin pages are not walked.
 
 ## Reading a failure
 
