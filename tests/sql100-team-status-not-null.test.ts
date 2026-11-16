@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest'
 const read = (name: string) => readFileSync(new URL(`../sql/${name}`, import.meta.url), 'utf8')
 const sql = read('100-team-status-not-null-v1.sql')
 const down = read('100-team-status-not-null-down.sql')
+const downProduction = read('100-team-status-not-null-down-production.sql')
 const statements = (text: string) => text.split('\n').filter(line => line.trim() && !line.trim().startsWith('--')).join('\n')
 
 describe('SQL100: team and tournament status and team owner can no longer be null', () => {
@@ -34,9 +35,14 @@ describe('SQL100: team and tournament status and team owner can no longer be nul
     expect(sql).toContain("raise exception 'SQL100 self-check failed'")
   })
 
-  it('has a rollback that, as written, keeps the status rules Staging already had', () => {
+  it('has one rollback per project, each putting back only what that project allowed before', () => {
     expect(statements(down).match(/^alter table .*$/gm)).toEqual(['alter table public.teams alter column created_by drop not null;'])
-    expect(down).toContain('--   alter table public.teams alter column status drop not null;')
-    expect(down).toContain('--   alter table public.tournaments alter column status drop not null;')
+    expect(statements(downProduction).match(/^alter table .*$/gm)).toEqual([
+      'alter table public.teams alter column created_by drop not null;',
+      'alter table public.teams alter column status drop not null;',
+      'alter table public.tournaments alter column status drop not null;',
+    ])
+    expect(down).toContain('Staging (vorpnkedpscsqhnrssrl) only')
+    expect(downProduction).toContain('Production (hivedzrwrrcnjrlirhtv) only')
   })
 })
