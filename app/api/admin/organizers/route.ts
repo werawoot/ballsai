@@ -6,7 +6,7 @@ import { apiError } from '@/lib/api-error'
 import { organizerRpcError } from '@/lib/organizer-access'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
 
-// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
 const RATE_LIMIT = { scope: 'admin-organizers', limit: 120, windowSeconds: 5 * 60 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i

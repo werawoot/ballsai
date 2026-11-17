@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 
-// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
 const RATE_LIMIT = { scope: 'admin-athlete-search', limit: 90, windowSeconds: 5 * 60 }
 
 export const dynamic = 'force-dynamic'

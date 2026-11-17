@@ -6,7 +6,7 @@ import { canonicalProvince } from '@/lib/thai-provinces'
 import { normalisePhone, organizerRequestIssue, organizerRpcError } from '@/lib/organizer-access'
 import { logServerError } from '@/lib/monitoring'
 
-// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
 const RATE_LIMIT = { scope: 'organizer-requests', limit: 10, windowSeconds: 60 * 60 }
 
 // Asks for organizer access (ADR-013, sql/89). request_organizer_access() holds every rule:

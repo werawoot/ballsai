@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { apiError } from '@/lib/api-error'
 
-// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
 const RATE_LIMIT = { scope: 'team-announcements', limit: 120, windowSeconds: 5 * 60 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i

@@ -5,7 +5,7 @@ import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { saveFixturesPublished } from '@/lib/fixture-draw'
 
-// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
 const RATE_LIMIT = { scope: 'tournament-fixtures-publish', limit: 20, windowSeconds: 60 }
 
 // Shows or hides a tournament's draw to everyone. set_fixtures_published_safely (sql/57)

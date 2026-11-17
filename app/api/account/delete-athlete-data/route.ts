@@ -5,7 +5,7 @@ import { logServerError, logServerEvent } from '@/lib/monitoring'
 import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { AVATAR_BUCKET, avatarPath as ownAvatarPath, ownAvatarPaths } from '@/lib/athlete-avatar'
 
-// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
 const RATE_LIMIT = { scope: 'account-data-deletion', limit: 3, windowSeconds: 60 * 60 }
 
 const CONFIRM_PHRASE = 'ลบข้อมูลของฉัน'

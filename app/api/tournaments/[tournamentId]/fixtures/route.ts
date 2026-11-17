@@ -5,7 +5,7 @@ import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { parseDrawRequest, saveTournamentDraw } from '@/lib/fixture-draw'
 
-// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
 const RATE_LIMIT = { scope: 'tournament-fixtures', limit: 10, windowSeconds: 60 }
 
 // Makes (or remakes) a tournament's draw. The server builds the fixtures from the

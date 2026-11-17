@@ -5,7 +5,7 @@ import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { saveFixtureWinner } from '@/lib/fixture-draw'
 
-// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
 const RATE_LIMIT = { scope: 'tournament-fixture-winner', limit: 20, windowSeconds: 60 }
 
 // Names the winner of a drawn knockout match (penalties). set_fixture_winner_safely

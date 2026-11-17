@@ -5,7 +5,7 @@ import { logServerError, logServerEvent } from '@/lib/monitoring'
 import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { apiError } from '@/lib/api-error'
 
-// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
 const RATE_LIMIT = { scope: 'match-result-void', limit: 10, windowSeconds: 10 * 60 }
 
 export async function POST(request: Request, props: { params: Promise<{ matchResultId: string }> }) {

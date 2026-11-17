@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
 import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 
-// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
 const RATE_LIMIT = { scope: 'highlight-report', limit: 5, windowSeconds: 10 * 60 }
 
 const MAX_REASON_LENGTH = 400
