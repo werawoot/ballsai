@@ -13,9 +13,14 @@ type Bucket = { count: number; resetAt: number }
 
 const localBuckets = new Map<string, Bucket>()
 
+// The caller's address as Vercel sets it. Vercel overwrites x-real-ip and x-forwarded-for with the
+// real client address (https://vercel.com/docs/headers/request-headers); any other header, such as
+// cf-connecting-ip, arrives as the caller wrote it. doensai.com has no Cloudflare in front (T65,
+// checked 17 Nov 2026), so reading cf-connecting-ip let anyone choose a fresh bucket per request.
+// If a proxy is ever put in front of Vercel, every caller would share the proxy's address here:
+// revisit this then.
 function clientAddress(request: Request) {
-  return request.headers.get('cf-connecting-ip')
-    ?? request.headers.get('x-real-ip')
+  return request.headers.get('x-real-ip')
     ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     ?? 'unknown'
 }
