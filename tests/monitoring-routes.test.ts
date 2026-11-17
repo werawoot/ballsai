@@ -46,7 +46,10 @@ describe('browser error report', () => {
 // The route that receives browser reports: rate-limited, logs one structured line.
 const logged = vi.hoisted(() => ({ calls: [] as unknown[], allowed: true }))
 vi.mock('@/lib/monitoring', () => ({ logServerError: (entry: unknown) => { logged.calls.push(entry) } }))
-vi.mock('@/lib/rate-limit', () => ({ checkRateLimit: async () => ({ allowed: logged.allowed, retryAfterSeconds: 30 }) }))
+vi.mock('@/lib/rate-limit', () => {
+  const limit = async () => ({ allowed: logged.allowed, retryAfterSeconds: 30 })
+  return { checkRateLimit: limit, checkAddressRateLimit: limit, checkUserRateLimit: limit }
+})
 
 import { POST } from '@/app/api/client-errors/route'
 

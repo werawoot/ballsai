@@ -72,8 +72,25 @@ async function checkUpstashRateLimit(key: string, limit: number, windowSeconds: 
   }
 }
 
+async function countAgainst(key: string, limit: number, windowSeconds: number): Promise<RateLimitResult> {
+  return (await checkUpstashRateLimit(key, limit, windowSeconds)) ?? checkLocalRateLimit(key, limit, windowSeconds)
+}
+
+// A route anyone may call without signing in (client-errors): its limit, per address.
 export async function checkRateLimit(request: Request, options: RateLimitOptions): Promise<RateLimitResult> {
-  const key = `balldoensai:rate-limit:${options.scope}:${clientAddress(request)}`
-  return (await checkUpstashRateLimit(key, options.limit, options.windowSeconds))
-    ?? checkLocalRateLimit(key, options.limit, options.windowSeconds)
+  return countAgainst(`balldoensai:rate-limit:${options.scope}:${clientAddress(request)}`, options.limit, options.windowSeconds)
+}
+
+// T65 (owner, 17 Nov 2026: "ตกลง 20 เท่า"). A signed-in route counts twice. First, before the user
+// is known, a ceiling per address of 20 times the route's limit: it keeps a flood from one place off
+// the auth call, while 20 people behind one address (venue Wi-Fi, a mobile network) each fit.
+// Then, once the user is known, the route's own limit per account (checkUserRateLimit).
+export const ADDRESS_CEILING_MULTIPLIER = 20
+
+export async function checkAddressRateLimit(request: Request, options: RateLimitOptions): Promise<RateLimitResult> {
+  return countAgainst(`balldoensai:rate-limit:${options.scope}:${clientAddress(request)}`, options.limit * ADDRESS_CEILING_MULTIPLIER, options.windowSeconds)
+}
+
+export async function checkUserRateLimit(userId: string, options: RateLimitOptions): Promise<RateLimitResult> {
+  return countAgainst(`balldoensai:rate-limit:${options.scope}:user:${userId}`, options.limit, options.windowSeconds)
 }

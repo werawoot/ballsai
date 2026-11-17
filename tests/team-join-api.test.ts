@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const rpc = vi.hoisted(() => vi.fn())
-vi.mock('@/lib/rate-limit', () => ({ checkRateLimit: async () => ({ allowed: true }) }))
+vi.mock('@/lib/rate-limit', () => {
+  const limit = async () => ({ allowed: true })
+  return { checkRateLimit: limit, checkAddressRateLimit: limit, checkUserRateLimit: limit }
+})
 vi.mock('@/lib/supabase-server', () => ({ createServerSupabaseClient: async () => ({ rpc, auth: { getUser: async () => ({ data: { user: { id: 'u' } } }) } }) }))
 
 import { POST } from '@/app/api/team-join/route'

@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
+
+// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+const RATE_LIMIT = { scope: 'admin-athlete-search', limit: 90, windowSeconds: 5 * 60 }
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +21,7 @@ function safeSearch(value: string | null) {
 }
 
 export async function GET(request: Request) {
-  const rateLimit = await checkRateLimit(request, { scope: 'admin-athlete-search', limit: 90, windowSeconds: 5 * 60 })
+  const rateLimit = await checkAddressRateLimit(request, RATE_LIMIT)
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'ค้นหาบ่อยเกินไป กรุณารอสักครู่' }, { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } })
   }
@@ -26,6 +29,10 @@ export async function GET(request: Request) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 })
+  const userRateLimit = await checkUserRateLimit(user.id, RATE_LIMIT)
+  if (!userRateLimit.allowed) {
+    return NextResponse.json({ error: 'ค้นหาบ่อยเกินไป กรุณารอสักครู่' }, { status: 429, headers: { 'Retry-After': String(userRateLimit.retryAfterSeconds) } })
+  }
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
   if (profile?.role !== 'admin') return NextResponse.json({ error: 'ADMIN_REQUIRED' }, { status: 403 })

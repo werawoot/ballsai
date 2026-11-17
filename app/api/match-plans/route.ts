@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { signAvatarUrls } from '@/lib/athlete-avatar'
+
+// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+const RATE_LIMIT = { scope: 'match-plans', limit: 30, windowSeconds: 5 * 60 }
 
 type LineupPlayer = {
   athlete_id?: string
@@ -59,7 +62,7 @@ async function withRosterPhotos(supabase: Awaited<ReturnType<typeof createServer
 }
 
 export async function POST(request: Request) {
-  const rateLimit = await checkRateLimit(request, { scope: 'match-plans', limit: 30, windowSeconds: 5 * 60 })
+  const rateLimit = await checkAddressRateLimit(request, RATE_LIMIT)
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: 'บันทึกบ่อยเกินไป กรุณารอสักครู่' }, { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } })
   }
@@ -67,6 +70,10 @@ export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 })
+  const userRateLimit = await checkUserRateLimit(user.id, RATE_LIMIT)
+  if (!userRateLimit.allowed) {
+    return NextResponse.json({ error: 'บันทึกบ่อยเกินไป กรุณารอสักครู่' }, { status: 429, headers: { 'Retry-After': String(userRateLimit.retryAfterSeconds) } })
+  }
 
   const body = await request.json().catch(() => null) as MatchPlanBody | null
   if (!validUuid(body?.teamId ?? null) || !body?.formation?.trim() || !Array.isArray(body.players)) {

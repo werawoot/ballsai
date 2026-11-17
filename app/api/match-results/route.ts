@@ -4,11 +4,14 @@ import { revalidateTag } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { calculateRating, type MatchResult, type PlayerPosition } from '@/lib/rating'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { parseRequestId, recordMatchResult } from '@/lib/match-result-record'
 import { FIRST_MATCH_RATING, parsePlayerKey, profilePosition, toRecordedPerformance } from '@/lib/first-match-rank'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from '@/lib/season'
 import { apiError } from '@/lib/api-error'
+
+// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+const RATE_LIMIT = { scope: 'match-results', limit: 20, windowSeconds: 5 * 60 }
 
 type PerformanceInput = {
   playerRankId?: string
@@ -104,7 +107,7 @@ function averageRating(ratings: number[]) {
 }
 
 export async function POST(request: Request) {
-  const rateLimit = await checkRateLimit(request, { scope: 'match-results', limit: 20, windowSeconds: 5 * 60 })
+  const rateLimit = await checkAddressRateLimit(request, RATE_LIMIT)
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: 'บันทึกผลแข่งบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่' },
@@ -119,6 +122,13 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 })
+  }
+  const userRateLimit = await checkUserRateLimit(user.id, RATE_LIMIT)
+  if (!userRateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'บันทึกผลแข่งบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่' },
+      { status: 429, headers: { 'Retry-After': String(userRateLimit.retryAfterSeconds) } },
+    )
   }
 
   const { data: profile } = await supabase

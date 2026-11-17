@@ -1,20 +1,25 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { apiError } from '@/lib/api-error'
 import { canonicalProvince } from '@/lib/thai-provinces'
 import { normalisePhone, organizerRequestIssue, organizerRpcError } from '@/lib/organizer-access'
 import { logServerError } from '@/lib/monitoring'
 
+// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+const RATE_LIMIT = { scope: 'organizer-requests', limit: 10, windowSeconds: 60 * 60 }
+
 // Asks for organizer access (ADR-013, sql/89). request_organizer_access() holds every rule:
 // one pending request, 7 days after a decline or revocation, every admin told. The route
 // refuses a malformed form before the call.
 export async function POST(request: Request) {
-  const rateLimit = await checkRateLimit(request, { scope: 'organizer-requests', limit: 10, windowSeconds: 60 * 60 })
+  const rateLimit = await checkAddressRateLimit(request, RATE_LIMIT)
   if (!rateLimit.allowed) return apiError('tooManyRequests', 429, { retryAfter: String(rateLimit.retryAfterSeconds) })
   const db = await createServerSupabaseClient()
   const { data: { user } } = await db.auth.getUser()
   if (!user) return apiError('signInFirst', 401)
+  const userRateLimit = await checkUserRateLimit(user.id, RATE_LIMIT)
+  if (!userRateLimit.allowed) return apiError('tooManyRequests', 429, { retryAfter: String(userRateLimit.retryAfterSeconds) })
 
   const body = await request.json().catch(() => null) as Record<string, unknown> | null
   const input = {

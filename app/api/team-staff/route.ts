@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { apiError, type ApiErrorCode } from '@/lib/api-error'
 import { cleanDisplayName, cleanStaffEmail } from '@/lib/team-staff'
+
+// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+const RATE_LIMIT = { scope: 'team-staff', limit: 30, windowSeconds: 5 * 60 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -25,11 +28,13 @@ const REFUSALS: [string, ApiErrorCode, number][] = [
 // leaves. Who may do which is decided in the database by auth.uid(). The rate limit also
 // slows anyone trying emails to learn which ones have an account.
 export async function POST(request: Request) {
-  const rateLimit = await checkRateLimit(request, { scope: 'team-staff', limit: 30, windowSeconds: 5 * 60 })
+  const rateLimit = await checkAddressRateLimit(request, RATE_LIMIT)
   if (!rateLimit.allowed) return apiError('tooManyRequests', 429, { retryAfter: String(rateLimit.retryAfterSeconds) })
   const db = await createServerSupabaseClient()
   const { data: { user } } = await db.auth.getUser()
   if (!user) return apiError('signInFirst', 401)
+  const userRateLimit = await checkUserRateLimit(user.id, RATE_LIMIT)
+  if (!userRateLimit.allowed) return apiError('tooManyRequests', 429, { retryAfter: String(userRateLimit.retryAfterSeconds) })
 
   const body = await request.json().catch(() => null) as { action?: string; data?: Record<string, unknown> } | null
   const data = body?.data ?? {}

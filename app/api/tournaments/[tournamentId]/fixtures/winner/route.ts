@@ -1,20 +1,25 @@
 import { revalidatePath } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { apiError } from '@/lib/api-error'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { saveFixtureWinner } from '@/lib/fixture-draw'
+
+// Per account, behind a ceiling per address of 20 times this (lib/rate-limit.ts, T65).
+const RATE_LIMIT = { scope: 'tournament-fixture-winner', limit: 20, windowSeconds: 60 }
 
 // Names the winner of a drawn knockout match (penalties). set_fixture_winner_safely
 // (sql/56) decides who may and that the match really was drawn.
 export async function POST(request: Request, props: { params: Promise<{ tournamentId: string }> }) {
   const params = await props.params
-  const rateLimit = await checkRateLimit(request, { scope: 'tournament-fixture-winner', limit: 20, windowSeconds: 60 })
+  const rateLimit = await checkAddressRateLimit(request, RATE_LIMIT)
   if (!rateLimit.allowed) return apiError('fixturesRateLimited', 429, { retryAfter: String(rateLimit.retryAfterSeconds) })
 
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return apiError('signInFirst', 401)
+  const userRateLimit = await checkUserRateLimit(user.id, RATE_LIMIT)
+  if (!userRateLimit.allowed) return apiError('fixturesRateLimited', 429, { retryAfter: String(userRateLimit.retryAfterSeconds) })
 
   const body = await request.json().catch(() => null) as { fixtureKey?: unknown; winnerTeamId?: unknown } | null
   const fixtureKey = typeof body?.fixtureKey === 'string' && /^[A-Z0-9-]{1,40}$/.test(body.fixtureKey) ? body.fixtureKey : null
