@@ -9,7 +9,10 @@ const rpc = vi.hoisted(() => vi.fn())
 const photos = vi.hoisted(() => ({ rows: [] as { user_id: string; profile_image_url: string | null }[], readError: null as unknown, asked: [] as string[][] }))
 const from = vi.hoisted(() => vi.fn(() => ({ select: () => ({ in: async (_column: string, ids: string[]) => { photos.asked.push(ids); return { data: photos.readError ? null : photos.rows, error: photos.readError } } }) })))
 const storage = vi.hoisted(() => ({ from: () => ({ createSignedUrls: async (paths: string[]) => ({ data: paths.map(path => ({ path, signedUrl: `https://signed/${path}`, error: null })), error: null }) }) }))
-vi.mock('@/lib/rate-limit', () => ({ checkRateLimit: async () => ({ allowed: true }) }))
+vi.mock('@/lib/rate-limit', () => {
+  const limit = async () => ({ allowed: true })
+  return { checkRateLimit: limit, checkAddressRateLimit: limit, checkUserRateLimit: limit }
+})
 vi.mock('@/lib/supabase-server', () => ({ createServerSupabaseClient: async () => ({ rpc, from, storage, auth: { getUser: async () => ({ data: { user: { id: 'coach' } } }) } }) }))
 
 import { GET, POST } from '@/app/api/match-plans/route'

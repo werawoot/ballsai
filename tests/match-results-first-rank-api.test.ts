@@ -37,7 +37,10 @@ vi.mock('@/lib/supabase-server', () => ({
     rpc: db.rpc,
   }),
 }))
-vi.mock('@/lib/rate-limit', () => ({ checkRateLimit: () => ({ allowed: true }) }))
+vi.mock('@/lib/rate-limit', () => {
+  const limit = () => ({ allowed: true })
+  return { checkRateLimit: limit, checkAddressRateLimit: limit, checkUserRateLimit: limit }
+})
 vi.mock('@/lib/monitoring', () => ({ logServerError: vi.fn(), logServerEvent: vi.fn() }))
 vi.mock('next/cache', () => ({ revalidateTag: vi.fn() }))
 

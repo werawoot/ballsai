@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
+
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
+const RATE_LIMIT = { scope: 'payment-slip-upload', limit: 8, windowSeconds: 10 * 60 }
 
 const MAX_SLIP_SIZE_BYTES = 5 * 1024 * 1024
 const ALLOWED_SLIP_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -28,7 +31,7 @@ function firstRelation<T>(relation: T | T[] | null): T | null {
 
 export async function POST(request: Request, props: { params: Promise<{ teamId: string }> }) {
   const params = await props.params
-  const rateLimit = await checkRateLimit(request, { scope: 'payment-slip-upload', limit: 8, windowSeconds: 10 * 60 })
+  const rateLimit = await checkAddressRateLimit(request, RATE_LIMIT)
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: 'อัปโหลดบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่' },
@@ -43,6 +46,13 @@ export async function POST(request: Request, props: { params: Promise<{ teamId: 
 
   if (!user) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 })
+  }
+  const userRateLimit = await checkUserRateLimit(user.id, RATE_LIMIT)
+  if (!userRateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'อัปโหลดบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่' },
+      { status: 429, headers: { 'Retry-After': String(userRateLimit.retryAfterSeconds) } },
+    )
   }
 
   const { data: team, error: teamError } = await supabase

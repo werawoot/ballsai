@@ -1,21 +1,26 @@
 import { NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { apiError } from '@/lib/api-error'
 import { organizerRpcError } from '@/lib/organizer-access'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
+
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
+const RATE_LIMIT = { scope: 'admin-organizers', limit: 120, windowSeconds: 5 * 60 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 // An admin decides an organizer request or revokes organizer access (ADR-013, sql/89). The
 // functions check the admin role themselves; the first decision wins under a row lock.
 export async function POST(request: Request) {
-  const rateLimit = await checkRateLimit(request, { scope: 'admin-organizers', limit: 120, windowSeconds: 5 * 60 })
+  const rateLimit = await checkAddressRateLimit(request, RATE_LIMIT)
   if (!rateLimit.allowed) return apiError('tooManyRequests', 429, { retryAfter: String(rateLimit.retryAfterSeconds) })
   const db = await createServerSupabaseClient()
   const { data: { user } } = await db.auth.getUser()
   if (!user) return apiError('signInFirst', 401)
+  const userRateLimit = await checkUserRateLimit(user.id, RATE_LIMIT)
+  if (!userRateLimit.allowed) return apiError('tooManyRequests', 429, { retryAfter: String(userRateLimit.retryAfterSeconds) })
 
   const body = await request.json().catch(() => null) as Record<string, unknown> | null
   const reason = typeof body?.reason === 'string' ? body.reason.trim().slice(0, 500) : ''

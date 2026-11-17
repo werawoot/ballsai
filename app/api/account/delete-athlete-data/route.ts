@@ -2,13 +2,16 @@ import { NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { AVATAR_BUCKET, avatarPath as ownAvatarPath, ownAvatarPaths } from '@/lib/athlete-avatar'
+
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
+const RATE_LIMIT = { scope: 'account-data-deletion', limit: 3, windowSeconds: 60 * 60 }
 
 const CONFIRM_PHRASE = 'ลบข้อมูลของฉัน'
 
 export async function POST(request: Request) {
-  const rateLimit = await checkRateLimit(request, { scope: 'account-data-deletion', limit: 3, windowSeconds: 60 * 60 })
+  const rateLimit = await checkAddressRateLimit(request, RATE_LIMIT)
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: 'ทำรายการบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่' },
@@ -23,6 +26,13 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 })
+  }
+  const userRateLimit = await checkUserRateLimit(user.id, RATE_LIMIT)
+  if (!userRateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'ทำรายการบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่' },
+      { status: 429, headers: { 'Retry-After': String(userRateLimit.retryAfterSeconds) } },
+    )
   }
 
   const body = (await request.json().catch(() => null)) as { confirm?: string } | null

@@ -2,12 +2,15 @@ import { NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { apiError } from '@/lib/api-error'
+
+// Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
+const RATE_LIMIT = { scope: 'match-result-void', limit: 10, windowSeconds: 10 * 60 }
 
 export async function POST(request: Request, props: { params: Promise<{ matchResultId: string }> }) {
   const params = await props.params
-  const rateLimit = await checkRateLimit(request, { scope: 'match-result-void', limit: 10, windowSeconds: 10 * 60 })
+  const rateLimit = await checkAddressRateLimit(request, RATE_LIMIT)
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: 'ยกเลิกผลแข่งบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่' },
@@ -22,6 +25,13 @@ export async function POST(request: Request, props: { params: Promise<{ matchRes
 
   if (!user) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 })
+  }
+  const userRateLimit = await checkUserRateLimit(user.id, RATE_LIMIT)
+  if (!userRateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'ยกเลิกผลแข่งบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่' },
+      { status: 429, headers: { 'Retry-After': String(userRateLimit.retryAfterSeconds) } },
+    )
   }
 
   const { data: reverted, error } = await supabase.rpc('void_match_result_safely', {
