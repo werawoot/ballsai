@@ -21,6 +21,11 @@ const { state, step, expect, go, visible, tap, audit } = h
 const coach = await h.signedIn(E2E_COACH)
 const TEAM_NAME = 'ทีมสมัคร อัตโนมัติ'
 let teamId = ''
+// Submits the team from a signed-in tab, as the page's button does, and returns the app's answer.
+const submitFrom = tab => tab.evaluate(async id => {
+  const response = await fetch(`/api/teams/${id}/submit`, { method: 'POST' })
+  return { status: response.status, body: await response.json().catch(() => null) }
+}, teamId)
 
 await step('a coach opens the tournament and names a team', async () => {
   await go(`/tournaments/${TOURNAMENT}`)
@@ -85,10 +90,7 @@ await step('the coach submits and the team is pending', async () => {
 })
 
 await step('submitting again says it is already submitted', async () => {
-  const answer = await coach.evaluate(async id => {
-    const response = await fetch(`/api/teams/${id}/submit`, { method: 'POST' })
-    return { status: response.status, body: await response.json().catch(() => null) }
-  }, teamId)
+  const answer = await submitFrom(coach)
   expect(answer.status === 409 && answer.body?.code === 'teamAlreadySubmitted', `the app answered ${JSON.stringify(answer)}`)
 })
 
@@ -96,10 +98,7 @@ const guardian = await h.signedIn(E2E_GUARDIAN)
 
 await step('another account may not submit the team', async () => {
   await go('/team-members', guardian)
-  const answer = await guardian.evaluate(async id => {
-    const response = await fetch(`/api/teams/${id}/submit`, { method: 'POST' })
-    return { status: response.status, body: await response.json().catch(() => null) }
-  }, teamId)
+  const answer = await submitFrom(guardian)
   expect(answer.status === 403 && answer.body?.error === 'คุณไม่มีสิทธิ์ส่งสมัครทีมนี้', `the app answered ${JSON.stringify(answer)}`)
 })
 

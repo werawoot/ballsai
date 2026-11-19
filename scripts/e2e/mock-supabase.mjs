@@ -1,12 +1,15 @@
 // A small, stateful stand-in for Supabase (auth + PostgREST) for the browser end-to-end test
-// (scripts/e2e/athlete-flow.mjs). It keeps rows in memory, applies the PostgREST filters the
+// (scripts/e2e/*-flow.mjs). It keeps rows in memory, applies the PostgREST filters the
 // app uses (eq, neq, is, lt, lte, gt, gte, in, not.<op>), order, limit and offset, answers HEAD
 // counts, single-object reads and inserts, and enforces the unique keys of the real tables that
 // the flow can hit (sql/63: one active enrollment per athlete and programme, one check-in per
 // enrollment per day; sql/96: one self-test result per test per day).
 //
-// The functions the flow calls check what their SQL checks (sql/95 set_my_training_goal, sql/96
-// record_my_self_test and delete_my_self_test) and raise the same error codes. Locks and RLS are
+// The functions the flows call check what their SQL checks (sql/95 set_my_training_goal, sql/96
+// record_my_self_test and delete_my_self_test; the own-team functions of sql/78, 79 and 83 for
+// coach-flow.mjs; create_tournament_team_safely, invite_team_member, respond_team_invite and
+// submit_tournament_team_safely of sql/18, 20 and 99 for registration-flow.mjs, against a seeded,
+// read-only tournaments table) and raise the same error codes. Locks and RLS are
 // not modelled: the caller is whoever the bearer token names, and every row is visible.
 //
 // Anything it does not know (a table, a function, a filter operator) is answered with 501 and
@@ -20,6 +23,7 @@ export const E2E_COACH = '44444444-4444-4444-8444-444444444444'
 
 export const bangkokToday = () => new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10)
 
+const READ_ONLY = new Set(['tournaments'])
 const TABLES = ['profiles', 'tournaments', 'athlete_profiles', 'guardian_links', 'training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests', 'teams', 'team_members', 'team_join_links', 'team_join_requests', 'team_staff']
 // Read by the bottom bar (notifications), the training pages (team_members) and the athlete
 // home's fallback reads (app/profile/page.tsx); this athlete has no rows in any of them.
@@ -409,6 +413,11 @@ export function startMock(state, port = 54399) {
       return send(res, 501, { code: 'E2E_UNKNOWN', message: `the test double cannot apply ${bad.join(', ')}` })
     }
     const rows = state.tables[table]
+    // Tournaments are seeded by a flow; the app never writes one in these flows, so a write fails the run.
+    if (READ_ONLY.has(table) && !['GET', 'HEAD'].includes(req.method)) {
+      state.unknown.push(`${req.method} ${table}`)
+      return send(res, 501, { code: 'E2E_UNKNOWN', message: `the test double does not write ${table}` })
+    }
     if (req.method === 'POST') {
       const items = (Array.isArray(body) ? body : [body]).map(item => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...(table === 'training_enrollments' ? { status: 'active' } : {}), ...item }))
       const unique = UNIQUE[table]

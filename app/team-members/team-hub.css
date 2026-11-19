@@ -46,11 +46,6 @@
 .tm-roster li { align-items: center; display: flex; gap: 8px; justify-content: space-between; min-height: 32px; }
 .tm-roster li > span:first-child { color: var(--ui-text); font-size: 14px; min-width: 0; overflow-wrap: anywhere; }
 .tm-invite { padding: 16px; }
-/* The glass card (team-glass.css) has a backdrop-filter, which makes it the containing block of a
-   position: fixed child: the registration dock then sat over the "send invite" button inside the
-   card and nobody could press it (found by scripts/e2e/registration-flow.mjs, 19 Nov 2026). Inside
-   this card the dock stays in the flow, under the invite form. */
-.tm-page .tm-invite .tn-dock { background: none; padding: 0; position: static; }
 .tm-mine { display: grid; gap: 0; list-style: none; margin: 0; padding: 4px 16px; }
 .tm-mine li { align-items: center; border-top: 1px solid var(--ui-line); display: flex; gap: 10px; justify-content: space-between; min-height: 52px; }
 .tm-mine li:first-child { border-top: 0; }

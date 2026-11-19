@@ -1,6 +1,8 @@
-# Browser end-to-end check (athlete flow)
+# Browser end-to-end checks
 
-`npm run test:e2e` (`scripts/e2e/athlete-flow.mjs`, owner, 13 Nov 2026) drives a real Chromium
+`npm run test:e2e` runs three flows in turn: the athlete's (`scripts/e2e/athlete-flow.mjs`, owner,
+13 Nov 2026, below), the coach's own team and entering a tournament (both further down). The
+athlete flow drives a real Chromium
 through the athlete's main path against a production build of the app. The app talks to
 `scripts/e2e/mock-supabase.mjs`, an in-memory stand-in for Supabase auth and PostgREST, so nothing
 touches Staging or Production and no account or key is needed.
@@ -103,23 +105,29 @@ The mock's four entry functions check what sql/20 and sql/99 check that the flow
 (persona, name length, open tournament, one team per coach per tournament, owner or organizer,
 draft roster, account and athlete profile of the invitee, one roster per tournament, accepted
 member, capacity) and raise the same codes. The invitation row carries its team embedded, as the
-fallback read of `my_team_memberships` asks for it.
+fallback read of `my_team_memberships` asks for it: the mock answers `my_team_memberships` and
+`my_team_hub` as missing, so the athlete's invitation comes through that fallback, not the
+function Production runs.
 
 The app counts the registration limit per account since T65 (5 per 10 minutes). Every run signs
-in the same coach, and a run makes two registrations, so a third run on one server within ten
-minutes is refused "ทำรายการบ่อยเกินไป". Restart `next start` between runs, or wait.
+in the same coach, and a run makes two registrations, so on a third run on one server within ten
+minutes the second registration (step 2) gets "ทำรายการบ่อยเกินไป" instead of the 409, and the step fails. Restart `next start` between runs, or wait.
 
 First runs (19 Nov 2026) found and fixed:
 - **A coach could not send an invitation while entering a tournament.** On `/team-members` the
   draft entry's card is glass (`backdrop-filter`, team-glass.css), which makes it the containing
   block of a `position: fixed` child. The registration dock (`.tn-dock`) was laid out inside the
-  card, on top of the "ส่งคำเชิญ" button, at every scroll position (measured at 390 and 768 px:
-  `elementFromPoint` at the button's centre was the dock's submit button). Inside that card the
-  dock now stays in the flow (`.tm-page .tm-invite .tn-dock`, team-hub.css). Own teams have no
+  card, on top of the "ส่งคำเชิญ" button, at every scroll position (a one-off probe at 390 and 768 px: `elementFromPoint` at the button's
+  centre was the dock's submit button; the flow itself runs at 390 px, where a covered button fails
+  its click). Inside that card the
+  dock now stays in the flow (`.tm-page.gl .tm-invite .tn-dock`, team-glass.css). Own teams have no
   dock and were not affected.
 - The month on the red date badge (registration steps) was grey on red at 1.01:1, because
   `.tn-summary small` came after `.tn-date small`. It is white now, 5.89:1.
-- The "วางแผนก่อนแข่ง" link on `/team-members` was 4.16:1; it is #0b6b36, 5.09:1.
+- The "วางแผนก่อนแข่ง" link on `/team-members` was 4.16:1; it is `--gl-green-ink-on-tint` (#0B6B36,
+  app/glass.css), 5.09:1.
+- The date-badge fix (tournaments.css) also reaches the registration steps, which keep the old
+  look (ADR-014): it gives back the white the badge was meant to have, nothing else.
 
 ## How faithful the mock is
 
