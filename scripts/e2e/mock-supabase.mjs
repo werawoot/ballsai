@@ -20,12 +20,12 @@ export const E2E_COACH = '44444444-4444-4444-8444-444444444444'
 
 export const bangkokToday = () => new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10)
 
-const TABLES = ['profiles', 'athlete_profiles', 'guardian_links', 'training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests', 'teams', 'team_members', 'team_join_links', 'team_join_requests', 'team_staff']
+const TABLES = ['profiles', 'tournaments', 'athlete_profiles', 'guardian_links', 'training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests', 'teams', 'team_members', 'team_join_links', 'team_join_requests', 'team_staff']
 // Read by the bottom bar (notifications), the training pages (team_members) and the athlete
 // home's fallback reads (app/profile/page.tsx); this athlete has no rows in any of them.
-const EMPTY_BY_DESIGN = new Set(['coach_attestations', 'coach_skill_assessments', 'coach_athlete_notes', 'team_training_plans', 'team_announcements', 'team_events', 'team_match_minutes', 'team_match_minute_entries', 'notifications', 'player_ranks', 'tournaments', 'match_results', 'athlete_highlights', 'athlete_videos', 'athlete_progress', 'player_ratings', 'athlete_xp_events'])
+const EMPTY_BY_DESIGN = new Set(['coach_attestations', 'coach_skill_assessments', 'coach_athlete_notes', 'team_training_plans', 'team_announcements', 'team_events', 'team_match_minutes', 'team_match_minute_entries', 'notifications', 'player_ranks', 'match_results', 'athlete_highlights', 'athlete_videos', 'athlete_progress', 'player_ratings', 'athlete_xp_events'])
 
-export function createState({ athleteBirthDate = '2012-03-04' } = {}) {
+export function createState({ athleteBirthDate = '2012-03-04', tournaments = [] } = {}) {
   const users = {
     [E2E_ATHLETE]: { id: E2E_ATHLETE, email: 'e2e-athlete@example.com', aud: 'authenticated', role: 'authenticated' },
     [E2E_GUARDIAN]: { id: E2E_GUARDIAN, email: 'e2e-guardian@example.com', aud: 'authenticated', role: 'authenticated' },
@@ -46,6 +46,8 @@ export function createState({ athleteBirthDate = '2012-03-04' } = {}) {
       training_checkins: [],
       athlete_training_goals: [],
       athlete_self_tests: [],
+      // Tournaments a flow passes in (registration-flow.mjs); none by default, as before.
+      tournaments,
       teams: [],
       team_members: [],
       team_join_links: [],
@@ -258,6 +260,72 @@ function rpc(state, me, name, body) {
       t.teams = t.teams.filter(row => row.id !== team.id)
       state.writes.push('team:delete')
       return { status: 200, body: 'deleted' }
+    }
+    // Entering a tournament (sql/20, sql/99 for submit): the rules the registration flow can meet.
+    case 'public_tournament_organizers': return { status: 200, body: [] }
+    case 'create_tournament_team_safely': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const name = String(body.p_name ?? '').trim()
+      if (name.length < 2 || name.length > 80) return raise(400, '22023', 'INVALID_TEAM_NAME')
+      const profile = t.profiles.find(row => row.id === me)
+      if (!['organizer', 'admin'].includes(profile?.role) && profile?.onboarding_persona !== 'coach_organizer') return raise(403, '42501', 'COACH_ORGANIZER_REQUIRED')
+      const tournament = t.tournaments.find(row => row.id === body.p_tournament_id)
+      if (!tournament) return raise(400, 'P0001', 'TOURNAMENT_NOT_FOUND')
+      if (tournament.status !== 'open') return raise(400, 'P0001', 'TOURNAMENT_CLOSED')
+      if (t.teams.some(row => row.tournament_id === tournament.id && row.created_by === me)) return raise(409, '23505', 'ALREADY_HAS_TEAM_FOR_TOURNAMENT')
+      const id = crypto.randomUUID()
+      // The embedded tournaments object stands in for PostgREST's embedding (/team-members reads it).
+      t.teams.push({ id, name, members: '', tournament_id: tournament.id, created_by: me, status: 'draft', kind: 'entry', created_at: new Date().toISOString(), tournaments: { name: tournament.name, fee: tournament.fee, location: tournament.location ?? null } })
+      state.writes.push('team:create-entry')
+      return { status: 200, body: id }
+    }
+    case 'invite_team_member': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const team = t.teams.find(row => row.id === body.p_team_id)
+      if (!team) return raise(400, 'P0001', 'TEAM_NOT_FOUND')
+      const organizer = t.tournaments.find(row => row.id === team.tournament_id)?.organizer_id
+      if (!(team.created_by === me || (organizer != null && organizer === me))) return raise(400, 'P0001', 'NOT_ALLOWED')
+      if (team.status !== 'draft') return raise(400, 'P0001', 'ROSTER_LOCKED')
+      const invitee = Object.values(state.users).find(user => user.email.toLowerCase() === String(body.p_email ?? '').trim().toLowerCase())
+      if (!invitee) return raise(400, 'P0001', 'USER_NOT_FOUND')
+      if (invitee.id === me) return raise(400, 'P0001', 'CANNOT_INVITE_SELF')
+      if (!t.athlete_profiles.some(row => row.user_id === invitee.id)) return raise(400, 'P0001', 'ATHLETE_PROFILE_REQUIRED')
+      if (t.team_members.some(row => row.athlete_id === invitee.id && row.team_id !== team.id && ['pending', 'accepted'].includes(row.status) && t.teams.find(other => other.id === row.team_id)?.tournament_id === team.tournament_id)) return raise(400, 'P0001', 'ATHLETE_ALREADY_ON_TOURNAMENT_ROSTER')
+      const embedded = { id: team.id, name: team.name, status: team.status, tournaments: team.tournaments ? { name: team.tournaments.name, location: team.tournaments.location } : null }
+      let member = t.team_members.find(row => row.team_id === team.id && row.athlete_id === invitee.id)
+      if (member) Object.assign(member, { status: 'pending', invited_by: me, invited_at: new Date().toISOString(), responded_at: null })
+      else {
+        member = { id: crypto.randomUUID(), team_id: team.id, athlete_id: invitee.id, invited_by: me, status: 'pending', invited_at: new Date().toISOString(), created_at: new Date().toISOString(), responded_at: null, teams: embedded }
+        t.team_members.push(member)
+      }
+      state.writes.push('team:invite')
+      return { status: 200, body: member.id }
+    }
+    case 'respond_team_invite': {
+      if (!['accepted', 'declined'].includes(body.p_status)) return raise(400, 'P0001', 'INVALID_STATUS')
+      const member = t.team_members.find(row => row.id === body.p_member_id && row.athlete_id === me && row.status === 'pending')
+      if (!member) return raise(400, 'P0001', 'INVITE_NOT_FOUND')
+      Object.assign(member, { status: body.p_status, responded_at: new Date().toISOString() })
+      state.writes.push(`team:invite-${body.p_status}`)
+      return { status: 200, body: null }
+    }
+    case 'submit_tournament_team_safely': {
+      // sql/99: a null in the permission check is a refusal, checked before anything about the team.
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const team = t.teams.find(row => row.id === body.p_team_id)
+      if (!team) return raise(400, 'P0001', 'TEAM_NOT_FOUND')
+      const tournament = t.tournaments.find(row => row.id === team.tournament_id)
+      const admin = t.profiles.find(row => row.id === me)?.role === 'admin'
+      if (!(team.created_by === me || (tournament?.organizer_id != null && tournament.organizer_id === me) || admin)) return raise(403, '42501', 'NOT_ALLOWED')
+      if (!tournament) return raise(400, 'P0001', 'TOURNAMENT_NOT_FOUND')
+      if (team.status !== 'draft') return raise(400, 'P0001', 'TEAM_NOT_DRAFT')
+      if (tournament.status !== 'open') return raise(400, 'P0001', 'TOURNAMENT_CLOSED')
+      if (!t.team_members.some(row => row.team_id === team.id && row.status === 'accepted')) return raise(400, 'P0001', 'ACCEPTED_ROSTER_REQUIRED')
+      if (tournament.max_teams != null && t.teams.filter(row => row.tournament_id === tournament.id && ['pending', 'confirmed'].includes(row.status)).length >= tournament.max_teams) return raise(400, 'P0001', 'TOURNAMENT_FULL')
+      team.status = 'pending'
+      for (const row of t.team_members) if (row.team_id === team.id && row.teams) row.teams.status = 'pending'
+      state.writes.push('team:submit')
+      return { status: 200, body: null }
     }
     case 'team_for_staff': {
       const team = t.teams.find(row => row.id === body.p_team_id)

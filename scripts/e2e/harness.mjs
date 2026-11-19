@@ -6,7 +6,8 @@ import { readFileSync, mkdirSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { createState, startMock } from './mock-supabase.mjs'
 
-export async function createHarness() {
+// options: rows a flow seeds in the test double (createState), e.g. { tournaments: [...] }.
+export async function createHarness(options = {}) {
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:3100'
   const OUT = process.env.E2E_OUT || new URL('../../.e2e-out/', import.meta.url).pathname
   const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
@@ -14,7 +15,7 @@ export async function createHarness() {
   const AXE = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8')
   mkdirSync(OUT, { recursive: true })
 
-  const state = createState()
+  const state = createState(options)
   // One made-up client address per run, shared by every browser of the run. The app's rate limit
   // counts per address (lib/rate-limit.ts), so runs back to back in one server no longer add up
   // to its limit, while the requests of one run still count together.

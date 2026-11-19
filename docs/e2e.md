@@ -52,7 +52,7 @@ person's eye.
 
 Asking again (step 3) waits for the app's own answer and requires `already_requested`. Not
 walked: the coach's direct invitation by email (`/api/teams/[id]/members`, `invite_team_member`),
-assistant coaches, tournament entry.
+assistant coaches. Tournament entry is the registration flow below.
 
 The mock's team functions check a subset of what sql/78, sql/79 and sql/83 check (owner,
 persona, name length, draft roster, the typed name, one pending request per athlete) and raise
@@ -74,6 +74,52 @@ First runs (15 Nov 2026) found and fixed two accessibility errors on the team pa
   (`--ui-ink`) on the same green, at 8.5:1.
 - The roster table scrolls sideways and could not be reached by keyboard. It is now a focusable,
   named region.
+
+## The registration flow
+
+`scripts/e2e/registration-flow.mjs` (owner, 19 Nov 2026: "ทำข้อ 4") walks entering a team in a
+free tournament, on the same harness and mock. The flow seeds one open tournament
+(`createHarness({ tournaments: [...] })`).
+
+1. A coach opens the tournament, presses "สมัครทีม", names the team and lands on
+   `/team-members?team=…`; one `entry` team in `draft` for that tournament
+   (`create_tournament_team_safely`).
+2. A second team in the same tournament is refused with "คุณสร้างทีมสำหรับรายการนี้แล้ว"; still
+   one team.
+3. The submit button is off and says why while nobody has accepted.
+4. An invitation to an email with no account is refused ("ยังไม่มีบัญชีนี้ในระบบ") and writes
+   nothing; the athlete's email writes one pending invitation (`invite_team_member`).
+5. Signed in as the athlete, `/team-members` shows the invitation; "เข้าร่วมทีม" accepts it
+   (`respond_team_invite`).
+6. The coach submits; the page moves to the tournament's last step ("ส่งสมัครแล้ว") and the team
+   is `pending` (`submit_tournament_team_safely`).
+7. Submitting again answers 409 `teamAlreadySubmitted`; another account (the guardian) gets 403
+   "คุณไม่มีสิทธิ์ส่งสมัครทีมนี้" (the permission check comes first, sql/99).
+
+Not walked: a tournament with a fee (the slip upload goes to Storage, which the mock does not
+have), the organizer confirming a team, capacity, and an organizer or admin submitting.
+
+The mock's four entry functions check what sql/20 and sql/99 check that the flow can meet
+(persona, name length, open tournament, one team per coach per tournament, owner or organizer,
+draft roster, account and athlete profile of the invitee, one roster per tournament, accepted
+member, capacity) and raise the same codes. The invitation row carries its team embedded, as the
+fallback read of `my_team_memberships` asks for it.
+
+The app counts the registration limit per account since T65 (5 per 10 minutes). Every run signs
+in the same coach, and a run makes two registrations, so a third run on one server within ten
+minutes is refused "ทำรายการบ่อยเกินไป". Restart `next start` between runs, or wait.
+
+First runs (19 Nov 2026) found and fixed:
+- **A coach could not send an invitation while entering a tournament.** On `/team-members` the
+  draft entry's card is glass (`backdrop-filter`, team-glass.css), which makes it the containing
+  block of a `position: fixed` child. The registration dock (`.tn-dock`) was laid out inside the
+  card, on top of the "ส่งคำเชิญ" button, at every scroll position (measured at 390 and 768 px:
+  `elementFromPoint` at the button's centre was the dock's submit button). Inside that card the
+  dock now stays in the flow (`.tm-page .tm-invite .tn-dock`, team-hub.css). Own teams have no
+  dock and were not affected.
+- The month on the red date badge (registration steps) was grey on red at 1.01:1, because
+  `.tn-summary small` came after `.tn-date small`. It is white now, 5.89:1.
+- The "วางแผนก่อนแข่ง" link on `/team-members` was 4.16:1; it is #0b6b36, 5.09:1.
 
 ## How faithful the mock is
 
@@ -105,7 +151,7 @@ another host. The mock listens on port 54399.
 
 ## Limits
 
-- Not in CI: CI only checks the syntax of the four scripts (the two flows, the harness and the
+- Not in CI: CI only checks the syntax of the five scripts (the three flows, the harness and the
   mock). Running them needs a build plus a browser.
 - Organizer and admin pages are not walked.
 

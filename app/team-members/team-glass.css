@@ -46,7 +46,8 @@
 .tm-page.gl .tm-chip.is-ok { background: var(--gl-green-surface); }
 .tm-page.gl .tm-chip.is-club { background: #DBEAFE; color: #1D4ED8; }
 .tm-page.gl .tm-chip.is-wait { background: #FEF3C7; color: #8A5A00; }
-.tm-page.gl .tm-head-link { color: var(--gl-green-ink); }
+/* --gl-green-ink was 4.16:1 on this pale green; #0b6b36 is 5.09:1 (WCAG AA, owner 19 Nov 2026). */
+.tm-page.gl .tm-head-link { color: #0b6b36; }
 /* A chosen answer (an event reply, a staff invite) keeps a visible ring on a white card. */
 .tm-page.gl .me-answers .is-chosen { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
 .tm-page.gl .ui-field:focus-within, .tp-join.gl .ui-field:focus-within, .tm-page.gl .ui-option:focus-visible { outline: 3px solid var(--gl-navy); outline-offset: 2px; }
