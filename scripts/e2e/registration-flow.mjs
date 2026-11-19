@@ -29,11 +29,15 @@ const { state, step, expect, go, visible, tap, audit } = h
 const coach = await h.signedIn(E2E_COACH)
 const TEAM_NAME = 'ทีมสมัคร อัตโนมัติ'
 let teamId = ''
-// Submits the team from a signed-in tab, as the page's button does, and returns the app's answer.
-const submitFrom = tab => tab.evaluate(async id => {
-  const response = await fetch(`/api/teams/${id}/submit`, { method: 'POST' })
+// Posts to the app from a signed-in tab, as the page does, and returns the app's answer. With a file
+// ({ name, type, bytes }) the body is a form with that file as "slip", as PaymentStep sends it.
+const postFrom = (tab, path, file = null) => tab.evaluate(async ({ path, file }) => {
+  let body
+  if (file) { body = new FormData(); body.append('slip', new File([new Uint8Array(file.bytes)], file.name, { type: file.type })) }
+  const response = await fetch(path, { method: 'POST', body })
   return { status: response.status, body: await response.json().catch(() => null) }
-}, teamId)
+}, { path, file })
+const submitFrom = tab => postFrom(tab, `/api/teams/${teamId}/submit`)
 
 await step('a coach opens the tournament and names a team', async () => {
   await go(`/tournaments/${TOURNAMENT}`)
@@ -136,18 +140,14 @@ await step('in a tournament with a fee, the team is entered, joined and submitte
 
 await step('the payment step shows the amount and the organizer\'s PromptPay', async () => {
   await visible('แนบสลิปโอนเงิน', coach)
-  const text = (await coach.locator('main').innerText()).replace(/\s+/g, ' ')
-  expect(text.includes('500') && text.includes(PROMPTPAY) && text.includes(PAID_TEAM), `payment step says: ${text.slice(0, 300)}`)
+  // The amount card itself: "ยอดที่ต้องโอน · ทีม <name>", the fee and the organizer's PromptPay.
+  const card = (await coach.locator('.tn-amount').innerText()).replace(/\s+/g, ' ')
+  expect(new RegExp(`\\b500\\b`).test(card) && card.includes(PROMPTPAY) && card.includes(PAID_TEAM), `amount card says: ${card}`)
   await audit('/tournaments/[id]?teamId= (paid, slip)', coach)
 })
 
 await step('a file that is not an image is refused, and nothing is stored', async () => {
-  const answer = await coach.evaluate(async id => {
-    const form = new FormData()
-    form.append('slip', new File(['not a slip'], 'slip.txt', { type: 'text/plain' }))
-    const response = await fetch(`/api/teams/${id}/payment`, { method: 'POST', body: form })
-    return { status: response.status, body: await response.json().catch(() => null) }
-  }, paidTeamId)
+  const answer = await postFrom(coach, `/api/teams/${paidTeamId}/payment`, { name: 'slip.txt', type: 'text/plain', bytes: [...Buffer.from('not a slip')] })
   expect(answer.status === 400 && answer.body?.error === 'สลิปต้องเป็นไฟล์ JPG, PNG หรือ WEBP', `the app answered ${JSON.stringify(answer)}`)
   expect(state.storage.length === 0 && state.tables.payments.length === 0, 'something was stored for a refused file')
 })
@@ -164,12 +164,7 @@ await step('the slip is stored privately and the payment waits for the organizer
 })
 
 await step('a second slip for the same team is refused', async () => {
-  const answer = await coach.evaluate(async id => {
-    const form = new FormData()
-    form.append('slip', new File([new Uint8Array([137, 80, 78, 71])], 'again.png', { type: 'image/png' }))
-    const response = await fetch(`/api/teams/${id}/payment`, { method: 'POST', body: form })
-    return { status: response.status, body: await response.json().catch(() => null) }
-  }, paidTeamId)
+  const answer = await postFrom(coach, `/api/teams/${paidTeamId}/payment`, { name: 'again.png', type: 'image/png', bytes: [137, 80, 78, 71] })
   expect(answer.status === 409 && answer.body?.error === 'ทีมนี้มีรายการชำระเงินอยู่แล้ว', `the app answered ${JSON.stringify(answer)}`)
   expect(state.tables.payments.length === 1 && state.storage.length === 1, 'a second slip was stored')
 })

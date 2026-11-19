@@ -103,13 +103,13 @@ Then, in a second tournament with a fee (500, with the organizer's PromptPay):
 8. The team is entered, the athlete invited and accepting, and the team submitted, as above; the
    page moves to the payment step.
 9. The payment step shows the amount, the organizer's PromptPay and the team's name.
-10. A file that is not an image is refused ("สลิปต้องเป็นไฟล์ JPG, PNG หรือ WEBP"); nothing is
+10. A file that is not an image, posted to the route as the page would, is refused ("สลิปต้องเป็นไฟล์ JPG, PNG หรือ WEBP"); nothing is
     stored and no payment row is written.
 11. A PNG chosen in the file input and sent with "ส่งสลิปให้ผู้จัดตรวจ" shows "ส่งสลิปแล้ว": one
     `pending` payment of 500 by the coach, whose `slip_url` is the object path in the private
     `slips` bucket, never a public URL (AGENTS.md rule 6), and the file is in that bucket.
-12. A second slip for the same team is refused ("ทีมนี้มีรายการชำระเงินอยู่แล้ว"); still one
-    payment and one file.
+12. A second slip for the same team, posted to the route, is refused at the route's own check for
+    an existing payment ("ทีมนี้มีรายการชำระเงินอยู่แล้ว"); still one payment and one file.
 
 Not walked: the organizer confirming a payment or a team, the signed URL an organizer opens a
 slip with, capacity, and an organizer or admin submitting.
@@ -118,8 +118,12 @@ The mock's four entry functions check what sql/20 and sql/99 check that the flow
 (persona, name length, open tournament, one team per coach per tournament, owner or organizer,
 draft roster, account and athlete profile of the invitee, one roster per tournament, accepted
 member, capacity) and raise the same codes. A slip goes to an in-memory `slips` bucket
-(`state.storage`: path, type, size, owner; only that bucket, signed in, no overwrite). A payment
-needs a submitted team (`payment_team_pending_guard`, sql/20) and is one per team (sql/80). The invitation row carries its team embedded, as the
+(`state.storage`: path, type, size, owner; only that bucket, no overwrite, and the
+`slips_owner_insert` rule: signed in, with the caller's id before the first `_` of the name,
+refused as Storage does with HTTP 400 and statusCode 403). The bucket being private
+(`public = false`) is not modelled. A payment needs a submitted team (`payment_team_pending_guard`,
+sql/20) and is one per team (sql/80); the flow does not reach either rule, because the route
+checks the team's status and an existing payment first, and those are what step 12 meets. The invitation row carries its team embedded, as the
 fallback read of `my_team_memberships` asks for it: the mock answers `my_team_memberships` and
 `my_team_hub` as missing, so the athlete's invitation comes through that fallback, not the
 function Production runs.

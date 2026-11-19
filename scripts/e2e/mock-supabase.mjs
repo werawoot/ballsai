@@ -1,4 +1,4 @@
-// A small, stateful stand-in for Supabase (auth + PostgREST) for the browser end-to-end test
+// A small, stateful stand-in for Supabase (auth, PostgREST and the slips bucket of Storage) for the browser end-to-end test
 // (scripts/e2e/*-flow.mjs). It keeps rows in memory, applies the PostgREST filters the
 // app uses (eq, neq, is, lt, lte, gt, gte, in, not.<op>), order, limit and offset, answers HEAD
 // counts, single-object reads and inserts, and enforces the unique keys of the real tables that
@@ -393,14 +393,17 @@ export function startMock(state, port = 54399) {
     for await (const chunk of req) chunks.push(chunk)
     const bytes = Buffer.concat(chunks)
     // A slip upload (supabase-js storage.upload): only the private slips bucket, signed in, no
-    // overwrite. The file is kept as its size and type; nothing is served back from it.
+    // overwrite, under the bucket's owner rule. The file is kept as its size and type; nothing is served
+    // back from it, and the bucket being private (public = false) is not modelled.
     if (req.method === 'POST' && url.pathname.startsWith('/storage/v1/object/')) {
       const me = caller(state, req)
       const [bucket, ...rest] = url.pathname.slice('/storage/v1/object/'.length).split('/')
       const path = decodeURIComponent(rest.join('/'))
       state.trace.push([Date.now(), 'mock', req.method, `storage ${bucket}/${path}`])
       if (bucket !== 'slips') { state.unknown.push(`storage ${bucket}`); return send(res, 501, { message: `the test double has no bucket ${bucket}` }) }
-      if (!me) return send(res, 403, { statusCode: '403', error: 'Unauthorized', message: 'new row violates row-level security policy' })
+      // slips_owner_insert (sql/supabase-rls.sql): signed in, and the name starts with the caller's id
+      // before the first "_". Storage answers a policy refusal with HTTP 400 and statusCode 403.
+      if (!me || path.split('_')[0] !== me) return send(res, 400, { statusCode: '403', error: 'Unauthorized', message: 'new row violates row-level security policy' })
       if (state.storage.some(file => file.bucket === bucket && file.path === path)) return send(res, 409, { statusCode: '409', error: 'Duplicate', message: 'The resource already exists' })
       state.storage.push({ bucket, path, contentType: req.headers['content-type'] ?? null, size: bytes.length, owner: me })
       state.writes.push('storage:slips')
