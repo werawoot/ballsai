@@ -1,20 +1,28 @@
 // End-to-end check of entering a team in a tournament in a real browser (owner, 19 Nov 2026: "ทำข้อ 4").
-// Same harness as athlete-flow.mjs and coach-flow.mjs. A free tournament, so no slip is uploaded
-// (Storage is not in the test double). It walks:
+// Same harness as athlete-flow.mjs and coach-flow.mjs. It walks a free tournament:
 //   a coach opens the tournament and names a team → a second team in the same tournament is
 //   refused → submit waits for an accepted athlete → an invite to an email with no account is
 //   refused, the athlete's email is invited → the athlete accepts → the coach submits → the team
 //   is pending → submitting again says it is already submitted, and another account is not allowed.
+// Then a tournament with a fee: the team is entered and submitted the same way, the payment step
+// shows the amount and the organizer's PromptPay, a file that is not an image is refused, the slip
+// is stored privately (an object path in the slips bucket, never a public URL), and a second slip
+// for the same team is refused.
 // Every write is checked in the mock's rows; every page is audited with axe-core. See docs/e2e.md.
 import { bangkokToday, E2E_ATHLETE, E2E_COACH, E2E_GUARDIAN } from './mock-supabase.mjs'
 import { createHarness } from './harness.mjs'
 
 const TOURNAMENT = '55555555-5555-4555-8555-555555555555'
+const PAID = '77777777-7777-4777-8777-777777777777'
+const PROMPTPAY = '0812345678'
 const inDays = days => new Date(Date.parse(`${bangkokToday()}T00:00:00Z`) + days * 864e5).toISOString().slice(0, 10)
 const h = await createHarness({
   tournaments: [{
     id: TOURNAMENT, name: 'ฟุตบอลเยาวชน ทดสอบ', description: '', location: 'สนามทดสอบ', start_date: inDays(30), end_date: inDays(31),
     fee: null, max_teams: 8, promptpay: null, status: 'open', organizer_id: '66666666-6666-4666-8666-666666666666', created_at: new Date().toISOString(),
+  }, {
+    id: PAID, name: 'ฟุตบอลเยาวชน มีค่าสมัคร', description: '', location: 'สนามทดสอบ 2', start_date: inDays(40), end_date: inDays(41),
+    fee: 500, max_teams: 8, promptpay: PROMPTPAY, status: 'open', organizer_id: '66666666-6666-4666-8666-666666666666', created_at: new Date().toISOString(),
   }],
 })
 const { state, step, expect, go, visible, tap, audit } = h
@@ -100,6 +108,70 @@ await step('another account may not submit the team', async () => {
   await go('/team-members', guardian)
   const answer = await submitFrom(guardian)
   expect(answer.status === 403 && answer.body?.error === 'คุณไม่มีสิทธิ์ส่งสมัครทีมนี้', `the app answered ${JSON.stringify(answer)}`)
+})
+
+let paidTeamId = ''
+const PAID_TEAM = 'ทีมจ่ายเงิน อัตโนมัติ'
+// A small real PNG (1x1), as a phone photo of a slip would be an image.
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64')
+
+await step('in a tournament with a fee, the team is entered, joined and submitted', async () => {
+  h.focus(coach)
+  await go(`/tournaments/${PAID}?step=team`, coach)
+  await coach.getByLabel('ชื่อทีม').fill(PAID_TEAM)
+  await tap(coach.getByRole('button', { name: /สร้างทีมและเชิญสมาชิก/ }))
+  await coach.waitForURL(url => new URL(url).pathname === '/team-members' && new URL(url).searchParams.has('team'), { timeout: 15000 })
+  paidTeamId = new URL(coach.url()).searchParams.get('team')
+  await coach.getByLabel('อีเมลที่นักกีฬาใช้สมัคร').fill('e2e-athlete@example.com')
+  await tap(coach.getByRole('button', { name: 'ส่งคำเชิญ', exact: true }))
+  await visible('ส่งคำเชิญแล้ว', coach)
+  await go('/team-members', athlete)
+  await tap(athlete.getByRole('button', { name: 'เข้าร่วมทีม', exact: true }))
+  for (let waited = 0; !state.tables.team_members.some(row => row.team_id === paidTeamId && row.status === 'accepted') && waited < 10000; waited += 100) await athlete.waitForTimeout(100)
+  await go(`/team-members?team=${paidTeamId}`, coach)
+  await tap(coach.getByRole('button', { name: /ส่งสมัครรายการ/ }))
+  await coach.waitForURL(url => new URL(url).searchParams.get('teamId') === paidTeamId, { timeout: 15000 })
+  expect(state.tables.teams.find(row => row.id === paidTeamId)?.status === 'pending', 'the paid team was not submitted')
+})
+
+await step('the payment step shows the amount and the organizer\'s PromptPay', async () => {
+  await visible('แนบสลิปโอนเงิน', coach)
+  const text = (await coach.locator('main').innerText()).replace(/\s+/g, ' ')
+  expect(text.includes('500') && text.includes(PROMPTPAY) && text.includes(PAID_TEAM), `payment step says: ${text.slice(0, 300)}`)
+  await audit('/tournaments/[id]?teamId= (paid, slip)', coach)
+})
+
+await step('a file that is not an image is refused, and nothing is stored', async () => {
+  const answer = await coach.evaluate(async id => {
+    const form = new FormData()
+    form.append('slip', new File(['not a slip'], 'slip.txt', { type: 'text/plain' }))
+    const response = await fetch(`/api/teams/${id}/payment`, { method: 'POST', body: form })
+    return { status: response.status, body: await response.json().catch(() => null) }
+  }, paidTeamId)
+  expect(answer.status === 400 && answer.body?.error === 'สลิปต้องเป็นไฟล์ JPG, PNG หรือ WEBP', `the app answered ${JSON.stringify(answer)}`)
+  expect(state.storage.length === 0 && state.tables.payments.length === 0, 'something was stored for a refused file')
+})
+
+await step('the slip is stored privately and the payment waits for the organizer', async () => {
+  await coach.locator('input[type="file"]').setInputFiles({ name: 'slip.png', mimeType: 'image/png', buffer: PNG })
+  await tap(coach.getByRole('button', { name: 'ส่งสลิปให้ผู้จัดตรวจ', exact: true }))
+  await visible('ส่งสลิปแล้ว', coach)
+  const payments = state.tables.payments.filter(row => row.team_id === paidTeamId)
+  expect(payments.length === 1 && payments[0].status === 'pending' && payments[0].amount === 500 && payments[0].user_id === E2E_COACH, `payments: ${JSON.stringify(payments)}`)
+  // AGENTS.md rule 6: the slip is an object path in the private bucket, never a public URL.
+  const path = payments[0].slip_url
+  expect(typeof path === 'string' && !/^https?:/i.test(path) && state.storage.some(file => file.bucket === 'slips' && file.path === path && file.owner === E2E_COACH), `slip_url ${path}, storage ${JSON.stringify(state.storage)}`)
+})
+
+await step('a second slip for the same team is refused', async () => {
+  const answer = await coach.evaluate(async id => {
+    const form = new FormData()
+    form.append('slip', new File([new Uint8Array([137, 80, 78, 71])], 'again.png', { type: 'image/png' }))
+    const response = await fetch(`/api/teams/${id}/payment`, { method: 'POST', body: form })
+    return { status: response.status, body: await response.json().catch(() => null) }
+  }, paidTeamId)
+  expect(answer.status === 409 && answer.body?.error === 'ทีมนี้มีรายการชำระเงินอยู่แล้ว', `the app answered ${JSON.stringify(answer)}`)
+  expect(state.tables.payments.length === 1 && state.storage.length === 1, 'a second slip was stored')
 })
 
 await h.finish()

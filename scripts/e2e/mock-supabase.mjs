@@ -9,7 +9,8 @@
 // record_my_self_test and delete_my_self_test; the own-team functions of sql/78, 79 and 83 for
 // coach-flow.mjs; create_tournament_team_safely, invite_team_member, respond_team_invite and
 // submit_tournament_team_safely of sql/18, 20 and 99 for registration-flow.mjs, against a seeded,
-// read-only tournaments table) and raise the same error codes. Locks and RLS are
+// read-only tournaments table) and raise the same error codes. A slip upload goes to an in-memory
+// slips bucket (state.storage); a payment needs a submitted team (sql/20) and is one per team (sql/80). Locks and RLS are
 // not modelled: the caller is whoever the bearer token names, and every row is visible.
 //
 // Anything it does not know (a table, a function, a filter operator) is answered with 501 and
@@ -24,7 +25,7 @@ export const E2E_COACH = '44444444-4444-4444-8444-444444444444'
 export const bangkokToday = () => new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10)
 
 const READ_ONLY = new Set(['tournaments'])
-const TABLES = ['profiles', 'tournaments', 'athlete_profiles', 'guardian_links', 'training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests', 'teams', 'team_members', 'team_join_links', 'team_join_requests', 'team_staff']
+const TABLES = ['profiles', 'tournaments', 'payments', 'athlete_profiles', 'guardian_links', 'training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests', 'teams', 'team_members', 'team_join_links', 'team_join_requests', 'team_staff']
 // Read by the bottom bar (notifications), the training pages (team_members) and the athlete
 // home's fallback reads (app/profile/page.tsx); this athlete has no rows in any of them.
 const EMPTY_BY_DESIGN = new Set(['coach_attestations', 'coach_skill_assessments', 'coach_athlete_notes', 'team_training_plans', 'team_announcements', 'team_events', 'team_match_minutes', 'team_match_minute_entries', 'notifications', 'player_ranks', 'match_results', 'athlete_highlights', 'athlete_videos', 'athlete_progress', 'player_ratings', 'athlete_xp_events'])
@@ -57,7 +58,10 @@ export function createState({ athleteBirthDate = '2012-03-04', tournaments = [] 
       team_join_links: [],
       team_join_requests: [],
       team_staff: [],
+      payments: [],
     },
+    // Files uploaded to Storage: { bucket, path, contentType, size, owner }. Only the slips bucket.
+    storage: [],
     writes: [],
     unknown: [],
     // Every request, in order, for the failure report of a step: [ms, 'mock', method, path].
@@ -70,6 +74,8 @@ const UNIQUE = {
   training_enrollments: { keys: ['athlete_id', 'program_id'], where: row => row.status === 'active' },
   training_checkins: { keys: ['enrollment_id', 'session_date'] },
   athlete_self_tests: { keys: ['athlete_id', 'test_key', 'test_date'] },
+  // sql/80: one payment per team.
+  payments: { keys: ['team_id'] },
 }
 
 const OPERATORS = new Set(['eq', 'neq', 'is', 'lt', 'lte', 'gt', 'gte', 'in', 'not'])
@@ -279,7 +285,7 @@ function rpc(state, me, name, body) {
       if (t.teams.some(row => row.tournament_id === tournament.id && row.created_by === me)) return raise(409, '23505', 'ALREADY_HAS_TEAM_FOR_TOURNAMENT')
       const id = crypto.randomUUID()
       // The embedded tournaments object stands in for PostgREST's embedding (/team-members reads it).
-      t.teams.push({ id, name, members: '', tournament_id: tournament.id, created_by: me, status: 'draft', kind: 'entry', created_at: new Date().toISOString(), tournaments: { name: tournament.name, fee: tournament.fee, location: tournament.location ?? null } })
+      t.teams.push({ id, name, members: '', tournament_id: tournament.id, created_by: me, status: 'draft', kind: 'entry', created_at: new Date().toISOString(), tournaments: { name: tournament.name, fee: tournament.fee, location: tournament.location ?? null, promptpay: tournament.promptpay ?? null, status: tournament.status } })
       state.writes.push('team:create-entry')
       return { status: 200, body: id }
     }
@@ -383,8 +389,24 @@ export function startMock(state, port = 54399) {
       return res.end()
     }
     const url = new URL(req.url, 'http://mock')
-    let raw = ''
-    for await (const chunk of req) raw += chunk
+    const chunks = []
+    for await (const chunk of req) chunks.push(chunk)
+    const bytes = Buffer.concat(chunks)
+    // A slip upload (supabase-js storage.upload): only the private slips bucket, signed in, no
+    // overwrite. The file is kept as its size and type; nothing is served back from it.
+    if (req.method === 'POST' && url.pathname.startsWith('/storage/v1/object/')) {
+      const me = caller(state, req)
+      const [bucket, ...rest] = url.pathname.slice('/storage/v1/object/'.length).split('/')
+      const path = decodeURIComponent(rest.join('/'))
+      state.trace.push([Date.now(), 'mock', req.method, `storage ${bucket}/${path}`])
+      if (bucket !== 'slips') { state.unknown.push(`storage ${bucket}`); return send(res, 501, { message: `the test double has no bucket ${bucket}` }) }
+      if (!me) return send(res, 403, { statusCode: '403', error: 'Unauthorized', message: 'new row violates row-level security policy' })
+      if (state.storage.some(file => file.bucket === bucket && file.path === path)) return send(res, 409, { statusCode: '409', error: 'Duplicate', message: 'The resource already exists' })
+      state.storage.push({ bucket, path, contentType: req.headers['content-type'] ?? null, size: bytes.length, owner: me })
+      state.writes.push('storage:slips')
+      return send(res, 200, { Key: `${bucket}/${path}`, Id: crypto.randomUUID() })
+    }
+    const raw = bytes.toString()
     const body = raw ? JSON.parse(raw) : {}
     const me = caller(state, req)
     state.trace.push([Date.now(), 'mock', req.method, url.pathname.replace('/rest/v1/', '') + (url.search ? '?' + decodeURIComponent(url.search.slice(1)).slice(0, 80) : '')])
@@ -420,6 +442,10 @@ export function startMock(state, port = 54399) {
     }
     if (req.method === 'POST') {
       const items = (Array.isArray(body) ? body : [body]).map(item => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...(table === 'training_enrollments' ? { status: 'active' } : {}), ...item }))
+      // sql/20 payment_team_pending_guard: a payment only for a team that has been submitted.
+      if (table === 'payments' && items.some(item => state.tables.teams.find(team => team.id === item.team_id)?.status !== 'pending')) {
+        return send(res, 403, { code: '42501', message: 'TEAM_NOT_READY_FOR_PAYMENT' })
+      }
       const unique = UNIQUE[table]
       for (const item of items) {
         const inIndex = row => !unique.where || unique.where(row)
