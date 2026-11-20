@@ -26,8 +26,8 @@ export const bangkokToday = () => new Date(Date.now() + 7 * 3600e3).toISOString(
 
 const READ_ONLY = new Set(['tournaments'])
 const TABLES = ['profiles', 'tournaments', 'payments', 'athlete_profiles', 'guardian_links', 'training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests', 'teams', 'team_members', 'team_join_links', 'team_join_requests', 'team_staff']
-// Read by the bottom bar (notifications), the training pages (team_members) and the athlete
-// home's fallback reads (app/profile/page.tsx); this athlete has no rows in any of them.
+// Read by the bottom bar (notifications), the training pages (team_members), /career and the
+// /team-members inboxes; this athlete has no rows in any of them.
 const EMPTY_BY_DESIGN = new Set(['coach_attestations', 'coach_skill_assessments', 'coach_athlete_notes', 'team_training_plans', 'team_announcements', 'team_events', 'team_match_minutes', 'team_match_minute_entries', 'notifications', 'player_ranks', 'match_results', 'athlete_highlights', 'athlete_videos', 'athlete_progress', 'player_ratings', 'athlete_xp_events'])
 
 export function createState({ athleteBirthDate = '2012-03-04', tournaments = [] } = {}) {
@@ -133,14 +133,69 @@ function yearsBefore(day, years) {
   return date.toISOString().slice(0, 10)
 }
 
+const PROFILE_HOME_ATHLETE_COLUMNS = ['user_id', 'display_name', 'sport', 'position', 'province', 'height_cm', 'weight_kg',
+  'current_team', 'bio', 'profile_image_url', 'is_public', 'verification_level', 'verified_at', 'created_at', 'updated_at']
+const pick = (row, columns) => Object.fromEntries(columns.map(column => [column, row[column] ?? null]))
+
+// The rows of my_team_memberships (sql/82) for the caller.
+function myMemberships(t, me, limit) {
+  const capped = Math.min(Math.max(1, Math.floor(Number(limit) || 50)), 100)
+  return t.team_members.filter(row => row.athlete_id === me)
+    .sort((a, b) => String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')))
+    .slice(0, capped)
+    .map(row => {
+      const team = t.teams.find(item => item.id === row.team_id)
+      const tournament = team?.tournament_id ? t.tournaments.find(item => item.id === team.tournament_id) : null
+      return {
+        member_id: row.id, team_id: row.team_id, status: row.status, invited_at: row.invited_at ?? null, created_at: row.created_at ?? null,
+        team_name: team?.name ?? null, team_status: team?.status ?? null, team_kind: team?.kind ?? null,
+        tournament_name: tournament?.name ?? null, tournament_location: tournament?.location ?? null,
+      }
+    })
+}
+
+const MOCK_DELAY_MS = Number(process.env.E2E_MOCK_DELAY_MS) || 0
+// A request from the browser tab (mock-b in the trace) rather than from the app's server render.
+const fromBrowser = req => /Mozilla/.test(req.headers['user-agent'] ?? '')
+
 function rpc(state, me, name, body) {
   const today = bangkokToday()
   const t = state.tables
   const athlete = t.athlete_profiles.find(row => row.user_id === me)
   switch (name) {
-    // The home and hub functions are left out on purpose: the app's fallback reads run instead.
-    case 'my_profile_home': case 'my_team_memberships': case 'my_team_hub':
-      return raise(404, 'PGRST202', `Could not find the function public.${name}`)
+    // my_team_memberships (sql/82): the caller's own team_members rows, newest first, at most 100.
+    case 'my_team_memberships': return { status: 200, body: myMemberships(t, me, body.p_limit ?? 50) }
+    // my_team_hub (sql/92): the ten lists of /team-members and /guardian in one call. Only the
+    // memberships are modelled; the other nine are empty in these flows, as their functions below.
+    case 'my_team_hub': return { status: 200, body: {
+      memberships: myMemberships(t, me, 100), entries: [], events: [], child_teams: [], news: [], plans: [],
+      notes: [], minutes: [], staff_teams: [], team_staff: [],
+    } }
+    // my_profile_home (sql/91): /profile's own data in one call, under the caller's own rows.
+    case 'my_profile_home': {
+      const own = (table, column = 'athlete_id') => (t[table] ?? []).filter(row => row[column] === me)
+      const profile = t.profiles.find(row => row.id === me)
+      const active = own('training_enrollments').filter(row => row.status === 'active')
+      const firstStart = active.map(row => row.start_date).sort()[0]
+      const rank = (t.player_ranks ?? []).find(row => row.player_id === me && row.sport === body.p_sport && row.season === body.p_season)
+      const progress = own('athlete_progress')[0]
+      return { status: 200, body: {
+        profile: profile ? { full_name: profile.full_name ?? null, role: profile.role ?? null, onboarding_persona: profile.onboarding_persona ?? null } : null,
+        // The public columns only: the birth date and consent time come through `private`.
+        athlete: athlete ? pick(athlete, PROFILE_HOME_ATHLETE_COLUMNS) : null,
+        private: athlete ? { birth_date: athlete.birth_date ?? null, guardian_consent_at: athlete.guardian_consent_at ?? null } : null,
+        rank: rank ? pick(rank, ['id', 'player_name', 'position', 'ovr', 'pts']) : null,
+        progress: progress ? pick(progress, ['xp_total', 'current_level']) : null,
+        highlights: own('athlete_highlights').length,
+        videos: own('athlete_videos').length,
+        pending_guardian: own('guardian_links').filter(row => row.status === 'pending').length,
+        memberships: myMemberships(t, me, 5),
+        training: {
+          enrollments: active.map(row => pick(row, ['id', 'program_id', 'weekdays', 'start_date', 'status'])),
+          checkins: firstStart ? own('training_checkins').filter(row => row.session_date >= firstStart).map(row => pick(row, ['enrollment_id', 'session_date'])) : [],
+        },
+      } }
+    }
     // The age shown on a public profile; this athlete's profile is not public.
     case 'public_athlete_age': return { status: 200, body: null }
     case 'my_athlete_private':
@@ -252,7 +307,7 @@ function rpc(state, me, name, body) {
         if (team.status !== 'draft') return raise(409, '55000', 'ROSTER_LOCKED')
         const member = t.team_members.find(row => row.team_id === team.id && row.athlete_id === request.athlete_id)
         if (member) member.status = 'accepted'
-        else t.team_members.push({ id: crypto.randomUUID(), team_id: team.id, athlete_id: request.athlete_id, invited_by: me, status: 'accepted', invited_at: new Date().toISOString(), responded_at: new Date().toISOString() })
+        else t.team_members.push({ id: crypto.randomUUID(), team_id: team.id, athlete_id: request.athlete_id, invited_by: me, status: 'accepted', invited_at: new Date().toISOString(), created_at: new Date().toISOString(), responded_at: new Date().toISOString() })
       }
       request.status = body.p_accept ? 'accepted' : 'declined'
       state.writes.push(`join:${request.status}`)
@@ -388,6 +443,9 @@ export function startMock(state, port = 54399) {
       res.writeHead(204, { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*', 'access-control-expose-headers': 'content-range' })
       return res.end()
     }
+    // E2E_MOCK_DELAY_MS: answer every request that much later, as a database across a network would,
+    // so a page's reads made one after another show up as separate rounds (T59 request counts).
+    if (MOCK_DELAY_MS) await new Promise(resolve => setTimeout(resolve, MOCK_DELAY_MS))
     const url = new URL(req.url, 'http://mock')
     const chunks = []
     for await (const chunk of req) chunks.push(chunk)
@@ -412,7 +470,7 @@ export function startMock(state, port = 54399) {
     const raw = bytes.toString()
     const body = raw ? JSON.parse(raw) : {}
     const me = caller(state, req)
-    state.trace.push([Date.now(), 'mock', req.method, url.pathname.replace('/rest/v1/', '') + (url.search ? '?' + decodeURIComponent(url.search.slice(1)).slice(0, 80) : '')])
+    state.trace.push([Date.now(), fromBrowser(req) ? 'mock-b' : 'mock', req.method, url.pathname.replace('/rest/v1/', '') + (url.search ? '?' + decodeURIComponent(url.search.slice(1)).slice(0, 80) : '')])
     if (url.pathname === '/auth/v1/user') return me ? send(res, 200, state.users[me]) : send(res, 401, { message: 'invalid token' })
     if (url.pathname.startsWith('/rest/v1/rpc/')) {
       const result = rpc(state, me, url.pathname.slice('/rest/v1/rpc/'.length), body)

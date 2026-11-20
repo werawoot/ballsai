@@ -51,11 +51,11 @@ export default async function TeamMembersPage(props: { searchParams?: Promise<{ 
   // read again without it and every team is a tournament team, as before.
   const teamsQuery = (columns: string) => supabase.from('teams').select(columns).eq('created_by', user.id).order('created_at', { ascending: false })
   // Everything that needs only the user id, side by side (T59): the coach's teams, the
-  // person's own team data (one call to my_team_hub, sql/92, or its ten functions before it
-  // is applied), their profile, and what coaches sent them to answer.
+  // person's own team data (one call to my_team_hub, sql/92), their profile, and what
+  // coaches sent them to answer.
   const [teamsFirst, mine, { data: profileRow }, { data: attestationRows, error: attestationError }, { data: skillRows }] = await Promise.all([
     teamsQuery('id, name, tournament_id, status, kind, tournaments(name, fee)'),
-    fetchMyTeamHub(supabase, user.id),
+    fetchMyTeamHub(supabase),
     supabase.from('profiles').select('role, onboarding_persona, full_name').eq('id', user.id).maybeSingle(),
     // The athlete's own pending and answered attestations. A failure here is surfaced
     // too, rather than silently hiding a request that is waiting on them.
@@ -139,7 +139,7 @@ export default async function TeamMembersPage(props: { searchParams?: Promise<{ 
   }))
   // Upcoming events (sql/70), a guardian's children's teams (sql/83), news (sql/71), plans
   // (sql/72), coach notes (sql/73), minutes (sql/74) and staff (sql/75), all from the
-  // my_team_hub read above; a section whose SQL is not applied is empty.
+  // my_team_hub read above.
   const myEvents = mine.events
   const childTeams = mine.childTeams
   const myNews = mine.news

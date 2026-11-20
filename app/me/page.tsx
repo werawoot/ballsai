@@ -64,8 +64,8 @@ export default async function MePage() {
   if (!user) redirect('/login?next=/me')
 
   const [t, p, s] = await Promise.all([getTranslations('mePage'), getTranslations('profileHome'), getTranslations('roleHome')])
-  // The same one call as /profile (sql/91), or its separate reads before that file.
-  const home = await fetchProfileHome(supabase, user.id)
+  // The same one call as /profile (sql/91).
+  const home = await fetchProfileHome(supabase)
   const kind = homeKind({ persona: home.profile?.onboarding_persona, role: home.profile?.role })
   const athlete = home.athlete as AthleteRow | null
   const rank = home.rank

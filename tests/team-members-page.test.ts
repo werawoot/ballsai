@@ -24,9 +24,27 @@ function fakeClient() {
     }
     return builder
   }
-  // Functions (sql/70 my_upcoming_team_events, sql/71 my_team_announcements): the seeded
-  // rows under the function's name, or missing like before the file.
-  const rpc = async (name: string) => (db.tables[name] ? { data: db.tables[name], error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } })
+  // Functions: the seeded rows under the function's name, or missing like before the file.
+  // my_team_hub (sql/92) wraps ten of them in one call: its memberships are the user's own
+  // team_members rows in sql/82's shape, and each list is the rows seeded under the function
+  // it wraps (my_upcoming_team_events, my_team_announcements, ...).
+  const rpc = async (name: string) => {
+    if (name === 'my_team_hub') {
+      if (db.failing.has('my_team_hub')) return { data: null, error: { code: '57014', message: 'timeout' } }
+      const list = (fn: string) => db.tables[fn] ?? []
+      const memberships = (db.tables.team_members ?? []).filter(row => row.athlete_id === db.user).map(row => {
+        const teams = row.teams as { name?: string; status?: string; kind?: string } | undefined
+        return { member_id: row.id, team_id: row.team_id, status: row.status, invited_at: row.invited_at ?? null, created_at: row.created_at ?? null,
+          team_name: teams?.name ?? null, team_status: teams?.status ?? null, team_kind: teams?.kind ?? null, tournament_name: null, tournament_location: null }
+      })
+      return { data: {
+        memberships, entries: list('my_entry_rosters'), events: list('my_upcoming_team_events'), child_teams: list('my_children_team_memberships'),
+        news: list('my_team_announcements'), plans: list('my_team_training_plans'), notes: list('my_coach_notes'), minutes: list('my_match_minutes'),
+        staff_teams: list('my_staff_teams'), team_staff: list('my_team_staff'),
+      }, error: null }
+    }
+    return db.tables[name] ? { data: db.tables[name], error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } }
+  }
   return { from, rpc, auth: { getUser: async () => ({ data: { user: { id: db.user } } }) } }
 }
 vi.mock('@supabase/ssr', () => ({ createServerClient: () => fakeClient() }))
@@ -183,7 +201,7 @@ describe('/team-members when a lookup fails', () => {
   })
 
   it('says the invitations could not be loaded instead of "no team yet"', async () => {
-    db.user = 'u1'; db.failing = new Set(['team_members'])
+    db.user = 'u1'; db.failing = new Set(['my_team_hub'])
     db.tables = { teams: [], team_members: [invite], coach_attestations: [] }
     const html = await render()
     expect(html).toContain('โหลดข้อมูลทีมไม่สำเร็จ')
