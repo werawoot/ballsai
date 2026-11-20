@@ -184,10 +184,10 @@ app's server render and `mock-b` one from the browser tab.
 `scripts/e2e/request-count.mjs` uses it to print, for each role and for `/profile`,
 `/team-members`, `/guardian` and `/career`, how many data reads the page's render sends and in how
 many rounds, and how many Supabase Auth calls come with it (T59, T62). It is a measurement, not a
-check, and is not part of `npm run test:e2e`:
+check, and is not part of `npm run test:e2e`. It sets `E2E_MOCK_DELAY_MS=50` itself unless given:
 
 ```bash
-E2E_MOCK_DELAY_MS=50 PLAYWRIGHT_MODULE=/opt/node22/lib/node_modules/playwright/index.mjs node scripts/e2e/request-count.mjs
+PLAYWRIGHT_MODULE=/opt/node22/lib/node_modules/playwright/index.mjs node scripts/e2e/request-count.mjs
 ```
 
 ## Limits

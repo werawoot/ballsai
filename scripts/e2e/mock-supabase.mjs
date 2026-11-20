@@ -64,7 +64,8 @@ export function createState({ athleteBirthDate = '2012-03-04', tournaments = [] 
     storage: [],
     writes: [],
     unknown: [],
-    // Every request, in order, for the failure report of a step: [ms, 'mock', method, path].
+    // Every request, in order, for the failure report of a step: [ms, source, method, path]; source
+    // is 'mock' from the app's server, 'mock-b' from the browser tab, 'browser' for RSC requests.
     trace: [],
   }
 }
@@ -457,7 +458,7 @@ export function startMock(state, port = 54399) {
       const me = caller(state, req)
       const [bucket, ...rest] = url.pathname.slice('/storage/v1/object/'.length).split('/')
       const path = decodeURIComponent(rest.join('/'))
-      state.trace.push([Date.now(), 'mock', req.method, `storage ${bucket}/${path}`])
+      state.trace.push([Date.now(), fromBrowser(req) ? 'mock-b' : 'mock', req.method, `storage ${bucket}/${path}`])
       if (bucket !== 'slips') { state.unknown.push(`storage ${bucket}`); return send(res, 501, { message: `the test double has no bucket ${bucket}` }) }
       // slips_owner_insert (sql/supabase-rls.sql): signed in, and the name starts with the caller's id
       // before the first "_". Storage answers a policy refusal with HTTP 400 and statusCode 403.

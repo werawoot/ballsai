@@ -13,8 +13,8 @@ const db = vi.hoisted(() => ({
   tables: {} as Record<string, unknown>,
   counts: {} as Record<string, number>,
   private: null as null | { birth_date: string | null; guardian_consent_at: string | null },
-  // my_team_memberships rows (sql/82); null: the function is missing, the old read is used, and
-  // my_profile_home builds its memberships from the team_members rows instead.
+  // my_team_memberships rows (sql/82) for the pages that call it (e.g. /career); null: answered as
+  // missing. my_profile_home uses these too, else builds them from the team_members rows.
   memberships: null as null | Record<string, unknown>[],
   failing: [] as string[],
   // Before SQL78 teams has no kind column: a select naming it fails the way PostgREST does.

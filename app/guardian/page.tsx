@@ -64,6 +64,10 @@ export default async function GuardianPage() {
     fetchMyTeamHub(supabase),
   ])
   const { events, news, plans, notes: coachNotes, minutes: myMinutes, teamStaff } = mine
+  // my_team_hub failed: the children's team sections below are empty for that reason, not
+  // because there is nothing, so the page says so (the same message as /team-members).
+  const teamLoadFailed = mine.failed
+  const tr = teamLoadFailed ? await getTranslations('teamRoster') : null
   const planDay = planToday()
   const isGuardian = (profile as Profile | null)?.onboarding_persona === 'guardian'
   const links = ((guardianRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
@@ -77,6 +81,7 @@ export default async function GuardianPage() {
         <p style={{ margin: '0 0 12px' }}>{tp('notGuardian.body')}</p>
         <Link href={CHANGE_ROLE_PATH} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 18px', borderRadius: 12, background: '#CC0001', color: 'white', fontWeight: 800, fontSize: 15, textDecoration: 'none' }}>{tp('notGuardian.changeRole')}</Link>
       </div>}
+      {tr && <p role="alert" style={{ background: 'var(--ui-card)', border: '1px solid #f3b4b4', borderRadius: 12, padding: 14, color: '#8a1c1c', fontSize: 14, lineHeight: 1.55, margin: '0 0 16px' }}>{tr('loadFailed')}</p>}
       <MyNewsPanel rows={news} />
       <MyCoachNotesPanel rows={coachNotes} viewerId={user.id} />
       <MyMinutesPanel rows={myMinutes} viewerId={user.id} />
