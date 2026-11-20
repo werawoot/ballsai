@@ -253,6 +253,9 @@
 .tn-date b { font: 800 26px/1 var(--font-oswald), sans-serif; }
 .tn-date small { font: 700 11px var(--font-sarabun), sans-serif; margin-top: 3px; opacity: .78; }
 .tn-date.is-next { background: var(--ui-red); }
+/* The month on the red badge: .tn-summary small (below) made it grey, 1.01:1, and white at .78
+   would be 3.88:1; full white is 5.89:1 (WCAG AA, owner 19 Nov 2026). */
+.tn-date.is-next small { color: inherit; opacity: 1; }
 
 /* Detail */
 .bds-page.tn-detail { padding-bottom: 150px !important; }

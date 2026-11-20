@@ -1,6 +1,8 @@
-# Browser end-to-end check (athlete flow)
+# Browser end-to-end checks
 
-`npm run test:e2e` (`scripts/e2e/athlete-flow.mjs`, owner, 13 Nov 2026) drives a real Chromium
+`npm run test:e2e` runs three flows in turn: the athlete's (`scripts/e2e/athlete-flow.mjs`, owner,
+13 Nov 2026, below), the coach's own team and entering a tournament (both further down). The
+athlete flow drives a real Chromium
 through the athlete's main path against a production build of the app. The app talks to
 `scripts/e2e/mock-supabase.mjs`, an in-memory stand-in for Supabase auth and PostgREST, so nothing
 touches Staging or Production and no account or key is needed.
@@ -52,7 +54,7 @@ person's eye.
 
 Asking again (step 3) waits for the app's own answer and requires `already_requested`. Not
 walked: the coach's direct invitation by email (`/api/teams/[id]/members`, `invite_team_member`),
-assistant coaches, tournament entry.
+assistant coaches. Tournament entry is the registration flow below.
 
 The mock's team functions check a subset of what sql/78, sql/79 and sql/83 check (owner,
 persona, name length, draft roster, the typed name, one pending request per athlete) and raise
@@ -74,6 +76,78 @@ First runs (15 Nov 2026) found and fixed two accessibility errors on the team pa
   (`--ui-ink`) on the same green, at 8.5:1.
 - The roster table scrolls sideways and could not be reached by keyboard. It is now a focusable,
   named region.
+
+## The registration flow
+
+`scripts/e2e/registration-flow.mjs` (owner, 19 Nov 2026: "ทำข้อ 4") walks entering a team in a
+free tournament, on the same harness and mock. The flow seeds one open tournament
+(`createHarness({ tournaments: [...] })`).
+
+1. A coach opens the tournament, presses "สมัครทีม", names the team and lands on
+   `/team-members?team=…`; one `entry` team in `draft` for that tournament
+   (`create_tournament_team_safely`).
+2. A second team in the same tournament is refused with "คุณสร้างทีมสำหรับรายการนี้แล้ว"; still
+   one team.
+3. The submit button is off and says why while nobody has accepted.
+4. An invitation to an email with no account is refused ("ยังไม่มีบัญชีนี้ในระบบ") and writes
+   nothing; the athlete's email writes one pending invitation (`invite_team_member`).
+5. Signed in as the athlete, `/team-members` shows the invitation; "เข้าร่วมทีม" accepts it
+   (`respond_team_invite`).
+6. The coach submits; the page moves to the tournament's last step ("ส่งสมัครแล้ว") and the team
+   is `pending` (`submit_tournament_team_safely`).
+7. Submitting again answers 409 `teamAlreadySubmitted`; another account (the guardian) gets 403
+   "คุณไม่มีสิทธิ์ส่งสมัครทีมนี้" (the permission check comes first, sql/99).
+
+Then, in a second tournament with a fee (500, with the organizer's PromptPay):
+
+8. The team is entered, the athlete invited and accepting, and the team submitted, as above; the
+   page moves to the payment step.
+9. The payment step shows the amount, the organizer's PromptPay and the team's name.
+10. A file that is not an image, posted to the route as the page would, is refused ("สลิปต้องเป็นไฟล์ JPG, PNG หรือ WEBP"); nothing is
+    stored and no payment row is written.
+11. A PNG chosen in the file input and sent with "ส่งสลิปให้ผู้จัดตรวจ" shows "ส่งสลิปแล้ว": one
+    `pending` payment of 500 by the coach, whose `slip_url` is the object path in the private
+    `slips` bucket, never a public URL (AGENTS.md rule 6), and the file is in that bucket.
+12. A second slip for the same team, posted to the route, is refused at the route's own check for
+    an existing payment ("ทีมนี้มีรายการชำระเงินอยู่แล้ว"); still one payment and one file.
+
+Not walked: the organizer confirming a payment or a team, the signed URL an organizer opens a
+slip with, capacity, and an organizer or admin submitting.
+
+The mock's four entry functions check what sql/20 and sql/99 check that the flow can meet
+(persona, name length, open tournament, one team per coach per tournament, owner or organizer,
+draft roster, account and athlete profile of the invitee, one roster per tournament, accepted
+member, capacity) and raise the same codes. A slip goes to an in-memory `slips` bucket
+(`state.storage`: path, type, size, owner; only that bucket, no overwrite, and the
+`slips_owner_insert` rule: signed in, with the caller's id before the first `_` of the name,
+refused as Storage does with HTTP 400 and statusCode 403). The bucket being private
+(`public = false`) is not modelled. A payment needs a submitted team (`payment_team_pending_guard`,
+sql/20) and is one per team (sql/80); the flow does not reach either rule, because the route
+checks the team's status and an existing payment first, and those are what step 12 meets. The invitation row carries its team embedded, as the
+fallback read of `my_team_memberships` asks for it: the mock answers `my_team_memberships` and
+`my_team_hub` as missing, so the athlete's invitation comes through that fallback, not the
+function Production runs.
+
+The app counts the registration limit per account since T65 (5 per 10 minutes). Every run signs
+in the same coach and makes three registrations, so a second run on one server within ten minutes
+gets "ทำรายการบ่อยเกินไป" on its third (the tournament with a fee), and that step fails. Restart
+`next start` between runs, or wait.
+
+First runs (19 Nov 2026) found and fixed:
+- **A coach could not send an invitation while entering a tournament.** On `/team-members` the
+  draft entry's card is glass (`backdrop-filter`, team-glass.css), which makes it the containing
+  block of a `position: fixed` child. The registration dock (`.tn-dock`) was laid out inside the
+  card, on top of the "ส่งคำเชิญ" button, at every scroll position (a one-off probe at 390 and 768 px: `elementFromPoint` at the button's
+  centre was the dock's submit button; the flow itself runs at 390 px, where a covered button fails
+  its click). Inside that card the
+  dock now stays in the flow (`.tm-page.gl .tm-invite .tn-dock`, team-glass.css). Own teams have no
+  dock and were not affected.
+- The month on the red date badge (registration steps) was grey on red at 1.01:1, because
+  `.tn-summary small` came after `.tn-date small`. It is white now, 5.89:1.
+- The "วางแผนก่อนแข่ง" link on `/team-members` was 4.16:1; it is `--gl-green-ink-on-tint` (#0B6B36,
+  app/glass.css), 5.09:1.
+- The date-badge fix (tournaments.css) also reaches the registration steps, which keep the old
+  look (ADR-014): it gives back the white the badge was meant to have, nothing else.
 
 ## How faithful the mock is
 
@@ -105,7 +179,7 @@ another host. The mock listens on port 54399.
 
 ## Limits
 
-- Not in CI: CI only checks the syntax of the four scripts (the two flows, the harness and the
+- Not in CI: CI only checks the syntax of the five scripts (the three flows, the harness and the
   mock). Running them needs a build plus a browser.
 - Organizer and admin pages are not walked.
 

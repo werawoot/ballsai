@@ -6,6 +6,7 @@
   --gl-green: #16E06E;
   --gl-green-hover: #12C961;
   --gl-green-ink: #0F7A3F; /* green text on white: 5.4:1 */
+  --gl-green-ink-on-tint: #0B6B36; /* green text on the pale green page tint (#CFE8D2): 5.09:1 */
   --gl-white: #FFFFFF;
   --gl-canvas: #F3F6F9;
   --gl-green-surface: #E8F9EE;

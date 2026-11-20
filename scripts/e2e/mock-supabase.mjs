@@ -1,12 +1,16 @@
-// A small, stateful stand-in for Supabase (auth + PostgREST) for the browser end-to-end test
-// (scripts/e2e/athlete-flow.mjs). It keeps rows in memory, applies the PostgREST filters the
+// A small, stateful stand-in for Supabase (auth, PostgREST and the slips bucket of Storage) for the browser end-to-end test
+// (scripts/e2e/*-flow.mjs). It keeps rows in memory, applies the PostgREST filters the
 // app uses (eq, neq, is, lt, lte, gt, gte, in, not.<op>), order, limit and offset, answers HEAD
 // counts, single-object reads and inserts, and enforces the unique keys of the real tables that
 // the flow can hit (sql/63: one active enrollment per athlete and programme, one check-in per
 // enrollment per day; sql/96: one self-test result per test per day).
 //
-// The functions the flow calls check what their SQL checks (sql/95 set_my_training_goal, sql/96
-// record_my_self_test and delete_my_self_test) and raise the same error codes. Locks and RLS are
+// The functions the flows call check what their SQL checks (sql/95 set_my_training_goal, sql/96
+// record_my_self_test and delete_my_self_test; the own-team functions of sql/78, 79 and 83 for
+// coach-flow.mjs; create_tournament_team_safely, invite_team_member, respond_team_invite and
+// submit_tournament_team_safely of sql/18, 20 and 99 for registration-flow.mjs, against a seeded,
+// read-only tournaments table) and raise the same error codes. A slip upload goes to an in-memory
+// slips bucket (state.storage); a payment needs a submitted team (sql/20) and is one per team (sql/80). Locks and RLS are
 // not modelled: the caller is whoever the bearer token names, and every row is visible.
 //
 // Anything it does not know (a table, a function, a filter operator) is answered with 501 and
@@ -20,12 +24,13 @@ export const E2E_COACH = '44444444-4444-4444-8444-444444444444'
 
 export const bangkokToday = () => new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10)
 
-const TABLES = ['profiles', 'athlete_profiles', 'guardian_links', 'training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests', 'teams', 'team_members', 'team_join_links', 'team_join_requests', 'team_staff']
+const READ_ONLY = new Set(['tournaments'])
+const TABLES = ['profiles', 'tournaments', 'payments', 'athlete_profiles', 'guardian_links', 'training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests', 'teams', 'team_members', 'team_join_links', 'team_join_requests', 'team_staff']
 // Read by the bottom bar (notifications), the training pages (team_members) and the athlete
 // home's fallback reads (app/profile/page.tsx); this athlete has no rows in any of them.
-const EMPTY_BY_DESIGN = new Set(['coach_attestations', 'coach_skill_assessments', 'coach_athlete_notes', 'team_training_plans', 'team_announcements', 'team_events', 'team_match_minutes', 'team_match_minute_entries', 'notifications', 'player_ranks', 'tournaments', 'match_results', 'athlete_highlights', 'athlete_videos', 'athlete_progress', 'player_ratings', 'athlete_xp_events'])
+const EMPTY_BY_DESIGN = new Set(['coach_attestations', 'coach_skill_assessments', 'coach_athlete_notes', 'team_training_plans', 'team_announcements', 'team_events', 'team_match_minutes', 'team_match_minute_entries', 'notifications', 'player_ranks', 'match_results', 'athlete_highlights', 'athlete_videos', 'athlete_progress', 'player_ratings', 'athlete_xp_events'])
 
-export function createState({ athleteBirthDate = '2012-03-04' } = {}) {
+export function createState({ athleteBirthDate = '2012-03-04', tournaments = [] } = {}) {
   const users = {
     [E2E_ATHLETE]: { id: E2E_ATHLETE, email: 'e2e-athlete@example.com', aud: 'authenticated', role: 'authenticated' },
     [E2E_GUARDIAN]: { id: E2E_GUARDIAN, email: 'e2e-guardian@example.com', aud: 'authenticated', role: 'authenticated' },
@@ -46,12 +51,17 @@ export function createState({ athleteBirthDate = '2012-03-04' } = {}) {
       training_checkins: [],
       athlete_training_goals: [],
       athlete_self_tests: [],
+      // Tournaments a flow passes in (registration-flow.mjs); none by default, as before.
+      tournaments,
       teams: [],
       team_members: [],
       team_join_links: [],
       team_join_requests: [],
       team_staff: [],
+      payments: [],
     },
+    // Files uploaded to Storage: { bucket, path, contentType, size, owner }. Only the slips bucket.
+    storage: [],
     writes: [],
     unknown: [],
     // Every request, in order, for the failure report of a step: [ms, 'mock', method, path].
@@ -64,6 +74,8 @@ const UNIQUE = {
   training_enrollments: { keys: ['athlete_id', 'program_id'], where: row => row.status === 'active' },
   training_checkins: { keys: ['enrollment_id', 'session_date'] },
   athlete_self_tests: { keys: ['athlete_id', 'test_key', 'test_date'] },
+  // sql/80: one payment per team.
+  payments: { keys: ['team_id'] },
 }
 
 const OPERATORS = new Set(['eq', 'neq', 'is', 'lt', 'lte', 'gt', 'gte', 'in', 'not'])
@@ -259,6 +271,72 @@ function rpc(state, me, name, body) {
       state.writes.push('team:delete')
       return { status: 200, body: 'deleted' }
     }
+    // Entering a tournament (sql/20, sql/99 for submit): the rules the registration flow can meet.
+    case 'public_tournament_organizers': return { status: 200, body: [] }
+    case 'create_tournament_team_safely': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const name = String(body.p_name ?? '').trim()
+      if (name.length < 2 || name.length > 80) return raise(400, '22023', 'INVALID_TEAM_NAME')
+      const profile = t.profiles.find(row => row.id === me)
+      if (!['organizer', 'admin'].includes(profile?.role) && profile?.onboarding_persona !== 'coach_organizer') return raise(403, '42501', 'COACH_ORGANIZER_REQUIRED')
+      const tournament = t.tournaments.find(row => row.id === body.p_tournament_id)
+      if (!tournament) return raise(400, 'P0001', 'TOURNAMENT_NOT_FOUND')
+      if (tournament.status !== 'open') return raise(400, 'P0001', 'TOURNAMENT_CLOSED')
+      if (t.teams.some(row => row.tournament_id === tournament.id && row.created_by === me)) return raise(409, '23505', 'ALREADY_HAS_TEAM_FOR_TOURNAMENT')
+      const id = crypto.randomUUID()
+      // The embedded tournaments object stands in for PostgREST's embedding (/team-members reads it).
+      t.teams.push({ id, name, members: '', tournament_id: tournament.id, created_by: me, status: 'draft', kind: 'entry', created_at: new Date().toISOString(), tournaments: { name: tournament.name, fee: tournament.fee, location: tournament.location ?? null, promptpay: tournament.promptpay ?? null, status: tournament.status } })
+      state.writes.push('team:create-entry')
+      return { status: 200, body: id }
+    }
+    case 'invite_team_member': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const team = t.teams.find(row => row.id === body.p_team_id)
+      if (!team) return raise(400, 'P0001', 'TEAM_NOT_FOUND')
+      const organizer = t.tournaments.find(row => row.id === team.tournament_id)?.organizer_id
+      if (!(team.created_by === me || (organizer != null && organizer === me))) return raise(400, 'P0001', 'NOT_ALLOWED')
+      if (team.status !== 'draft') return raise(400, 'P0001', 'ROSTER_LOCKED')
+      const invitee = Object.values(state.users).find(user => user.email.toLowerCase() === String(body.p_email ?? '').trim().toLowerCase())
+      if (!invitee) return raise(400, 'P0001', 'USER_NOT_FOUND')
+      if (invitee.id === me) return raise(400, 'P0001', 'CANNOT_INVITE_SELF')
+      if (!t.athlete_profiles.some(row => row.user_id === invitee.id)) return raise(400, 'P0001', 'ATHLETE_PROFILE_REQUIRED')
+      if (t.team_members.some(row => row.athlete_id === invitee.id && row.team_id !== team.id && ['pending', 'accepted'].includes(row.status) && t.teams.find(other => other.id === row.team_id)?.tournament_id === team.tournament_id)) return raise(400, 'P0001', 'ATHLETE_ALREADY_ON_TOURNAMENT_ROSTER')
+      const embedded = { id: team.id, name: team.name, status: team.status, tournaments: team.tournaments ? { name: team.tournaments.name, location: team.tournaments.location } : null }
+      let member = t.team_members.find(row => row.team_id === team.id && row.athlete_id === invitee.id)
+      if (member) Object.assign(member, { status: 'pending', invited_by: me, invited_at: new Date().toISOString(), responded_at: null })
+      else {
+        member = { id: crypto.randomUUID(), team_id: team.id, athlete_id: invitee.id, invited_by: me, status: 'pending', invited_at: new Date().toISOString(), created_at: new Date().toISOString(), responded_at: null, teams: embedded }
+        t.team_members.push(member)
+      }
+      state.writes.push('team:invite')
+      return { status: 200, body: member.id }
+    }
+    case 'respond_team_invite': {
+      if (!['accepted', 'declined'].includes(body.p_status)) return raise(400, 'P0001', 'INVALID_STATUS')
+      const member = t.team_members.find(row => row.id === body.p_member_id && row.athlete_id === me && row.status === 'pending')
+      if (!member) return raise(400, 'P0001', 'INVITE_NOT_FOUND')
+      Object.assign(member, { status: body.p_status, responded_at: new Date().toISOString() })
+      state.writes.push(`team:invite-${body.p_status}`)
+      return { status: 200, body: null }
+    }
+    case 'submit_tournament_team_safely': {
+      // sql/99: a null in the permission check is a refusal, checked before anything about the team.
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const team = t.teams.find(row => row.id === body.p_team_id)
+      if (!team) return raise(400, 'P0001', 'TEAM_NOT_FOUND')
+      const tournament = t.tournaments.find(row => row.id === team.tournament_id)
+      const admin = t.profiles.find(row => row.id === me)?.role === 'admin'
+      if (!(team.created_by === me || (tournament?.organizer_id != null && tournament.organizer_id === me) || admin)) return raise(403, '42501', 'NOT_ALLOWED')
+      if (!tournament) return raise(400, 'P0001', 'TOURNAMENT_NOT_FOUND')
+      if (team.status !== 'draft') return raise(400, 'P0001', 'TEAM_NOT_DRAFT')
+      if (tournament.status !== 'open') return raise(400, 'P0001', 'TOURNAMENT_CLOSED')
+      if (!t.team_members.some(row => row.team_id === team.id && row.status === 'accepted')) return raise(400, 'P0001', 'ACCEPTED_ROSTER_REQUIRED')
+      if (tournament.max_teams != null && t.teams.filter(row => row.tournament_id === tournament.id && ['pending', 'confirmed'].includes(row.status)).length >= tournament.max_teams) return raise(400, 'P0001', 'TOURNAMENT_FULL')
+      team.status = 'pending'
+      for (const row of t.team_members) if (row.team_id === team.id && row.teams) row.teams.status = 'pending'
+      state.writes.push('team:submit')
+      return { status: 200, body: null }
+    }
     case 'team_for_staff': {
       const team = t.teams.find(row => row.id === body.p_team_id)
       const staff = team && (team.created_by === me || t.team_staff.some(row => row.team_id === team.id && row.user_id === me && row.status === 'accepted'))
@@ -311,8 +389,27 @@ export function startMock(state, port = 54399) {
       return res.end()
     }
     const url = new URL(req.url, 'http://mock')
-    let raw = ''
-    for await (const chunk of req) raw += chunk
+    const chunks = []
+    for await (const chunk of req) chunks.push(chunk)
+    const bytes = Buffer.concat(chunks)
+    // A slip upload (supabase-js storage.upload): only the private slips bucket, signed in, no
+    // overwrite, under the bucket's owner rule. The file is kept as its size and type; nothing is served
+    // back from it, and the bucket being private (public = false) is not modelled.
+    if (req.method === 'POST' && url.pathname.startsWith('/storage/v1/object/')) {
+      const me = caller(state, req)
+      const [bucket, ...rest] = url.pathname.slice('/storage/v1/object/'.length).split('/')
+      const path = decodeURIComponent(rest.join('/'))
+      state.trace.push([Date.now(), 'mock', req.method, `storage ${bucket}/${path}`])
+      if (bucket !== 'slips') { state.unknown.push(`storage ${bucket}`); return send(res, 501, { message: `the test double has no bucket ${bucket}` }) }
+      // slips_owner_insert (sql/supabase-rls.sql): signed in, and the name starts with the caller's id
+      // before the first "_". Storage answers a policy refusal with HTTP 400 and statusCode 403.
+      if (!me || path.split('_')[0] !== me) return send(res, 400, { statusCode: '403', error: 'Unauthorized', message: 'new row violates row-level security policy' })
+      if (state.storage.some(file => file.bucket === bucket && file.path === path)) return send(res, 409, { statusCode: '409', error: 'Duplicate', message: 'The resource already exists' })
+      state.storage.push({ bucket, path, contentType: req.headers['content-type'] ?? null, size: bytes.length, owner: me })
+      state.writes.push('storage:slips')
+      return send(res, 200, { Key: `${bucket}/${path}`, Id: crypto.randomUUID() })
+    }
+    const raw = bytes.toString()
     const body = raw ? JSON.parse(raw) : {}
     const me = caller(state, req)
     state.trace.push([Date.now(), 'mock', req.method, url.pathname.replace('/rest/v1/', '') + (url.search ? '?' + decodeURIComponent(url.search.slice(1)).slice(0, 80) : '')])
@@ -341,8 +438,17 @@ export function startMock(state, port = 54399) {
       return send(res, 501, { code: 'E2E_UNKNOWN', message: `the test double cannot apply ${bad.join(', ')}` })
     }
     const rows = state.tables[table]
+    // Tournaments are seeded by a flow; the app never writes one in these flows, so a write fails the run.
+    if (READ_ONLY.has(table) && !['GET', 'HEAD'].includes(req.method)) {
+      state.unknown.push(`${req.method} ${table}`)
+      return send(res, 501, { code: 'E2E_UNKNOWN', message: `the test double does not write ${table}` })
+    }
     if (req.method === 'POST') {
       const items = (Array.isArray(body) ? body : [body]).map(item => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...(table === 'training_enrollments' ? { status: 'active' } : {}), ...item }))
+      // sql/20 payment_team_pending_guard: a payment only for a team that has been submitted.
+      if (table === 'payments' && items.some(item => state.tables.teams.find(team => team.id === item.team_id)?.status !== 'pending')) {
+        return send(res, 403, { code: '42501', message: 'TEAM_NOT_READY_FOR_PAYMENT' })
+      }
       const unique = UNIQUE[table]
       for (const item of items) {
         const inIndex = row => !unique.where || unique.where(row)
