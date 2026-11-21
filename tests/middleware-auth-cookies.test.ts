@@ -57,16 +57,22 @@ describe('middleware auth cookies', () => {
 // not, and the page itself still checks the user when it renders.
 describe('middleware skips the Supabase round trip where it adds nothing', () => {
   beforeEach(() => { auth.refresh = false; auth.user = null; auth.calls = 0 })
-  // A request built here keeps the header; under next start and on Vercel, Next removes
-  // next-router-prefetch before middleware runs (middleware.ts), so these cases hold only for a
-  // browser's own Purpose / Sec-Purpose prefetch there. The app's links: nav-link-prefetch.test.ts.
-  const prefetch = (url: string) => new NextRequest(url, { headers: { 'next-router-prefetch': '1' } })
+  // A browser's own prefetch. Next's <Link> prefetches are left out by config.matcher (next test).
+  const prefetch = (url: string) => new NextRequest(url, { headers: { 'sec-purpose': 'prefetch' } })
 
   it('never runs for the page photos or other static files', () => {
     const [matcher] = config.matcher
-    const pattern = new RegExp(`^${matcher}$`)
+    const pattern = new RegExp(`^${matcher.source}$`)
     for (const path of ['/photos/head-net-dark.webp', '/icon.svg', '/apple-touch-icon.png', '/fonts/x.woff2']) expect(pattern.test(path), path).toBe(false)
     for (const path of ['/', '/tournaments', '/profile/edit', '/api/health', '/players/abc']) expect(pattern.test(path), path).toBe(true)
+  })
+
+  // T62: Next removes next-router-prefetch before middleware runs, so only the matcher, which the
+  // router checks on the raw request, can leave a <Link> prefetch out. Checked end to end with
+  // next start on 21 Nov 2026 (0 Auth calls per prefetch, 1 before).
+  it('leaves every <Link> prefetch out in the matcher, not in the function', () => {
+    const [matcher] = config.matcher
+    expect(matcher.missing).toEqual([{ type: 'header', key: 'next-router-prefetch' }])
   })
 
   it('does not ask Supabase for a prefetch of a public page', async () => {

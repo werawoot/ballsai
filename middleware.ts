@@ -4,16 +4,12 @@ import { robotsHeader } from '@/lib/seo'
 
 const PROTECTED_PREFIXES = ['/dashboard', '/admin', '/profile', '/me', '/progress', '/organizer-request']
 
-// Next prefetches the links on screen. A prefetch of a public page needs no session check
-// here: the page checks the user itself when it renders, and the real visit refreshes the
-// session (22 Oct 2026). But Next removes its own router headers, next-router-prefetch among
-// them, before middleware sees the request (next/dist/server/web/adapter.js, FLIGHT_HEADERS;
-// measured 21 Nov 2026 with next start: every <Link> prefetch still cost one Auth call). Only a
-// browser's own prefetch (Purpose / Sec-Purpose) is caught here; the links on every page are
-// kept from prefetching instead (T62, tests/nav-link-prefetch.test.ts).
+// A browser's own prefetch (Purpose / Sec-Purpose: a <link rel=prefetch> or speculation rule) of a
+// public page needs no session check here: the page checks the user itself when it renders, and
+// the real visit refreshes the session (22 Oct 2026). Next's own <Link> prefetches never reach
+// this function: config.matcher below leaves them out (T62).
 function isPrefetch(request: NextRequest) {
-  return request.headers.get('next-router-prefetch') === '1'
-    || request.headers.get('purpose') === 'prefetch'
+  return request.headers.get('purpose') === 'prefetch'
     || (request.headers.get('sec-purpose') ?? '').includes('prefetch')
 }
 
@@ -68,6 +64,16 @@ function withRobots(response: NextResponse, pathname: string) {
 
 // Not for built assets, photos or other static files: each run asks Supabase Auth who the
 // user is, and an image needs no answer.
+// Nor for a <Link> prefetch (T62, owner 21 Nov 2026: "ใช้ matcher แทน"). Next removes its router
+// headers, next-router-prefetch among them, before this function sees the request
+// (next/dist/server/web/adapter.js, FLIGHT_HEADERS), so the check has to sit here, where the router
+// matches the raw request. Such a prefetch brings back the page shell with no data, and cost one
+// Supabase Auth call each, 4 to 11 per page view (scripts/e2e/request-count.mjs, 21 Nov 2026). A
+// prefetch of a protected page is not redirected here; the page shell it gets holds no data, and
+// the real visit runs this function and redirects.
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|photos/|.*\\.(?:webp|png|jpe?g|gif|svg|ico|avif|woff2?|ttf|map)$).*)'],
+  matcher: [{
+    source: '/((?!_next/static|_next/image|favicon.ico|photos/|.*\\.(?:webp|png|jpe?g|gif|svg|ico|avif|woff2?|ttf|map)$).*)',
+    missing: [{ type: 'header', key: 'next-router-prefetch' }],
+  }],
 }
