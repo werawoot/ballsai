@@ -4,12 +4,12 @@ import { robotsHeader } from '@/lib/seo'
 
 const PROTECTED_PREFIXES = ['/dashboard', '/admin', '/profile', '/me', '/progress', '/organizer-request']
 
-// Next prefetches the links on screen. A prefetch of a public page needs no session check
-// here: the page checks the user itself when it renders, and the real visit refreshes the
-// session. Skipping it saves a Supabase Auth round trip per link (22 Oct 2026).
+// A browser's own prefetch (Purpose / Sec-Purpose: a <link rel=prefetch> or speculation rule) of a
+// public page needs no session check here: the page checks the user itself when it renders, and
+// the real visit refreshes the session (22 Oct 2026). Next's own <Link> prefetches never reach
+// this function: config.matcher below leaves them out (T62).
 function isPrefetch(request: NextRequest) {
-  return request.headers.get('next-router-prefetch') === '1'
-    || request.headers.get('purpose') === 'prefetch'
+  return request.headers.get('purpose') === 'prefetch'
     || (request.headers.get('sec-purpose') ?? '').includes('prefetch')
 }
 
@@ -64,6 +64,20 @@ function withRobots(response: NextResponse, pathname: string) {
 
 // Not for built assets, photos or other static files: each run asks Supabase Auth who the
 // user is, and an image needs no answer.
+// Nor for a <Link> prefetch (T62, owner 21 Nov 2026: "ใช้ matcher แทน"). Next removes its router
+// headers, next-router-prefetch among them, before this function sees the request
+// (next/dist/server/web/adapter.js, FLIGHT_HEADERS), so the check has to sit here, where the router
+// matches the raw request. A prefetch of a page with no loading.tsx above it renders only the root
+// layout, which asks nothing of Supabase, yet it cost one Auth call here, 4 to 11 per page view
+// (scripts/e2e/request-count.mjs, 21 Nov 2026). A prefetch of a protected page is not redirected
+// here; the real visit runs this function and redirects.
+// /admin is the exception: its loading.tsx makes a prefetch render app/admin/layout.tsx, which asks
+// Supabase who the user is. With an expired token that call would refresh the session where no
+// cookie can be written, so admin prefetches still come through here first, which refreshes it.
+// tests/middleware-auth-cookies.test.ts holds both rules and fails if a loading.tsx appears elsewhere.
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|photos/|.*\\.(?:webp|png|jpe?g|gif|svg|ico|avif|woff2?|ttf|map)$).*)'],
+  matcher: [{ source: '/admin/:path*' }, {
+    source: '/((?!_next/static|_next/image|favicon.ico|photos/|.*\\.(?:webp|png|jpe?g|gif|svg|ico|avif|woff2?|ttf|map)$).*)',
+    missing: [{ type: 'header', key: 'next-router-prefetch' }],
+  }],
 }
