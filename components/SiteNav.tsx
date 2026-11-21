@@ -181,9 +181,12 @@ export default function SiteNav() {
         const isPending = loading && pending?.href === item.href
         // Unread notifications: on their tab, or on the athlete's home, which holds the bell.
         const itemBadge = item.id === 'notifications' || item.id === 'myHome' ? badge : null
+        // No prefetch (T62): middleware cannot see Next's prefetch header, so each prefetch costs
+        // a Supabase Auth call for a page shell with no data (tests/nav-link-prefetch.test.ts).
         return <Link
           key={item.id}
           href={item.href}
+          prefetch={false}
           className={`bds-nav-item${isActive ? ' is-active' : ''}${isPending ? ' is-pending' : ''}`}
           aria-current={isActive ? 'page' : undefined}
           aria-label={itemBadge ? `${t(`items.${item.id}`)} · ${t('unread', { count: unread ?? 0 })}` : undefined}

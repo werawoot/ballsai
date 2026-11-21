@@ -33,13 +33,15 @@ export default function PageHeader({ back, eyebrow, actions }: {
 }) {
   // Not async on purpose: two client pages (dashboard/create, tournaments/[id]) render it.
   const t = useTranslations('header')
+  // Its links do not prefetch (T62, tests/nav-link-prefetch.test.ts): each prefetch would cost a
+  // Supabase Auth call in middleware for a page shell with no data.
   return <header className={`bds-page-header${actions ? ' has-actions' : ''}`}>
     {back
-      ? <Link href={back.href} className="bds-page-header-back" aria-label={t('backTo', { label: back.label })}>
+      ? <Link href={back.href} prefetch={false} className="bds-page-header-back" aria-label={t('backTo', { label: back.label })}>
           <ArrowLeft size={20} aria-hidden="true" />
           <span>{back.label}</span>
         </Link>
-      : <Link href="/" className="bds-page-header-brand" aria-label={t('home')}>
+      : <Link href="/" prefetch={false} className="bds-page-header-brand" aria-label={t('home')}>
           <BrandMark size={24} />
           <span>DOENSAI.com</span>
         </Link>}

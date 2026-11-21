@@ -57,6 +57,9 @@ describe('middleware auth cookies', () => {
 // not, and the page itself still checks the user when it renders.
 describe('middleware skips the Supabase round trip where it adds nothing', () => {
   beforeEach(() => { auth.refresh = false; auth.user = null; auth.calls = 0 })
+  // A request built here keeps the header; under next start and on Vercel, Next removes
+  // next-router-prefetch before middleware runs (middleware.ts), so these cases hold only for a
+  // browser's own Purpose / Sec-Purpose prefetch there. The app's links: nav-link-prefetch.test.ts.
   const prefetch = (url: string) => new NextRequest(url, { headers: { 'next-router-prefetch': '1' } })
 
   it('never runs for the page photos or other static files', () => {

@@ -6,7 +6,11 @@ const PROTECTED_PREFIXES = ['/dashboard', '/admin', '/profile', '/me', '/progres
 
 // Next prefetches the links on screen. A prefetch of a public page needs no session check
 // here: the page checks the user itself when it renders, and the real visit refreshes the
-// session. Skipping it saves a Supabase Auth round trip per link (22 Oct 2026).
+// session (22 Oct 2026). But Next removes its own router headers, next-router-prefetch among
+// them, before middleware sees the request (next/dist/server/web/adapter.js, FLIGHT_HEADERS;
+// measured 21 Nov 2026 with next start: every <Link> prefetch still cost one Auth call). Only a
+// browser's own prefetch (Purpose / Sec-Purpose) is caught here; the links on every page are
+// kept from prefetching instead (T62, tests/nav-link-prefetch.test.ts).
 function isPrefetch(request: NextRequest) {
   return request.headers.get('next-router-prefetch') === '1'
     || request.headers.get('purpose') === 'prefetch'
