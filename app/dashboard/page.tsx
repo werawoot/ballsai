@@ -135,13 +135,13 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
                           </div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 18, fontWeight: 700, color: '#CC0001' }}>฿{t.fee}</div>
+                          <div style={{ fontFamily: 'var(--font-oswald)', fontSize: 18, fontWeight: 700, color: 'var(--ui-red-text)' }}>฿{t.fee}</div>
                           {tPending > 0 && (
                             <div style={{ background: '#fef9c3', color: '#854d0e', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20 }}>
                               {tPending} รอยืนยัน
                             </div>
                           )}
-                          <div style={{ background: 'var(--ui-sunk)', color: t.status === 'open' ? '#166534' : t.status === 'draft' ? '#854d0e' : '#991b1b', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20 }}>
+                          <div style={{ background: 'var(--ui-sunk)', color: t.status === 'open' ? 'var(--ui-ok)' : t.status === 'draft' ? 'var(--ui-gold)' : 'var(--ui-red-text)', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20 }}>
                             {t.status === 'open' ? 'เปิดรับสมัคร' : t.status === 'draft' ? draftText('badge') : 'ปิดรับสมัคร'}
                           </div>
                         </div>
@@ -218,7 +218,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
                           <div style={{ background: 'var(--ui-sunk)', borderRadius: 10, padding: '10px', marginBottom: 8 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                               <span style={{ fontSize: 12, color: 'var(--ui-mute)' }}>ยอดชำระ</span>
-                              <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, fontWeight: 700, color: '#CC0001' }}>฿{payment.amount?.toLocaleString()}</span>
+                              <span style={{ fontFamily: 'var(--font-oswald)', fontSize: 16, fontWeight: 700, color: 'var(--ui-red-text)' }}>฿{payment.amount?.toLocaleString()}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span style={{ fontSize: 12, color: 'var(--ui-mute)' }}>สถานะ</span>
