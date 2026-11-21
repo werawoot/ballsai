@@ -195,7 +195,8 @@ await step('the organizer sees both teams waiting, the paid one with its amount 
   paymentId = state.tables.payments[0].id
   const free = (await queueCard(TEAM_NAME).innerText()).replace(/\s+/g, ' ')
   const paid = (await queueCard(PAID_TEAM).innerText()).replace(/\s+/g, ' ')
-  expect(!free.includes('หลักฐานการชำระเงิน') && /ยืนยัน/.test(free), `free team card says: ${free}`)
+  expect(!free.includes('หลักฐานการชำระเงิน'), `free team card says: ${free}`)
+  expect(await queueCard(TEAM_NAME).getByRole('button', { name: 'ยืนยัน', exact: true }).count() === 1, 'the free team has no confirm button')
   expect(paid.includes('฿500') && paid.includes('รอตรวจสอบ') && paid.includes('ยืนยันทีมและการชำระ'), `paid team card says: ${paid}`)
   // The slip image loads through the private route, not a public URL.
   const image = queueCard(PAID_TEAM).locator(`img[src="/api/payments/${paymentId}/slip"]`)
@@ -213,11 +214,17 @@ await step('the slip opens for the organizer and the payer only, through a short
     expect(answer.status === 307 && answer.location?.includes('/storage/v1/object/sign/slips/') && answer.location.includes('token='), `${who}: ${JSON.stringify(answer)}`)
   }
   for (const [who, answer] of [['athlete', forAthlete], ['guardian', forGuardian]]) expect(answer.status === 403, `${who}: ${JSON.stringify(answer)}`)
-  // AGENTS.md rule 6: 60 seconds, for this file only.
+  // AGENTS.md rule 6: signed for exactly 60 seconds, for this file only, and never a public URL.
   const signed = state.signedUrls.filter(item => item.path === path)
-  expect(signed.length >= 2 && signed.every(item => item.expiresAt - Date.now() <= 60000), `signed: ${JSON.stringify(signed.map(item => ({ path: item.path, by: item.by, expiresAt: item.expiresAt })))}`)
+  expect(signed.length >= 2 && signed.every(item => item.expiresIn === 60), `signed: ${JSON.stringify(signed.map(item => ({ path: item.path, by: item.by, expiresIn: item.expiresIn })))}`)
+  expect(!state.trace.some(entry => String(entry[3]).includes('/object/public/')), 'a public object URL was asked for')
   const file = await organizer.request.get(forOrganizer.location)
   expect(file.status() === 200 && (await file.body()).equals(PNG), `the signed URL served ${file.status()}`)
+  // Once its minute is over, the same URL no longer serves the file.
+  const token = new URL(forOrganizer.location).searchParams.get('token')
+  state.signedUrls.find(item => item.token === token).expiresAt = Date.now() - 1
+  const expired = await organizer.request.get(forOrganizer.location)
+  expect(expired.status() === 400, `an expired signed URL answered ${expired.status()}`)
   await athlete.context().close()
   await guardian.context().close()
 })
@@ -232,8 +239,7 @@ await step('one tap confirms the payment and the team, and a second call changes
   await tap(queueCard(PAID_TEAM).getByRole('button', { name: /ยืนยันทีมและการชำระ/ }))
   for (let waited = 0; state.tables.payments[0].status !== 'confirmed' && waited < 10000; waited += 100) await organizer.waitForTimeout(100)
   expect(state.tables.payments[0].status === 'confirmed' && state.tables.teams.find(row => row.id === paidTeamId)?.status === 'confirmed', `payment ${state.tables.payments[0].status}, team ${state.tables.teams.find(row => row.id === paidTeamId)?.status}`)
-  await organizer.getByText(PAID_TEAM).waitFor({ state: 'detached', timeout: 10000 }).catch(() => {})
-  expect(await queueCard(PAID_TEAM).count() === 0, 'the paid team is still in the queue')
+  await organizer.waitForFunction(name => !document.body.innerText.includes(name), PAID_TEAM, { timeout: 10000 })
   const writes = state.writes.length
   const again = await postFrom(organizer, `/api/payments/${paymentId}/confirm`)
   expect(again.status === 200 && state.writes.length === writes && state.tables.payments.length === 1, `again: ${JSON.stringify(again)}, writes ${writes} → ${state.writes.length}`)

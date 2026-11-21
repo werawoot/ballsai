@@ -118,8 +118,8 @@ Then the organizer of both tournaments (owner, 21 Nov 2026: "ทำข้อ ข
     button, the paid one with ฿500, "รอตรวจสอบ", "ยืนยันทีมและการชำระ", and the slip image, which
     loads through `/api/payments/<id>/slip`.
 14. That route redirects (307) the organizer and the coach who paid to a signed URL in the
-    `slips` bucket that lives 60 seconds and serves the same PNG; the athlete and the guardian get
-    403.
+    `slips` bucket, asked for 60 seconds (`expiresIn` 60), that serves the same PNG and stops once
+    expired; the athlete and the guardian get 403; no public object URL is ever asked for.
 15. The coach who paid cannot confirm their own payment (403); nothing changes.
 16. "ยืนยันทีมและการชำระ" confirms the payment and the team together (`confirm_payment_safely`);
     the card leaves the queue. Calling the route again answers 200 and writes nothing.
@@ -129,8 +129,16 @@ Then the organizer of both tournaments (owner, 21 Nov 2026: "ทำข้อ ข
 Mutation check (21 Nov 2026): with the slip route letting every signed-in account read, step 14
 fails (the athlete got 500, where Storage's own rule refused the signature, instead of 403).
 
-Not walked: rejecting a team, capacity, an organizer or admin submitting, a second organizer, and
-the bucket being private (`public = false`).
+Not walked: rejecting a team, capacity, an organizer or admin submitting, a second organizer
+(the coach in step 17 is refused for their role, not for the tournament), two confirmations at the
+same moment, and the bucket being private (`public = false`).
+
+Found while writing these steps, not tested on purpose and not fixed here (21 Nov 2026, to the
+owner): `/api/teams/<id>/status` and the `teams_update_organizer_admin` policy check only who the
+organizer is, never the team's state. An organizer can confirm a team still in `draft`, confirm a
+paid team whose payment is not confirmed (the payment stays `pending`), or turn a confirmed team
+to `rejected`, through the route or a direct table update. A step here would lock that in; it
+needs its own fix, failing test first.
 
 The mock's four entry functions check what sql/20 and sql/99 check that the flow can meet
 (persona, name length, open tournament, one team per coach per tournament, owner or organizer,

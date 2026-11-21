@@ -66,7 +66,7 @@ export function createState({ athleteBirthDate = '2012-03-04', tournaments = [] 
     },
     // Files uploaded to Storage: { bucket, path, contentType, size, owner, bytes }. Only the slips bucket.
     storage: [],
-    // Signed URLs handed out for those files: { token, bucket, path, expiresAt, by }.
+    // Signed URLs handed out for those files: { token, bucket, path, expiresIn, expiresAt, by }.
     signedUrls: [],
     writes: [],
     unknown: [],
@@ -500,13 +500,13 @@ export function startMock(state, port = 54399) {
       state.trace.push([Date.now(), fromBrowser(req) ? 'mock-b' : 'mock', req.method, `storage sign ${bucket}/${path}`])
       if (bucket !== 'slips') { state.unknown.push(`storage sign ${bucket}`); return send(res, 501, { message: `the test double has no bucket ${bucket}` }) }
       const file = state.storage.find(item => item.bucket === bucket && item.path === path)
-      const isAdmin = state.tables.profiles.some(row => row.id === me && row.role === 'admin')
       const organizes = state.tables.payments.some(payment => payment.slip_url === path
         && state.tables.tournaments.some(tournament => tournament.id === payment.tournament_id && tournament.organizer_id === me))
-      if (!me || !file || !(path.split('_')[0] === me || isAdmin || organizes)) return send(res, 400, { statusCode: '404', error: 'not_found', message: 'Object not found' })
+      if (!me || !file || !(path.split('_')[0] === me || isAdmin(state, me) || organizes)) return send(res, 400, { statusCode: '404', error: 'not_found', message: 'Object not found' })
       const token = crypto.randomUUID()
-      const expiresIn = Number(JSON.parse(bytes.toString() || '{}').expiresIn) || 60
-      state.signedUrls.push({ token, bucket, path, expiresAt: Date.now() + expiresIn * 1000, by: me })
+      // The lifetime the app asked for, kept as sent, so a flow can check it (AGENTS.md rule 6: 60 s).
+      const expiresIn = JSON.parse(bytes.toString() || '{}').expiresIn ?? null
+      state.signedUrls.push({ token, bucket, path, expiresIn, expiresAt: Date.now() + Number(expiresIn) * 1000, by: me })
       return send(res, 200, { signedURL: `/object/sign/${bucket}/${encodeURIComponent(path)}?token=${token}` })
     }
     // The signed URL itself, as the browser opens it: the file while the token lives, else 400.
