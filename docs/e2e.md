@@ -123,10 +123,11 @@ member, capacity) and raise the same codes. A slip goes to an in-memory `slips` 
 refused as Storage does with HTTP 400 and statusCode 403). The bucket being private
 (`public = false`) is not modelled. A payment needs a submitted team (`payment_team_pending_guard`,
 sql/20) and is one per team (sql/80); the flow does not reach either rule, because the route
-checks the team's status and an existing payment first, and those are what step 12 meets. The invitation row carries its team embedded, as the
-fallback read of `my_team_memberships` asks for it: the mock answers `my_team_memberships` and
-`my_team_hub` as missing, so the athlete's invitation comes through that fallback, not the
-function Production runs.
+checks the team's status and an existing payment first, and those are what step 12 meets. The athlete's invitation comes through
+`my_team_hub` and `my_team_memberships`, as on Production: the mock answers both (and
+`my_profile_home`) from its own `team_members`, `teams` and `tournaments` rows, in the column
+shape of sql/82, sql/91 and sql/92. Only the memberships are modelled in the hub; its other nine
+lists are empty in these flows.
 
 The app counts the registration limit per account since T65 (5 per 10 minutes). Every run signs
 in the same coach and makes three registrations, so a second run on one server within ten minutes
@@ -175,7 +176,19 @@ PLAYWRIGHT_MODULE=/opt/node22/lib/node_modules/playwright/index.mjs npm run test
 ```
 
 Screenshots of failed steps go to `.e2e-out/` (`E2E_OUT` to change). `E2E_BASE_URL` points it at
-another host. The mock listens on port 54399.
+another host. The mock listens on port 54399. `E2E_MOCK_DELAY_MS` makes the mock answer every
+request that much later, as a database across a network would, so reads a page makes one after
+another show up as separate rounds in the trace (T59). In the trace, `mock` is a request from the
+app's server render and `mock-b` one from the browser tab.
+
+`scripts/e2e/request-count.mjs` uses it to print, for each role and for `/profile`,
+`/team-members`, `/guardian` and `/career`, how many data reads the page's render sends and in how
+many rounds, and how many Supabase Auth calls come with it (T59, T62). It is a measurement, not a
+check, and is not part of `npm run test:e2e`. It sets `E2E_MOCK_DELAY_MS=50` itself unless given:
+
+```bash
+PLAYWRIGHT_MODULE=/opt/node22/lib/node_modules/playwright/index.mjs node scripts/e2e/request-count.mjs
+```
 
 ## Limits
 

@@ -56,16 +56,18 @@ export default async function GuardianPage() {
   const tp = await getTranslations('guardianPage')
 
   // One wave (T59): the profile, both sides of the guardian links, and the children's team
-  // data from my_team_hub (sql/92), or the functions it wraps side by side before it is
-  // applied: events (sql/70), news (sql/71), plans (sql/72), coach notes (sql/73), minutes
-  // (sql/74) and staff (sql/75). A section whose SQL is not applied is empty.
+  // data from my_team_hub (sql/92): events, news, plans, coach notes, minutes and staff.
   const [{ data: profile }, { data: guardianRows }, { data: incomingRows }, mine] = await Promise.all([
     supabase.from('profiles').select('onboarding_persona').eq('id', user.id).maybeSingle(),
     supabase.from('guardian_links').select('id, athlete_id, status, requested_at, athlete_profiles!guardian_links_athlete_id_fkey(display_name, is_public, athlete_progress(xp_total, current_level), athlete_badges(badge_key))').eq('guardian_id', user.id).order('requested_at', { ascending: false }),
     supabase.from('guardian_links').select('id, status, requested_at').eq('athlete_id', user.id).eq('status', 'pending').order('requested_at', { ascending: false }),
-    fetchMyTeamHub(supabase, user.id),
+    fetchMyTeamHub(supabase),
   ])
   const { events, news, plans, notes: coachNotes, minutes: myMinutes, teamStaff } = mine
+  // my_team_hub failed: the children's team sections below are empty for that reason, not
+  // because there is nothing, so the page says so (the same message as /team-members).
+  const teamLoadFailed = mine.failed
+  const tr = teamLoadFailed ? await getTranslations('teamRoster') : null
   const planDay = planToday()
   const isGuardian = (profile as Profile | null)?.onboarding_persona === 'guardian'
   const links = ((guardianRows ?? []) as unknown as LinkRow[]).map(row => mapLink(row, tp('athleteFallback')))
@@ -79,6 +81,7 @@ export default async function GuardianPage() {
         <p style={{ margin: '0 0 12px' }}>{tp('notGuardian.body')}</p>
         <Link href={CHANGE_ROLE_PATH} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 18px', borderRadius: 12, background: '#CC0001', color: 'white', fontWeight: 800, fontSize: 15, textDecoration: 'none' }}>{tp('notGuardian.changeRole')}</Link>
       </div>}
+      {tr && <p role="alert" style={{ background: 'var(--ui-card)', border: '1px solid #f3b4b4', borderRadius: 12, padding: 14, color: '#8a1c1c', fontSize: 14, lineHeight: 1.55, margin: '0 0 16px' }}>{tr('loadFailed')}</p>}
       <MyNewsPanel rows={news} />
       <MyCoachNotesPanel rows={coachNotes} viewerId={user.id} />
       <MyMinutesPanel rows={myMinutes} viewerId={user.id} />

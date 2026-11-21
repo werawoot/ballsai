@@ -13,12 +13,42 @@ const db = vi.hoisted(() => ({
   tables: {} as Record<string, unknown>,
   counts: {} as Record<string, number>,
   private: null as null | { birth_date: string | null; guardian_consent_at: string | null },
-  // my_team_memberships rows (sql/82); null: the function is missing, the old read is used.
+  // my_team_memberships rows (sql/82) for the pages that call it (e.g. /career); null: answered as
+  // missing. my_profile_home uses these too, else builds them from the team_members rows.
   memberships: null as null | Record<string, unknown>[],
   failing: [] as string[],
   // Before SQL78 teams has no kind column: a select naming it fails the way PostgREST does.
   noKindColumn: false,
 }))
+// What my_profile_home (sql/91) returns for this database: the rows above, the head counts, and
+// the memberships (db.memberships, else the team_members rows in sql/82's shape).
+type EmbeddedMember = { id?: string; team_id?: string; status: string; invited_at?: string | null; created_at?: string | null; teams?: { id?: string; name?: string; status?: string; kind?: string | null; tournaments?: { name?: string; location?: string }[] | null } | null }
+function profileHome() {
+  const t = db.tables as Record<string, unknown>
+  const members = (db.memberships ?? ((t.team_members ?? []) as EmbeddedMember[]).map((row, index) => ({
+    member_id: row.id ?? `m${index}`, team_id: row.team_id ?? row.teams?.id ?? null, status: row.status,
+    invited_at: row.invited_at ?? null, created_at: row.created_at ?? null,
+    team_name: row.teams?.name ?? null, team_status: row.teams?.status ?? null, team_kind: row.teams?.kind ?? null,
+    tournament_name: row.teams?.tournaments?.[0]?.name ?? null, tournament_location: row.teams?.tournaments?.[0]?.location ?? null,
+  }))).slice(0, 5)
+  const active = ((t.training_enrollments ?? []) as { status: string; start_date: string }[]).filter(row => row.status === 'active')
+  const firstStart = active.map(row => row.start_date).sort()[0]
+  return {
+    profile: t.profiles ?? null,
+    athlete: t.athlete_profiles ?? null,
+    private: t.athlete_profiles ? db.private : null,
+    rank: t.player_ranks ?? null,
+    progress: t.athlete_progress ?? null,
+    highlights: db.counts.athlete_highlights ?? 0,
+    videos: db.counts.athlete_videos ?? 0,
+    pending_guardian: db.counts.guardian_links ?? 0,
+    memberships: members,
+    training: {
+      enrollments: active,
+      checkins: firstStart ? ((t.training_checkins ?? []) as { session_date: string }[]).filter(row => row.session_date >= firstStart) : [],
+    },
+  }
+}
 function fakeClient() {
   const from = (table: string) => {
     let head = false
@@ -43,10 +73,10 @@ function fakeClient() {
   }
   return {
     from,
-    // my_profile_home (sql/91) answers as missing here, so these pages read through the
-    // separate reads it replaces; tests/profile-home.test.ts covers the one-call path.
+    // my_profile_home (sql/91) is answered from the same tables and counts, in its own JSON shape
+    // (tests/profile-home.test.ts covers the mapping itself).
     rpc: async (fn: string) => fn === 'my_profile_home'
-      ? { data: null, error: { code: 'PGRST202' } }
+      ? { data: profileHome(), error: null }
       : fn === 'my_team_memberships'
       ? (db.memberships ? { data: db.memberships, error: null } : { data: null, error: { code: 'PGRST202' } })
       : { data: db.private ? [db.private] : [], error: null },

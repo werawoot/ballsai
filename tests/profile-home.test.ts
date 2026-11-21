@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { fetchProfileHome } from '@/lib/profile-home'
 
 // T59: /profile sent ten reads in three waves. my_profile_home (sql/91) answers them in one
-// call; before it is applied the page keeps its old separate reads.
+// call.
 type Answer = { data: unknown; error: { code?: string } | null; count?: number | null }
 
 function fakeSupabase(rpcAnswers: Record<string, Answer>, tables: Record<string, Record<string, unknown>[]> = {}) {
@@ -41,7 +41,7 @@ const home = {
 describe("the athlete's own /profile data", () => {
   it('comes from my_profile_home in one call, in the shape the page uses', async () => {
     const { client, calls } = fakeSupabase({ my_profile_home: { data: home, error: null } })
-    const result = await fetchProfileHome(client, U)
+    const result = await fetchProfileHome(client)
     expect(calls).toEqual(['rpc:my_profile_home'])
     expect(result.profile?.full_name).toBe('Nong A')
     expect(result.athlete?.display_name).toBe('Nong A')
@@ -53,36 +53,18 @@ describe("the athlete's own /profile data", () => {
     expect(result.training).toEqual({ available: true, enrollments: home.training.enrollments, checkins: { e1: ['2026-10-06', '2026-10-08'] } })
   })
 
-  it('falls back to the separate reads, same answer, while sql/91 is not applied', async () => {
-    const { client, calls } = fakeSupabase({
-      my_athlete_private: { data: [home.private], error: null },
-      my_team_memberships: { data: home.memberships, error: null },
-    }, {
-      profiles: [{ id: U, ...home.profile }],
-      athlete_profiles: [home.athlete],
-      player_ranks: [{ ...home.rank, player_id: U, sport: 'football', season: '2026' }],
-      athlete_progress: [{ athlete_id: U, ...home.progress }],
-      athlete_highlights: [{ athlete_id: U }, { athlete_id: U }],
-      athlete_videos: [{ athlete_id: U }],
-      guardian_links: [{ athlete_id: U, status: 'pending' }, { athlete_id: U, status: 'approved' }],
-      training_enrollments: home.training.enrollments.map(row => ({ ...row, athlete_id: U })),
-      training_checkins: home.training.checkins.map(row => ({ ...row, athlete_id: U })),
-    })
-    const result = await fetchProfileHome(client, U)
-    expect(calls[0]).toBe('rpc:my_profile_home')
-    expect(calls.length).toBeGreaterThan(5)
-    expect(result.athlete?.display_name).toBe('Nong A')
-    expect(result.private).toEqual(home.private)
-    expect(result.rank?.pts).toBe(900)
-    expect([result.highlights, result.videos, result.pendingGuardian]).toEqual([2, 1, 1])
-    expect(result.memberships[0]?.teams?.name).toBe('Tigers U13')
-    expect(result.training.checkins).toEqual({ e1: ['2026-10-06', '2026-10-08'] })
+  // SQL91 is on Staging and Production (23 Oct 2026): a missing function is an error, not a
+  // reason to read ten times more.
+  it('throws when my_profile_home is missing, without the old separate reads', async () => {
+    const { client, calls } = fakeSupabase({})
+    await expect(fetchProfileHome(client)).rejects.toMatchObject({ code: 'PGRST202' })
+    expect(calls).toEqual(['rpc:my_profile_home'])
   })
 
   // A timeout is not "the function is missing": ten more reads would only add to the load.
   it('throws when my_profile_home fails for another reason, instead of reading ten times more', async () => {
     const { client, calls } = fakeSupabase({ my_profile_home: { data: null, error: { code: '57014' } } })
-    await expect(fetchProfileHome(client, U)).rejects.toMatchObject({ code: '57014' })
+    await expect(fetchProfileHome(client)).rejects.toMatchObject({ code: '57014' })
     expect(calls).toEqual(['rpc:my_profile_home'])
   })
 })

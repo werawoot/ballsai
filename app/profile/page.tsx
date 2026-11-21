@@ -77,8 +77,8 @@ export default async function ProfilePage() {
   if (!user) redirect('/login')
 
   const t = await getTranslations('profileHome')
-  // One call to my_profile_home (sql/91), or the old separate reads before it is applied.
-  const home = await fetchProfileHome(supabase, user.id)
+  // One call to my_profile_home (sql/91).
+  const home = await fetchProfileHome(supabase)
   const profile = home.profile as Profile | null
   const today = thaiDate(new Date())
   const kind = homeKind({ persona: profile?.onboarding_persona, role: profile?.role })

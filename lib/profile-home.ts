@@ -1,12 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { ACTIVE_SEASON, ACTIVE_SPORT } from './season'
-import { PUBLIC_PROFILE_COLUMNS, fetchMyAthletePrivate, type AthletePrivate } from './athlete-private'
-import { fetchMyTeamMemberships, membershipFromRow, type MembershipRow, type MyTeamMembership } from './my-team-memberships'
-import { fetchMyTraining, type Enrollment, type MyTraining } from './training/data'
+import type { AthletePrivate } from './athlete-private'
+import { membershipFromRow, type MembershipRow, type MyTeamMembership } from './my-team-memberships'
+import type { Enrollment, MyTraining } from './training/data'
 
-// The signed-in person's own /profile data (T59). my_profile_home (sql/91) returns it in one
-// call under the caller's own RLS; before that file is applied the function is missing and
-// the page's old separate reads run instead, with the same result.
+// The signed-in person's own /profile data (T59). my_profile_home (sql/91, on Staging and
+// Production since 23 Oct 2026) returns it in one call under the caller's own RLS. A failed call
+// is thrown to the page's error boundary, never answered with ten separate reads.
 
 export type ProfileRow = { full_name?: string | null; role?: string | null; onboarding_persona?: string | null }
 export type ProfileHome = {
@@ -36,9 +36,7 @@ type HomeJson = {
   training: { enrollments: Enrollment[] | null; checkins: { enrollment_id: string; session_date: string }[] | null } | null
 }
 
-const MISSING = ['PGRST202', '42883']
-
-export async function fetchProfileHome(client: SupabaseClient, userId: string): Promise<ProfileHome> {
+export async function fetchProfileHome(client: SupabaseClient): Promise<ProfileHome> {
   const { data, error } = await client.rpc('my_profile_home', { p_sport: ACTIVE_SPORT, p_season: ACTIVE_SEASON })
   if (!error) {
     const home = (data ?? {}) as HomeJson
@@ -57,46 +55,5 @@ export async function fetchProfileHome(client: SupabaseClient, userId: string): 
       training: { available: true, enrollments: home.training?.enrollments ?? [], checkins },
     }
   }
-  if (!MISSING.includes(error.code ?? '')) throw error
-  return fetchProfileHomeSeparately(client, userId)
-}
-
-const count = async (query: PromiseLike<{ count: number | null; error: unknown }>) => {
-  const { count: value, error } = await query
-  return error ? 0 : value ?? 0
-}
-
-// Before sql/91: the reads /profile made one by one. Delete once SQL91 is on Production.
-async function fetchProfileHomeSeparately(client: SupabaseClient, userId: string): Promise<ProfileHome> {
-  const [profileResult, athleteResult, rankResult, membershipResult, progressResult, highlights, videos, pendingGuardian] = await Promise.all([
-    client.from('profiles').select('full_name, role, onboarding_persona').eq('id', userId).maybeSingle(),
-    client.from('athlete_profiles').select(PUBLIC_PROFILE_COLUMNS).eq('user_id', userId).maybeSingle(),
-    client.from('player_ranks').select('id, player_name, position, ovr, pts').eq('player_id', userId).eq('sport', ACTIVE_SPORT).eq('season', ACTIVE_SEASON).maybeSingle(),
-    fetchMyTeamMemberships(client as never, userId, 5),
-    client.from('athlete_progress').select('xp_total, current_level').eq('athlete_id', userId).maybeSingle(),
-    count(client.from('athlete_highlights').select('id', { count: 'exact', head: true }).eq('athlete_id', userId)),
-    count(client.from('athlete_videos').select('id', { count: 'exact', head: true }).eq('athlete_id', userId)),
-    count(client.from('guardian_links').select('id', { count: 'exact', head: true }).eq('athlete_id', userId).eq('status', 'pending')),
-  ])
-  const athlete = (athleteResult.data ?? null) as Record<string, unknown> | null
-  // The birth date and consent time come only through my_athlete_private (sql/58).
-  const [athletePrivate, training] = athlete ? await Promise.all([
-    fetchMyAthletePrivate(client).catch(error => {
-      console.error(JSON.stringify({ level: 'error', event: 'athlete_private_read_failed', code: error?.code ?? null }))
-      return { birth_date: null, guardian_consent_at: null }
-    }),
-    fetchMyTraining(client, userId),
-  ]) : [null, { available: false, enrollments: [], checkins: {} } satisfies MyTraining]
-  return {
-    profile: (profileResult.data ?? null) as ProfileRow | null,
-    athlete,
-    private: athletePrivate,
-    rank: (rankResult.data ?? null) as ProfileHome['rank'],
-    progress: (progressResult.data ?? null) as ProfileHome['progress'],
-    highlights,
-    videos,
-    pendingGuardian,
-    memberships: membershipResult.memberships,
-    training,
-  }
+  throw error
 }

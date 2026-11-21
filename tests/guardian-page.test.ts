@@ -5,8 +5,11 @@ import { describe, expect, it, vi } from 'vitest'
 import th from '@/messages/th.json'
 
 const db = vi.hoisted(() => ({ persona: 'guardian' as string | null, events: null as Record<string, unknown>[] | null, news: null as Record<string, unknown>[] | null, plans: null as Record<string, unknown>[] | null, notes: null as Record<string, unknown>[] | null, minutes: null as Record<string, unknown>[] | null, staff: null as Record<string, unknown>[] | null,
-  // my_team_hub (sql/92): null while missing, so the page calls the functions it wraps.
-  hub: null as Record<string, unknown> | null }))
+  // my_team_hub (sql/92) as a test sets it; null: built from the lists above, as the function
+  // builds it from the ten functions it wraps.
+  hub: null as Record<string, unknown> | null,
+  // my_team_hub fails (a timeout, say): the page has no team data to show.
+  hubFails: false }))
 function fakeClient() {
   const from = (table: string) => {
     const builder: Record<string, unknown> = {}
@@ -15,10 +18,11 @@ function fakeClient() {
     builder.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(resolve)
     return builder
   }
-  // my_upcoming_team_events (sql/70) and my_team_announcements (sql/71): missing until
-  // the file is applied, unless a test seeds rows.
+  // The page reads its children's team data only through my_team_hub (sql/92); the other
+  // names answer for any component that still calls a function on its own.
   const rpc = async (name: string) => {
-    if (name === 'my_team_hub') return db.hub ? { data: db.hub, error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } }
+    if (name === 'my_team_hub' && db.hubFails) return { data: null, error: { code: '57014', message: 'timeout' } }
+    if (name === 'my_team_hub') return { data: db.hub ?? { events: db.events ?? [], news: db.news ?? [], plans: db.plans ?? [], notes: db.notes ?? [], minutes: db.minutes ?? [], team_staff: db.staff ?? [] }, error: null }
     const rows = ({ my_upcoming_team_events: db.events, my_team_announcements: db.news, my_team_training_plans: db.plans, my_coach_notes: db.notes, my_match_minutes: db.minutes, my_team_staff: db.staff } as Record<string, Record<string, unknown>[] | null>)[name] ?? null
     return rows ? { data: rows, error: null } : { data: null, error: { code: 'PGRST202', message: 'missing' } }
   }
@@ -87,7 +91,7 @@ describe('/guardian team events (sql/70)', () => {
     expect(html).toContain(th.teamEvents.yes)
   })
 
-  it('reads the same event and news through my_team_hub once sql/92 is applied', async () => {
+  it('reads the event and news a test hands my_team_hub (sql/92) directly', async () => {
     db.persona = 'guardian'
     db.hub = {
       events: [{ event_id: 'e1', team_id: 't1', team_name: 'ขอนแก่น U13', kind: 'match', title: 'นัดกระชับมิตร', starts_at: '2026-10-18T02:00:00Z', location: null, note: null, athlete_id: 'child', athlete_name: 'ปาล์ม', answer: null }],
@@ -98,6 +102,20 @@ describe('/guardian team events (sql/70)', () => {
     expect(html).toContain('นัดกระชับมิตร')
     expect(html).toContain('สำหรับ ปาล์ม')
     expect(html).toContain('งดซ้อมวันเสาร์ ฝนตก')
+  })
+
+  it('says the team data could not be loaded when my_team_hub fails, instead of showing nothing', async () => {
+    db.persona = 'guardian'
+    db.events = [{ event_id: 'e1', team_id: 't1', team_name: 'ขอนแก่น U13', kind: 'match', title: 'นัดกระชับมิตร', starts_at: '2026-10-18T02:00:00Z', location: null, note: null, athlete_id: 'child', athlete_name: 'ปาล์ม', answer: null }]
+    db.hubFails = true
+    const failed = await render(GuardianPage as () => Promise<ReactElement>)
+    db.hubFails = false
+    const loaded = await render(GuardianPage as () => Promise<ReactElement>)
+    db.events = null
+    expect(failed).toContain(th.teamRoster.loadFailed)
+    expect(failed).not.toContain('นัดกระชับมิตร')
+    expect(loaded).not.toContain(th.teamRoster.loadFailed)
+    expect(loaded).toContain('นัดกระชับมิตร')
   })
 
   it('shows no event section before SQL70 is applied', async () => {
