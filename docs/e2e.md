@@ -111,8 +111,26 @@ Then, in a second tournament with a fee (500, with the organizer's PromptPay):
 12. A second slip for the same team, posted to the route, is refused at the route's own check for
     an existing payment ("ทีมนี้มีรายการชำระเงินอยู่แล้ว"); still one payment and one file.
 
-Not walked: the organizer confirming a payment or a team, the signed URL an organizer opens a
-slip with, capacity, and an organizer or admin submitting.
+Then the organizer of both tournaments (owner, 21 Nov 2026: "ทำข้อ ข"; `E2E_ORGANIZER`,
+`profiles.role` `organizer`):
+
+13. `/dashboard` lists both teams waiting: the free one with no payment block and its "ยืนยัน"
+    button, the paid one with ฿500, "รอตรวจสอบ", "ยืนยันทีมและการชำระ", and the slip image, which
+    loads through `/api/payments/<id>/slip`.
+14. That route redirects (307) the organizer and the coach who paid to a signed URL in the
+    `slips` bucket that lives 60 seconds and serves the same PNG; the athlete and the guardian get
+    403.
+15. The coach who paid cannot confirm their own payment (403); nothing changes.
+16. "ยืนยันทีมและการชำระ" confirms the payment and the team together (`confirm_payment_safely`);
+    the card leaves the queue. Calling the route again answers 200 and writes nothing.
+17. The free team's "ยืนยัน" confirms it (`/api/teams/<id>/status`); the coach posting the same
+    gets 403 first. The queue is empty.
+
+Mutation check (21 Nov 2026): with the slip route letting every signed-in account read, step 14
+fails (the athlete got 500, where Storage's own rule refused the signature, instead of 403).
+
+Not walked: rejecting a team, capacity, an organizer or admin submitting, a second organizer, and
+the bucket being private (`public = false`).
 
 The mock's four entry functions check what sql/20 and sql/99 check that the flow can meet
 (persona, name length, open tournament, one team per coach per tournament, owner or organizer,
@@ -128,6 +146,18 @@ checks the team's status and an existing payment first, and those are what step 
 `my_profile_home`) from its own `team_members`, `teams` and `tournaments` rows, in the column
 shape of sql/82, sql/91 and sql/92. Only the memberships are modelled in the hub; its other nine
 lists are empty in these flows.
+
+For the organizer, the mock adds (scripts/e2e/mock-supabase.mjs):
+- the signed URL of a slip (`POST /storage/v1/object/sign/slips/...`) under
+  `slips_read_owner_organizer_admin` (sql/production-hardening.sql): the uploader, an admin, or the
+  organizer of the tournament a payment with that slip belongs to; the URL serves the stored bytes
+  until it expires (`state.signedUrls`);
+- `confirm_payment_safely` with that function's checks (organizer or admin, the payment's
+  tournament) and no change on a second call;
+- `teams_update_organizer_admin` on a team update: other rows are left out silently, as RLS does;
+- PostgREST embedding for these reads: `tournaments(...)` and `tournaments!inner(...)` on teams
+  and payments (live tournament row; `!inner` drops rows without one), filters on
+  `tournaments.organizer_id`, and `profiles:created_by(email)` on teams.
 
 The app counts the registration limit per account since T65 (5 per 10 minutes). Every run signs
 in the same coach and makes three registrations, so a second run on one server within ten minutes

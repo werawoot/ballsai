@@ -21,6 +21,8 @@ import http from 'node:http'
 export const E2E_ATHLETE = '11111111-1111-4111-8111-111111111111'
 export const E2E_GUARDIAN = '22222222-2222-4222-8222-222222222222'
 export const E2E_COACH = '44444444-4444-4444-8444-444444444444'
+// The organizer of the tournaments registration-flow.mjs seeds (profiles.role 'organizer').
+export const E2E_ORGANIZER = '66666666-6666-4666-8666-666666666666'
 
 export const bangkokToday = () => new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10)
 
@@ -35,6 +37,7 @@ export function createState({ athleteBirthDate = '2012-03-04', tournaments = [] 
     [E2E_ATHLETE]: { id: E2E_ATHLETE, email: 'e2e-athlete@example.com', aud: 'authenticated', role: 'authenticated' },
     [E2E_GUARDIAN]: { id: E2E_GUARDIAN, email: 'e2e-guardian@example.com', aud: 'authenticated', role: 'authenticated' },
     [E2E_COACH]: { id: E2E_COACH, email: 'e2e-coach@example.com', aud: 'authenticated', role: 'authenticated' },
+    [E2E_ORGANIZER]: { id: E2E_ORGANIZER, email: 'e2e-organizer@example.com', aud: 'authenticated', role: 'authenticated' },
   }
   return {
     users,
@@ -43,6 +46,7 @@ export function createState({ athleteBirthDate = '2012-03-04', tournaments = [] 
         { id: E2E_ATHLETE, full_name: 'ทดสอบ อัตโนมัติ', role: 'player', onboarding_persona: 'athlete' },
         { id: E2E_GUARDIAN, full_name: 'ผู้ปกครอง ทดสอบ', role: 'player', onboarding_persona: 'guardian' },
         { id: E2E_COACH, full_name: 'โค้ช ทดสอบ', role: 'player', onboarding_persona: 'coach_organizer', province: 'เชียงใหม่' },
+        { id: E2E_ORGANIZER, full_name: 'ผู้จัด ทดสอบ', role: 'organizer', onboarding_persona: 'coach_organizer' },
       ],
       athlete_profiles: [{ user_id: E2E_ATHLETE, display_name: 'ทดสอบ อัตโนมัติ', position: 'MF', province: 'กรุงเทพมหานคร', is_public: false, verification_level: 'self', birth_date: athleteBirthDate, guardian_consent_at: '2026-01-01T00:00:00Z' }],
       // The embedded athlete_profiles object stands in for PostgREST's resource embedding.
@@ -60,8 +64,10 @@ export function createState({ athleteBirthDate = '2012-03-04', tournaments = [] 
       team_staff: [],
       payments: [],
     },
-    // Files uploaded to Storage: { bucket, path, contentType, size, owner }. Only the slips bucket.
+    // Files uploaded to Storage: { bucket, path, contentType, size, owner, bytes }. Only the slips bucket.
     storage: [],
+    // Signed URLs handed out for those files: { token, bucket, path, expiresAt, by }.
+    signedUrls: [],
     writes: [],
     unknown: [],
     // Every request, in order, for the failure report of a step: [ms, source, method, path]; source
@@ -82,7 +88,8 @@ const UNIQUE = {
 const OPERATORS = new Set(['eq', 'neq', 'is', 'lt', 'lte', 'gt', 'gte', 'in', 'not'])
 
 function matches(row, key, raw) {
-  const value = row[key]
+  // A filter on an embedded table (tournaments.organizer_id) reads the embedded row.
+  const value = key.includes('.') ? key.split('.').reduce((item, part) => item?.[part], row) : row[key]
   const [op, ...rest] = raw.split('.')
   const arg = rest.join('.')
   switch (op) {
@@ -153,6 +160,23 @@ function myMemberships(t, me, limit) {
         tournament_name: tournament?.name ?? null, tournament_location: tournament?.location ?? null,
       }
     })
+}
+
+const isAdmin = (state, me) => state.tables.profiles.some(row => row.id === me && row.role === 'admin')
+
+// PostgREST resource embedding, for the reads the organizer pages make: a team's or a payment's
+// tournament (tournaments(...), and tournaments!inner(...), which drops rows without one) and the
+// team owner's email (profiles:created_by(email)). Copies of the rows; the stored rows are untouched.
+function withEmbeds(state, table, rows, select) {
+  let out = rows
+  if (['teams', 'payments'].includes(table) && /\btournaments(!inner)?\(/.test(select)) {
+    out = out.map(row => (row.tournament_id ? { ...row, tournaments: state.tables.tournaments.find(item => item.id === row.tournament_id) ?? null } : row))
+    if (select.includes('tournaments!inner(')) out = out.filter(row => row.tournaments)
+  }
+  if (table === 'teams' && select.includes('profiles:created_by(')) {
+    out = out.map(row => ({ ...row, profiles: { email: state.users[row.created_by]?.email ?? null } }))
+  }
+  return out
 }
 
 const MOCK_DELAY_MS = Number(process.env.E2E_MOCK_DELAY_MS) || 0
@@ -329,6 +353,21 @@ function rpc(state, me, name, body) {
     }
     // Entering a tournament (sql/20, sql/99 for submit): the rules the registration flow can meet.
     case 'public_tournament_organizers': return { status: 200, body: [] }
+    // confirm_payment_safely (sql/production-hardening.sql): an organizer of the payment's tournament
+    // or an admin confirms the payment and its team together; a second call changes nothing.
+    case 'confirm_payment_safely': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const role = t.profiles.find(row => row.id === me)?.role
+      if (!['organizer', 'admin'].includes(role)) return raise(403, '42501', 'FORBIDDEN')
+      const payment = t.payments.find(row => row.id === body.p_payment_id)
+      if (!payment) return raise(404, 'P0002', 'PAYMENT_NOT_FOUND')
+      const organizer = t.tournaments.find(row => row.id === payment.tournament_id)?.organizer_id
+      if (role !== 'admin' && organizer !== me) return raise(403, '42501', 'FORBIDDEN')
+      if (payment.status !== 'confirmed') { payment.status = 'confirmed'; state.writes.push('payment:confirm') }
+      const team = t.teams.find(row => row.id === payment.team_id)
+      if (team && team.status !== 'confirmed') { team.status = 'confirmed'; state.writes.push('team:confirm') }
+      return { status: 204, body: undefined }
+    }
     case 'create_tournament_team_safely': {
       if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
       const name = String(body.p_name ?? '').trim()
@@ -451,9 +490,39 @@ export function startMock(state, port = 54399) {
     const chunks = []
     for await (const chunk of req) chunks.push(chunk)
     const bytes = Buffer.concat(chunks)
+    // A signed URL for a slip (supabase-js createSignedUrl), under slips_read_owner_organizer_admin
+    // (sql/production-hardening.sql): the uploader (name prefix), an admin, or the organizer of the
+    // tournament a payment with that slip belongs to. Storage answers a refusal with HTTP 400.
+    if (req.method === 'POST' && url.pathname.startsWith('/storage/v1/object/sign/')) {
+      const me = caller(state, req)
+      const [bucket, ...rest] = url.pathname.slice('/storage/v1/object/sign/'.length).split('/')
+      const path = decodeURIComponent(rest.join('/'))
+      state.trace.push([Date.now(), fromBrowser(req) ? 'mock-b' : 'mock', req.method, `storage sign ${bucket}/${path}`])
+      if (bucket !== 'slips') { state.unknown.push(`storage sign ${bucket}`); return send(res, 501, { message: `the test double has no bucket ${bucket}` }) }
+      const file = state.storage.find(item => item.bucket === bucket && item.path === path)
+      const isAdmin = state.tables.profiles.some(row => row.id === me && row.role === 'admin')
+      const organizes = state.tables.payments.some(payment => payment.slip_url === path
+        && state.tables.tournaments.some(tournament => tournament.id === payment.tournament_id && tournament.organizer_id === me))
+      if (!me || !file || !(path.split('_')[0] === me || isAdmin || organizes)) return send(res, 400, { statusCode: '404', error: 'not_found', message: 'Object not found' })
+      const token = crypto.randomUUID()
+      const expiresIn = Number(JSON.parse(bytes.toString() || '{}').expiresIn) || 60
+      state.signedUrls.push({ token, bucket, path, expiresAt: Date.now() + expiresIn * 1000, by: me })
+      return send(res, 200, { signedURL: `/object/sign/${bucket}/${encodeURIComponent(path)}?token=${token}` })
+    }
+    // The signed URL itself, as the browser opens it: the file while the token lives, else 400.
+    if (req.method === 'GET' && url.pathname.startsWith('/storage/v1/object/sign/')) {
+      const [bucket, ...rest] = url.pathname.slice('/storage/v1/object/sign/'.length).split('/')
+      const path = decodeURIComponent(rest.join('/'))
+      state.trace.push([Date.now(), fromBrowser(req) ? 'mock-b' : 'mock', req.method, `storage get ${bucket}/${path}`])
+      const signed = state.signedUrls.find(item => item.token === url.searchParams.get('token') && item.bucket === bucket && item.path === path)
+      const file = state.storage.find(item => item.bucket === bucket && item.path === path)
+      if (!signed || signed.expiresAt < Date.now() || !file) return send(res, 400, { statusCode: '400', error: 'InvalidJWT', message: 'invalid signature' })
+      res.writeHead(200, { 'content-type': file.contentType ?? 'application/octet-stream', 'access-control-allow-origin': '*' })
+      return res.end(file.bytes)
+    }
     // A slip upload (supabase-js storage.upload): only the private slips bucket, signed in, no
-    // overwrite, under the bucket's owner rule. The file is kept as its size and type; nothing is served
-    // back from it, and the bucket being private (public = false) is not modelled.
+    // overwrite, under the bucket's owner rule. The file keeps its bytes, type and owner; it is served
+    // only through a signed URL (above), and the bucket being private (public = false) is not modelled.
     if (req.method === 'POST' && url.pathname.startsWith('/storage/v1/object/')) {
       const me = caller(state, req)
       const [bucket, ...rest] = url.pathname.slice('/storage/v1/object/'.length).split('/')
@@ -464,7 +533,7 @@ export function startMock(state, port = 54399) {
       // before the first "_". Storage answers a policy refusal with HTTP 400 and statusCode 403.
       if (!me || path.split('_')[0] !== me) return send(res, 400, { statusCode: '403', error: 'Unauthorized', message: 'new row violates row-level security policy' })
       if (state.storage.some(file => file.bucket === bucket && file.path === path)) return send(res, 409, { statusCode: '409', error: 'Duplicate', message: 'The resource already exists' })
-      state.storage.push({ bucket, path, contentType: req.headers['content-type'] ?? null, size: bytes.length, owner: me })
+      state.storage.push({ bucket, path, contentType: req.headers['content-type'] ?? null, size: bytes.length, owner: me, bytes })
       state.writes.push('storage:slips')
       return send(res, 200, { Key: `${bucket}/${path}`, Id: crypto.randomUUID() })
     }
@@ -522,7 +591,10 @@ export function startMock(state, port = 54399) {
       return send(res, 201, wantRows ? (single ? items[0] : items) : undefined)
     }
     if (req.method === 'PATCH') {
-      const { rows: hit } = query(rows, url.searchParams)
+      let { rows: hit } = query(rows, url.searchParams)
+      // teams_update_organizer_admin: only an admin or the organizer of the team's tournament
+      // changes a team; other rows are left out silently, as RLS does.
+      if (table === 'teams') hit = hit.filter(row => isAdmin(state, me) || state.tables.tournaments.some(tournament => tournament.id === row.tournament_id && tournament.organizer_id === me))
       for (const row of hit) Object.assign(row, body)
       state.writes.push(`update:${table}`)
       return send(res, 200, hit)
@@ -533,7 +605,7 @@ export function startMock(state, port = 54399) {
       state.writes.push(`delete:${table}`)
       return send(res, 200, hit)
     }
-    const { total, rows: page } = query(rows, url.searchParams)
+    const { total, rows: page } = query(withEmbeds(state, table, rows, url.searchParams.get('select') ?? ''), url.searchParams)
     const range = `0-${Math.max(0, page.length - 1)}/${total}`
     if (req.method === 'HEAD') { res.writeHead(200, { 'content-range': range, 'access-control-allow-origin': '*', 'access-control-expose-headers': 'content-range' }); return res.end() }
     if (single) return page.length ? send(res, 200, page[0]) : send(res, 406, { code: 'PGRST116', message: 'no rows' })

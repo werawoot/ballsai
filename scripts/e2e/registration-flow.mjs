@@ -8,8 +8,13 @@
 // shows the amount and the organizer's PromptPay, a file that is not an image is refused, the slip
 // is stored privately (an object path in the slips bucket, never a public URL), and a second slip
 // for the same team is refused.
+// Then the organizer (owner, 21 Nov 2026: "ทำข้อ ข"): /dashboard lists both teams waiting, the paid one
+// with its amount and its slip; the slip opens through a 60-second signed URL for the organizer and
+// the coach who paid, and for nobody else; the coach cannot confirm their own payment; one tap
+// confirms the payment and the team together, a second call changes nothing; the free team is
+// confirmed with its own button, which another account cannot do.
 // Every write is checked in the mock's rows; every page is audited with axe-core. See docs/e2e.md.
-import { bangkokToday, E2E_ATHLETE, E2E_COACH, E2E_GUARDIAN } from './mock-supabase.mjs'
+import { bangkokToday, E2E_ATHLETE, E2E_COACH, E2E_GUARDIAN, E2E_ORGANIZER } from './mock-supabase.mjs'
 import { createHarness } from './harness.mjs'
 
 const TOURNAMENT = '55555555-5555-4555-8555-555555555555'
@@ -19,10 +24,10 @@ const inDays = days => new Date(Date.parse(`${bangkokToday()}T00:00:00Z`) + days
 const h = await createHarness({
   tournaments: [{
     id: TOURNAMENT, name: 'ฟุตบอลเยาวชน ทดสอบ', description: '', location: 'สนามทดสอบ', start_date: inDays(30), end_date: inDays(31),
-    fee: null, max_teams: 8, promptpay: null, status: 'open', organizer_id: '66666666-6666-4666-8666-666666666666', created_at: new Date().toISOString(),
+    fee: null, max_teams: 8, promptpay: null, status: 'open', organizer_id: E2E_ORGANIZER, created_at: new Date().toISOString(),
   }, {
     id: PAID, name: 'ฟุตบอลเยาวชน มีค่าสมัคร', description: '', location: 'สนามทดสอบ 2', start_date: inDays(40), end_date: inDays(41),
-    fee: 500, max_teams: 8, promptpay: PROMPTPAY, status: 'open', organizer_id: '66666666-6666-4666-8666-666666666666', created_at: new Date().toISOString(),
+    fee: 500, max_teams: 8, promptpay: PROMPTPAY, status: 'open', organizer_id: E2E_ORGANIZER, created_at: new Date().toISOString(),
   }],
 })
 const { state, step, expect, go, visible, tap, audit } = h
@@ -31,12 +36,15 @@ const TEAM_NAME = 'ทีมสมัคร อัตโนมัติ'
 let teamId = ''
 // Posts to the app from a signed-in tab, as the page does, and returns the app's answer. With a file
 // ({ name, type, bytes }) the body is a form with that file as "slip", as PaymentStep sends it.
-const postFrom = (tab, path, file = null) => tab.evaluate(async ({ path, file }) => {
+// With json, the body is that object as JSON, as ConfirmTeamButton sends it.
+const postFrom = (tab, path, file = null, json = null) => tab.evaluate(async ({ path, file, json }) => {
   let body
+  const headers = {}
   if (file) { body = new FormData(); body.append('slip', new File([new Uint8Array(file.bytes)], file.name, { type: file.type })) }
-  const response = await fetch(path, { method: 'POST', body })
+  if (json) { body = JSON.stringify(json); headers['Content-Type'] = 'application/json' }
+  const response = await fetch(path, { method: 'POST', body, headers })
   return { status: response.status, body: await response.json().catch(() => null) }
-}, { path, file })
+}, { path, file, json })
 const submitFrom = tab => postFrom(tab, `/api/teams/${teamId}/submit`)
 
 await step('a coach opens the tournament and names a team', async () => {
@@ -167,6 +175,78 @@ await step('a second slip for the same team is refused', async () => {
   const answer = await postFrom(coach, `/api/teams/${paidTeamId}/payment`, { name: 'again.png', type: 'image/png', bytes: [137, 80, 78, 71] })
   expect(answer.status === 409 && answer.body?.error === 'ทีมนี้มีรายการชำระเงินอยู่แล้ว', `the app answered ${JSON.stringify(answer)}`)
   expect(state.tables.payments.length === 1 && state.storage.length === 1, 'a second slip was stored')
+})
+
+const organizer = await h.signedIn(E2E_ORGANIZER)
+// The organizer's queue card for a team: the innermost block holding the team's name and its
+// reject button (every waiting team has one, whatever else it shows).
+const queueCard = name => organizer.locator('div').filter({ has: organizer.getByText(name, { exact: true }) }).filter({ has: organizer.getByRole('button', { name: 'ปฏิเสธ' }) }).last()
+// The slip route as a given account sees it: the status, and where a redirect points.
+const slipFor = async (tab, paymentId) => {
+  const response = await tab.request.get(`${h.BASE}/api/payments/${paymentId}/slip`, { maxRedirects: 0 })
+  return { status: response.status(), location: response.headers().location ?? null }
+}
+let paymentId = ''
+
+await step('the organizer sees both teams waiting, the paid one with its amount and slip', async () => {
+  await go('/dashboard', organizer)
+  await visible(TEAM_NAME, organizer)
+  await visible(PAID_TEAM, organizer)
+  paymentId = state.tables.payments[0].id
+  const free = (await queueCard(TEAM_NAME).innerText()).replace(/\s+/g, ' ')
+  const paid = (await queueCard(PAID_TEAM).innerText()).replace(/\s+/g, ' ')
+  expect(!free.includes('หลักฐานการชำระเงิน') && /ยืนยัน/.test(free), `free team card says: ${free}`)
+  expect(paid.includes('฿500') && paid.includes('รอตรวจสอบ') && paid.includes('ยืนยันทีมและการชำระ'), `paid team card says: ${paid}`)
+  // The slip image loads through the private route, not a public URL.
+  const image = queueCard(PAID_TEAM).locator(`img[src="/api/payments/${paymentId}/slip"]`)
+  await image.waitFor({ timeout: 10000 })
+  await organizer.waitForFunction(src => [...document.images].some(img => img.getAttribute('src') === src && img.complete && img.naturalWidth > 0), `/api/payments/${paymentId}/slip`, { timeout: 10000 })
+  await audit('/dashboard (organizer queue)', organizer)
+})
+
+await step('the slip opens for the organizer and the payer only, through a short signed URL', async () => {
+  const athlete = await h.signedIn(E2E_ATHLETE)
+  const guardian = await h.signedIn(E2E_GUARDIAN)
+  const [forOrganizer, forCoach, forAthlete, forGuardian] = await Promise.all([organizer, coach, athlete, guardian].map(tab => slipFor(tab, paymentId)))
+  const path = state.tables.payments[0].slip_url
+  for (const [who, answer] of [['organizer', forOrganizer], ['coach', forCoach]]) {
+    expect(answer.status === 307 && answer.location?.includes('/storage/v1/object/sign/slips/') && answer.location.includes('token='), `${who}: ${JSON.stringify(answer)}`)
+  }
+  for (const [who, answer] of [['athlete', forAthlete], ['guardian', forGuardian]]) expect(answer.status === 403, `${who}: ${JSON.stringify(answer)}`)
+  // AGENTS.md rule 6: 60 seconds, for this file only.
+  const signed = state.signedUrls.filter(item => item.path === path)
+  expect(signed.length >= 2 && signed.every(item => item.expiresAt - Date.now() <= 60000), `signed: ${JSON.stringify(signed.map(item => ({ path: item.path, by: item.by, expiresAt: item.expiresAt })))}`)
+  const file = await organizer.request.get(forOrganizer.location)
+  expect(file.status() === 200 && (await file.body()).equals(PNG), `the signed URL served ${file.status()}`)
+  await athlete.context().close()
+  await guardian.context().close()
+})
+
+await step('the coach who paid cannot confirm their own payment', async () => {
+  const answer = await postFrom(coach, `/api/payments/${paymentId}/confirm`)
+  expect(answer.status === 403, `the app answered ${JSON.stringify(answer)}`)
+  expect(state.tables.payments[0].status === 'pending' && state.tables.teams.find(row => row.id === paidTeamId)?.status === 'pending', 'the payment or team changed')
+})
+
+await step('one tap confirms the payment and the team, and a second call changes nothing', async () => {
+  await tap(queueCard(PAID_TEAM).getByRole('button', { name: /ยืนยันทีมและการชำระ/ }))
+  for (let waited = 0; state.tables.payments[0].status !== 'confirmed' && waited < 10000; waited += 100) await organizer.waitForTimeout(100)
+  expect(state.tables.payments[0].status === 'confirmed' && state.tables.teams.find(row => row.id === paidTeamId)?.status === 'confirmed', `payment ${state.tables.payments[0].status}, team ${state.tables.teams.find(row => row.id === paidTeamId)?.status}`)
+  await organizer.getByText(PAID_TEAM).waitFor({ state: 'detached', timeout: 10000 }).catch(() => {})
+  expect(await queueCard(PAID_TEAM).count() === 0, 'the paid team is still in the queue')
+  const writes = state.writes.length
+  const again = await postFrom(organizer, `/api/payments/${paymentId}/confirm`)
+  expect(again.status === 200 && state.writes.length === writes && state.tables.payments.length === 1, `again: ${JSON.stringify(again)}, writes ${writes} → ${state.writes.length}`)
+})
+
+await step('the free team is confirmed with its own button, which another account cannot use', async () => {
+  const refused = await postFrom(coach, `/api/teams/${teamId}/status`, null, { status: 'confirmed' })
+  expect(refused.status === 403 && state.tables.teams.find(row => row.id === teamId)?.status === 'pending', `coach: ${JSON.stringify(refused)}`)
+  await tap(queueCard(TEAM_NAME).getByRole('button', { name: 'ยืนยัน', exact: true }))
+  for (let waited = 0; state.tables.teams.find(row => row.id === teamId)?.status !== 'confirmed' && waited < 10000; waited += 100) await organizer.waitForTimeout(100)
+  expect(state.tables.teams.find(row => row.id === teamId)?.status === 'confirmed', `team ${state.tables.teams.find(row => row.id === teamId)?.status}`)
+  await organizer.waitForFunction(name => !document.body.innerText.includes(name), TEAM_NAME, { timeout: 10000 })
+  await audit('/dashboard (queue empty)', organizer)
 })
 
 await h.finish()
