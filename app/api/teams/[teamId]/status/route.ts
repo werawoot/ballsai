@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { sendTeamStatusEmail } from '@/lib/email'
 import { logServerError } from '@/lib/monitoring'
+import { apiError } from '@/lib/api-error'
 
 type TeamStatusBody = {
   status?: 'confirmed' | 'rejected'
@@ -71,7 +72,12 @@ export async function POST(request: Request, props: { params: Promise<{ teamId: 
     .eq('id', params.teamId)
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 400 })
+    // The status rules of sql/102 (team_status_transition_guard): a paid team waits for its
+    // confirmed payment; a confirmed or rejected team does not change again.
+    if (updateError.message.includes('TEAM_PAYMENT_REQUIRED')) return apiError('teamPaymentRequired', 409)
+    if (updateError.message.includes('TEAM_STATUS_TRANSITION')) return apiError('teamStatusLocked', 409)
+    logServerError({ event: 'team_status_update_failed', userId: user.id, route: '/api/teams/[teamId]/status', metadata: { teamId: params.teamId, code: updateError.code ?? null }, error: updateError })
+    return NextResponse.json({ error: 'อัปเดตสถานะทีมไม่สำเร็จ' }, { status: 400 })
   }
 
   const email = teamOwner?.email

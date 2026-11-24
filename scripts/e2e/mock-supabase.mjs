@@ -179,6 +179,21 @@ function withEmbeds(state, table, rows, select) {
   return out
 }
 
+// team_status_transition_guard (sql/102): for anyone but an admin, a team's status moves only
+// draft→pending, pending→rejected, and pending→confirmed when the tournament is free or the
+// team's payment is confirmed. The refusal message, or null when the change is allowed.
+function teamStatusRefusal(state, me, row, next) {
+  if (next === row.status || isAdmin(state, me)) return null
+  if (row.status === 'draft' && next === 'pending') return null
+  if (row.status === 'pending' && next === 'rejected') return null
+  if (row.status === 'pending' && next === 'confirmed') {
+    const fee = Number(state.tables.tournaments.find(item => item.id === row.tournament_id)?.fee ?? 0)
+    const paid = state.tables.payments.some(payment => payment.team_id === row.id && payment.status === 'confirmed')
+    return fee <= 0 || paid ? null : 'TEAM_PAYMENT_REQUIRED'
+  }
+  return 'TEAM_STATUS_TRANSITION'
+}
+
 const MOCK_DELAY_MS = Number(process.env.E2E_MOCK_DELAY_MS) || 0
 // A request from the browser tab (mock-b in the trace) rather than from the app's server render.
 const fromBrowser = req => /Mozilla/.test(req.headers['user-agent'] ?? '')
@@ -353,7 +368,7 @@ function rpc(state, me, name, body) {
     }
     // Entering a tournament (sql/20, sql/99 for submit): the rules the registration flow can meet.
     case 'public_tournament_organizers': return { status: 200, body: [] }
-    // confirm_payment_safely (sql/production-hardening.sql): an organizer of the payment's tournament
+    // confirm_payment_safely (sql/103, after sql/102 and sql/production-hardening.sql): an organizer of the payment's tournament
     // or an admin confirms the payment and its team together; a second call changes nothing.
     case 'confirm_payment_safely': {
       if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
@@ -363,9 +378,13 @@ function rpc(state, me, name, body) {
       if (!payment) return raise(404, 'P0002', 'PAYMENT_NOT_FOUND')
       const organizer = t.tournaments.find(row => row.id === payment.tournament_id)?.organizer_id
       if (role !== 'admin' && organizer !== me) return raise(403, '42501', 'FORBIDDEN')
-      if (payment.status !== 'confirmed') { payment.status = 'confirmed'; state.writes.push('payment:confirm') }
+      // sql/103: only with a slip. sql/102: only a waiting team (or one already confirmed), except
+      // for an admin, whose confirmation leaves the team as it is.
+      if (!String(payment.slip_url ?? '').trim()) return raise(400, 'P0001', 'SLIP_REQUIRED')
       const team = t.teams.find(row => row.id === payment.team_id)
-      if (team && team.status !== 'confirmed') { team.status = 'confirmed'; state.writes.push('team:confirm') }
+      if (role !== 'admin' && !['pending', 'confirmed'].includes(team?.status)) return raise(400, 'P0001', 'TEAM_NOT_PENDING')
+      if (payment.status !== 'confirmed') { payment.status = 'confirmed'; state.writes.push('payment:confirm') }
+      if (team?.status === 'pending') { team.status = 'confirmed'; state.writes.push('team:confirm') }
       return { status: 204, body: undefined }
     }
     case 'create_tournament_team_safely': {
@@ -573,6 +592,10 @@ export function startMock(state, port = 54399) {
     }
     if (req.method === 'POST') {
       const items = (Array.isArray(body) ? body : [body]).map(item => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...(table === 'training_enrollments' ? { status: 'active' } : {}), ...item }))
+      // payment_rules_guard (sql/103): a new payment carries a slip, for anyone but an admin.
+      if (table === 'payments' && !isAdmin(state, me) && items.some(item => !String(item.slip_url ?? '').trim())) {
+        return send(res, 400, { code: 'P0001', message: 'SLIP_REQUIRED' })
+      }
       // sql/20 payment_team_pending_guard: a payment only for a team that has been submitted.
       if (table === 'payments' && items.some(item => state.tables.teams.find(team => team.id === item.team_id)?.status !== 'pending')) {
         return send(res, 403, { code: '42501', message: 'TEAM_NOT_READY_FOR_PAYMENT' })
@@ -595,6 +618,17 @@ export function startMock(state, port = 54399) {
       // teams_update_organizer_admin: only an admin or the organizer of the team's tournament
       // changes a team; other rows are left out silently, as RLS does.
       if (table === 'teams') hit = hit.filter(row => isAdmin(state, me) || state.tables.tournaments.some(tournament => tournament.id === row.tournament_id && tournament.organizer_id === me))
+      // payment_rules_guard (sql/103): a payment's status changes only inside confirm_payment_safely.
+      if (table === 'payments' && 'status' in body && !isAdmin(state, me) && hit.some(row => row.status !== body.status)) {
+        return send(res, 400, { code: 'P0001', message: 'PAYMENT_STATUS_LOCKED' })
+      }
+      // team_status_transition_guard (sql/102): the whole update fails on the first row it refuses.
+      if (table === 'teams' && 'status' in body) {
+        for (const row of hit) {
+          const refused = teamStatusRefusal(state, me, row, body.status)
+          if (refused) return send(res, 400, { code: 'P0001', message: refused })
+        }
+      }
       for (const row of hit) Object.assign(row, body)
       state.writes.push(`update:${table}`)
       return send(res, 200, hit)

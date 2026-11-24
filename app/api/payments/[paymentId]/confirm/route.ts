@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { apiError } from '@/lib/api-error'
 
 type PaymentQueryResult = {
   id: string
@@ -57,6 +58,10 @@ export async function POST(_request: Request, props: { params: Promise<{ payment
   })
 
   if (confirmError) {
+    // sql/102: confirm_payment_safely confirms only a team that is waiting (or already confirmed).
+    if (confirmError.message.includes('TEAM_NOT_PENDING')) return apiError('teamStatusLocked', 409)
+    // sql/103: a payment is confirmed only with a slip.
+    if (confirmError.message.includes('SLIP_REQUIRED')) return apiError('paymentSlipRequired', 409)
     return NextResponse.json({ error: 'ยืนยันการชำระเงินไม่สำเร็จ กรุณาลองใหม่หรือติดต่อผู้ดูแลระบบ' }, { status: 400 })
   }
 

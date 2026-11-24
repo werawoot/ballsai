@@ -4,12 +4,14 @@ import { useState } from 'react'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { useApiErrorText, type ApiErrorBody } from '@/lib/use-api-error-text'
 
 export default function ConfirmTeamButton({ teamId, action }: { teamId: string, action: 'confirmed' | 'rejected' }) {
   const t = useTranslations('approval')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const router = useRouter()
+  const errorText = useApiErrorText()
 
   const handleClick = async () => {
     setLoading(true)
@@ -22,8 +24,8 @@ export default function ConfirmTeamButton({ teamId, action }: { teamId: string, 
     })
 
     if (!response.ok) {
-      const data = (await response.json().catch(() => null)) as { error?: string } | null
-      setMessage(data?.error ?? t('teamFailed'))
+      const data = (await response.json().catch(() => null)) as ApiErrorBody
+      setMessage(errorText(data, t('teamFailed')))
       setLoading(false)
       return
     }

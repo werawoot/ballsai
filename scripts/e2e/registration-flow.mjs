@@ -12,7 +12,9 @@
 // with its amount and its slip; the slip opens through a 60-second signed URL for the organizer and
 // the coach who paid, and for nobody else; the coach cannot confirm their own payment; one tap
 // confirms the payment and the team together, a second call changes nothing; the free team is
-// confirmed with its own button, which another account cannot do.
+// confirmed with its own button, which another account cannot do. Under the status rules of sql/102,
+// the paid team cannot be confirmed by its status before its payment, and neither confirmed team can
+// be rejected afterwards.
 // Every write is checked in the mock's rows; every page is audited with axe-core. See docs/e2e.md.
 import { bangkokToday, E2E_ATHLETE, E2E_COACH, E2E_GUARDIAN, E2E_ORGANIZER } from './mock-supabase.mjs'
 import { createHarness } from './harness.mjs'
@@ -229,6 +231,12 @@ await step('the slip opens for the organizer and the payer only, through a short
   await guardian.context().close()
 })
 
+await step('a paid team cannot be confirmed by its status alone, only through its payment (sql/102)', async () => {
+  const answer = await postFrom(organizer, `/api/teams/${paidTeamId}/status`, null, { status: 'confirmed' })
+  expect(answer.status === 409 && answer.body?.code === 'teamPaymentRequired', `the app answered ${JSON.stringify(answer)}`)
+  expect(state.tables.teams.find(row => row.id === paidTeamId)?.status === 'pending', 'the paid team changed')
+})
+
 await step('the coach who paid cannot confirm their own payment', async () => {
   const answer = await postFrom(coach, `/api/payments/${paymentId}/confirm`)
   expect(answer.status === 403, `the app answered ${JSON.stringify(answer)}`)
@@ -253,6 +261,14 @@ await step('the free team is confirmed with its own button, which another accoun
   expect(state.tables.teams.find(row => row.id === teamId)?.status === 'confirmed', `team ${state.tables.teams.find(row => row.id === teamId)?.status}`)
   await organizer.waitForFunction(name => !document.body.innerText.includes(name), TEAM_NAME, { timeout: 10000 })
   await audit('/dashboard (queue empty)', organizer)
+})
+
+await step('a confirmed team stays confirmed (sql/102)', async () => {
+  for (const id of [teamId, paidTeamId]) {
+    const answer = await postFrom(organizer, `/api/teams/${id}/status`, null, { status: 'rejected' })
+    expect(answer.status === 409 && answer.body?.code === 'teamStatusLocked', `the app answered ${JSON.stringify(answer)}`)
+    expect(state.tables.teams.find(row => row.id === id)?.status === 'confirmed', `team ${id} changed`)
+  }
 })
 
 await h.finish()
