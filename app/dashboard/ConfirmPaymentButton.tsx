@@ -4,7 +4,8 @@ import { useLoading } from "@/hooks/useLoading";
 import { CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "next-intl"
+import { useApiErrorText, type ApiErrorBody } from "@/lib/use-api-error-text";
 
 // One tap confirms the payment and the team together (confirm_payment_safely).
 export default function ConfirmPaymentButton({ paymentId }: { paymentId: string }) {
@@ -16,6 +17,7 @@ export default function ConfirmPaymentButton({ paymentId }: { paymentId: string 
     loadingSubMessage: t("confirmingSub"),
   });
   const router = useRouter();
+  const errorText = useApiErrorText();
 
   const handleConfirm = async () => {
     setMessage("");
@@ -26,8 +28,8 @@ export default function ConfirmPaymentButton({ paymentId }: { paymentId: string 
       });
 
       if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as { error?: string } | null;
-        setMessage(data?.error ?? t("paymentFailed"));
+        const data = (await response.json().catch(() => null)) as ApiErrorBody;
+        setMessage(errorText(data, t("paymentFailed")));
         return;
       }
 

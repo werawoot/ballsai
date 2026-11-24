@@ -125,6 +125,9 @@ Then the organizer of both tournaments (owner, 21 Nov 2026: "ทำข้อ ข
     the card leaves the queue. Calling the route again answers 200 and writes nothing.
 17. The free team's "ยืนยัน" confirms it (`/api/teams/<id>/status`); the coach posting the same
     gets 403 first. The queue is empty.
+18. Before step 16, the paid team posted to `/api/teams/<id>/status` as confirmed answers 409
+    `teamPaymentRequired` and stays pending; after step 17, posting either team as rejected
+    answers 409 `teamStatusLocked` and both stay confirmed (sql/102).
 
 Mutation check (21 Nov 2026): with the slip route letting every signed-in account read, step 14
 fails (the athlete got 500, where Storage's own rule refused the signature, instead of 403).
@@ -133,12 +136,10 @@ Not walked: rejecting a team, capacity, an organizer or admin submitting, a seco
 (the coach in step 17 is refused for their role, not for the tournament), two confirmations at the
 same moment, and the bucket being private (`public = false`).
 
-Found while writing these steps, not tested on purpose and not fixed here (21 Nov 2026, to the
-owner): `/api/teams/<id>/status` and the `teams_update_organizer_admin` policy check only who the
-organizer is, never the team's state. An organizer can confirm a team still in `draft`, confirm a
-paid team whose payment is not confirmed (the payment stays `pending`), or turn a confirmed team
-to `rejected`, through the route or a direct table update. A step here would lock that in; it
-needs its own fix, failing test first.
+The status rules of sql/102 (owner, 21 Nov 2026), in the mock as `teamStatusRefusal` and in
+`confirm_payment_safely`: before its payment is confirmed, the paid team cannot be confirmed by its
+status (409 `teamPaymentRequired`); once confirmed, neither team can be rejected (409
+`teamStatusLocked`).
 
 The mock's four entry functions check what sql/20 and sql/99 check that the flow can meet
 (persona, name length, open tournament, one team per coach per tournament, owner or organizer,
