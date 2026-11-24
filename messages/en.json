@@ -712,6 +712,7 @@
     "teamNotFound": "Team not found",
     "teamPaymentRequired": "This tournament has a fee: the team is confirmed once its payment slip is confirmed",
     "teamStatusLocked": "This team's status can no longer change: only a team waiting for confirmation can be confirmed or rejected",
+    "paymentSlipRequired": "This payment has no slip: only a payment with a slip can be confirmed",
     "teamDeleteNameMismatch": "The name you typed does not match. Type the team name exactly before deleting.",
     "teamDeleteSubmitted": "This team has been sent to the organizer and cannot be deleted. Contact the organizer to withdraw it.",
     "teamDeletePaid": "This team has a payment or slip and cannot be deleted. Contact the organizer.",

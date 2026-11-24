@@ -6,7 +6,8 @@
 create or replace function pg_temp.as_user(uid text) returns void language plpgsql as $$ begin perform set_config('request.jwt.claim.sub', uid, false); end $$;
 create temp table result (check_name text, ok boolean);
 grant all on result to authenticated;
--- Fresh rows: team id ends in the case it is for.
+-- Fresh rows: team id ends in the case it is for. Written as the backend (no user).
+select pg_temp.as_user('');
 delete from public.payments; delete from public.teams;
 insert into public.teams (id, name, tournament_id, created_by, status) values
   ('00000000-0000-4000-8000-000000000101','free pending','00000000-0000-4000-8000-0000000000f4','00000000-0000-4000-8000-0000000000c1','pending'),
@@ -15,13 +16,16 @@ insert into public.teams (id, name, tournament_id, created_by, status) values
   ('00000000-0000-4000-8000-000000000104','free confirmed','00000000-0000-4000-8000-0000000000f4','00000000-0000-4000-8000-0000000000c2','confirmed'),
   ('00000000-0000-4000-8000-000000000105','free pending to reject','00000000-0000-4000-8000-0000000000f4','00000000-0000-4000-8000-0000000000c1','pending'),
   ('00000000-0000-4000-8000-000000000106','free rejected','00000000-0000-4000-8000-0000000000f4','00000000-0000-4000-8000-0000000000c2','rejected'),
-  ('00000000-0000-4000-8000-000000000107','paid rejected, payment pending','00000000-0000-4000-8000-0000000000f1','00000000-0000-4000-8000-0000000000c2','rejected'),
+  ('00000000-0000-4000-8000-000000000107','paid rejected, payment pending','00000000-0000-4000-8000-0000000000f1','00000000-0000-4000-8000-0000000000c2','pending'),
   ('00000000-0000-4000-8000-000000000108','orphan paid pending','00000000-0000-4000-8000-0000000000f5','00000000-0000-4000-8000-0000000000c1','pending'),
   ('00000000-0000-4000-8000-000000000109','free confirmed for admin','00000000-0000-4000-8000-0000000000f4','00000000-0000-4000-8000-0000000000c1','confirmed');
-insert into public.payments (id, team_id, tournament_id, user_id, amount, status) values
-  ('00000000-0000-4000-8000-000000000202','00000000-0000-4000-8000-000000000102','00000000-0000-4000-8000-0000000000f1','00000000-0000-4000-8000-0000000000c1',500,'pending'),
-  ('00000000-0000-4000-8000-000000000207','00000000-0000-4000-8000-000000000107','00000000-0000-4000-8000-0000000000f1','00000000-0000-4000-8000-0000000000c2',500,'pending'),
-  ('00000000-0000-4000-8000-000000000208','00000000-0000-4000-8000-000000000108','00000000-0000-4000-8000-0000000000f5','00000000-0000-4000-8000-0000000000c1',300,'pending');
+-- Payments carry a slip and are made while their team waits, as the app and sql/20 require; team 107
+-- is rejected afterwards (as the backend: no user is set yet).
+insert into public.payments (id, team_id, tournament_id, user_id, amount, slip_url, status) values
+  ('00000000-0000-4000-8000-000000000202','00000000-0000-4000-8000-000000000102','00000000-0000-4000-8000-0000000000f1','00000000-0000-4000-8000-0000000000c1',500,'c1_202.png','pending'),
+  ('00000000-0000-4000-8000-000000000207','00000000-0000-4000-8000-000000000107','00000000-0000-4000-8000-0000000000f1','00000000-0000-4000-8000-0000000000c2',500,'c2_207.png','pending'),
+  ('00000000-0000-4000-8000-000000000208','00000000-0000-4000-8000-000000000108','00000000-0000-4000-8000-0000000000f5','00000000-0000-4000-8000-0000000000c1',300,'c1_208.png','pending');
+update public.teams set status = 'rejected' where id = '00000000-0000-4000-8000-000000000107';
 -- One status change as the signed-in person: true when it took effect.
 create or replace function pg_temp.moved(p_team text, p_status text) returns boolean language plpgsql as $$
 declare n int;

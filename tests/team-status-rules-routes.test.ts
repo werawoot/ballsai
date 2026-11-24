@@ -94,10 +94,17 @@ describe('POST /api/payments/[paymentId]/confirm under the SQL102 rules', () => 
     expect(response.status).toBe(409)
     expect((await response.json()).code).toBe('teamStatusLocked')
   })
+
+  it('says the payment has no slip when confirm_payment_safely refuses with SLIP_REQUIRED (sql/103)', async () => {
+    boundary.rpc.mockResolvedValue({ error: { code: 'P0001', message: 'SLIP_REQUIRED' } })
+    const response = await postConfirm()
+    expect(response.status).toBe(409)
+    expect((await response.json()).code).toBe('paymentSlipRequired')
+  })
 })
 
 describe('the words for these codes', () => {
-  it.each(['teamPaymentRequired', 'teamStatusLocked'])('%s has Thai and English text', code => {
+  it.each(['teamPaymentRequired', 'teamStatusLocked', 'paymentSlipRequired'])('%s has Thai and English text', code => {
     expect(th.apiErrors[code as keyof typeof th.apiErrors]).toBeTruthy()
     expect(en.apiErrors[code as keyof typeof en.apiErrors]).toBeTruthy()
   })
