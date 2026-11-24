@@ -56,6 +56,8 @@ begin
 end;
 $$;
 
+-- The grants as both projects had them before SQL102 (read 24 Nov 2026: postgres, authenticated,
+-- service_role), not as sql/production-hardening.sql wrote them (no service_role there).
 revoke all on function public.confirm_payment_safely(uuid) from public, anon;
 grant execute on function public.confirm_payment_safely(uuid) to authenticated, service_role;
 

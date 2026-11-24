@@ -4,7 +4,7 @@ import { useLoading } from "@/hooks/useLoading";
 import { CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useTranslations } from "next-intl"
+import { useTranslations } from "next-intl";
 import { useApiErrorText, type ApiErrorBody } from "@/lib/use-api-error-text";
 
 // One tap confirms the payment and the team together (confirm_payment_safely).
