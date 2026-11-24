@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
 import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
+import { apiError } from '@/lib/api-error'
 
 // Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
 const RATE_LIMIT = { scope: 'payment-slip-upload', limit: 8, windowSeconds: 10 * 60 }
@@ -145,7 +146,12 @@ export async function POST(request: Request, props: { params: Promise<{ teamId: 
       metadata: { teamId: params.teamId },
       error: paymentError,
     })
-    return NextResponse.json({ error: paymentError.message }, { status: 400 })
+    // payment_rules_guard (sql/103, sql/104): this route uploads the slip and copies the fee first,
+    // so these mean the upload and the insert disagreed; the page words the code.
+    if (paymentError.message.includes('SLIP_NOT_UPLOADED')) return apiError('paymentSlipNotUploaded', 409)
+    if (paymentError.message.includes('PAYMENT_AMOUNT_MISMATCH')) return apiError('paymentAmountMismatch', 409)
+    if (paymentError.message.includes('SLIP_REQUIRED')) return apiError('paymentSlipRequired', 409)
+    return NextResponse.json({ error: 'บันทึกการชำระเงินไม่สำเร็จ กรุณาลองใหม่' }, { status: 400 })
   }
 
   logServerEvent({

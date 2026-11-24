@@ -31,10 +31,22 @@ exception when others then raise notice 'payment % to %: %', p_payment, p_status
 end $$;
 create or replace function pg_temp.confirmed_payment(p_payment text) returns boolean language plpgsql as $$
 begin perform public.confirm_payment_safely(p_payment::uuid); return true; exception when others then raise notice 'confirm_payment_safely(%): %', p_payment, sqlerrm; return false; end $$;
+-- A payment as the slip route makes it. Once SQL104's sandbox has added Storage and the PromptPay
+-- columns, the slip is uploaded first and the tournament's PromptPay copied, as the route does, so
+-- this file checks SQL103's rules alone before and after SQL104.
 create or replace function pg_temp.inserted_payment(p_team text, p_user text, p_slip text) returns boolean language plpgsql as $$
 begin
-  insert into public.payments (team_id, tournament_id, user_id, amount, slip_url, status)
-  values (p_team::uuid, '00000000-0000-4000-8000-0000000000f1', p_user::uuid, 500, p_slip, 'pending');
+  if to_regclass('storage.objects') is not null and nullif(p_slip, '') is not null then
+    execute 'insert into storage.objects (bucket_id, name, owner_id) values (''slips'', $1, $2)' using p_slip, p_user;
+  end if;
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'payments' and column_name = 'promptpay') then
+    execute 'insert into public.payments (team_id, tournament_id, user_id, amount, promptpay, slip_url, status)
+      select $1, tr.id, $2, 500, coalesce(tr.promptpay, ''''), $3, ''pending'' from public.tournaments tr where tr.id = ''00000000-0000-4000-8000-0000000000f1'''
+      using p_team::uuid, p_user::uuid, p_slip;
+  else
+    insert into public.payments (team_id, tournament_id, user_id, amount, slip_url, status)
+    values (p_team::uuid, '00000000-0000-4000-8000-0000000000f1', p_user::uuid, 500, p_slip, 'pending');
+  end if;
   return true;
 exception when others then raise notice 'insert payment for %: %', p_team, sqlerrm; return false;
 end $$;
@@ -74,4 +86,5 @@ select pg_temp.as_user('');
 insert into result values ('backend_may_update_payment', pg_temp.payment_moved('00000000-0000-4000-8000-000000000401', 'pending'));
 
 delete from public.payments; delete from public.teams;
+do $$ begin if to_regclass('storage.objects') is not null then execute 'delete from storage.objects'; end if; end $$;
 select check_name, ok from result order by check_name;

@@ -596,6 +596,18 @@ export function startMock(state, port = 54399) {
       if (table === 'payments' && !isAdmin(state, me) && items.some(item => !String(item.slip_url ?? '').trim())) {
         return send(res, 400, { code: 'P0001', message: 'SLIP_REQUIRED' })
       }
+      // payment_rules_guard (sql/104): the slip is an object its payer uploaded to slips, and the
+      // amount and PromptPay are the tournament's.
+      if (table === 'payments' && !isAdmin(state, me)) {
+        for (const item of items) {
+          const uploaded = String(item.slip_url ?? '').split('_')[0] === item.user_id && state.storage.some(file => file.bucket === 'slips' && file.path === item.slip_url)
+          if (!uploaded) return send(res, 400, { code: 'P0001', message: 'SLIP_NOT_UPLOADED' })
+          const tournament = state.tables.tournaments.find(row => row.id === item.tournament_id)
+          if (Number(item.amount) !== Number(tournament?.fee ?? 0) || String(item.promptpay ?? '') !== String(tournament?.promptpay ?? '')) {
+            return send(res, 400, { code: 'P0001', message: 'PAYMENT_AMOUNT_MISMATCH' })
+          }
+        }
+      }
       // sql/20 payment_team_pending_guard: a payment only for a team that has been submitted.
       if (table === 'payments' && items.some(item => state.tables.teams.find(team => team.id === item.team_id)?.status !== 'pending')) {
         return send(res, 403, { code: '42501', message: 'TEAM_NOT_READY_FOR_PAYMENT' })
@@ -618,6 +630,10 @@ export function startMock(state, port = 54399) {
       // teams_update_organizer_admin: only an admin or the organizer of the team's tournament
       // changes a team; other rows are left out silently, as RLS does.
       if (table === 'teams') hit = hit.filter(row => isAdmin(state, me) || state.tables.tournaments.some(tournament => tournament.id === row.tournament_id && tournament.organizer_id === me))
+      // payment_rules_guard (sql/104): a payment's other fields do not change after it is made.
+      if (table === 'payments' && !isAdmin(state, me) && hit.some(row => Object.entries(body).some(([key, value]) => key !== 'status' && row[key] !== value))) {
+        return send(res, 400, { code: 'P0001', message: 'PAYMENT_LOCKED' })
+      }
       // payment_rules_guard (sql/103): a payment's status changes only inside confirm_payment_safely.
       if (table === 'payments' && 'status' in body && !isAdmin(state, me) && hit.some(row => row.status !== body.status)) {
         return send(res, 400, { code: 'P0001', message: 'PAYMENT_STATUS_LOCKED' })
