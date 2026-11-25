@@ -7,6 +7,7 @@ import { getTranslations } from 'next-intl/server'
 import Image from 'next/image'
 import ConfirmTeamButton from './ConfirmTeamButton'
 import ConfirmPaymentButton from './ConfirmPaymentButton'
+import RejectPaymentButton from './RejectPaymentButton'
 import { approvalAction } from '@/lib/team-approval'
 import NotOrganizer from '@/components/NotOrganizer'
 import ToggleTournamentStatusButton from './ToggleTournamentStatusButton'
@@ -17,6 +18,7 @@ import { fetchOrganizerDashboard } from '@/lib/organizer-dashboard'
 
 export default async function DashboardPage(props: { searchParams?: Promise<{ page?: string; pending?: string }> }) {
   const tl = await getTranslations('labels')
+  const ta = await getTranslations('approval')
   const searchParams = (await props.searchParams) ?? {}
   const cookieStore = await cookies()
   const supabase = createServerClient(
@@ -222,10 +224,16 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span style={{ fontSize: 12, color: 'var(--ui-mute)' }}>สถานะ</span>
-                              <span style={{ fontSize: 11, fontWeight: 800, background: payment.status === 'confirmed' ? 'var(--ui-sunk)' : '#fef9c3', color: payment.status === 'confirmed' ? '#16a34a' : '#854d0e', padding: '2px 8px', borderRadius: 20 }}>
-                                {payment.status === 'confirmed' ? '✓ ยืนยันแล้ว' : '⏳ รอตรวจสอบ'}
+                              <span style={{ fontSize: 11, fontWeight: 800, background: payment.status === 'confirmed' ? 'var(--ui-sunk)' : payment.status === 'rejected' ? 'transparent' : '#fef9c3', color: payment.status === 'confirmed' ? '#16a34a' : payment.status === 'rejected' ? 'var(--ui-red-text)' : '#854d0e', padding: '2px 8px', borderRadius: 20 }}>
+                                {payment.status === 'confirmed' ? '✓ ยืนยันแล้ว' : payment.status === 'rejected' ? ta('slipRejected') : '⏳ รอตรวจสอบ'}
                               </span>
                             </div>
+                            {payment.status === 'rejected' && (
+                              <p style={{ marginTop: 6, fontSize: 12, color: 'var(--ui-text)' }}>
+                                {typeof payment.rejection_reason === 'string' && payment.rejection_reason ? ta('slipRejectedReason', { reason: payment.rejection_reason }) : null}
+                                <span style={{ display: 'block', marginTop: 2, color: 'var(--ui-mute)', fontWeight: 700 }}>{ta('waitingNewSlip')}</span>
+                              </p>
+                            )}
                           </div>
 
                           {payment.slip_url && (
@@ -246,6 +254,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
 
                       <div style={{ display: 'grid', gap: 8 }}>
                         {action === 'confirmPayment' && payment && <ConfirmPaymentButton paymentId={payment.id} />}
+                        {action === 'confirmPayment' && payment && <RejectPaymentButton paymentId={payment.id} />}
                         {action === 'confirmTeam' && <ConfirmTeamButton teamId={team.id} action="confirmed" />}
                         <ConfirmTeamButton teamId={team.id} action="rejected" />
                       </div>

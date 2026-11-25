@@ -13,6 +13,7 @@ import type { Locale } from '@/i18n/config'
 import PageHeader from '@/components/PageHeader'
 import TeamStep from './TeamStep'
 import PaymentStep from './PaymentStep'
+import { pickTeamPayments } from '@/lib/team-approval'
 import ShareButton from './ShareButton'
 import '../../glass.css'
 import '../tournaments.css'
@@ -79,10 +80,17 @@ export default async function TournamentPage(props: { params: Promise<{ id: stri
 
   if (searchParams.teamId) {
     // RLS lets the team's creator, the organizer and admins read it; anyone else sees no name.
-    const { data: team } = await supabase.from('teams').select('name, status').eq('id', searchParams.teamId).maybeSingle()
+    // The coach reads their own payments (RLS); the open one, else the latest rejected (sql/105).
+    const [{ data: team }, { data: paymentRows }] = await Promise.all([
+      supabase.from('teams').select('name, status').eq('id', searchParams.teamId).maybeSingle(),
+      supabase.from('payments').select('team_id, status, rejection_reason, created_at').eq('team_id', searchParams.teamId)
+        .order('created_at', { ascending: false }).limit(20),
+    ])
+    const latest = pickTeamPayments((paymentRows ?? []) as Array<{ team_id: string; status: string; rejection_reason: string | null; created_at: string }>)[searchParams.teamId]
+    const payment = latest ? { status: latest.status, reason: latest.rejection_reason } : null
     return <main className="bds-page tn-page tn-detail">
       <PageHeader back={self} />
-      <PaymentStep fee={fee} promptpay={tournament.promptpay?.trim() || null} summary={summary} teamId={searchParams.teamId} teamName={team?.name ?? null} teamStatus={team?.status ?? null} tournamentId={tournament.id} />
+      <PaymentStep fee={fee} promptpay={tournament.promptpay?.trim() || null} summary={summary} teamId={searchParams.teamId} teamName={team?.name ?? null} teamStatus={team?.status ?? null} tournamentId={tournament.id} payment={payment} />
     </main>
   }
 

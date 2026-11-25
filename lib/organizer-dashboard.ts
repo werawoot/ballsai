@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { pickTeamPayments } from '@/lib/team-approval'
 
 // /dashboard shows an organizer's own tournaments and the teams waiting for approval.
 // Both are read one page at a time and every request names at most one page of ids, so
@@ -21,7 +22,7 @@ export type DashboardPendingTeam = Record<string, unknown> & {
   tournament_id: string
   tournaments: { name: string; fee?: number | null } | null
 }
-export type DashboardPayment = Record<string, unknown> & { id: string; team_id: string; amount: number | null; status: string; slip_url: string | null }
+export type DashboardPayment = Record<string, unknown> & { id: string; team_id: string; amount: number | null; status: string; slip_url: string | null; rejection_reason?: string | null; created_at?: string }
 
 type Options = { organizerId: string; tournamentsPage: number; pendingPage: number }
 
@@ -71,7 +72,8 @@ export async function fetchOrganizerDashboard(client: SupabaseClient, { organize
     counts.total += 1
     if (row.status === 'pending') counts.pending += 1
   }
-  const paymentsByTeam = Object.fromEntries(((paymentRows.data ?? []) as DashboardPayment[]).map(payment => [payment.team_id, payment]))
+  // A team may have rejected payments before its open one (sql/105); show the open one.
+  const paymentsByTeam = pickTeamPayments((paymentRows.data ?? []) as DashboardPayment[])
 
   return {
     stats: { tournaments: tournamentCount.count ?? 0, pending: pendingCount.count ?? 0, confirmed: confirmedCount.count ?? 0 },

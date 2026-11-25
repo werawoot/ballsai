@@ -81,8 +81,8 @@ const UNIQUE = {
   training_enrollments: { keys: ['athlete_id', 'program_id'], where: row => row.status === 'active' },
   training_checkins: { keys: ['enrollment_id', 'session_date'] },
   athlete_self_tests: { keys: ['athlete_id', 'test_key', 'test_date'] },
-  // sql/80: one payment per team.
-  payments: { keys: ['team_id'] },
+  // sql/105 (was sql/80): one payment per team that is not rejected.
+  payments: { keys: ['team_id'], where: row => row.status !== 'rejected' },
 }
 
 const OPERATORS = new Set(['eq', 'neq', 'is', 'lt', 'lte', 'gt', 'gte', 'in', 'not'])
@@ -381,10 +381,31 @@ function rpc(state, me, name, body) {
       // sql/103: only with a slip. sql/102: only a waiting team (or one already confirmed), except
       // for an admin, whose confirmation leaves the team as it is.
       if (!String(payment.slip_url ?? '').trim()) return raise(400, 'P0001', 'SLIP_REQUIRED')
+      // sql/105: a rejected slip is final, except for an admin.
+      if (role !== 'admin' && payment.status === 'rejected') return raise(400, 'P0001', 'PAYMENT_REJECTED')
       const team = t.teams.find(row => row.id === payment.team_id)
       if (role !== 'admin' && !['pending', 'confirmed'].includes(team?.status)) return raise(400, 'P0001', 'TEAM_NOT_PENDING')
       if (payment.status !== 'confirmed') { payment.status = 'confirmed'; state.writes.push('payment:confirm') }
       if (team?.status === 'pending') { team.status = 'confirmed'; state.writes.push('team:confirm') }
+      return { status: 204, body: undefined }
+    }
+    // reject_payment_safely (sql/105): the organizer of the payment's tournament (or an admin) rejects
+    // a waiting slip of a waiting team with a 1-200 character reason; the team keeps waiting.
+    case 'reject_payment_safely': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const role = t.profiles.find(row => row.id === me)?.role
+      if (!['organizer', 'admin'].includes(role)) return raise(403, '42501', 'FORBIDDEN')
+      const reason = String(body.p_reason ?? '').trim()
+      if (reason.length < 1 || reason.length > 200) return raise(400, 'P0001', 'REJECTION_REASON_REQUIRED')
+      const payment = t.payments.find(row => row.id === body.p_payment_id)
+      if (!payment) return raise(404, 'P0002', 'PAYMENT_NOT_FOUND')
+      const organizer = t.tournaments.find(row => row.id === payment.tournament_id)?.organizer_id
+      if (role !== 'admin' && organizer !== me) return raise(403, '42501', 'FORBIDDEN')
+      if (payment.status !== 'pending') return raise(400, 'P0001', 'PAYMENT_NOT_PENDING')
+      const team = t.teams.find(row => row.id === payment.team_id)
+      if (role !== 'admin' && team?.status !== 'pending') return raise(400, 'P0001', 'TEAM_NOT_PENDING')
+      Object.assign(payment, { status: 'rejected', rejection_reason: reason, rejected_at: new Date().toISOString() })
+      state.writes.push('payment:reject')
       return { status: 204, body: undefined }
     }
     case 'create_tournament_team_safely': {

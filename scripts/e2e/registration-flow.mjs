@@ -243,14 +243,73 @@ await step('the coach who paid cannot confirm their own payment', async () => {
   expect(state.tables.payments[0].status === 'pending' && state.tables.teams.find(row => row.id === paidTeamId)?.status === 'pending', 'the payment or team changed')
 })
 
+const REASON = 'ยอดไม่ครบ 500 บาท'
+let rejectedId = ''
+
+await step('the organizer rejects the slip with a reason, and the team keeps waiting (sql/105)', async () => {
+  const byCoach = await postFrom(coach, `/api/payments/${paymentId}/reject`, null, { reason: 'x' })
+  expect(byCoach.status === 403, `coach: ${JSON.stringify(byCoach)}`)
+  const blank = await postFrom(organizer, `/api/payments/${paymentId}/reject`, null, { reason: '   ' })
+  expect(blank.status === 400 && blank.body?.code === 'paymentRejectReasonRequired', `blank reason: ${JSON.stringify(blank)}`)
+  await tap(queueCard(PAID_TEAM).getByRole('button', { name: /ปฏิเสธสลิป/ }))
+  await queueCard(PAID_TEAM).locator('textarea').fill(REASON)
+  await tap(queueCard(PAID_TEAM).getByRole('button', { name: 'ยืนยันปฏิเสธสลิป', exact: true }))
+  const payment = () => state.tables.payments.find(row => row.id === paymentId)
+  for (let waited = 0; payment()?.status !== 'rejected' && waited < 10000; waited += 100) await organizer.waitForTimeout(100)
+  expect(payment()?.status === 'rejected' && payment()?.rejection_reason === REASON, `payment ${JSON.stringify(payment())}`)
+  expect(state.tables.teams.find(row => row.id === paidTeamId)?.status === 'pending', 'the team did not keep waiting')
+  await visible('รอโค้ชส่งสลิปใหม่', organizer)
+  const card = (await queueCard(PAID_TEAM).innerText()).replace(/\s+/g, ' ')
+  expect(card.includes('สลิปถูกปฏิเสธ') && card.includes(REASON) && !card.includes('ยืนยันทีมและการชำระ'), `paid team card says: ${card}`)
+  await audit('/dashboard (slip rejected)', organizer)
+  rejectedId = paymentId
+})
+
+await step('a rejected slip is final: it is not confirmed or rejected again', async () => {
+  const confirm = await postFrom(organizer, `/api/payments/${rejectedId}/confirm`)
+  expect(confirm.status === 409 && confirm.body?.code === 'paymentRejected', `confirm: ${JSON.stringify(confirm)}`)
+  const again = await postFrom(organizer, `/api/payments/${rejectedId}/reject`, null, { reason: 'อีกครั้ง' })
+  expect(again.status === 409 && again.body?.code === 'paymentNotPending', `reject again: ${JSON.stringify(again)}`)
+  expect(state.tables.teams.find(row => row.id === paidTeamId)?.status === 'pending', 'the team changed')
+})
+
+await step('the coach sees the reason and sends a new slip; the old one stays as evidence', async () => {
+  await go(`/tournaments/${PAID}?teamId=${paidTeamId}`, coach)
+  await visible('ผู้จัดปฏิเสธสลิปก่อนหน้า', coach)
+  await visible(REASON, coach)
+  await audit('/tournaments/[id]?teamId= (slip rejected)', coach)
+  await coach.locator('input[type="file"]').setInputFiles({ name: 'slip2.png', mimeType: 'image/png', buffer: PNG })
+  await tap(coach.getByRole('button', { name: 'ส่งสลิปให้ผู้จัดตรวจ', exact: true }))
+  await visible('ส่งสลิปแล้ว', coach)
+  const rows = state.tables.payments.filter(row => row.team_id === paidTeamId)
+  const open = rows.find(row => row.status === 'pending')
+  expect(rows.length === 2 && rows.some(row => row.id === rejectedId && row.status === 'rejected') && open, `payments: ${JSON.stringify(rows)}`)
+  expect(state.storage.filter(file => file.bucket === 'slips').length === 2, `storage: ${JSON.stringify(state.storage)}`)
+  paymentId = open.id
+  // Back on the page, a slip waiting for review shows as sent, with no second upload.
+  await go(`/tournaments/${PAID}?teamId=${paidTeamId}`, coach)
+  await visible('ส่งสลิปแล้ว', coach)
+  expect(await coach.locator('input[type="file"]').count() === 0, 'the upload form is offered while a slip waits')
+  const third = await postFrom(coach, `/api/teams/${paidTeamId}/payment`, { name: 'third.png', type: 'image/png', bytes: [...PNG] })
+  expect(third.status === 409 && third.body?.code === 'paymentExists', `third slip: ${JSON.stringify(third)}`)
+})
+
 await step('one tap confirms the payment and the team, and a second call changes nothing', async () => {
+  // The coach sent a new slip since the organizer last loaded the queue.
+  await go('/dashboard', organizer)
   await tap(queueCard(PAID_TEAM).getByRole('button', { name: /ยืนยันทีมและการชำระ/ }))
-  for (let waited = 0; state.tables.payments[0].status !== 'confirmed' && waited < 10000; waited += 100) await organizer.waitForTimeout(100)
-  expect(state.tables.payments[0].status === 'confirmed' && state.tables.teams.find(row => row.id === paidTeamId)?.status === 'confirmed', `payment ${state.tables.payments[0].status}, team ${state.tables.teams.find(row => row.id === paidTeamId)?.status}`)
+  const payment = () => state.tables.payments.find(row => row.id === paymentId)
+  for (let waited = 0; payment()?.status !== 'confirmed' && waited < 10000; waited += 100) await organizer.waitForTimeout(100)
+  expect(payment()?.status === 'confirmed' && state.tables.teams.find(row => row.id === paidTeamId)?.status === 'confirmed', `payment ${payment()?.status}, team ${state.tables.teams.find(row => row.id === paidTeamId)?.status}`)
   await organizer.waitForFunction(name => !document.body.innerText.includes(name), PAID_TEAM, { timeout: 10000 })
   const writes = state.writes.length
   const again = await postFrom(organizer, `/api/payments/${paymentId}/confirm`)
-  expect(again.status === 200 && state.writes.length === writes && state.tables.payments.length === 1, `again: ${JSON.stringify(again)}, writes ${writes} → ${state.writes.length}`)
+  expect(again.status === 200 && state.writes.length === writes && state.tables.payments.length === 2, `again: ${JSON.stringify(again)}, writes ${writes} → ${state.writes.length}`)
+})
+
+await step('the coach\'s payment page says the payment is confirmed', async () => {
+  await go(`/tournaments/${PAID}?teamId=${paidTeamId}`, coach)
+  await visible('ผู้จัดยืนยันการชำระเงินแล้ว', coach)
 })
 
 await step('the free team is confirmed with its own button, which another account cannot use', async () => {

@@ -85,6 +85,8 @@ export async function POST(request: Request, props: { params: Promise<{ teamId: 
     .from('payments')
     .select('id')
     .eq('team_id', params.teamId)
+    // A rejected slip does not count (sql/105): the coach sends a new one.
+    .neq('status', 'rejected')
     .maybeSingle()
 
   if (existingPayment) {

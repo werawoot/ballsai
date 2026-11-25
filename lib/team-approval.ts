@@ -11,3 +11,17 @@ export function approvalAction(fee: number | null | undefined, payment: { status
   // slip; no fee means there is nothing to wait for. An unknown fee keeps the old behaviour.
   return fee != null && fee > 0 ? 'waitSlip' : 'confirmTeam'
 }
+
+// The payment a team shows (sql/105): its one payment that is not rejected, else its latest
+// rejected one (the coach has not sent a new slip yet). Rejected rows stay as evidence.
+export function pickTeamPayments<P extends { team_id: string; status: string; created_at?: unknown }>(rows: P[]): Record<string, P> {
+  const picked: Record<string, P> = {}
+  for (const row of rows) {
+    const current = picked[row.team_id]
+    const better = !current
+      || (current.status === 'rejected' && row.status !== 'rejected')
+      || (current.status === 'rejected' && row.status === 'rejected' && String(row.created_at ?? '') > String(current.created_at ?? ''))
+    if (better) picked[row.team_id] = row
+  }
+  return picked
+}
