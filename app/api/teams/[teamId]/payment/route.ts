@@ -88,7 +88,7 @@ export async function POST(request: Request, props: { params: Promise<{ teamId: 
     .maybeSingle()
 
   if (existingPayment) {
-    return NextResponse.json({ error: 'ทีมนี้มีรายการชำระเงินอยู่แล้ว' }, { status: 409 })
+    return apiError('paymentExists', 409)
   }
 
   const formData = await request.formData()
@@ -125,7 +125,7 @@ export async function POST(request: Request, props: { params: Promise<{ teamId: 
       metadata: { teamId: params.teamId, fileType: slip.type, fileSize: slip.size },
       error: uploadError,
     })
-    return NextResponse.json({ error: uploadError.message }, { status: 400 })
+    return apiError('paymentSlipUploadFailed', 400)
   }
 
   const { error: paymentError } = await supabase.from('payments').insert({
@@ -151,7 +151,9 @@ export async function POST(request: Request, props: { params: Promise<{ teamId: 
     if (paymentError.message.includes('SLIP_NOT_UPLOADED')) return apiError('paymentSlipNotUploaded', 409)
     if (paymentError.message.includes('PAYMENT_AMOUNT_MISMATCH')) return apiError('paymentAmountMismatch', 409)
     if (paymentError.message.includes('SLIP_REQUIRED')) return apiError('paymentSlipRequired', 409)
-    return NextResponse.json({ error: 'บันทึกการชำระเงินไม่สำเร็จ กรุณาลองใหม่' }, { status: 400 })
+    // payments_one_payment_per_team_idx: a second request for the same team got there first.
+    if (paymentError.code === '23505') return apiError('paymentExists', 409)
+    return apiError('paymentSaveFailed', 400)
   }
 
   logServerEvent({

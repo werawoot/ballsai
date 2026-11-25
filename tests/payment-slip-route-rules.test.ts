@@ -7,7 +7,10 @@ import en from '@/messages/en.json'
 // refuses only a payment forged around it; if it ever refuses the route's own insert, the page gets
 // a code it can word, never the database's text.
 
-const boundary = vi.hoisted(() => ({ insertError: null as null | { code?: string; message: string } }))
+const boundary = vi.hoisted(() => ({
+  insertError: null as null | { code?: string; message: string },
+  uploadError: null as null | { message: string },
+}))
 vi.mock('@/lib/rate-limit', () => ({
   checkAddressRateLimit: async () => ({ allowed: true, retryAfterSeconds: 0 }),
   checkUserRateLimit: async () => ({ allowed: true, retryAfterSeconds: 0 }),
@@ -16,7 +19,7 @@ vi.mock('@/lib/monitoring', () => ({ logServerError: () => {}, logServerEvent: (
 vi.mock('@/lib/supabase-server', () => ({
   createServerSupabaseClient: async () => ({
     auth: { getUser: async () => ({ data: { user: { id: 'coach-1' } } }) },
-    storage: { from: () => ({ upload: async () => ({ error: null }) }) },
+    storage: { from: () => ({ upload: async () => ({ error: boundary.uploadError }) }) },
     from: (table: string) => {
       const chain: Record<string, unknown> = {}
       chain.select = () => chain
@@ -38,7 +41,10 @@ const sendSlip = () => {
   return POST(new Request('http://localhost/api/teams/team-1/payment', { method: 'POST', body: form }), { params: Promise.resolve({ teamId: 'team-1' }) })
 }
 
-beforeEach(() => { boundary.insertError = null })
+beforeEach(() => {
+  boundary.insertError = null
+  boundary.uploadError = null
+})
 
 describe('POST /api/teams/[teamId]/payment under the SQL104 rules', () => {
   it('stores the slip and the payment', async () => {
@@ -63,10 +69,30 @@ describe('POST /api/teams/[teamId]/payment under the SQL104 rules', () => {
     boundary.insertError = { code: '42501', message: 'new row violates row-level security policy for table "payments"' }
     const response = await sendSlip()
     expect(response.status).toBe(400)
-    expect(JSON.stringify(await response.json())).not.toContain('row-level security')
+    const body = await response.json()
+    expect(body.code).toBe('paymentSaveFailed')
+    expect(JSON.stringify(body)).not.toContain('row-level security')
   })
 
-  it.each(['paymentSlipNotUploaded', 'paymentAmountMismatch'])('%s has Thai and English text', code => {
+  it('answers a second payment for the same team (unique index) with 409 paymentExists', async () => {
+    boundary.insertError = { code: '23505', message: 'duplicate key value violates unique constraint "payments_one_payment_per_team_idx"' }
+    const response = await sendSlip()
+    expect(response.status).toBe(409)
+    const body = await response.json()
+    expect(body.code).toBe('paymentExists')
+    expect(JSON.stringify(body)).not.toContain('duplicate key')
+  })
+
+  it('does not hand the Storage error to the page as it is', async () => {
+    boundary.uploadError = { message: 'new row violates row-level security policy' }
+    const response = await sendSlip()
+    expect(response.status).toBe(400)
+    const body = await response.json()
+    expect(body.code).toBe('paymentSlipUploadFailed')
+    expect(JSON.stringify(body)).not.toContain('row-level security')
+  })
+
+  it.each(['paymentSlipNotUploaded', 'paymentAmountMismatch', 'paymentSaveFailed', 'paymentExists', 'paymentSlipUploadFailed'])('%s has Thai and English text', code => {
     expect(th.apiErrors[code as keyof typeof th.apiErrors]).toBeTruthy()
     expect(en.apiErrors[code as keyof typeof en.apiErrors]).toBeTruthy()
   })
