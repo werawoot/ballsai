@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { useApiErrorText, type ApiErrorBody } from '@/lib/use-api-error-text'
 import { CheckCircle2, Copy, Lock, Upload } from 'lucide-react'
 import { RegisterSteps, TournamentSummary, type TournamentSummaryProps } from './RegisterSteps'
 
@@ -25,6 +26,7 @@ export default function PaymentStep({ tournamentId, teamId, teamName, teamStatus
 }) {
   const t = useTranslations('tournament')
   const router = useRouter()
+  const errorText = useApiErrorText()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState('')
   const [saving, setSaving] = useState(false)
@@ -61,9 +63,9 @@ export default function PaymentStep({ tournamentId, teamId, teamName, teamStatus
       router.push(`/login?next=${encodeURIComponent(`/tournaments/${tournamentId}?teamId=${teamId}`)}`)
       return
     }
-    const result = (await response?.json().catch(() => null)) as { error?: string } | null
+    const result = (await response?.json().catch(() => null)) as ApiErrorBody
     if (!response?.ok) {
-      setError(result?.error ?? t('slipFailed'))
+      setError(errorText(result, t('slipFailed')))
       setSaving(false)
       return
     }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { logServerError, logServerEvent } from '@/lib/monitoring'
 import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
+import { apiError } from '@/lib/api-error'
 
 // Per account, behind a ceiling per address of ADDRESS_CEILING_MULTIPLIER times this (lib/rate-limit.ts, T65).
 const RATE_LIMIT = { scope: 'payment-slip-upload', limit: 8, windowSeconds: 10 * 60 }
@@ -87,7 +88,7 @@ export async function POST(request: Request, props: { params: Promise<{ teamId: 
     .maybeSingle()
 
   if (existingPayment) {
-    return NextResponse.json({ error: 'ทีมนี้มีรายการชำระเงินอยู่แล้ว' }, { status: 409 })
+    return apiError('paymentExists', 409)
   }
 
   const formData = await request.formData()
@@ -124,7 +125,7 @@ export async function POST(request: Request, props: { params: Promise<{ teamId: 
       metadata: { teamId: params.teamId, fileType: slip.type, fileSize: slip.size },
       error: uploadError,
     })
-    return NextResponse.json({ error: uploadError.message }, { status: 400 })
+    return apiError('paymentSlipUploadFailed', 400)
   }
 
   const { error: paymentError } = await supabase.from('payments').insert({
@@ -145,7 +146,14 @@ export async function POST(request: Request, props: { params: Promise<{ teamId: 
       metadata: { teamId: params.teamId },
       error: paymentError,
     })
-    return NextResponse.json({ error: paymentError.message }, { status: 400 })
+    // payment_rules_guard (sql/103, sql/104): this route uploads the slip and copies the fee first,
+    // so these mean the upload and the insert disagreed; the page words the code.
+    if (paymentError.message.includes('SLIP_NOT_UPLOADED')) return apiError('paymentSlipNotUploaded', 409)
+    if (paymentError.message.includes('PAYMENT_AMOUNT_MISMATCH')) return apiError('paymentAmountMismatch', 409)
+    if (paymentError.message.includes('SLIP_REQUIRED')) return apiError('paymentSlipRequired', 409)
+    // payments_one_payment_per_team_idx: a second request for the same team got there first.
+    if (paymentError.code === '23505') return apiError('paymentExists', 409)
+    return apiError('paymentSaveFailed', 400)
   }
 
   logServerEvent({
