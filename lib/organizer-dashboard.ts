@@ -57,12 +57,21 @@ export async function fetchOrganizerDashboard(client: SupabaseClient, { organize
     tournaments.length
       ? client.from('teams').select('tournament_id, status').in('tournament_id', tournaments.map(item => item.id))
       : Promise.resolve({ data: [], error: null }),
+    // Open payments: at most one per team (payments_one_open_payment_per_team_idx, sql/105).
     pendingTeams.length
-      ? client.from('payments').select('*').in('team_id', pendingTeams.map(item => item.id))
+      ? client.from('payments').select('*').in('team_id', pendingTeams.map(item => item.id)).neq('status', 'rejected')
       : Promise.resolve({ data: [], error: null }),
   ])
   if (teamRows.error) throw teamRows.error
   if (paymentRows.error) throw paymentRows.error
+
+  // A team with no open payment shows its latest rejected one (with the reason). Rejected rows stay
+  // as evidence, so each team's is read alone, newest first, one row: at most a page of small reads.
+  const openTeams = new Set(((paymentRows.data ?? []) as DashboardPayment[]).map(payment => payment.team_id))
+  const lastRejected = await Promise.all(pendingTeams.filter(item => !openTeams.has(item.id)).map(item =>
+    client.from('payments').select('*').eq('team_id', item.id).eq('status', 'rejected')
+      .order('created_at', { ascending: false }).limit(1)))
+  for (const result of lastRejected) if (result.error) throw result.error
 
   const teamCounts: Record<string, { total: number; pending: number }> = {}
   for (const item of tournaments) teamCounts[item.id] = { total: 0, pending: 0 }
@@ -73,7 +82,7 @@ export async function fetchOrganizerDashboard(client: SupabaseClient, { organize
     if (row.status === 'pending') counts.pending += 1
   }
   // A team may have rejected payments before its open one (sql/105); show the open one.
-  const paymentsByTeam = pickTeamPayments((paymentRows.data ?? []) as DashboardPayment[])
+  const paymentsByTeam = pickTeamPayments([...(paymentRows.data ?? []), ...lastRejected.flatMap(result => result.data ?? [])] as DashboardPayment[])
 
   return {
     stats: { tournaments: tournamentCount.count ?? 0, pending: pendingCount.count ?? 0, confirmed: confirmedCount.count ?? 0 },

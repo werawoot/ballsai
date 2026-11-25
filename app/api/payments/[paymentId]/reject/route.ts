@@ -47,6 +47,10 @@ export async function POST(request: Request, props: { params: Promise<{ paymentI
     if (error.message.includes('PAYMENT_NOT_PENDING')) return apiError('paymentNotPending', 409)
     if (error.message.includes('TEAM_NOT_PENDING')) return apiError('teamStatusLocked', 409)
     if (error.message.includes('REJECTION_REASON_REQUIRED')) return apiError('paymentRejectReasonRequired', 400)
+    if (error.message.includes('FORBIDDEN')) return apiError('paymentForbidden', 403)
+    if (error.message.includes('PAYMENT_NOT_FOUND')) return apiError('paymentNotFound', 404)
+    // Before sql/105 is applied on this project.
+    if (['PGRST202', '42883'].includes(error.code ?? '')) return apiError('featureNotReady', 503)
     logServerError({ event: 'payment_reject_failed', userId: user.id, route: '/api/payments/[paymentId]/reject', metadata: { paymentId: params.paymentId, code: error.code ?? null }, error })
     return apiError('paymentRejectFailed', 400)
   }

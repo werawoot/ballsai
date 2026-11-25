@@ -89,6 +89,8 @@ describe('POST /api/payments/[paymentId]/reject', () => {
     ['PAYMENT_NOT_PENDING', 'paymentNotPending', 409],
     ['TEAM_NOT_PENDING', 'teamStatusLocked', 409],
     ['REJECTION_REASON_REQUIRED', 'paymentRejectReasonRequired', 400],
+    ['FORBIDDEN', 'paymentForbidden', 403],
+    ['PAYMENT_NOT_FOUND', 'paymentNotFound', 404],
     ['new row violates row-level security policy', 'paymentRejectFailed', 400],
   ])('answers %s with the code %s, never the database text', async (raised, code, status) => {
     boundary.rpc.mockResolvedValue({ error: { code: 'P0001', message: raised } })
@@ -100,7 +102,23 @@ describe('POST /api/payments/[paymentId]/reject', () => {
   })
 })
 
+describe('before SQL105 is applied', () => {
+  it('answers 503 featureNotReady when reject_payment_safely does not exist yet', async () => {
+    boundary.rpc.mockResolvedValue({ error: { code: 'PGRST202', message: 'Could not find the function public.reject_payment_safely' } })
+    const response = await postReject({ reason: 'ยอดไม่ครบ' })
+    expect(response.status).toBe(503)
+    expect((await response.json()).code).toBe('featureNotReady')
+  })
+})
+
 describe('POST /api/payments/[paymentId]/confirm after SQL105', () => {
+  it('answers an open payment already on the team (unique index) with 409 paymentExists', async () => {
+    boundary.rpc.mockResolvedValue({ error: { code: '23505', message: 'duplicate key value violates unique constraint "payments_one_open_payment_per_team_idx"' } })
+    const response = await postConfirm()
+    expect(response.status).toBe(409)
+    expect((await response.json()).code).toBe('paymentExists')
+  })
+
   it('answers a rejected slip with 409 paymentRejected', async () => {
     boundary.rpc.mockResolvedValue({ error: { code: 'P0001', message: 'PAYMENT_REJECTED' } })
     const response = await postConfirm()

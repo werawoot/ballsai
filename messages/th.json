@@ -982,6 +982,8 @@
     "cancel": "ยกเลิก",
     "rejectFailed": "ปฏิเสธสลิปไม่สำเร็จ",
     "slipRejected": "✕ สลิปถูกปฏิเสธ",
+    "slipConfirmed": "✓ ยืนยันแล้ว",
+    "slipWaiting": "⏳ รอตรวจสอบ",
     "slipRejectedReason": "เหตุผล: {reason}",
     "waitingNewSlip": "รอโค้ชส่งสลิปใหม่"
   },

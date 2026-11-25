@@ -982,6 +982,8 @@
     "cancel": "Cancel",
     "rejectFailed": "Could not reject the slip",
     "slipRejected": "✕ Slip rejected",
+    "slipConfirmed": "✓ Confirmed",
+    "slipWaiting": "⏳ Waiting for review",
     "slipRejectedReason": "Reason: {reason}",
     "waitingNewSlip": "Waiting for the coach to send a new slip"
   },
