@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { DASHBOARD_PAGE_SIZE, fetchOrganizerDashboard } from '@/lib/organizer-dashboard'
 
 type Row = Record<string, unknown>
-type Call = { table: string; filters: string[]; orders: string[]; inSizes: number[]; head: boolean; range?: [number, number] }
+type Call = { table: string; filters: string[]; orders: string[]; inSizes: number[]; head: boolean; range?: [number, number]; limit?: number }
 
 const get = (row: Row, path: string) => path.split('.').reduce<unknown>((value, key) => (value as Row | undefined)?.[key], row)
 
@@ -17,12 +17,19 @@ function fakeSupabase(tables: Record<string, Row[]>) {
     let rows = tables[table] ?? []
     const result = () => call.head
       ? { data: null, count: rows.length, error: null }
-      : { data: call.range ? rows.slice(call.range[0], call.range[1] + 1) : rows, count: null, error: null }
+      : { data: call.range ? rows.slice(call.range[0], call.range[1] + 1) : call.limit !== undefined ? rows.slice(0, call.limit) : rows, count: null, error: null }
     const builder = {
       select: (_columns: string, options?: { count?: string; head?: boolean }) => { call.head = Boolean(options?.head); return builder },
       eq: (column: string, value: unknown) => { call.filters.push(`${column}=${value}`); rows = rows.filter(row => get(row, column) === value); return builder },
+      neq: (column: string, value: unknown) => { call.filters.push(`${column}!=${value}`); rows = rows.filter(row => get(row, column) !== value); return builder },
+      limit: (count: number) => { call.limit = count; return builder },
       in: (column: string, values: unknown[]) => { call.inSizes.push(values.length); call.filters.push(`${column} in`); rows = rows.filter(row => values.includes(get(row, column))); return builder },
-      order: (column: string, options?: { ascending?: boolean }) => { call.orders.push(`${column} ${options?.ascending === false ? 'desc' : 'asc'}`); return builder },
+      order: (column: string, options?: { ascending?: boolean }) => {
+        call.orders.push(`${column} ${options?.ascending === false ? 'desc' : 'asc'}`)
+        // Other tables come already in the order asked; payments are sorted, for the sql/105 case.
+        if (table === 'payments') rows = [...rows].sort((a, b) => String(get(a, column) ?? '').localeCompare(String(get(b, column) ?? '')) * (options?.ascending === false ? -1 : 1))
+        return builder
+      },
       range: (start: number, end: number) => { call.range = [start, end]; return builder },
       then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) => Promise.resolve(result()).then(resolve, reject),
     }
@@ -65,7 +72,7 @@ describe('organizer dashboard, one page at a time', () => {
     const { client, calls } = fakeSupabase({ tournaments: mine, teams, payments: [] })
     const dashboard = await fetchOrganizerDashboard(client as never, { organizerId: ME, tournamentsPage: 2, pendingPage: 3 })
     for (const call of calls) for (const size of call.inSizes) expect(size).toBeLessThanOrEqual(DASHBOARD_PAGE_SIZE)
-    for (const call of calls.filter(item => !item.head)) expect(call.range ?? call.inSizes.length).toBeTruthy()
+    for (const call of calls.filter(item => !item.head)) expect(call.range ?? call.limit ?? call.inSizes.length).toBeTruthy()
     expect(dashboard.stats).toEqual({ tournaments: 400, pending: 400, confirmed: 400 })
   })
 
@@ -81,5 +88,21 @@ describe('organizer dashboard, one page at a time', () => {
     expect(dashboard.teamCounts).toEqual({ [mine[0].id]: { total: 1, pending: 1 }, [mine[1].id]: { total: 1, pending: 0 } })
     const teamCalls = calls.filter(call => call.table === 'teams' && !call.filters.some(filter => filter.startsWith('tournament_id')))
     for (const call of teamCalls) expect(call.filters).toContain(`tournaments.organizer_id=${ME}`)
+  })
+
+  // sql/105: rejected payments stay as evidence, so a team may have many. The queue shows the open
+  // one, else the latest rejected one, and never reads a team's whole history.
+  it('shows a team\'s open payment however many rejected ones it has, and reads each history with a bound', async () => {
+    const mine = tournaments(1)
+    const teams = [team('a', mine[0], 'pending'), team('b', mine[0], 'pending')]
+    const rejected = (teamId: string, n: number) => Array.from({ length: n }, (_, index) => ({ id: `${teamId}-r${index}`, team_id: teamId, status: 'rejected', rejection_reason: `r${index}`, created_at: `2026-11-25T00:${String(index).padStart(2, '0')}:00Z` }))
+    const payments = [...rejected('a', 40), { id: 'a-open', team_id: 'a', status: 'pending', created_at: '2026-11-25T01:00:00Z' }, ...rejected('b', 40)]
+    const { client, calls } = fakeSupabase({ tournaments: mine, teams, payments })
+    const dashboard = await fetchOrganizerDashboard(client as never, { organizerId: ME, tournamentsPage: 1, pendingPage: 1 })
+    expect(dashboard.paymentsByTeam.a.id).toBe('a-open')
+    expect(dashboard.paymentsByTeam.b.id).toBe('b-r39')
+    for (const call of calls.filter(item => item.table === 'payments')) {
+      expect(call.filters.includes('status!=rejected') || call.limit === 1).toBe(true)
+    }
   })
 })

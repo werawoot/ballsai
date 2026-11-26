@@ -7,6 +7,7 @@ import { getTranslations } from 'next-intl/server'
 import Image from 'next/image'
 import ConfirmTeamButton from './ConfirmTeamButton'
 import ConfirmPaymentButton from './ConfirmPaymentButton'
+import RejectPaymentButton from './RejectPaymentButton'
 import { approvalAction } from '@/lib/team-approval'
 import NotOrganizer from '@/components/NotOrganizer'
 import ToggleTournamentStatusButton from './ToggleTournamentStatusButton'
@@ -15,8 +16,20 @@ import Pagination from '@/components/Pagination'
 import { parsePage } from '@/lib/pagination'
 import { fetchOrganizerDashboard } from '@/lib/organizer-dashboard'
 
+
+// The payment's state on the queue card (sql/105 added rejected); colours as before, rejected in the
+// theme's red on the card itself so it keeps its contrast.
+type SlipState = 'confirmed' | 'rejected' | 'waiting'
+const slipState = (status: string): SlipState => status === 'confirmed' || status === 'rejected' ? status : 'waiting'
+const SLIP_CHIP: Record<SlipState, { label: 'slipConfirmed' | 'slipRejected' | 'slipWaiting'; style: React.CSSProperties }> = {
+  confirmed: { label: 'slipConfirmed', style: { background: 'var(--ui-sunk)', color: '#16a34a' } },
+  rejected: { label: 'slipRejected', style: { background: 'transparent', color: 'var(--ui-red-text)' } },
+  waiting: { label: 'slipWaiting', style: { background: '#fef9c3', color: '#854d0e' } },
+}
+
 export default async function DashboardPage(props: { searchParams?: Promise<{ page?: string; pending?: string }> }) {
   const tl = await getTranslations('labels')
+  const ta = await getTranslations('approval')
   const searchParams = (await props.searchParams) ?? {}
   const cookieStore = await cookies()
   const supabase = createServerClient(
@@ -222,10 +235,16 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span style={{ fontSize: 12, color: 'var(--ui-mute)' }}>สถานะ</span>
-                              <span style={{ fontSize: 11, fontWeight: 800, background: payment.status === 'confirmed' ? 'var(--ui-sunk)' : '#fef9c3', color: payment.status === 'confirmed' ? '#16a34a' : '#854d0e', padding: '2px 8px', borderRadius: 20 }}>
-                                {payment.status === 'confirmed' ? '✓ ยืนยันแล้ว' : '⏳ รอตรวจสอบ'}
+                              <span style={{ fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 20, ...SLIP_CHIP[slipState(payment.status)].style }}>
+                                {ta(SLIP_CHIP[slipState(payment.status)].label)}
                               </span>
                             </div>
+                            {payment.status === 'rejected' && (
+                              <p style={{ marginTop: 6, fontSize: 12, color: 'var(--ui-text)' }}>
+                                {typeof payment.rejection_reason === 'string' && payment.rejection_reason ? ta('slipRejectedReason', { reason: payment.rejection_reason }) : null}
+                                <span style={{ display: 'block', marginTop: 2, color: 'var(--ui-mute)', fontWeight: 700 }}>{ta('waitingNewSlip')}</span>
+                              </p>
+                            )}
                           </div>
 
                           {payment.slip_url && (
@@ -246,6 +265,7 @@ export default async function DashboardPage(props: { searchParams?: Promise<{ pa
 
                       <div style={{ display: 'grid', gap: 8 }}>
                         {action === 'confirmPayment' && payment && <ConfirmPaymentButton paymentId={payment.id} />}
+                        {action === 'confirmPayment' && payment && <RejectPaymentButton paymentId={payment.id} />}
                         {action === 'confirmTeam' && <ConfirmTeamButton teamId={team.id} action="confirmed" />}
                         <ConfirmTeamButton teamId={team.id} action="rejected" />
                       </div>

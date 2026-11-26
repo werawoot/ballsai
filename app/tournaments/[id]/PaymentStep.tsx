@@ -15,7 +15,7 @@ import { RegisterSteps, TournamentSummary, type TournamentSummaryProps } from '.
 // A free tournament (fee null) has nothing to pay: a submitted team is only waiting for the
 // organizer (approvalAction offers "confirm team" with no payment), a draft one still has to
 // be submitted from /team-members.
-export default function PaymentStep({ tournamentId, teamId, teamName, teamStatus, fee, promptpay, summary }: {
+export default function PaymentStep({ tournamentId, teamId, teamName, teamStatus, fee, promptpay, summary, payment = null }: {
   tournamentId: string
   teamId: string
   teamName: string | null
@@ -23,6 +23,8 @@ export default function PaymentStep({ tournamentId, teamId, teamName, teamStatus
   fee: string | null
   promptpay: string | null
   summary: TournamentSummaryProps
+  // The team's open payment, else its latest rejected one (sql/105); null when none was sent.
+  payment?: { status: string; reason: string | null } | null
 }) {
   const t = useTranslations('tournament')
   const router = useRouter()
@@ -88,7 +90,16 @@ export default function PaymentStep({ tournamentId, teamId, teamName, teamStatus
     </div>
   }
 
-  if (done) {
+  if (payment?.status === 'confirmed' && !done) {
+    return <div className="tn-detail-body tn-done" role="status">
+      <CheckCircle2 size={64} strokeWidth={1.6} aria-hidden="true" />
+      <h1 className="ui-h1">{t('paidTitle')}</h1>
+      <p>{t('paidText')}</p>
+      <Link className="ui-btn ui-btn-primary" href={`/tournaments/${tournamentId}`}>{t('doneBack')}</Link>
+    </div>
+  }
+
+  if (done || payment?.status === 'pending') {
     return <div className="tn-detail-body tn-done" role="status">
       <CheckCircle2 size={64} strokeWidth={1.6} aria-hidden="true" />
       <h1 className="ui-h1">{t('doneTitle')}</h1>
@@ -112,6 +123,11 @@ export default function PaymentStep({ tournamentId, teamId, teamName, teamStatus
           </div>
         : fee && <p className="tn-info">{t('noPromptpay')}</p>}
     </div>
+    {payment?.status === 'rejected' && <div className="tn-error" role="alert" style={{ marginTop: 14 }}>
+      <b>{t('rejectedTitle')}</b>
+      {payment.reason && <p>{t('rejectedReason', { reason: payment.reason })}</p>}
+      <p>{t('rejectedHint')}</p>
+    </div>}
     <section className="tn-section">
       <h2>{t('slipTitle')}</h2>
       <label className="tn-drop">

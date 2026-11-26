@@ -19,6 +19,8 @@ function fakeClient() {
       select: (_columns: string, options?: { head?: boolean }) => { head = Boolean(options?.head); return builder },
       eq: (column: string, value: unknown) => { rows = rows.filter(row => get(row, column) === value); return builder },
       in: (column: string, values: unknown[]) => { rows = rows.filter(row => values.includes(get(row, column))); return builder },
+      neq: (column: string, value: unknown) => { rows = rows.filter(row => get(row, column) !== value); return builder },
+      limit: (count: number) => { slice = [0, count - 1]; return builder },
       order: () => builder,
       range: (start: number, end: number) => { slice = [start, end]; return builder },
       single: async () => ({ data: rows[0] ?? null, error: null }),

@@ -24,6 +24,7 @@ vi.mock('@/lib/supabase-server', () => ({
       const chain: Record<string, unknown> = {}
       chain.select = () => chain
       chain.eq = () => chain
+      chain.neq = () => chain
       chain.single = async () => ({ data: { id: 'team-1', tournament_id: 't-1', created_by: 'coach-1', status: 'pending', tournaments: { fee: 500, promptpay: '0812345678', status: 'open' } }, error: null })
       chain.maybeSingle = async () => ({ data: null, error: null })
       chain.insert = async () => ({ error: table === 'payments' ? boundary.insertError : null })
