@@ -3,8 +3,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 // A child's birth date and the time a guardian consented are not the public's (T50).
 // Since sql/58 (Staging and Production) no one but the athlete can read them; everyone else gets an age worked out
 // in the database. Read athlete_profiles with these columns, never with '*': SQL58 grants
-// SELECT column by column, and '*' would ask for the two it withholds.
-export const PUBLIC_PROFILE_COLUMNS = 'user_id, display_name, sport, position, province, height_cm, weight_kg, current_team, bio, profile_image_url, is_public, verification_level, verified_at, created_at, updated_at'
+// SELECT column by column, and '*' would ask for the two it withholds. The weight is health data
+// and since sql/106 is not in this list either: read it with fetchAthleteWeight.
+export const PUBLIC_PROFILE_COLUMNS = 'user_id, display_name, sport, position, province, height_cm, current_team, bio, profile_image_url, is_public, verification_level, verified_at, created_at, updated_at'
 
 type Failure = { code?: string; message: string } | null
 export type AthletePrivate = { birth_date: string | null; guardian_consent_at: string | null }
@@ -45,6 +46,23 @@ export async function fetchAthleteAge(client: SupabaseClient, userId: string): P
   if (!error) return typeof data === 'number' ? shownAge(data) : null
   console.error(JSON.stringify({ level: 'error', event: 'athlete_age_failed', code: error.code ?? null }))
   return null
+}
+
+// An athlete's weight (sql/106, owner 25 Nov 2026): the database answers the athlete, their
+// linked guardians, their team's staff and admins, and null to anyone else. `known` is false
+// when it could not be read (before sql/106, or an error): the caller must then not overwrite it.
+export async function fetchAthleteWeight(client: SupabaseClient, athleteId: string): Promise<{ known: boolean; weightKg: number | null }> {
+  const { data, error } = await client.rpc('athlete_weight_kg', { p_athlete_id: athleteId })
+  if (!error) return { known: true, weightKg: data === null || data === undefined ? null : Number(data) }
+  console.error(JSON.stringify({ level: 'error', event: 'athlete_weight_failed', code: error.code ?? null }))
+  return { known: false, weightKg: null }
+}
+
+// The weight to save: only when the field differs from what was last loaded or saved, so a weight
+// the page could not read is never erased by saving the rest of the profile.
+export function weightChange(current: string, saved: string): { weight_kg?: number | null } {
+  if (current === saved) return {}
+  return { weight_kg: current ? Number(current) : null }
 }
 
 // The signed-in athlete's own birth date and consent time, for /profile.

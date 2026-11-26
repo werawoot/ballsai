@@ -44,7 +44,6 @@ export type AthleteProfile = {
   position?: string | null
   province?: string | null
   height_cm?: number | null
-  weight_kg?: number | null
   current_team?: string | null
   bio?: string | null
   profile_image_url?: string | null

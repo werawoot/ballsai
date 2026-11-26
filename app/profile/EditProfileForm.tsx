@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { Award, BadgeCheck, Camera, CheckCircle2, ImageIcon, Link2, Loader2, Plus, ShieldAlert, Trash2, Upload, Video as VideoIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { ACTIVE_SPORT } from '@/lib/season'
-import { ageOn, birthDateIssue, saveAthleteProfile, thaiDate } from '@/lib/athlete-private'
+import { ageOn, birthDateIssue, saveAthleteProfile, thaiDate, weightChange } from '@/lib/athlete-private'
 import { MINOR_UNDER } from '@/lib/profile-readiness'
 import { THAI_PROVINCES, canonicalProvince, provinceName } from '@/lib/thai-provinces'
 import type { Locale } from '@/i18n/config'
@@ -215,7 +215,8 @@ export default function EditProfileForm({
         position: fields.position || null,
         province: fields.province.trim() || null,
         height_cm: fields.height ? Number(fields.height) : null,
-        weight_kg: fields.weight ? Number(fields.weight) : null,
+        // Only when changed (sql/106): a weight the page could not read is not erased.
+        ...weightChange(fields.weight, saved.weight),
         current_team: fields.team.trim() || null,
         bio: fields.bio.trim() || null,
         profile_image_url: nextProfileImageUrl || null,

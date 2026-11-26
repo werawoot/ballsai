@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server'
 import EditProfileForm from '../EditProfileForm'
 import { signAvatarUrls } from '@/lib/athlete-avatar'
 import PageHeader from '@/components/PageHeader'
-import { PUBLIC_PROFILE_COLUMNS, fetchMyAthletePrivate } from '@/lib/athlete-private'
+import { PUBLIC_PROFILE_COLUMNS, fetchAthleteWeight, fetchMyAthletePrivate } from '@/lib/athlete-private'
 import { glassSceneStyle, PAGE_PHOTOS } from '@/lib/stock-photos'
 import '../../glass.css'
 import '../profile.css'
@@ -35,13 +35,15 @@ export default async function EditProfilePage() {
   ])
   // The birth date and consent time come only through my_athlete_private (sql/58).
   const storedAvatar = (athleteProfile as { profile_image_url?: string | null } | null)?.profile_image_url
-  const [athletePrivate, avatarUrls] = await Promise.all([
+  // The weight is health data and comes only through athlete_weight_kg (sql/106).
+  const [athletePrivate, avatarUrls, weight] = await Promise.all([
     athleteProfile ? fetchMyAthletePrivate(supabase).catch(error => {
       console.error(JSON.stringify({ level: 'error', event: 'athlete_private_read_failed', code: error?.code ?? null }))
       return { birth_date: null, guardian_consent_at: null }
     }) : null,
     // The photo is a private object (T51): the form keeps the stored path, shows this URL.
     signAvatarUrls(supabase, [storedAvatar]),
+    athleteProfile ? fetchAthleteWeight(supabase, user.id) : null,
   ])
 
   return (
@@ -51,7 +53,7 @@ export default async function EditProfilePage() {
       <div className="pf-edit">
         <EditProfileForm
           profile={profile}
-          athleteProfile={athleteProfile ? { ...(athleteProfile as object), ...athletePrivate } as never : null}
+          athleteProfile={athleteProfile ? { ...(athleteProfile as object), ...athletePrivate, weight_kg: weight?.weightKg ?? null } as never : null}
           videos={(videos ?? []) as never}
           achievements={(achievements ?? []) as never}
           highlights={(highlights ?? []) as never}
