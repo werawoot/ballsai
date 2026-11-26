@@ -96,15 +96,15 @@ describe('athlete birth date and consent', () => {
 describe('athlete weight', () => {
   it('reads it through athlete_weight_kg', async () => {
     const { client, calls } = fakeClient({ rpc: { data: 47.5, error: null } })
-    expect(await fetchAthleteWeight(client, 'u1')).toEqual({ known: true, weightKg: 47.5 })
+    expect(await fetchAthleteWeight(client, 'u1')).toBe(47.5)
     expect(calls).toEqual(['rpc athlete_weight_kg {"p_athlete_id":"u1"}'])
   })
 
-  it('knows "no weight" from "could not read it"', async () => {
-    expect(await fetchAthleteWeight(fakeClient({ rpc: { data: null, error: null } }).client, 'u1')).toEqual({ known: true, weightKg: null })
+  it('answers null for no weight, and for a failed read without reading the table', async () => {
+    expect(await fetchAthleteWeight(fakeClient({ rpc: { data: null, error: null } }).client, 'u1')).toBeNull()
     const missing = fakeClient({ rpc: missingFunction })
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    expect(await fetchAthleteWeight(missing.client, 'u1')).toEqual({ known: false, weightKg: null })
+    expect(await fetchAthleteWeight(missing.client, 'u1')).toBeNull()
     expect(missing.calls.filter(call => call.startsWith('select'))).toEqual([])
     spy.mockRestore()
   })

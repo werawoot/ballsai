@@ -53,7 +53,7 @@ export default async function EditProfilePage() {
       <div className="pf-edit">
         <EditProfileForm
           profile={profile}
-          athleteProfile={athleteProfile ? { ...(athleteProfile as object), ...athletePrivate, weight_kg: weight?.weightKg ?? null } as never : null}
+          athleteProfile={athleteProfile ? { ...(athleteProfile as object), ...athletePrivate, weight_kg: weight ?? null } as never : null}
           videos={(videos ?? []) as never}
           achievements={(achievements ?? []) as never}
           highlights={(highlights ?? []) as never}

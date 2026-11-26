@@ -49,13 +49,13 @@ export async function fetchAthleteAge(client: SupabaseClient, userId: string): P
 }
 
 // An athlete's weight (sql/106, owner 25 Nov 2026): the database answers the athlete, their
-// linked guardians, their team's staff and admins, and null to anyone else. `known` is false
-// when it could not be read (before sql/106, or an error): the caller must then not overwrite it.
-export async function fetchAthleteWeight(client: SupabaseClient, athleteId: string): Promise<{ known: boolean; weightKg: number | null }> {
+// linked guardians, their team's staff and admins, and null to anyone else. A failed read (before
+// sql/106, an error) is null too: the form then saves the weight only if it is typed (weightChange).
+export async function fetchAthleteWeight(client: SupabaseClient, athleteId: string): Promise<number | null> {
   const { data, error } = await client.rpc('athlete_weight_kg', { p_athlete_id: athleteId })
-  if (!error) return { known: true, weightKg: data === null || data === undefined ? null : Number(data) }
+  if (!error) return data === null || data === undefined ? null : Number(data)
   console.error(JSON.stringify({ level: 'error', event: 'athlete_weight_failed', code: error.code ?? null }))
-  return { known: false, weightKg: null }
+  return null
 }
 
 // The weight to save: only when the field differs from what was last loaded or saved, so a weight

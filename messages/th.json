@@ -1783,13 +1783,11 @@
     "facts": {
       "age": "อายุ",
       "height": "ส่วนสูง",
-      "weight": "น้ำหนัก",
       "province": "จังหวัด",
       "position": "ตำแหน่ง",
       "team": "ทีม"
     },
     "cm": "{value} ซม.",
-    "kg": "{value} กก.",
     "notSet": "—",
     "highlights": "ไฮไลต์",
     "uploadedVideo": "วิดีโอ",
