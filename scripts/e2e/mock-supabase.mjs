@@ -238,6 +238,11 @@ function rpc(state, me, name, body) {
     }
     // The age shown on a public profile; this athlete's profile is not public.
     case 'public_athlete_age': return { status: 200, body: null }
+    // athlete_weight_kg (sql/106): the weight for the athlete themself (the flows sign in as them).
+    case 'athlete_weight_kg': {
+      const owner = t.athlete_profiles.find(row => row.user_id === body.p_athlete_id)
+      return { status: 200, body: owner && owner.user_id === me ? owner.weight_kg ?? null : null }
+    }
     case 'my_athlete_private':
       return { status: 200, body: athlete ? [{ birth_date: athlete.birth_date ?? null, guardian_consent_at: athlete.guardian_consent_at ?? null }] : [] }
     case 'set_my_training_goal': {

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { execSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
-import { PUBLIC_PROFILE_COLUMNS, ageOn, birthDateIssue, fetchAthleteAge, fetchMyAthletePrivate, saveAthleteProfile } from '@/lib/athlete-private'
+import { PUBLIC_PROFILE_COLUMNS, ageOn, birthDateIssue, fetchAthleteAge, fetchAthleteWeight, fetchMyAthletePrivate, saveAthleteProfile, weightChange } from '@/lib/athlete-private'
 
 type Answer = { data: unknown; error: { code?: string; message: string } | null }
 
@@ -34,8 +34,10 @@ const missingFunction = { data: null, error: { code: 'PGRST202', message: 'Could
 describe('athlete birth date and consent', () => {
   it('never lists the birth date or the consent time among the public profile columns', () => {
     const columns = PUBLIC_PROFILE_COLUMNS.split(',').map(column => column.trim())
-    expect(columns).toEqual(expect.arrayContaining(['user_id', 'display_name', 'bio', 'height_cm', 'weight_kg', 'profile_image_url', 'is_public', 'verification_level']))
+    expect(columns).toEqual(expect.arrayContaining(['user_id', 'display_name', 'bio', 'height_cm', 'profile_image_url', 'is_public', 'verification_level']))
     expect(columns).not.toContain('birth_date')
+    // sql/106 (owner, 25 Nov 2026): a weight is health data; it is not public.
+    expect(columns).not.toContain('weight_kg')
     expect(columns).not.toContain('guardian_consent_at')
     expect(columns).not.toContain('*')
   })
@@ -88,6 +90,41 @@ describe('athlete birth date and consent', () => {
 
 // An upsert needs SELECT on every column it writes (Postgres reads EXCLUDED), which SQL58
 // takes away for birth_date. A plain insert or update needs none.
+// sql/106: the weight is read only through athlete_weight_kg, which answers the athlete, their
+// linked guardians, their team's staff and admins; a missing function is reported, never read
+// around (the form then leaves the stored weight as it is, see EditProfileForm).
+describe('athlete weight', () => {
+  it('reads it through athlete_weight_kg', async () => {
+    const { client, calls } = fakeClient({ rpc: { data: 47.5, error: null } })
+    expect(await fetchAthleteWeight(client, 'u1')).toBe(47.5)
+    expect(calls).toEqual(['rpc athlete_weight_kg {"p_athlete_id":"u1"}'])
+  })
+
+  it('answers null for no weight, and for a failed read without reading the table', async () => {
+    expect(await fetchAthleteWeight(fakeClient({ rpc: { data: null, error: null } }).client, 'u1')).toBeNull()
+    const missing = fakeClient({ rpc: missingFunction })
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(await fetchAthleteWeight(missing.client, 'u1')).toBeNull()
+    expect(missing.calls.filter(call => call.startsWith('select'))).toEqual([])
+    spy.mockRestore()
+  })
+})
+
+describe('saving the weight', () => {
+  // Saving the profile writes the weight only when the person changed it: a weight the page could
+  // not read (before sql/106, an error) shows empty, and saving must not erase the stored one.
+  it('sends nothing when the field is as it was', () => {
+    expect(weightChange('', '')).toEqual({})
+    expect(weightChange('47', '47')).toEqual({})
+  })
+
+  it('sends the new weight, or null when the person cleared it', () => {
+    expect(weightChange('48.5', '47')).toEqual({ weight_kg: 48.5 })
+    expect(weightChange('', '47')).toEqual({ weight_kg: null })
+    expect(weightChange('47', '')).toEqual({ weight_kg: 47 })
+  })
+})
+
 describe('saving the athlete profile', () => {
   const row = { user_id: 'me', display_name: 'Som', birth_date: '2014-01-02', guardian_consent_at: null, is_public: false }
 
@@ -138,13 +175,13 @@ describe('reads of athlete_profiles across the app', () => {
     expect(reads.filter(read => /\*/.test(read.columns))).toEqual([])
   })
 
-  it('never reads the birth date or consent time from the table (T50: only my_athlete_private does)', () => {
-    expect(reads.filter(read => /birth_date|guardian_consent_at/.test(read.columns)).map(read => read.file)).toEqual([])
+  it('never reads the birth date, consent time or weight from the table (T50, sql/106)', () => {
+    expect(reads.filter(read => /birth_date|guardian_consent_at|weight_kg/.test(read.columns)).map(read => read.file)).toEqual([])
   })
 
   it('never asks for them through a read of another table either', () => {
     expect(embedded.length).toBeGreaterThan(0)
-    expect(embedded.filter(read => /birth_date|guardian_consent_at|\*/.test(read.columns)).map(read => read.file)).toEqual([])
+    expect(embedded.filter(read => /birth_date|guardian_consent_at|weight_kg|\*/.test(read.columns)).map(read => read.file)).toEqual([])
   })
 })
 

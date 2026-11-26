@@ -101,7 +101,6 @@ export default async function PlayerPage(props: { params: Promise<{ id: string }
     { label: t('facts.position'), value: positionName ?? t('notSet') },
     { label: t('facts.age'), value: age !== null && age !== undefined ? t('age', { age }) : t('notSet') },
     { label: t('facts.height'), value: athleteProfile?.height_cm ? t('cm', { value: athleteProfile.height_cm }) : t('notSet') },
-    { label: t('facts.weight'), value: athleteProfile?.weight_kg ? t('kg', { value: athleteProfile.weight_kg }) : t('notSet') },
     { label: t('facts.province'), value: province ?? t('notSet') },
     { label: t('facts.team'), value: team ?? t('notSet') },
   ]
