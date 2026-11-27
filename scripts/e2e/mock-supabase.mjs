@@ -27,7 +27,7 @@ export const E2E_ORGANIZER = '66666666-6666-4666-8666-666666666666'
 export const bangkokToday = () => new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10)
 
 const READ_ONLY = new Set(['tournaments'])
-const TABLES = ['profiles', 'tournaments', 'payments', 'athlete_profiles', 'guardian_links', 'training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests', 'teams', 'team_members', 'team_join_links', 'team_join_requests', 'team_staff']
+const TABLES = ['profiles', 'tournaments', 'payments', 'athlete_profiles', 'guardian_links', 'training_enrollments', 'training_checkins', 'athlete_training_goals', 'athlete_self_tests', 'teams', 'team_members', 'team_join_links', 'team_join_requests', 'team_staff', 'run_logs', 'run_goals']
 // Read by the bottom bar (notifications), the training pages (team_members), /career and the
 // /team-members inboxes; this athlete has no rows in any of them.
 const EMPTY_BY_DESIGN = new Set(['coach_attestations', 'coach_skill_assessments', 'coach_athlete_notes', 'team_training_plans', 'team_announcements', 'team_events', 'team_match_minutes', 'team_match_minute_entries', 'notifications', 'player_ranks', 'match_results', 'athlete_highlights', 'athlete_videos', 'athlete_progress', 'player_ratings', 'athlete_xp_events'])
@@ -63,6 +63,8 @@ export function createState({ athleteBirthDate = '2012-03-04', tournaments = [] 
       team_join_requests: [],
       team_staff: [],
       payments: [],
+      run_logs: [],
+      run_goals: [],
     },
     // Files uploaded to Storage: { bucket, path, contentType, size, owner, bytes }. Only the slips bucket.
     storage: [],
@@ -238,6 +240,42 @@ function rpc(state, me, name, body) {
     }
     // The age shown on a public profile; this athlete's profile is not public.
     case 'public_athlete_age': return { status: 200, body: null }
+    // Running mode V1 (sql/108): add_my_run is one run per request id, with the same limits.
+    case 'add_my_run': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const again = t.run_logs.find(row => row.user_id === me && row.request_id === body.p_request_id)
+      if (again) return { status: 200, body: again.id }
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date())
+      if (body.p_run_date > today || body.p_run_date < '2020-01-01') return raise(400, '22023', 'RUN_DATE_INVALID')
+      const m = body.p_distance_m, sec = body.p_duration_s
+      if (!(m >= 100 && m <= 100000 && sec >= 60 && sec <= 86400 && sec * 1000 >= m * 150)) return raise(400, '22023', 'RUN_INVALID')
+      if (t.run_logs.filter(row => row.user_id === me && row.run_date === body.p_run_date).length >= 10) return raise(400, 'P0001', 'RUN_DAY_LIMIT')
+      const id = crypto.randomUUID()
+      t.run_logs.push({ id, user_id: me, request_id: body.p_request_id, run_date: body.p_run_date, distance_m: m, duration_s: sec, created_at: new Date().toISOString() })
+      state.writes.push('run:add')
+      return { status: 200, body: id }
+    }
+    case 'set_my_run_goal': {
+      if (!me) return raise(401, '42501', 'AUTH_REQUIRED')
+      const ok = (body.p_unit === 'runs' && body.p_target >= 1 && body.p_target <= 14) || (body.p_unit === 'km' && body.p_target >= 1 && body.p_target <= 300)
+      if (!ok) return raise(400, '22023', 'RUN_GOAL_INVALID')
+      t.run_goals = [...t.run_goals.filter(row => row.user_id !== me), { user_id: me, unit: body.p_unit, target: body.p_target }]
+      state.writes.push('run:goal')
+      return { status: 204, body: undefined }
+    }
+    case 'my_run_weeks': {
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date())
+      const monday = new Date(`${today}T00:00:00Z`)
+      monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7))
+      const weeks = Math.max(1, Math.min(Number(body.p_weeks) || 1, 53))
+      return { status: 200, body: Array.from({ length: weeks }, (_, index) => {
+        const start = new Date(monday); start.setUTCDate(start.getUTCDate() - 7 * index)
+        const end = new Date(start); end.setUTCDate(end.getUTCDate() + 7)
+        const [from, to] = [start, end].map(day => day.toISOString().slice(0, 10))
+        const mine = t.run_logs.filter(row => row.user_id === me && row.run_date >= from && row.run_date < to)
+        return { week_start: from, runs: mine.length, distance_m: mine.reduce((sum, row) => sum + row.distance_m, 0), duration_s: mine.reduce((sum, row) => sum + row.duration_s, 0) }
+      }) }
+    }
     // athlete_weight_kg (sql/106): the weight for the athlete themself (the flows sign in as them).
     case 'athlete_weight_kg': {
       const owner = t.athlete_profiles.find(row => row.user_id === body.p_athlete_id)

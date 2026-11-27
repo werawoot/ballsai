@@ -73,6 +73,9 @@ describe('the tab /training opens on', () => {
     expect(trainingTab('skills', true)).toBe('skills')
     expect(trainingTab('programs', true)).toBe('programs')
     expect(trainingTab('mine', false)).toBe('programs')
+    // Running mode V1 (ADR-016): its own tab, open to anyone, with or without a programme.
+    expect(trainingTab('run', false)).toBe('run')
+    expect(trainingTab('run', true)).toBe('run')
     expect(trainingTab('nonsense', true)).toBe('mine')
   })
 })

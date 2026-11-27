@@ -7,6 +7,8 @@ import PageHeader from '@/components/PageHeader'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { fetchAthleteAge, thaiDate } from '@/lib/athlete-private'
 import GoalPicker from './GoalPicker'
+import RunPanel from './RunPanel'
+import { fetchMyRunning } from '@/lib/running-data'
 import { fetchMyGoal } from '@/lib/training/goal-data'
 import { goalFits, orderForGoal } from '@/lib/training/goals'
 import { CONTENT_REVIEW, TRAINING_PROGRAMS, bandForAge, drillImage, programsForBand, say, type Band } from '@/lib/training/content'
@@ -31,7 +33,7 @@ const script = Kaushan_Script({ weight: '400', subsets: ['latin'], display: 'swa
 // The range an athlete can start alone; a coach-guided programme is not counted.
 const sessionMinutes = TRAINING_PROGRAMS.filter(program => program.access === 'solo').map(program => program.minutes)
 
-export default async function TrainingPage(props: { searchParams: Promise<{ band?: string; skill?: string; tab?: string; goal?: string }> }) {
+export default async function TrainingPage(props: { searchParams: Promise<{ band?: string; skill?: string; tab?: string; goal?: string; runPage?: string }> }) {
   const searchParams = await props.searchParams
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -55,7 +57,15 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
   const today = thaiDate(new Date())
   const view = mine?.available ? trainingToday(mine, today) : null
   const tab = trainingTab(searchParams.tab, Boolean(view && view.programs.length > 0))
-  const tabs: TrainingTab[] = view && view.programs.length > 0 ? ['mine', 'programs', 'skills'] : ['programs', 'skills']
+  // Running (ADR-016) is open to everyone, with or without a programme.
+  const tabs: TrainingTab[] = view && view.programs.length > 0 ? ['mine', 'programs', 'skills', 'run'] : ['programs', 'skills', 'run']
+  const runPage = Math.max(1, Math.min(10_000, Number.parseInt(searchParams.runPage ?? '1', 10) || 1))
+  const running = tab === 'run' && user
+    ? await fetchMyRunning(supabase, user.id, runPage).catch(error => {
+      console.error(JSON.stringify({ level: 'error', event: 'running_read_failed', code: error?.code ?? null }))
+      return null
+    })
+    : null
   const href = (next: { band?: Band; skill?: Skill | null; tab?: TrainingTab }) => {
     const params = new URLSearchParams({ band: next.band ?? band })
     const nextSkill = next.skill === undefined ? skill : next.skill
@@ -69,20 +79,20 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
   return (
     <main className="bds-page tg gl gl-scene" style={glassSceneStyle(PAGE_PHOTOS.training)}>
       <PageHeader back={{ href: '/profile', label: t('back') }} />
-      <section className={`tg-hero gl-on-photo${tab === 'mine' ? ' is-compact' : ''}`}>
+      <section className={`tg-hero gl-on-photo${tab === 'mine' || tab === 'run' ? ' is-compact' : ''}`}>
         <div className="tg-hero-inner">
           <div className="tg-hero-copy">
             <p className={`tg-tagline ${script.className}`} lang="en">{t('tagline')}</p>
             <h1>{t('title')}</h1>
-            {tab !== 'mine' && <p className="tg-lead">{t('heroLead')}</p>}
-            <nav className="tg-bands" aria-label={t('bandLabel')}>
+            {tab !== 'mine' && tab !== 'run' && <p className="tg-lead">{t('heroLead')}</p>}
+            {tab !== 'run' && <nav className="tg-bands" aria-label={t('bandLabel')}>
               {BANDS.map(item => <Link aria-current={item === band ? 'page' : undefined} className={item === band ? 'is-on' : undefined} href={href({ band: item, skill: null })} key={item}>
                 {item === ownBand ? t('yourBand', { band: t(`bands.${item}`) }) : t(`bands.${item}`)}
               </Link>)}
-            </nav>
+            </nav>}
           </div>
           {/* My schedule opens straight on the week (second reference); the pitch for the programmes stays on the other tabs. */}
-          {tab !== 'mine' && <ul className="tg-features" aria-label={t('featuresLabel')}>
+          {tab !== 'mine' && tab !== 'run' && <ul className="tg-features" aria-label={t('featuresLabel')}>
             {FEATURES.map(([key, Icon]) => <li key={key}>
               <span className="tg-feature-icon" aria-hidden="true"><Icon size={24} /></span>
               <span><b>{t(`features.${key}.title`)}</b><small>{t(`features.${key}.body`, { min: Math.min(...sessionMinutes), max: Math.max(...sessionMinutes) })}</small></span>
@@ -147,6 +157,12 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
             </ul>
           </section>}
 
+          {tab === 'run' && (!user
+            ? <p className="tg-note" role="status"><Link href="/login?next=/training%3Ftab%3Drun">{t('run.signIn')}</Link></p>
+            : !running ? <p className="tg-note is-error" role="alert">{t('run.loadFailed')}</p>
+            : !running.available ? <p className="tg-note" role="status">{t('run.notReady')}</p>
+            : <RunPanel today={today} runs={running.runs} weeks={running.weeks} goal={running.goal} page={runPage} hasNext={running.hasNext} pagePath={href({ tab: 'run' })} />)}
+
           {tab === 'skills' && <nav className="tg-skills" aria-label={t('skillsLabel')}>
             {(['all', ...skills] as const).map(item => {
               const Icon = SKILL_ICONS[item]
@@ -157,7 +173,7 @@ export default async function TrainingPage(props: { searchParams: Promise<{ band
             })}
           </nav>}
 
-          {CONTENT_REVIEW === 'draft' && <p className="tg-note"><TriangleAlert size={16} aria-hidden="true" /><span>{t('draftNote')}</span></p>}
+          {CONTENT_REVIEW === 'draft' && tab !== 'run' && <p className="tg-note"><TriangleAlert size={16} aria-hidden="true" /><span>{t('draftNote')}</span></p>}
           {mine && !mine.available && <p className="tg-note" role="status">{t('notReady')}</p>}
 
           {tab === 'programs' && <>
