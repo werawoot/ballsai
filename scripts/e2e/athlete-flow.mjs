@@ -220,7 +220,7 @@ await step('log a run on the running tab; a retried save is one run', async () =
 
 await step('a weekly goal measures this week, and a run can be removed', async () => {
   await go('/training?tab=run')
-  await page.getByLabel('เป้ารายสัปดาห์').fill('2')
+  await page.getByLabel('จำนวนต่อสัปดาห์').fill('2')
   await tap(page.getByRole('button', { name: 'ตั้งเป้า', exact: true }))
   await visible('ถึงเป้าแล้ว')
   expect(state.tables.run_goals.some(row => row.user_id === E2E_ATHLETE && row.unit === 'runs' && row.target === 2), `goals: ${JSON.stringify(state.tables.run_goals)}`)

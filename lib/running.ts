@@ -35,11 +35,36 @@ export function paceText(distanceM: number, durationS: number) {
   return `${Math.floor(perKm / 60)}:${String(perKm % 60).padStart(2, '0')}`
 }
 
-const amount = (goal: RunGoal, week: RunWeek) => goal.unit === 'runs' ? week.runs : Math.round(week.distanceM / 100) / 10
+/** Kilometres to one decimal, as shown and as a km goal counts them. */
+export const kmOf = (metres: number) => Math.round(metres / 100) / 10
+
+const amount = (goal: RunGoal, week: RunWeek) => goal.unit === 'runs' ? week.runs : kmOf(week.distanceM)
 
 export function goalProgress(goal: RunGoal, week: RunWeek) {
   const done = amount(goal, week)
   return { done, target: goal.target, met: done >= goal.target }
+}
+
+type LoggedRun = { run_date: string; distance_m: number; duration_s: number }
+
+/** This week as the database counted it, plus the runs added and minus the runs removed on this
+ *  screen since that count (until the page brings a fresh one). */
+export function adjustWeek(week: RunWeek, added: LoggedRun[], removed: LoggedRun[]): RunWeek {
+  const inWeek = (run: LoggedRun) => run.run_date >= week.weekStart
+  const sum = (runs: LoggedRun[], key: 'distance_m' | 'duration_s') => runs.filter(inWeek).reduce((total, run) => total + run[key], 0)
+  return {
+    ...week,
+    runs: Math.max(0, week.runs + added.filter(inWeek).length - removed.filter(inWeek).length),
+    distanceM: Math.max(0, week.distanceM + sum(added, 'distance_m') - sum(removed, 'distance_m')),
+    durationS: Math.max(0, week.durationS + sum(added, 'duration_s') - sum(removed, 'duration_s')),
+  }
+}
+
+/** Hours, minutes and seconds of a run, e.g. 31:05 or 1:02:30. */
+export function durationText(seconds: number) {
+  const h = Math.floor(seconds / 3600), m = Math.floor((seconds % 3600) / 60), s = seconds % 60
+  const two = (n: number) => String(n).padStart(2, '0')
+  return h > 0 ? `${h}:${two(m)}:${two(s)}` : `${m}:${two(s)}`
 }
 
 /** Weeks in a row that met the goal, newest first; this week counts once it is met, and an

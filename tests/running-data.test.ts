@@ -27,7 +27,7 @@ describe('the running tab data', () => {
     const running = await fetchMyRunning(client, 'u1', 2)
     expect(asked).toContain(`range ${RUN_PAGE_SIZE}-${RUN_PAGE_SIZE * 2}`)
     expect(asked).toContain('run_logs user_id=u1')
-    expect(asked).toContain('rpc my_run_weeks {"p_weeks":12}')
+    expect(asked).toContain('rpc my_run_weeks {"p_weeks":53}')
     expect(running.runs).toHaveLength(RUN_PAGE_SIZE)
     expect(running.hasNext).toBe(true)
     expect(running.weeks).toEqual([{ weekStart: '2026-11-23', runs: 2, distanceM: 8000, durationS: 3000 }])

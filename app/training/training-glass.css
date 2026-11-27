@@ -153,4 +153,4 @@
 .tg-run-list li b { color: var(--gl-navy); font-size: 14px; }
 .tg-run-list li small { color: #475569; font-size: 12.5px; }
 .tg-run-pages { display: flex; gap: 16px; justify-content: center; margin: 12px 0 0; }
-.tg-run-pages a { color: #0B1220; font-weight: 700; text-decoration: underline; }
+.tg-run-pages a { color: var(--gl-navy); font-weight: 700; text-decoration: underline; }

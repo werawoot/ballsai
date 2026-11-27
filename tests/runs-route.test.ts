@@ -20,7 +20,7 @@ vi.mock('@/lib/supabase-server', () => ({
   createServerSupabaseClient: async () => ({
     auth: { getUser: async () => ({ data: { user: boundary.user } }) },
     rpc: boundary.rpc,
-    from: () => ({ delete: () => ({ eq: (_c: string, id: string) => ({ eq: async () => boundary.remove(id) }) }) }),
+    from: () => ({ delete: () => ({ eq: (_c: string, id: string) => ({ eq: () => ({ select: async () => boundary.remove(id) }) }) }) }),
   }),
 }))
 
@@ -34,7 +34,7 @@ beforeEach(() => {
   boundary.user = { id: 'u1' }
   boundary.allowed = true
   boundary.rpc.mockReset().mockResolvedValue({ data: 'run-1', error: null })
-  boundary.remove.mockReset().mockResolvedValue({ error: null, count: 1 })
+  boundary.remove.mockReset().mockResolvedValue({ data: [{ id: 'x' }], error: null })
 })
 
 describe('POST /api/runs', () => {
@@ -90,6 +90,13 @@ describe('POST /api/runs', () => {
     const response = await post({ action: 'remove', id: REQUEST })
     expect(response.status).toBe(200)
     expect(boundary.remove).toHaveBeenCalledWith(REQUEST)
+  })
+
+  it('says so when there was no such run of this account to remove', async () => {
+    boundary.remove.mockResolvedValue({ data: [], error: null })
+    const response = await post({ action: 'remove', id: REQUEST })
+    expect(response.status).toBe(404)
+    expect((await response.json()).code).toBe('runNotFound')
   })
 
   it('asks a signed-out person to sign in, and slows a flood', async () => {

@@ -4,11 +4,13 @@ import type { RunGoal, RunWeek } from './running'
 // Running mode V1 (sql/108): the signed-in account's runs, a page at a time, its weekly totals
 // from the database (my_run_weeks) and its goal. Before sql/108 `available` is false.
 export const RUN_PAGE_SIZE = 20
-export const RUN_WEEKS = 12
+// A year of weeks for the streak (my_run_weeks allows up to 53); the page lists the last 12.
+export const RUN_WEEKS = 53
 export type RunRow = { id: string; run_date: string; distance_m: number; duration_s: number }
 export type MyRunning = { available: boolean; runs: RunRow[]; hasNext: boolean; weeks: RunWeek[]; goal: RunGoal | null }
 
-const MISSING = ['PGRST202', 'PGRST205', '42883', '42P01']
+/** A table or function that is not there yet (before sql/108). */
+export const MISSING_CODES = ['PGRST202', 'PGRST205', '42883', '42P01']
 
 export async function fetchMyRunning(client: SupabaseClient, userId: string, page: number): Promise<MyRunning> {
   const from = (Math.max(1, page) - 1) * RUN_PAGE_SIZE
@@ -21,7 +23,7 @@ export async function fetchMyRunning(client: SupabaseClient, userId: string, pag
   ])
   const failure = runs.error ?? weeks.error ?? goal.error
   if (failure) {
-    if (MISSING.includes(failure.code ?? '')) return { available: false, runs: [], hasNext: false, weeks: [], goal: null }
+    if (MISSING_CODES.includes(failure.code ?? '')) return { available: false, runs: [], hasNext: false, weeks: [], goal: null }
     throw failure
   }
   const rows = (runs.data ?? []) as RunRow[]

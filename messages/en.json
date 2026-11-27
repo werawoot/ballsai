@@ -757,7 +757,8 @@
     "draftLimit": "While you wait for approval you can keep up to 3 drafts",
     "cannotReturnToDraft": "An opened tournament cannot go back to draft",
     "reasonRequired": "Please give a reason of at least 3 characters",
-    "draftNotPublic": "A draft cannot publish its fixtures; open it first"
+    "draftNotPublic": "A draft cannot publish its fixtures; open it first",
+    "runNotFound": "That run was not found; it may already be removed"
   },
   "impact": {
     "back": "Home",
@@ -2138,7 +2139,7 @@
       "unitKm": "km",
       "goalSave": "Set goal",
       "streak": "Goal met {count} weeks in a row",
-      "weeksTitle": "Last 12 weeks",
+      "weeksTitle": "Last {count} weeks",
       "weekOf": "Week of {date}",
       "history": "Your runs",
       "empty": "No runs logged yet. Start with your first one above",
@@ -2149,7 +2150,8 @@
       "newer": "Newer",
       "guardianNote": "Your linked guardians can see your runs; coaches cannot",
       "loadFailed": "Could not load your runs. Please try again",
-      "goalUnit": "Unit"
+      "goalUnit": "Unit",
+      "goalTarget": "How many a week"
     }
   },
   "guardianSteps": {

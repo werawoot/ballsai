@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { goalProgress, paceText, parseRun, weekStreak, type RunWeek } from '@/lib/running'
+import { adjustWeek, durationText, goalProgress, paceText, parseRun, weekStreak, type RunWeek } from '@/lib/running'
 
 // Running mode V1 (ADR-016, owner 25 Nov 2026): a run is logged by hand, by its owner, and stays
 // "self" data. These rules match sql/108's checks, so the page refuses what the database would.
@@ -56,5 +56,27 @@ describe('the weekly goal and the streak', () => {
 
   it('has no streak without a goal', () => {
     expect(weekStreak(null, weeks([[5, 20]]))).toBe(0)
+  })
+})
+
+describe('this week on screen before the page refreshes', () => {
+  const week: RunWeek = { weekStart: '2026-11-23', runs: 2, distanceM: 8000, durationS: 3000 }
+  const run = (date: string, m: number) => ({ run_date: date, distance_m: m, duration_s: 600 })
+
+  it('adds what was saved this week, and only this week', () => {
+    expect(adjustWeek(week, [run('2026-11-25', 5000), run('2026-11-20', 3000)], [])).toEqual({ weekStart: '2026-11-23', runs: 3, distanceM: 13000, durationS: 3600 })
+  })
+
+  it('takes off what was removed, so a run added then removed counts nothing', () => {
+    const added = run('2026-11-25', 5000)
+    expect(adjustWeek(week, [added], [added])).toEqual(week)
+    expect(adjustWeek(week, [], [run('2026-11-24', 3000)])).toEqual({ weekStart: '2026-11-23', runs: 1, distanceM: 5000, durationS: 2400 })
+  })
+})
+
+describe('duration', () => {
+  it('reads minutes:seconds, with hours when there are any', () => {
+    expect(durationText(1865)).toBe('31:05')
+    expect(durationText(3750)).toBe('1:02:30')
   })
 })

@@ -4,6 +4,7 @@ import { checkAddressRateLimit, checkUserRateLimit } from '@/lib/rate-limit'
 import { apiError } from '@/lib/api-error'
 import { thaiDate } from '@/lib/athlete-private'
 import { GOAL_LIMITS, parseRun } from '@/lib/running'
+import { MISSING_CODES } from '@/lib/running-data'
 
 // Running mode V1 (ADR-016, sql/108): the signed-in account adds a run, removes one of its own,
 // or sets its weekly goal. Anyone signed in, any role, alone. The database decides (RLS and the
@@ -40,13 +41,15 @@ export async function POST(request: Request) {
     ;({ error } = await db.rpc('set_my_run_goal', { p_unit: unit, p_target: target }))
   } else if (body?.action === 'remove') {
     if (typeof body.id !== 'string' || !UUID.test(body.id)) return apiError('requestInvalid', 400)
-    ;({ error } = await db.from('run_logs').delete().eq('id', body.id).eq('user_id', user.id))
+    const deleted = await db.from('run_logs').delete().eq('id', body.id).eq('user_id', user.id).select('id')
+    error = deleted.error
+    if (!error && (deleted.data ?? []).length === 0) return apiError('runNotFound', 404)
   } else {
     return apiError('requestInvalid', 400)
   }
 
   if (error) {
-    if (['PGRST202', '42883', '42P01', 'PGRST205'].includes(error.code ?? '')) return apiError('featureNotReady', 503)
+    if (MISSING_CODES.includes(error.code ?? '')) return apiError('featureNotReady', 503)
     if (error.message.includes('RUN_DAY_LIMIT')) return apiError('runDayLimit', 409)
     if (error.message.includes('RUN_DATE_INVALID')) return apiError('runDate', 400)
     if (error.message.includes('RUN_GOAL_INVALID')) return apiError('runGoalInvalid', 400)
