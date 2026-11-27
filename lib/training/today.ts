@@ -7,8 +7,8 @@ import { trainingProgress, weekdayOf, type Progress } from './schedule'
 // programme per day (SQL63); nothing is counted per drill, so a drill shows no tick of its own.
 // Free of React and of the database, so every rule can be tested directly.
 
-export type TrainingTab = 'mine' | 'programs' | 'skills'
-const TABS: readonly TrainingTab[] = ['mine', 'programs', 'skills']
+export type TrainingTab = 'mine' | 'programs' | 'skills' | 'run'
+const TABS: readonly TrainingTab[] = ['mine', 'programs', 'skills', 'run']
 
 /** The tab to open: the address's, else my schedule when there is a programme to show. */
 export function trainingTab(value: string | undefined, hasProgramme: boolean): TrainingTab {

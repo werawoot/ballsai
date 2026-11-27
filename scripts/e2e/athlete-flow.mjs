@@ -196,4 +196,37 @@ await step('on a slow connection the goal change waits for the page, with no ear
   expect(early.length === 0, `the picker loaded the page again in full at ${early.join(', ')} ms, while the navigation was on its way`)
 })
 
+// Running mode V1 (ADR-016, sql/108): the athlete logs a run alone, a retried save is one run,
+// the week is measured against a goal, and a run can be removed.
+await step('log a run on the running tab; a retried save is one run', async () => {
+  await go('/training?tab=run')
+  await visible('บันทึกการวิ่ง')
+  await page.getByLabel('ระยะทาง (กม.)').fill('5')
+  await page.getByLabel('นาที', { exact: true }).fill('30')
+  await tap(page.getByRole('button', { name: 'บันทึก', exact: true }))
+  await visible('บันทึกแล้ว')
+  const runs = () => state.tables.run_logs.filter(row => row.user_id === E2E_ATHLETE)
+  expect(runs().length === 1 && runs()[0].distance_m === 5000 && runs()[0].duration_s === 1800, `runs: ${JSON.stringify(runs())}`)
+  await visible('6:00 /กม.')
+  // The same request twice (a retry after a lost answer): one run.
+  const answers = await page.evaluate(async () => {
+    const body = JSON.stringify({ action: 'add', requestId: '1b2c3d4e-5f60-4a7b-8c9d-0e1f2a3b4c5d', date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date()), km: '3', minutes: '20', seconds: '0' })
+    const send = () => fetch('/api/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }).then(response => response.json())
+    return [await send(), await send()]
+  })
+  expect(answers[0].id && answers[0].id === answers[1].id && runs().length === 2, `answers ${JSON.stringify(answers)}, runs ${runs().length}`)
+  await audit('/training?tab=run', page)
+})
+
+await step('a weekly goal measures this week, and a run can be removed', async () => {
+  await go('/training?tab=run')
+  await page.getByLabel('เป้ารายสัปดาห์').fill('2')
+  await tap(page.getByRole('button', { name: 'ตั้งเป้า', exact: true }))
+  await visible('ถึงเป้าแล้ว')
+  expect(state.tables.run_goals.some(row => row.user_id === E2E_ATHLETE && row.unit === 'runs' && row.target === 2), `goals: ${JSON.stringify(state.tables.run_goals)}`)
+  await tap(page.getByRole('button', { name: /^ลบการวิ่งวันที่/ }).first())
+  for (let waited = 0; state.tables.run_logs.length !== 1 && waited < 10000; waited += 100) await page.waitForTimeout(100)
+  expect(state.tables.run_logs.length === 1, `runs left: ${state.tables.run_logs.length}`)
+})
+
 await h.finish()
